@@ -1,0 +1,10 @@
+.gh-cli/
+__pycache__/
+backups/
+logs/
+tiantianle_ironlaw_20260617_current/
+*.zip
+*.pyc
+*.pyo
+*.tmp
+*.log

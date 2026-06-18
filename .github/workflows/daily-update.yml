@@ -1,0 +1,57 @@
+name: daily-tiantianle-update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 * * *"
+    - cron: "30 7 * * *"
+    - cron: "30 8 * * *"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Update Tiantianle data and reports
+        env:
+          TIANTIANLE_CORE_BACKTEST_ROUNDS: "120"
+          TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS: "120"
+          TIANTIANLE_ADVANCED_BACKTEST_ROUNDS: "80"
+          TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS: "80"
+          TIANTIANLE_GROUP_BACKTEST_SHORT: "60"
+          TIANTIANLE_GROUP_BACKTEST_MID: "120"
+          TIANTIANLE_GROUP_BACKTEST_LONG: "240"
+        run: python "美國加州天天樂_20260618_第1版.py"
+      - name: Build mobile site
+        run: python pages_build.py
+      - name: Commit updated data
+        run: |
+          git config user.name "tiantianle automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add data reports site
+          git diff --cached --quiet || git commit -m "Update Tiantianle data and reports"
+          git push
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
