@@ -28,14 +28,14 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260620211343">
+    <link rel="manifest" href="manifest.webmanifest?v=20260620232543">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head>
 <body>
-<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-06-20T21:13:43+08:00 / 最新開獎 2026-06-19 / 下期預測時間（台灣） 2026-06-21 09:50</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-06-20T23:25:43+08:00 / 最新開獎 2026-06-19 / 下期預測時間（台灣） 2026-06-21 09:50</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
@@ -74,11 +74,11 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
       }
-      location.href = 'index.html?v=20260620211343&t=' + Date.now();
+      location.href = 'index.html?v=20260620232543&t=' + Date.now();
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260620211343', { updateViaCache: 'none' }).then(function(reg){ reg.update(); }).catch(function(){});
+        navigator.serviceWorker.register('service-worker.js?v=20260620232543', { updateViaCache: 'none' }).then(function(reg){ reg.update(); }).catch(function(){});
       });
     }
     </script>
