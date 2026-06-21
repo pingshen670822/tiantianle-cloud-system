@@ -1,7 +1,7 @@
-const CACHE_NAME = 'tiantianle-ironlaw-20260621212547';
+const CACHE_NAME = 'tiantianle-ironlaw-20260621212947';
 const APP_SHELL = ['index.html','prediction.html','review.html','prediction-history.html','latest_analysis.json','system_health_report.md','manifest.webmanifest','offline.html','icon-192.png','icon-512.png'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20260621212547')).catch(() => cache.addAll(APP_SHELL))));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20260621212947')).catch(() => cache.addAll(APP_SHELL))));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
@@ -13,7 +13,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isFreshFile) {
-    url.searchParams.set('v', '20260621212547');
+    url.searchParams.set('v', '20260621212947');
     event.respondWith(fetch(url.toString(), { cache: 'no-store' }).then(response => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
