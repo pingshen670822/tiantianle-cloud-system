@@ -56,14 +56,14 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260621212947">
+    <link rel="manifest" href="manifest.webmanifest?v=20260621233207">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head>
 <body>
-<header><h1>天天樂 上期未命中檢討</h1><p>報表產生 2026-06-21T21:29:47+08:00 / 美國加州最新開獎日 2026-06-20 / 台灣可更新時間 2026-06-21 09:50 / 下期預測時間（台灣） 2026-06-22 09:50</p></header>
+<header><h1>天天樂 上期未命中檢討</h1><p>報表產生 2026-06-21T23:32:07+08:00 / 美國加州最新開獎日 2026-06-20 / 台灣可更新時間 2026-06-21 09:50 / 下期預測時間（台灣） 2026-06-22 09:50</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
@@ -89,11 +89,11 @@
         const keys = await caches.keys();
         await Promise.all(keys.map(key => caches.delete(key)));
       }
-      location.href = 'index.html?v=20260621212947&t=' + Date.now();
+      location.href = 'index.html?v=20260621233207&t=' + Date.now();
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260621212947', { updateViaCache: 'none' }).then(function(reg){ reg.update(); }).catch(function(){});
+        navigator.serviceWorker.register('service-worker.js?v=20260621233207', { updateViaCache: 'none' }).then(function(reg){ reg.update(); }).catch(function(){});
       });
     }
     </script>
