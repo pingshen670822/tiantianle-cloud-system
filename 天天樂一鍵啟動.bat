@@ -1,5 +1,0 @@
-@echo off
-chcp 65001 >nul
-cd /d "%~dp0"
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\run_california_fantasy5_once.ps1"
-pause

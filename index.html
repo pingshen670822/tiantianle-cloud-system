@@ -3,19 +3,143 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url=site/index.html">
-<title>天天樂手機雲端版</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>天天樂 手機雲端首頁</title>
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;margin:0;background:#f6f7fb;color:#111827}
-main{max-width:720px;margin:12vh auto;padding:20px}
-a{display:block;background:#166534;color:white;text-align:center;text-decoration:none;padding:18px;border-radius:8px;font-weight:900;font-size:20px}
+body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f6f7fb;color:#111827}
+header{background:#0f172a;color:white;padding:22px 28px}header h1{margin:0 0 8px;font-size:28px}header p{margin:0;color:#cbd5e1}
+main{max-width:980px;margin:auto;padding:18px}.band{background:white;border:1px solid #e5e7eb;border-radius:8px;margin-top:14px;padding:16px;overflow-x:auto}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.tabs a{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}.tabs a.active{background:#166534;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.card{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px}.card h2{margin:0 0 8px;font-size:15px;color:#475569}.value{font-size:22px;font-weight:900}
+table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left}th{background:#f1f5f9}
+.high-note{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}.high-note h2{color:#991b1b}.small{font-size:13px;color:#475569}
+.signal-focus{border:4px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 5px #fee2e2 inset}.signal-focus h2{color:#991b1b}.signal-numbers{font-size:34px;line-height:1.25;font-weight:900;color:#991b1b;letter-spacing:0}.signal-detail{font-weight:900;color:#7f1d1d}
+.confidence-high{display:inline-block;padding:4px 8px;border-radius:6px;background:#dc2626;color:white;font-weight:900}.confidence-mid{display:inline-block;padding:4px 8px;border-radius:6px;background:#f97316;color:white;font-weight:900}
+.primary{display:block;text-align:center;padding:18px;border-radius:8px;background:#166534;color:white!important;font-size:20px;font-weight:900;text-decoration:none}
+.secondary{background:#1d4ed8}.danger{background:#991b1b}.url{word-break:break-all;color:#14532d;font-weight:800}
+@media(max-width:640px){header{padding:16px}header h1{font-size:22px}main{padding:10px}.tabs{grid-template-columns:1fr}}
 </style>
-</head>
+
+    <style>
+      .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
+      .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
+      .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
+      .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
+      .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
+      .sticky-launch{position:fixed;left:12px;right:12px;bottom:12px;width:calc(100% - 24px);z-index:9999}
+      body{padding-bottom:82px}
+      @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
+    </style>
+    <link rel="manifest" href="manifest.webmanifest?v=20260622165617">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Tiantianle">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    </head>
 <body>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-06-22T16:56:17+08:00 / 最新開獎 2026-06-21 / 下期預測時間（台灣） 2026-06-23 09:50</p></header>
 <main>
-<h1>天天樂手機雲端版</h1>
-<p>正在開啟最新戰報。</p>
-<a href="site/index.html">一鍵啟動天天樂</a>
+    <section class="band launch-panel">
+      <h2>天天樂手機雲端獨立版</h2>
+      <a class="mobile-action" href="https://github.com/pingshen670924-dotcom/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
+      <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
+      <p class="cloud-note">雲端網址：<span>https://pingshen670924-dotcom.github.io/tiantianle-cloud-system/</span></p>
+      <p class="cloud-note" id="mobileUpdateStatus">Build 20260622165617</p>
+      
+    </section>
+    <a class="mobile-action sticky-launch" href="https://github.com/pingshen670924-dotcom/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
+    
+<nav class="tabs">
+<a class="active" href="index.html">首頁</a>
+<a href="prediction.html">下期預測</a>
+<a href="review.html">上期未命中檢討</a>
+</nav>
+<section class="band"><a class="primary" href="prediction.html">查看下期預測</a></section>
+<section class="band"><a class="primary danger" href="review.html">查看上期未命中檢討</a></section>
+<section class="band"><a class="primary secondary" href="https://github.com/pingshen670924-dotcom/tiantianle-cloud-system/actions/workflows/daily-update.yml">立即雲端更新</a><p class="url">https://pingshen670924-dotcom.github.io/tiantianle-cloud-system/</p></section>
+<section class="band signal-focus"><h2>本期主信心牌</h2><div class="signal-numbers">18 35 37 25 30</div><p class="signal-detail">18:高信心 / 35:高信心 / 37:高信心 / 25:中高信心 / 30:高信心</p><p class="small">高信心號碼已以加粗紅色區塊強調，正式與非正式狀態仍依發布關卡判定。</p></section>
+<section class="band high-note"><h2>高機率／高信心預測加註</h2><p>機率高或信心高的號碼已強制顯示說明，並保留發布關卡狀態。</p><table><tr><th>排名</th><th>號碼</th><th>高信心說明</th><th>來源理由</th></tr><tr><td>1</td><td>18</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 97.5 / 模型機率 18.24% / 穩定共識 5 / 交叉驗證 4/11 passed / 成熟度 71.6 usable_watch</span></td><td>遺漏補償、正邊際核心、滾動檢討漏抓尾數區間補位、滾動檢討未命中來源降權</td></tr><tr><td>2</td><td>35</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 96.0 / 模型機率 17.78% / 穩定共識 5 / 交叉驗證 7/11 passed / 成熟度 86.0 mature</span></td><td>快慢趨勢一致、蒙地卡羅穩定、排名錯位修正、滾動檢討漏抓實開號補位</td></tr><tr><td>3</td><td>37</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 95.3 / 模型機率 18.72% / 穩定共識 4 / 交叉驗證 6/11 passed / 成熟度 76.8 usable_watch</span></td><td>時間序列動能、神經網路綜合、多模型共識、快慢趨勢一致</td></tr><tr><td>4</td><td>25</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 93.4 / 模型機率 16.97% / 穩定共識 5 / 交叉驗證 6/11 passed / 成熟度 64.4 research_only</span></td><td>馬可夫轉移、神經網路綜合、蒙地卡羅穩定、分布平衡風控</td></tr><tr><td>5</td><td>30</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 91.5 / 模型機率 17.53% / 穩定共識 4 / 交叉驗證 5/11 passed / 成熟度 79.3 usable_watch</span></td><td>分布平衡風控、排名錯位修正、滾動檢討漏抓實開號補位、滾動檢討未命中來源降權</td></tr><tr><td>6</td><td>21</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 90.8 / 模型機率 16.14% / 穩定共識 5 / 交叉驗證 8/11 passed / 成熟度 69.0 research_only</span></td><td>蒙地卡羅穩定、分布平衡風控、滾動檢討漏抓尾數區間補位、滾動檢討未命中來源降權</td></tr><tr><td>7</td><td>01</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 89.8 / 模型機率 18.17% / 穩定共識 3 / 交叉驗證 5/11 passed / 成熟度 73.9 usable_watch</span></td><td>尾數區間、區間奇偶壓力、漏命中回收、滾動檢討漏抓實開號補位</td></tr><tr><td>8</td><td>13</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 88.5 / 模型機率 16.59% / 穩定共識 4 / 交叉驗證 5/11 passed / 成熟度 63.1 research_only</span></td><td>尾數區間、區間奇偶壓力、漏命中回收、中期穩定</td></tr><tr><td>9</td><td>27</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 85.8 / 模型機率 16.92% / 穩定共識 3 / 交叉驗證 4/11 passed / 成熟度 72.2 usable_watch</span></td><td>分布平衡風控、滾動檢討漏抓實開號補位、滾動檢討未命中來源降權</td></tr><tr><td>10</td><td>22</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 83.5 / 模型機率 16.21% / 穩定共識 3 / 交叉驗證 4/11 passed / 成熟度 58.3 research_only</span></td><td>馬可夫轉移、神經網路綜合、分布平衡風控、日期牌</td></tr></table></section>
+<div class="grid">
+<section class="card"><h2>最新開獎日</h2><div class="value">2026-06-21</div></section>
+<section class="card"><h2>台灣可更新時間</h2><div class="value">2026-06-22 09:50</div></section>
+<section class="card"><h2>下期預測時間</h2><div class="value">2026-06-23 09:50</div></section>
+<section class="card"><h2>全歷史筆數</h2><div class="value">11835</div></section>
+<section class="card"><h2>發布狀態</h2><div class="value">verified_research_complete</div><p class="small">非正式保證</p></section>
+<section class="card"><h2>實戰成熟度</h2><div class="value">71.5</div><p class="small">passed</p></section>
+</div>
+<section class="band"><h2>本期核心預測摘要</h2><p><strong>Top10:</strong> 18 35 37 25 30 21 01 13 27 22</p><table><tr><th>模型</th><th>號碼</th><th>目標</th><th>成熟度</th></tr><tr><th>獨支精準1中1</th><td>35</td><td>1</td><td>86.0 / passed</td></tr><tr><th>2中1~2</th><td>35 37</td><td>1</td><td>81.4 / passed</td></tr><tr><th>3中2~3</th><td>18 21 35</td><td>2</td><td>75.5 / watch_only</td></tr><tr><th>5中2~3</th><td>01 27 30 35 37</td><td>2</td><td>77.6 / passed</td></tr><tr><th>9中3~5</th><td>01 13 18 21 25 27 30 35 37</td><td>3</td><td>72.9 / passed</td></tr></table></section>
 </main>
-</body>
-</html>
+
+    <script>
+    window.TIANTIANLE_BUILD_VERSION = '20260622165617';
+    function setMobileStatus(text) {
+      var el = document.getElementById('mobileUpdateStatus');
+      if (el) el.textContent = text;
+    }
+    async function clearMobileCaches() {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(async function(reg) {
+          try {
+            if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+            await reg.update();
+            await reg.unregister();
+          } catch (err) {}
+        }));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+      }
+    }
+    const REFRESH_CHECK_MS = 30000;
+    async function forceRefresh() {
+      setMobileStatus('Updating ' + new Date().toLocaleTimeString());
+      await clearMobileCaches();
+      try {
+        await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      location.replace('index.html?v=20260622165617&force=' + Date.now());
+    }
+    async function autoRefreshIfStale() {
+      try {
+        const res = await fetch('latest_analysis.json?check=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stamp = String(data.generated_at_taiwan || data.generated_at || '').replace(/\D/g, '').slice(0, 14);
+        if (stamp && stamp !== window.TIANTIANLE_BUILD_VERSION && !sessionStorage.getItem('tiantianle_refreshed_' + stamp)) {
+          sessionStorage.setItem('tiantianle_refreshed_' + stamp, '1');
+          await clearMobileCaches();
+          location.replace('index.html?v=' + stamp + '&auto=' + Date.now());
+        }
+      } catch (err) {}
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js?v=20260622165617', { updateViaCache: 'none' }).then(function(reg){
+          reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }).catch(function(){});
+        autoRefreshIfStale();
+        setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+      });
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
+          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
+          location.reload();
+        }
+      });
+    } else {
+      window.addEventListener('load', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+    }
+    </script>
+    </body></html>

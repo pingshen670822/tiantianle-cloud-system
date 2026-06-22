@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tiantianle">
+<link rel="manifest" href="manifest.webmanifest?v={version}">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>天天樂手機雲端獨立版</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}
+header{background:#111827;color:white;padding:18px}main{max-width:760px;margin:auto;padding:14px}
+.band{background:white;border:1px solid #d8dee9;border-radius:8px;margin:12px 0;padding:16px}
+.btn{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;margin:10px 0;border:0;border-radius:8px;background:#166534;color:#fff;text-decoration:none;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
+.sticky-launch{position:fixed;left:12px;right:12px;bottom:12px;width:calc(100% - 24px);z-index:9999}
+body{padding-bottom:82px}
+.btn.blue{background:#1d4ed8}.btn.gray{background:#475569}.warn{border-color:#f97316;background:#fff7ed}ol{padding-left:22px}li{margin:8px 0}.url{word-break:break-all;font-weight:900;color:#14532d}
+</style>
+</head>
+<body>
+<header><h1>天天樂手機雲端獨立版</h1><p>使用 GitHub Pages 與 GitHub Actions，電腦關機也能從手機開啟。</p></header>
+<main>
+    
+<section class="band">
+<button id="installBtn" class="btn">一鍵啟動天天樂雲端版</button>
+<a class="btn blue" href="https://github.com/pingshen670924-dotcom/tiantianle-cloud-system/actions/workflows/daily-update.yml">登入 GitHub 後立即雲端更新</a>
+</section>
+<section class="band"><h2>真正手機網址</h2><p class="url">https://pingshen670924-dotcom.github.io/tiantianle-cloud-system/</p><p>手機安裝必須使用這個 GitHub Pages 網址，不是電腦的 file:/// 路徑。</p></section>
+<section class="band">
+<h2>Android / Chrome</h2>
+<ol><li>手機開 GitHub Pages 網址。</li><li>點上方一鍵啟動天天樂雲端版。</li><li>瀏覽器若跳出安裝提示，選擇安裝 App。</li><li>安裝後從手機主畫面開啟天天樂。</li></ol>
+<h2>iPhone / Safari</h2>
+<ol><li>點 Safari 分享按鈕。</li><li>選擇「加入主畫面」。</li><li>完成後從主畫面開啟天天樂。</li></ol>
+</section>
+<section class="band"><p>這是雲端版入口：更新由 GitHub Actions 執行，畫面由 GitHub Pages 提供。手機不需要連回電腦。</p></section>
+</main>
+<button id="stickyBtn" class="btn sticky-launch">一鍵啟動天天樂雲端版</button>
+<script>
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', function(e){e.preventDefault();deferredPrompt=e;});
+async function launchTiantianle(){
+  if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
+  location.href='index.html';
+}
+document.getElementById('installBtn').addEventListener('click', launchTiantianle);
+document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
+if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=' + Date.now(), { updateViaCache: 'none' });
+</script>
+</body></html>
