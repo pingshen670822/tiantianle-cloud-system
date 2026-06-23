@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 
 from aerospace_engine import compute_aerospace_assurance
 from industrial_engine import compute_industrial_analysis
-from tiantianle_539_core import compute_539_core_analysis
+from tiantianle_core import compute_tiantianle_core_analysis
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -41,6 +41,7 @@ NETWORK_REPORT_MD = REPORT_DIR / "network_diagnostic_report.md"
 IMPORT_REPORT_MD = REPORT_DIR / "csv_import_report.md"
 VALIDATION_REPORT_MD = REPORT_DIR / "source_validation_report.md"
 HEALTH_REPORT_MD = REPORT_DIR / "system_health_report.md"
+DATA_INTEGRITY_REPORT_MD = REPORT_DIR / "data_integrity_report.md"
 NUMBER_MAX = 39
 DRAW_SIZE = 5
 WINDOWS = [5, 10, 20, 50, 100]
@@ -56,6 +57,8 @@ TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
 ENGINE_VERSION = "tiantianle_ironlaw_industrial_v1"
+OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
+LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
     {"name": "Lotto8Latest", "url": "https://www.lotto-8.com/usa/listltoFT5.asp?indexpage=1&orderby=new"},
     {"name": "LottolyzerLatest", "url": "https://en.lottolyzer.com/history/united-states/fantasy-5-california/"},
@@ -275,12 +278,80 @@ def valid_numbers(numbers):
     return len(numbers) == 5 and len(set(numbers)) == 5 and all(1 <= n <= NUMBER_MAX for n in numbers)
 
 
+def source_priority(source):
+    text = str(source or "").lower()
+    if "calottery" in text or "official:" in text:
+        return 120
+    if "consensus_latest" in text:
+        return 108
+    if "manual_verified" in text:
+        return 96
+    if "lotteryusa" in text:
+        return 90
+    if "auto_csv_import" in text and "user_selected" in text:
+        return 85
+    if "lottolyzer" in text or "lotto8" in text:
+        return 75
+    if "lottery.net" in text or "lotterynet_year" in text:
+        return 65
+    if "lotterynet_latest" in text:
+        return 35
+    if "cached_latest" in text:
+        return 45
+    return 50
+
+
+def source_is_confirmed(source):
+    text = str(source or "").lower()
+    return any(
+        marker in text
+        for marker in (
+            "calottery",
+            "official:",
+            "consensus_latest",
+            "manual_verified",
+            "auto_csv_import:user_selected",
+            "auto_csv_import:00_user_selected",
+        )
+    )
+
+
 def upsert_draw(conn, draw_date, numbers, source):
     numbers = sorted(int(n) for n in numbers)
     if not draw_date_allowed(draw_date):
         return False
     if not valid_numbers(numbers):
         return False
+    existing = conn.execute(
+        "SELECT n1,n2,n3,n4,n5,source FROM draws WHERE draw_date=?",
+        (draw_date,),
+    ).fetchone()
+    if existing:
+        existing_numbers = tuple(int(x) for x in existing[:5])
+        new_numbers = tuple(numbers)
+        old_source = existing[5] or ""
+        if existing_numbers == new_numbers:
+            if source_priority(source) > source_priority(old_source):
+                conn.execute(
+                    "UPDATE draws SET source=?,created_at=? WHERE draw_date=?",
+                    (source, iso_local(taiwan_now()), draw_date),
+                )
+                return True
+            return False
+        if source_priority(source) > source_priority(old_source):
+            conn.execute(
+                """
+                UPDATE draws
+                SET n1=?,n2=?,n3=?,n4=?,n5=?,source=?,created_at=?
+                WHERE draw_date=?
+                """,
+                (*numbers, source, iso_local(taiwan_now()), draw_date),
+            )
+            return True
+        raise ValueError(
+            f"draw_conflict:{draw_date}: existing={existing_numbers} source={old_source} "
+            f"new={new_numbers} source={source}"
+        )
     conn.execute(
         """
         INSERT OR IGNORE INTO draws(draw_date,n1,n2,n3,n4,n5,source,created_at)
@@ -496,6 +567,9 @@ def http_text(url, retries=1, timeout=6):
         headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ca-fantasy5-history-builder/2.0",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
         },
     )
     context = ssl._create_unverified_context()
@@ -579,6 +653,141 @@ def parse_year_page(text, year):
         if valid_numbers(numbers):
             result.append((draw_date, numbers))
     return unique_year_draws(result)
+
+
+def parse_official_calottery_latest(text):
+    decoded = html.unescape(re.sub(r"<[^>]+>", " ", text or ""))
+    decoded = re.sub(r"\s+", " ", decoded)
+    pattern = re.compile(
+        r"Winning Numbers:\s*(?:[A-Z]{3}/)?(?P<month>[A-Z]{3,9})\s+"
+        r"(?P<day>\d{1,2}),?\s+(?P<year>\d{4})(?P<body>.*?)(?:This Could Be|Detailed Draw Results|LAST DRAW DETAILS|Past Winning Numbers|$)",
+        re.IGNORECASE,
+    )
+    match = pattern.search(decoded)
+    if not match:
+        return []
+    draw_year = int(match.group("year"))
+    try:
+        draw_date = date(draw_year, month_number(match.group("month")), int(match.group("day"))).isoformat()
+    except Exception:
+        return []
+    numbers = first_five_numbers(match.group("body"))
+    if not valid_numbers(numbers):
+        return []
+    return [(draw_date, numbers)]
+
+
+def short_source_name(value):
+    text = str(value or "").lower()
+    if "calottery" in text:
+        return "calottery"
+    if "lotto-8" in text or "lotto8" in text:
+        return "lotto8"
+    if "lottolyzer" in text:
+        return "lottolyzer"
+    if "lotteryusa" in text:
+        return "lotteryusa"
+    if "lottery.net" in text or "lotterynet" in text:
+        return "lotterynet"
+    if "lotterycorner" in text:
+        return "lotterycorner"
+    if "lotterypredictor" in text:
+        return "lotterypredictor"
+    return re.sub(r"[^a-z0-9_]+", "_", str(value or "source").lower()).strip("_")[:40] or "source"
+
+
+def apply_consensus_draws(conn, source_draws, channel, min_sources=LATEST_CONSENSUS_MIN_SOURCES):
+    grouped = defaultdict(list)
+    files = []
+    skipped_future = []
+    for source_name, draws in source_draws:
+        clean_name = short_source_name(source_name)
+        files.append({"source": clean_name, "draws_found": len(draws), "latest": draws[-1][0] if draws else ""})
+        for draw_date, numbers in draws:
+            numbers = tuple(sorted(int(n) for n in numbers))
+            if not draw_date_allowed(draw_date):
+                skipped_future.append({"draw_date": draw_date, "numbers": list(numbers), "source": clean_name})
+                continue
+            if not valid_numbers(numbers):
+                continue
+            grouped[(draw_date, numbers)].append(clean_name)
+
+    by_date = defaultdict(list)
+    for (draw_date, numbers), sources in grouped.items():
+        by_date[draw_date].append({"numbers": list(numbers), "sources": sorted(set(sources))})
+
+    conflicts = [
+        {"draw_date": draw_date, "versions": versions}
+        for draw_date, versions in sorted(by_date.items())
+        if len(versions) > 1
+    ]
+    conflict_dates = {item["draw_date"] for item in conflicts}
+    skipped_single = []
+    skipped_conflict = []
+    accepted = []
+    applied = 0
+    for (draw_date, numbers), sources in sorted(grouped.items()):
+        unique_sources = sorted(set(sources))
+        if draw_date in conflict_dates:
+            skipped_conflict.append({"draw_date": draw_date, "numbers": list(numbers), "sources": unique_sources})
+            continue
+        if len(unique_sources) < min_sources:
+            skipped_single.append({"draw_date": draw_date, "numbers": list(numbers), "sources": unique_sources})
+            continue
+        source_label = "consensus_latest:{}:{}".format(channel, "+".join(unique_sources[:5]))
+        before = conn.total_changes
+        upsert_draw(conn, draw_date, numbers, source_label)
+        changed = conn.total_changes > before
+        applied += 1 if changed else 0
+        accepted.append(
+            {
+                "draw_date": draw_date,
+                "numbers": list(numbers),
+                "sources": unique_sources,
+                "changed": changed,
+            }
+        )
+    conn.commit()
+    return {
+        "added": applied,
+        "accepted": accepted[-12:],
+        "accepted_count": len(accepted),
+        "files": files,
+        "skipped_single_source": skipped_single[-12:],
+        "skipped_single_source_count": len(skipped_single),
+        "skipped_future": skipped_future[-12:],
+        "skipped_future_count": len(skipped_future),
+        "skipped_conflict": skipped_conflict[-12:],
+        "skipped_conflict_count": len(skipped_conflict),
+        "conflicts": conflicts[-12:],
+        "conflict_count": len(conflicts),
+    }
+
+
+def fetch_official_latest(conn):
+    result = {"status": "not_checked", "added": 0, "draws": [], "errors": []}
+    try:
+        draws = parse_official_calottery_latest(http_text(OFFICIAL_LATEST_URL, retries=1, timeout=8))
+        result["draws"] = [{"draw_date": item[0], "numbers": item[1]} for item in draws]
+        if not draws:
+            result["status"] = "empty"
+            result["errors"].append("official_page_empty_or_unparsed")
+            return result
+        added = 0
+        for draw_date, numbers in draws:
+            if not draw_date_allowed(draw_date):
+                result["errors"].append(f"official_future_date_skipped:{draw_date}")
+                continue
+            before = conn.total_changes
+            upsert_draw(conn, draw_date, numbers, "official:calottery")
+            added += 1 if conn.total_changes > before else 0
+        conn.commit()
+        result["added"] = added
+        result["status"] = "ok"
+    except Exception as exc:
+        result["status"] = "blocked"
+        result["errors"].append(str(exc)[:300])
+    return result
 
 
 def update_history_year_status(conn, year, status, source, draw_count, inserted_count, attempts, last_error):
@@ -727,9 +936,6 @@ def fetch_history(conn, full=False):
 
 def fetch_latest_results(conn):
     current_year = california_now().year
-    allowed_latest = latest_allowed_draw_date()
-    latest_row = conn.execute("SELECT MAX(draw_date) FROM draws").fetchone()
-    latest_existing_date = latest_row[0] if latest_row and latest_row[0] else "0000-00-00"
     urls = [
         "https://www.lotto-8.com/usa/listltoFT5.asp?indexpage=1&orderby=new",
         "https://en.lottolyzer.com/history/united-states/fantasy-5-california/",
@@ -738,57 +944,65 @@ def fetch_latest_results(conn):
         f"https://www.lottery.net/california/fantasy-5/numbers/{current_year}",
         f"https://www.lotteryusa.com/california/fantasy-5/year/{current_year}",
     ]
-    added = 0
+    official = fetch_official_latest(conn)
     errors = []
-    seen = set()
+    source_draws = []
     for url in urls:
         try:
             draws = parse_year_page(http_text(url, retries=1, timeout=4), current_year)
             if not draws:
                 errors.append(f"{url}: empty")
                 continue
-            for draw_date, numbers in draws:
-                if draw_date > allowed_latest:
-                    errors.append(f"{url}: skipped_future_date:{draw_date}")
-                    continue
-                if draw_date < latest_existing_date:
-                    continue
-                key = (draw_date, tuple(numbers))
-                if key in seen:
-                    continue
-                seen.add(key)
-                before = conn.total_changes
-                upsert_draw(conn, draw_date, numbers, f"latest_auto:{url}")
-                added += 1 if conn.total_changes > before else 0
-            if added > 0:
-                break
+            source_draws.append((url, draws))
         except Exception as exc:
             errors.append(f"{url}: {exc}")
+    consensus = apply_consensus_draws(conn, source_draws, "network")
+    errors.extend(consensus.get("conflicts", []))
+    errors.extend(official.get("errors", []))
     conn.commit()
-    return {"added": added, "checked": len(urls), "errors": errors[-6:]}
+    return {
+        "added": int(official.get("added", 0)) + int(consensus.get("added", 0)),
+        "checked": len(urls) + 1,
+        "official": official,
+        "consensus": consensus,
+        "errors": errors[-6:],
+    }
 
 
 def import_cached_latest_pages(conn):
     setup_dirs()
     current_year = california_now().year
-    added = 0
+    source_draws = []
     files = []
     errors = []
+    official_cache = {"status": "not_checked", "added": 0, "draws": [], "errors": []}
     for path in sorted(CACHE_DIR.glob("*.html")):
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
+            if "calottery" in path.name.lower():
+                draws = parse_official_calottery_latest(text)
+                official_cache["draws"] = [{"draw_date": item[0], "numbers": item[1]} for item in draws]
+                official_cache["status"] = "ok" if draws else "empty"
+                inserted = 0
+                for draw_date, numbers in draws:
+                    before = conn.total_changes
+                    upsert_draw(conn, draw_date, numbers, "official:calottery_cache")
+                    inserted += 1 if conn.total_changes > before else 0
+                official_cache["added"] += inserted
+                files.append({"file": path.name, "draws_found": len(draws), "latest": draws[-1][0] if draws else "", "official": True})
+                continue
             draws = parse_year_page(text, current_year)
-            inserted = 0
-            for draw_date, numbers in draws:
-                before = conn.total_changes
-                upsert_draw(conn, draw_date, numbers, f"cached_latest:{path.name}")
-                inserted += 1 if conn.total_changes > before else 0
-            added += inserted
-            files.append({"file": path.name, "draws_found": len(draws), "inserted": inserted})
+            source_draws.append((path.name, draws))
+            files.append({"file": path.name, "draws_found": len(draws), "latest": draws[-1][0] if draws else ""})
         except Exception as exc:
             errors.append(f"{path.name}: {exc}")
+    consensus = apply_consensus_draws(conn, source_draws, "cache")
+    consensus["added"] += official_cache.get("added", 0)
+    consensus["official_cache"] = official_cache
     conn.commit()
-    return {"added": added, "files": files, "errors": errors}
+    consensus["files"] = files
+    consensus["errors"] = errors
+    return consensus
 
 
 def history_scraper_summary(conn):
@@ -834,9 +1048,9 @@ def render_history_scraper_report(conn):
 
 
 def fetch_draws(conn):
-    rows = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5 FROM draws ORDER BY draw_date").fetchall()
+    rows = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5,source FROM draws ORDER BY draw_date").fetchall()
     return [
-        {"period": index, "draw_date": row[0], "numbers": list(row[1:6])}
+        {"period": index, "draw_date": row[0], "numbers": list(row[1:6]), "source": row[6] or ""}
         for index, row in enumerate(rows, start=1)
     ]
 
@@ -1143,13 +1357,22 @@ def backfill_predictions_from_snapshots(conn):
 
 
 def settle_predictions(conn):
-    rows = conn.execute("SELECT id,based_on_date,candidates_json,strong_packs_json FROM predictions WHERE status='pending'").fetchall()
+    rows = conn.execute(
+        """
+        SELECT id,based_on_date,candidates_json,strong_packs_json,status,actual_date,actual_numbers_json
+        FROM predictions
+        WHERE status IN ('pending','settled')
+        """
+    ).fetchall()
     settled = 0
     for row in rows:
         actual = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date > ? ORDER BY draw_date LIMIT 1", (row[1],)).fetchone()
         if not actual:
             continue
         actual_numbers = set(actual[1:6])
+        actual_numbers_json = json.dumps(sorted(actual_numbers), ensure_ascii=False)
+        if row[4] == "settled" and row[5] == actual[0] and (row[6] or "") == actual_numbers_json:
+            continue
         candidates = json.loads(row[2])
         ranked = [x["number"] for x in candidates]
         packs = json.loads(row[3])
@@ -1175,7 +1398,7 @@ def settle_predictions(conn):
             (
                 iso_local(taiwan_now()),
                 actual[0],
-                json.dumps(sorted(actual_numbers), ensure_ascii=False),
+                actual_numbers_json,
                 len(set(ranked[:5]) & actual_numbers),
                 len(set(ranked[:10]) & actual_numbers),
                 len(set(ranked[:15]) & actual_numbers),
@@ -1219,6 +1442,120 @@ def _settled_prediction_from_row(row):
         "top5_hits": row[6] or 0,
         "top10_hits": row[7] or 0,
         "top15_hits": row[8] or 0,
+    }
+
+
+def monthly_prediction_review(conn):
+    latest = conn.execute("SELECT MAX(draw_date) FROM draws").fetchone()[0]
+    if not latest:
+        return {"has_review": False, "month": "", "sample_size": 0}
+    month = latest[:7]
+    rows = conn.execute(
+        """
+        SELECT based_on_date,target_date,actual_date,actual_numbers_json,candidates_json,
+               strong_pack_hits_json,top5_hits,top10_hits,top15_hits
+        FROM predictions
+        WHERE status='settled' AND actual_date LIKE ?
+        ORDER BY actual_date
+        """,
+        (month + "%",),
+    ).fetchall()
+    if not rows:
+        return {"has_review": False, "month": month, "sample_size": 0}
+
+    settled_items = [_settled_prediction_from_row(row) for row in rows]
+    sample_size = len(settled_items)
+    top5_values = [item["top5_hits"] for item in settled_items]
+    top10_values = [item["top10_hits"] for item in settled_items]
+    top15_values = [item["top15_hits"] for item in settled_items]
+    actual_missed_top10 = Counter()
+    late_hit_numbers = Counter()
+    failed_counts = Counter()
+    hit_counts = Counter()
+    reason_hits = Counter()
+    reason_misses = Counter()
+    pack_stats = defaultdict(lambda: {"rounds": 0, "passes": 0, "hits": 0, "zero_hits": 0})
+    top10_distribution = Counter(top10_values)
+
+    for settled in settled_items:
+        actual_set = set(settled["actual_numbers"])
+        top10 = set(settled["candidate_numbers"][:10])
+        top15_tail = set(settled["candidate_numbers"][10:15])
+        for number in actual_set - top10:
+            actual_missed_top10[number] += 1
+        for number in actual_set & top15_tail:
+            late_hit_numbers[number] += 1
+        for number in settled["candidate_numbers"][:15]:
+            if not isinstance(number, int):
+                continue
+            if number in actual_set:
+                hit_counts[number] += 1
+            else:
+                failed_counts[number] += 1
+        for candidate in settled["candidate_review"]:
+            counter = reason_hits if candidate["hit"] else reason_misses
+            counter.update(candidate.get("reasons") or [])
+        for key, pack in (settled.get("strong_pack_hits") or {}).items():
+            normalized_key = "legacy_three_hit_one" if key == "three_hit_one" else key
+            stat = pack_stats[normalized_key]
+            hits = int(pack.get("hits", 0) or 0)
+            stat["rounds"] += 1
+            stat["passes"] += 1 if pack.get("passed") else 0
+            stat["hits"] += hits
+            stat["zero_hits"] += 1 if hits == 0 else 0
+
+    avg_top5 = round(sum(top5_values) / sample_size, 3)
+    avg_top10 = round(sum(top10_values) / sample_size, 3)
+    avg_top15 = round(sum(top15_values) / sample_size, 3)
+    pack_summary = {}
+    for key, stat in pack_stats.items():
+        rounds = stat["rounds"] or 1
+        pack_summary[key] = {
+            "rounds": stat["rounds"],
+            "passes": stat["passes"],
+            "pass_rate": round(stat["passes"] / rounds, 3),
+            "avg_hits": round(stat["hits"] / rounds, 3),
+            "zero_hit_rate": round(stat["zero_hits"] / rounds, 3),
+            "status": "usable_watch" if stat["passes"] / rounds >= 0.45 else "strict_downshift",
+        }
+
+    monthly_failed_numbers = [
+        number for number, count in failed_counts.most_common()
+        if count >= 3 and hit_counts.get(number, 0) == 0
+    ][:12]
+    weak_reasons = [
+        reason for reason, miss in reason_misses.most_common(10)
+        if miss >= max(2, reason_hits.get(reason, 0) * 2)
+    ][:6]
+    best_plan = {
+        "mode": "monthly_precision_guard",
+        "summary": "use Top10 as observation pool; strong packs require monthly and walk-forward pass before official release",
+        "actions": [
+            "strong_single_official_disabled_until_monthly_rate_reaches_20_percent",
+            "three_hit_two_official_disabled_until_real_three_hit_two_samples_pass",
+            "five_hit_two_and_nine_hit_three_watch_only_until_monthly_and_360_walk_forward_pass",
+            "two_hit_one_kept_as_relative_observation_not_official_high_probability",
+            "monthly_failed_numbers_soft_penalty_and_late_hit_recovery_promoted",
+        ],
+        "primary_watch_layer": "Top10",
+        "relative_stable_pack": "two_hit_one" if pack_summary.get("two_hit_one", {}).get("pass_rate", 0) >= 0.45 else "none",
+        "no_official_high_probability": True,
+    }
+    return {
+        "has_review": True,
+        "month": month,
+        "sample_size": sample_size,
+        "date_range": [settled_items[0]["actual_date"], settled_items[-1]["actual_date"]],
+        "avg_top5_hits": avg_top5,
+        "avg_top10_hits": avg_top10,
+        "avg_top15_hits": avg_top15,
+        "top10_distribution": dict(sorted(top10_distribution.items())),
+        "pack_summary": pack_summary,
+        "monthly_failed_numbers": monthly_failed_numbers,
+        "monthly_late_hit_numbers": [{"number": n, "count": c} for n, c in late_hit_numbers.most_common(12)],
+        "monthly_missed_actual_numbers": [{"number": n, "count": c} for n, c in actual_missed_top10.most_common(12)],
+        "weak_reasons": weak_reasons,
+        "best_rolling_plan": best_plan,
     }
 
 
@@ -1338,12 +1675,19 @@ def failure_review(conn):
         if reason_hits.get(reason, 0) == 0 or reason_misses[reason] >= reason_hits.get(reason, 0) * 2
     ]
 
+    monthly_review = monthly_prediction_review(conn)
     actions = [
         u"\u6700\u8fd15\u671f\u5df2\u7d0d\u5165\u6efe\u52d5\u6aa2\u8a0e\uff0cTop10\u5e73\u5747\u547d\u4e2d\u70ba"
         f" {avg_top10}",
         u"\u91cd\u8907\u9810\u6e2c\u4f46\u672a\u547d\u4e2d\u865f\u78bc\u5df2\u81ea\u52d5\u964d\u6b0a\uff1a"
         + fmt_numbers(rolling_failed_numbers[:8]),
     ]
+    if monthly_review.get("has_review"):
+        actions.append(
+            u"\u672c\u6708\u7e3d\u6aa2\u8a0e\u5df2\u7d0d\u5165\uff1aTop10\u5e73\u5747 "
+            + str(monthly_review.get("avg_top10_hits"))
+            + u"\uff0c\u5f37\u7368\u82075\u4e2d2\u672a\u904e\u5be6\u6230\u9580\u6abb\uff0c\u6539\u4ee5\u89c0\u5bdf\u6c60\u8207\u6708\u5ea6\u964d\u6b0a\u904b\u884c"
+        )
     if pack_fail_counts:
         actions.append(
             u"\u5931\u6e96\u5f37\u724c\u7d44\u5408\u5df2\u964d\u4f4e\u6b0a\u91cd\uff1a"
@@ -1365,6 +1709,7 @@ def failure_review(conn):
         "actions": actions,
         "last_settled": settled_items[0],
         "recent_settled": settled_items,
+        "monthly_review": monthly_review,
         "rolling_summary": {
             "sample_size": sample_size,
             "avg_top5_hits": avg_top5,
@@ -1387,22 +1732,30 @@ def failure_review(conn):
 
 def analyze(draws, review=None):
     industrial = compute_industrial_analysis(draws, review)
-    core539 = compute_539_core_analysis(draws, review, industrial=industrial)
-    industrial["primary_539_core"] = {
-        "engine_version": core539["engine_version"],
-        "model_family": core539["model_family"],
-        "component_names": core539["component_names"],
-        "weights": core539["weights"],
-        "two_stage_status": core539["two_stage_group_model"].get("status"),
+    tiantianle_core = compute_tiantianle_core_analysis(draws, review, industrial=industrial)
+    industrial["primary_tiantianle_core"] = {
+        "engine_version": tiantianle_core["engine_version"],
+        "model_family": tiantianle_core["model_family"],
+        "component_names": tiantianle_core["component_names"],
+        "weights": tiantianle_core["weights"],
+        "two_stage_status": tiantianle_core["two_stage_group_model"].get("status"),
     }
     aerospace = compute_aerospace_assurance(draws, industrial)
     if aerospace["release_assurance"]["status"] == "blocked":
         industrial.setdefault("release_gate", {})["status"] = "aerospace_blocked"
     elif aerospace["release_assurance"]["status"] == "watch_only":
         industrial.setdefault("release_gate", {})["aerospace_status"] = "watch_only"
-    candidates = core539["candidates"]
+    candidates = tiantianle_core["candidates"]
+    freshness = data_freshness(draws[-1]["draw_date"])
+    latest_source = draws[-1].get("source", "")
+    latest_source_confirmed = source_is_confirmed(latest_source)
+    freshness["latest_source"] = latest_source
+    freshness["latest_source_confirmed"] = latest_source_confirmed
+    freshness["source_confirmation_status"] = "confirmed" if latest_source_confirmed else "blocked_unconfirmed_latest_source"
+    if not latest_source_confirmed:
+        freshness["official_prediction_allowed"] = False
     official_release_allowed = (
-        data_freshness(draws[-1]["draw_date"]).get("official_prediction_allowed", False)
+        freshness.get("official_prediction_allowed", False)
         and industrial.get("release_gate", {}).get("status") == "official"
         and aerospace.get("release_assurance", {}).get("status") == "verified"
     )
@@ -1420,27 +1773,137 @@ def analyze(draws, review=None):
         "game": "\u5929\u5929\u6a02",
         "latest_draw": draws[-1],
         "target_draw_date": next_date(draws[-1]["draw_date"]),
-        "freshness": data_freshness(draws[-1]["draw_date"]),
+        "freshness": freshness,
         "official_release_allowed": official_release_allowed,
         "draw_count": len(draws),
         "history_completeness": completeness,
         "failure_review": review or {"has_review": False, "severity": "none"},
         "industrial_engine": industrial,
-        "primary_539_core": core539,
+        "primary_tiantianle_core": tiantianle_core,
         "aerospace_assurance": aerospace,
         "candidates": candidates,
         "official_candidates": candidates,
-        "strong_packs": core539["strong_prediction_packs"],
-        "suggested_sets": core539["suggested_sets"],
-        "two_stage_group_model": core539["two_stage_group_model"],
-        "relationships": core539["relationships"],
-        "backtest": core539["backtest"],
+        "strong_packs": tiantianle_core["strong_prediction_packs"],
+        "suggested_sets": tiantianle_core["suggested_sets"],
+        "two_stage_group_model": tiantianle_core["two_stage_group_model"],
+        "relationships": tiantianle_core["relationships"],
+        "backtest": tiantianle_core["backtest"],
         "windows": [{"window": w, "hot": frequency(draws[-w:]).most_common(10)} for w in WINDOWS if len(draws) >= w],
     }
 
 
-def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cached_latest=None):
+def data_integrity_audit(conn, cached_latest=None, latest_fetch=None, validation=None):
+    rows = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5,source FROM draws ORDER BY draw_date").fetchall()
+    dates = [row[0] for row in rows]
+    invalid_rows = []
+    for row in rows:
+        numbers = [int(row[i]) for i in range(1, 6)]
+        if not valid_numbers(numbers):
+            invalid_rows.append({"draw_date": row[0], "numbers": numbers, "source": row[6] or ""})
+    duplicate_dates = [draw_date for draw_date, count in Counter(dates).items() if count > 1]
+    future_rows = [row for row in rows if str(row[0]) > latest_allowed_draw_date()]
+    latest = rows[-1] if rows else None
+    latest_source = latest[6] if latest else ""
+    latest_confirmed = bool(latest and source_is_confirmed(latest_source))
+    recent_unconfirmed = [
+        {"draw_date": row[0], "numbers": [int(row[i]) for i in range(1, 6)], "source": row[6] or ""}
+        for row in rows[-14:]
+        if not source_is_confirmed(row[6] or "")
+    ]
+    cache_single = int((cached_latest or {}).get("skipped_single_source_count", 0))
+    cache_future = int((cached_latest or {}).get("skipped_future_count", 0))
+    cache_conflict = int((cached_latest or {}).get("skipped_conflict_count", 0))
+    network_consensus = (latest_fetch or {}).get("consensus", {})
+    network_single = int(network_consensus.get("skipped_single_source_count", 0)) if isinstance(network_consensus, dict) else 0
+    network_future = int(network_consensus.get("skipped_future_count", 0)) if isinstance(network_consensus, dict) else 0
+    network_conflict = int(network_consensus.get("skipped_conflict_count", 0)) if isinstance(network_consensus, dict) else 0
+    official = (latest_fetch or {}).get("official", {}) if isinstance(latest_fetch, dict) else {}
+    status = "ok"
+    warnings = []
+    if invalid_rows:
+        status = "error"
+        warnings.append("invalid_number_rows")
+    if duplicate_dates:
+        status = "error"
+        warnings.append("duplicate_draw_dates")
+    if future_rows:
+        status = "error"
+        warnings.append("future_draw_rows_in_database")
+    if latest and not latest_confirmed:
+        status = "warning" if status == "ok" else status
+        warnings.append("latest_draw_source_not_confirmed")
+    if recent_unconfirmed:
+        warnings.append("recent_rows_with_unconfirmed_source")
+    audit = {
+        "generated_at": iso_local(taiwan_now()),
+        "status": status,
+        "warnings": warnings,
+        "row_count": len(rows),
+        "first_draw_date": dates[0] if dates else "",
+        "latest_draw_date": latest[0] if latest else "",
+        "latest_numbers": [int(latest[i]) for i in range(1, 6)] if latest else [],
+        "latest_source": latest_source or "",
+        "latest_source_confirmed": latest_confirmed,
+        "allowed_latest_draw_date": latest_allowed_draw_date(),
+        "official_source_status": official.get("status", "not_checked") if isinstance(official, dict) else "not_checked",
+        "official_source_errors": official.get("errors", []) if isinstance(official, dict) else [],
+        "invalid_rows": invalid_rows[:20],
+        "duplicate_dates": duplicate_dates[:20],
+        "future_rows": [
+            {"draw_date": row[0], "numbers": [int(row[i]) for i in range(1, 6)], "source": row[6] or ""}
+            for row in future_rows[:20]
+        ],
+        "recent_unconfirmed": recent_unconfirmed,
+        "quarantined_single_source_count": cache_single + network_single,
+        "quarantined_future_count": cache_future + network_future,
+        "quarantined_conflict_count": cache_conflict + network_conflict,
+        "cached_latest": cached_latest or {},
+        "latest_fetch": latest_fetch or {},
+        "validation_status": (validation or {}).get("status", "not_run"),
+        "validation_conflicts": int((validation or {}).get("db_conflicts", 0)) + int((validation or {}).get("cross_conflicts", 0)),
+    }
+    lines = [
+        "# \u8cc7\u6599\u5b8c\u6574\u6027\u7a3d\u6838",
+        "",
+        f"- \u7522\u751f\u6642\u9593\uff1a{audit['generated_at']}",
+        f"- \u72c0\u614b\uff1a{audit['status']}",
+        f"- \u7e3d\u7b46\u6578\uff1a{audit['row_count']}",
+        f"- \u8cc7\u6599\u7bc4\u570d\uff1a{audit['first_draw_date']} ~ {audit['latest_draw_date']}",
+        f"- \u5141\u8a31\u6700\u65b0\u52a0\u5dde\u958b\u734e\u65e5\uff1a{audit['allowed_latest_draw_date']}",
+        f"- \u6700\u65b0\u865f\u78bc\uff1a{fmt_numbers(audit['latest_numbers']) if audit['latest_numbers'] else '-'}",
+        f"- \u6700\u65b0\u4f86\u6e90\uff1a{audit['latest_source'] or '-'}",
+        f"- \u4f86\u6e90\u78ba\u8a8d\uff1a{audit['latest_source_confirmed']}",
+        f"- \u5b98\u65b9\u4f86\u6e90\u72c0\u614b\uff1a{audit['official_source_status']}",
+        f"- \u55ae\u4e00\u4f86\u6e90\u9694\u96e2\uff1a{audit['quarantined_single_source_count']}",
+        f"- \u672a\u4f86\u65e5\u671f\u9694\u96e2\uff1a{audit['quarantined_future_count']}",
+        f"- \u885d\u7a81\u8cc7\u6599\u9694\u96e2\uff1a{audit['quarantined_conflict_count']}",
+        f"- \u9a57\u8b49\u885d\u7a81\uff1a{audit['validation_conflicts']}",
+        "",
+        "## \u8b66\u544a",
+    ]
+    lines.extend([f"- {item}" for item in warnings] or ["- \u7121"])
+    lines.extend(["", "## \u8fd1\u671f\u672a\u78ba\u8a8d\u4f86\u6e90"])
+    if recent_unconfirmed:
+        for item in recent_unconfirmed:
+            lines.append(f"- {item['draw_date']} {fmt_numbers(item['numbers'])} / {item['source']}")
+    else:
+        lines.append("- \u7121")
+    lines.extend(["", "## \u975e\u6cd5\u6216\u672a\u4f86\u8cc7\u6599"])
+    if invalid_rows or future_rows:
+        for item in invalid_rows[:10]:
+            lines.append(f"- invalid {item['draw_date']} {fmt_numbers(item['numbers'])} / {item['source']}")
+        for item in audit["future_rows"][:10]:
+            lines.append(f"- future {item['draw_date']} {fmt_numbers(item['numbers'])} / {item['source']}")
+    else:
+        lines.append("- \u7121")
+    DATA_INTEGRITY_REPORT_MD.write_text("\n".join(lines), encoding="utf-8")
+    return audit
+
+
+def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cached_latest=None, data_audit=None):
     ca_today = analysis["freshness"]["california_today"]
+    data_audit = data_audit or {}
+    latest_source_confirmed = bool(data_audit.get("latest_source_confirmed", analysis["freshness"].get("latest_source_confirmed", False)))
     pending_rows = conn.execute(
         "SELECT based_on_date,target_date,created_at FROM predictions WHERE status='pending' ORDER BY target_date"
     ).fetchall()
@@ -1463,6 +1926,10 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
         or (
             analysis["freshness"]["status"] in {"ok", "ok_before_draw"}
             and (latest_added > 0 or cached_added > 0)
+        )
+        or (
+            analysis["freshness"]["status"] in {"ok", "ok_before_draw"}
+            and latest_source_confirmed
         )
     )
     release_gate_status = analysis.get("industrial_engine", {}).get("release_gate", {}).get("status", "")
@@ -1498,6 +1965,12 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
         } if current else None,
         "network_status": network_status,
         "update_channel_ok": update_channel_ok,
+        "data_integrity_status": data_audit.get("status", "not_run"),
+        "latest_draw_source": data_audit.get("latest_source", analysis["freshness"].get("latest_source", "")),
+        "latest_source_confirmed": latest_source_confirmed,
+        "quarantined_single_source_count": data_audit.get("quarantined_single_source_count", 0),
+        "quarantined_future_count": data_audit.get("quarantined_future_count", 0),
+        "quarantined_conflict_count": data_audit.get("quarantined_conflict_count", 0),
         "latest_fetch_added": latest_added,
         "latest_fetch_errors": latest_fetch_errors,
         "cached_latest_added": cached_added,
@@ -1514,7 +1987,10 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
     status = "ok"
     warnings = []
     if not analysis.get("official_release_allowed"):
-        warnings.append("official_release_gate_watch_only")
+        if release_gate_status == "verified_research_complete":
+            warnings.append("official_release_gate_not_promoted_but_research_complete")
+        else:
+            warnings.append("official_release_gate_watch_only")
     if stale_pending:
         status = "warning"
         warnings.append("pending_predictions_older_than_california_today")
@@ -1524,6 +2000,15 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
     if not update_channel_ok:
         status = "warning"
         warnings.append("automatic_network_update_channel_blocked")
+    if data_audit.get("status") == "error":
+        status = "warning"
+        warnings.append("data_integrity_error_review_required")
+    elif data_audit.get("status") == "warning":
+        status = "warning"
+        warnings.append("data_integrity_warning_review_required")
+    if not latest_source_confirmed:
+        status = "warning"
+        warnings.append("latest_source_not_confirmed")
     health["status"] = status
     health["warnings"] = warnings
     lines = [
@@ -1544,6 +2029,12 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
         f"- \u9810\u6e2c\u5feb\u7167\u7d00\u9304\uff1a{health['snapshot_records']}",
         f"- \u81ea\u52d5\u7db2\u8def\u66f4\u65b0\uff1a{health['network_status']}",
         f"- \u66f4\u65b0\u901a\u9053\u53ef\u7528\uff1a{health['update_channel_ok']}",
+        f"- \u8cc7\u6599\u5b8c\u6574\u6027\uff1a{health['data_integrity_status']}",
+        f"- \u6700\u65b0\u8cc7\u6599\u4f86\u6e90\uff1a{health['latest_draw_source'] or '-'}",
+        f"- \u6700\u65b0\u4f86\u6e90\u78ba\u8a8d\uff1a{health['latest_source_confirmed']}",
+        f"- \u55ae\u4e00\u4f86\u6e90\u9694\u96e2\uff1a{health['quarantined_single_source_count']}",
+        f"- \u672a\u4f86\u65e5\u671f\u9694\u96e2\uff1a{health['quarantined_future_count']}",
+        f"- \u885d\u7a81\u8cc7\u6599\u9694\u96e2\uff1a{health['quarantined_conflict_count']}",
         f"- \u767c\u5e03\u95dc\u5361\uff1a{health['release_gate_status']}",
         f"- \u4e3b\u7cfb\u7d71\u5b8c\u6574\u5ea6\uff1a{health['system_completeness_percent']}%",
         f"- \u672c\u6b21\u7dda\u4e0a\u65b0\u589e\uff1a{health['latest_fetch_added']}",
@@ -1559,8 +2050,8 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
     lines.extend([
         "",
         "## \u7cbe\u6e96\u5ea6\u72c0\u614b",
-        "- \u767c\u5e03\u95dc\u5361 watch_only \u4ee3\u8868\u7cbe\u6e96\u767c\u5e03\u95dc\u5361\u672a\u9054\u6a19\uff0c\u4e0d\u4ee3\u8868\u4e3b\u7cfb\u7d71\u5931\u6548\u3002",
-        "- \u5df2\u555f\u7528\u6bcf\u671f\u6b63\u5f0f\u9810\u6e2c\u8ffd\u8e64\uff1awatch_only \u4e5f\u6703\u9032\u5165 predictions \u4e26\u5728\u4e0b\u671f\u7d50\u7b97\u3002",
+        "- \u767c\u5e03\u95dc\u5361\u6703\u5206\u70ba official\u3001verified_research_complete\u3001watch_only\uff1bofficial \u624d\u662f\u6b63\u5f0f\u9ad8\u4fe1\u5fc3\u767c\u5e03\u3002",
+        "- verified_research_complete \u4ee3\u8868\u8cc7\u6599\u3001\u6210\u719f\u5ea6\u3001\u4e3b\u76ee\u6a19\u7814\u7a76\u6b63\u908a\u969b\u90fd\u5df2\u5b8c\u6210\uff0c\u4f46\u4ecd\u4e0d\u4fdd\u8b49\u958b\u51fa\u3002",
     ])
     HEALTH_REPORT_MD.write_text("\n".join(lines), encoding="utf-8")
     return health
@@ -1627,6 +2118,8 @@ def render_reports(conn, analysis):
         f"- \u7576\u5730\u65e5\u671f\uff1a{analysis['freshness']['california_today']}",
         f"- \u7576\u5730\u6642\u9593\uff1a{analysis['freshness'].get('california_time', '-')}",
         f"- \u6700\u65b0\u958b\u734e\u53f0\u7063\u53ef\u66f4\u65b0\u6642\u9593\uff1a{analysis['freshness'].get('latest_taiwan_safe_update_time', '-')} / {fmt_numbers(analysis['latest_draw']['numbers'])}",
+        f"- \u6700\u65b0\u958b\u734e\u4f86\u6e90\uff1a{analysis['freshness'].get('latest_source', '-') or '-'}",
+        f"- \u6700\u65b0\u4f86\u6e90\u78ba\u8a8d\uff1a{analysis['freshness'].get('latest_source_confirmed')}",
         f"- \u9810\u6e2c\u958b\u734e\u53f0\u7063\u6642\u9593\uff1a{analysis['freshness'].get('target_taiwan_safe_update_time', '-')}",
         f"- \u8cc7\u6599\u72c0\u614b\uff1a{analysis['freshness']['status']} / \u843d\u5f8c {analysis['freshness']['age_days']} \u5929",
         f"- \u8cc7\u6599\u65b0\u9bae\u5ea6\u5141\u8a31\uff1a{analysis['freshness'].get('official_prediction_allowed')}",
@@ -1676,9 +2169,17 @@ def balls(numbers, hot_set=None):
 
 
 def release_badge(analysis):
+    status = analysis.get("industrial_engine", {}).get("release_gate", {}).get("status")
     allowed = analysis.get("official_release_allowed")
-    text = "\u6b63\u5f0f\u767c\u5e03" if allowed else "\u89c0\u5bdf\u724c"
-    cls = "ok" if allowed else "warn"
+    if allowed or status == "official":
+        text = "\u6b63\u5f0f\u767c\u5e03"
+        cls = "ok"
+    elif status == "verified_research_complete":
+        text = "\u5be6\u6230\u7814\u7a76\u5b8c\u6574\u7248"
+        cls = "ok"
+    else:
+        text = "\u89c0\u5bdf\u724c"
+        cls = "warn"
     return f'<span class="badge {cls}">{text}</span>'
 
 
@@ -1729,7 +2230,10 @@ def build_enhanced_battle_html(analysis, settled, hit_rows, markdown_text):
         )
     warnings = []
     if not analysis.get("official_release_allowed"):
-        warnings.append("\u5de5\u696d\u767c\u5e03\u95dc\u5361\u672a\u901a\u904e\uff0c\u672c\u671f\u50c5\u5217\u89c0\u5bdf\u724c\u3002")
+        if release.get("status") == "verified_research_complete":
+            warnings.append("\u5df2\u9054\u5be6\u6230\u7814\u7a76\u5b8c\u6574\u7248\uff0c\u4f46\u672a\u9054\u6b63\u5f0f\u9ad8\u4fe1\u5fc3\u4fdd\u8b49\u9580\u6abb\u3002")
+        else:
+            warnings.append("\u5de5\u696d\u767c\u5e03\u95dc\u5361\u672a\u901a\u904e\uff0c\u672c\u671f\u50c5\u5217\u89c0\u5bdf\u724c\u3002")
     if analysis.get("freshness", {}).get("status") not in {"ok", "ok_before_draw"}:
         warnings.append("\u8cc7\u6599\u65b0\u9bae\u5ea6\u4e0d\u8db3\uff0c\u4e0d\u7522\u751f\u65b0\u6b63\u5f0f\u9810\u6e2c\u3002")
     warning_html = "".join(f"<li>{item}</li>" for item in warnings) or "<li>\u7121</li>"
@@ -1749,7 +2253,7 @@ table{{width:100%;border-collapse:collapse;background:white}} th,td{{border-bott
 <header><h1>\u5929\u5929\u6a02\u9435\u5f8b\u5f37\u5316\u6230\u5831</h1><div>{release_badge(analysis)} \u7522\u751f\uff1a{html.escape(analysis["generated_at_taiwan"])}</div></header>
 <main>
 <div class="grid">
-<div class="card"><b>\u6700\u65b0\u958b\u734e\u53f0\u7063\u53ef\u66f4\u65b0\u6642\u9593</b><div class="value">{html.escape(analysis["freshness"].get("latest_taiwan_safe_update_time", "-"))}</div><div>{balls(latest["numbers"], latest["numbers"])}</div></div>
+<div class="card"><b>\u6700\u65b0\u958b\u734e\u53f0\u7063\u53ef\u66f4\u65b0\u6642\u9593</b><div class="value">{html.escape(analysis["freshness"].get("latest_taiwan_safe_update_time", "-"))}</div><div>{balls(latest["numbers"], latest["numbers"])}</div><div>{html.escape(analysis["freshness"].get("latest_source", "-") or "-")}</div></div>
 <div class="card"><b>\u9810\u6e2c\u958b\u734e\u53f0\u7063\u6642\u9593</b><div class="value">{html.escape(analysis["freshness"].get("target_taiwan_safe_update_time", "-"))}</div><div>\u5c0d\u61c9\u52a0\u5dde\u958b\u734e\u65e5 {html.escape(analysis["target_draw_date"])}</div></div>
 <div class="card"><b>\u8cc7\u6599\u7b46\u6578</b><div class="value">{analysis["draw_count"]}</div><div>{analysis["history_completeness"]["status"]}</div></div>
 <div class="card"><b>\u767c\u5e03\u95dc\u5361</b><div class="value">{html.escape(release.get("status", "-"))}</div><div>\u822a\u592a\uff1a{html.escape(aerospace.get("status", "-"))}</div></div>
@@ -1822,13 +2326,14 @@ def run(full=False):
         settled_count = settle_predictions(conn)
         export_csv(conn)
         validation = validate_sources(conn)
+        data_audit = data_integrity_audit(conn, cached_latest, latest_fetch, validation)
         draws = fetch_draws(conn)
         if not draws:
             raise RuntimeError("no draw data")
         analysis = analyze(draws, failure_review(conn))
         ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding="utf-8")
         status = store_prediction(conn, analysis)
-        health = prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest)
+        health = prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest, data_audit)
         render_reports(conn, analysis)
         try:
             import tiantianle_ironlaw_report
@@ -1840,7 +2345,7 @@ def run(full=False):
         ok = file_check()
         history_status = analysis["history_completeness"]["status"]
         run_status = "success" if ok and not errors and history_status == "complete" and health["status"] == "ok" else "warning"
-        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "scraper": scraper_summary}, ensure_ascii=False)
+        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
         conn.execute("UPDATE update_runs SET finished_at=?,status=?,message=? WHERE id=?", (iso_local(taiwan_now()), run_status, message[:1000], run_id))
         conn.commit()
     log(f"done latest={draws[-1]['draw_date']} top10={fmt_numbers([x['number'] for x in analysis['candidates'][:10]])}")
