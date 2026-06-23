@@ -2,9 +2,14 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
+$CloudOwner = "pingshen670822"
 $RepoName = "tiantianle-cloud-system"
 $env:GH_CONFIG_DIR = Join-Path $ScriptDir ".gh-cli"
+$env:GIT_CONFIG_GLOBAL = Join-Path $ScriptDir ".gitconfig-gh"
 New-Item -ItemType Directory -Path $env:GH_CONFIG_DIR -Force | Out-Null
+if (-not (Test-Path -LiteralPath $env:GIT_CONFIG_GLOBAL)) {
+  New-Item -ItemType File -Path $env:GIT_CONFIG_GLOBAL -Force | Out-Null
+}
 
 $env:TIANTIANLE_CORE_BACKTEST_ROUNDS = "120"
 $env:TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS = "120"
@@ -78,6 +83,7 @@ function Repair-GhAuthentication {
   if ($LASTEXITCODE -ne 0) {
     throw "GitHub login was not completed."
   }
+  gh auth setup-git -h github.com
   if (-not (Test-GhAuthentication)) {
     throw "GitHub login is still invalid."
   }
@@ -128,6 +134,22 @@ function Publish-From-CleanDirectory {
   Remove-Item -LiteralPath $DeployDir -Recurse -Force
 }
 
+function Get-RepositoryOwner {
+  if ($CloudOwner) {
+    return $CloudOwner
+  }
+  $remote = ""
+  try {
+    $remote = (git remote get-url origin 2>$null | Select-Object -First 1)
+  } catch {
+    $remote = ""
+  }
+  if ($remote -match "github\.com[:/](?<owner>[^/]+)/(?<repo>[^/.]+)(?:\.git)?$" -and $Matches["repo"] -eq $RepoName) {
+    return $Matches["owner"]
+  }
+  return (gh api user --jq .login)
+}
+
 Write-Host "Preparing Tiantianle cloud mobile system..."
 Ensure-Command "git" "Git.Git"
 Ensure-Command "gh" "GitHub.cli"
@@ -138,7 +160,7 @@ if (-not (Test-GhAuthentication)) {
   Repair-GhAuthentication
 }
 
-$Owner = gh api user --jq .login
+$Owner = Get-RepositoryOwner
 $FullRepo = "$Owner/$RepoName"
 $env:GITHUB_REPOSITORY = $FullRepo
 
