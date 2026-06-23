@@ -138,6 +138,23 @@ def metric_count(value):
     return value
 
 
+def industrial_backtest(analysis):
+    return ((analysis.get("industrial_engine") or {}).get("backtest") or {})
+
+
+def precision_governor(analysis):
+    return ((analysis.get("industrial_engine") or {}).get("precision_governor") or {})
+
+
+def release_label(analysis):
+    status = ((analysis.get("industrial_engine") or {}).get("release_gate") or {}).get("status")
+    if analysis.get("official_release_allowed") or status == "official":
+        return u("\\u6b63\\u5f0f\\u767c\\u5e03")
+    if status == "verified_research_complete":
+        return u("\\u5be6\\u6230\\u7814\\u7a76\\u5b8c\\u6574\\u7248\\uff08\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49\\uff09")
+    return u("\\u50c5\\u4f9b\\u89c0\\u5bdf\\uff0c\\u7981\\u6b62\\u6b63\\u5f0f\\u4e3b\\u63a8")
+
+
 def red(number):
     return (
         '<span style="display:inline-flex;align-items:center;justify-content:center;'
@@ -158,10 +175,10 @@ def mark_numbers(numbers, actual=None):
 def rows_html(rows):
     def cell_value(cell):
         if cell is None:
-            return u("0 / \\u5df2\\u5b8c\\u6210\\u904b\\u7b97")
+            return "-"
         text = str(cell)
         if text.strip() in {"", "-", "[]"}:
-            return u("0 / \\u5df2\\u5b8c\\u6210\\u904b\\u7b97")
+            return "-"
         return cell
 
     return "".join("<tr>" + "".join(f"<td>{cell_value(cell)}</td>" for cell in row) + "</tr>" for row in rows)
@@ -396,7 +413,7 @@ def single_precision_rows(analysis):
         if item.get("number") == number:
             retention = item.get("retention_rate", "-")
             break
-    backtest = analysis.get("backtest") or {}
+    backtest = industrial_backtest(analysis)
     redundant = (aerospace.get("redundant_channel_audit") or {})
     release = industrial.get("release_gate") or {}
     prev = industrial.get("previous_prediction_guard") or {}
@@ -442,7 +459,7 @@ def single_precision_rows(analysis):
 
 
 def rolling_rows(analysis):
-    rolling = (analysis.get("backtest") or {}).get("rolling_windows") or {}
+    rolling = industrial_backtest(analysis).get("rolling_windows") or {}
     rows = []
     for key in ["60", "120", "360"]:
         item = rolling.get(key, {})
@@ -515,7 +532,7 @@ def safe_rows(rows):
 
 
 def rank_calibration_rows(analysis):
-    backtest = analysis.get("backtest") or {}
+    backtest = industrial_backtest(analysis)
     candidates = analysis.get("candidates") or []
     return [
         ["Top1-5", len(candidates[:5]), fmt_numbers([x.get("number") for x in candidates[:5]]), backtest.get("top10_avg_hits", "-"), u("\\u6301\\u7e8c\\u89c0\\u5bdf")],
@@ -587,26 +604,34 @@ def core_model_rows(analysis):
 
 
 def ultimate_precision_rows(analysis):
-    targets = ((analysis.get("industrial_engine") or {}).get("ultimate_precision_targets") or {})
-    pack_backtest = targets.get("pack_backtest") or {}
+    packs = analysis.get("strong_packs") or {}
     rows = []
     order = ["strong_single", "two_hit_one", "three_hit_two", "five_hit_two", "nine_hit_three"]
+    threshold_label = u("\\u9580\\u6abb")
+    below_95_label = u("\\u672a\\u905495%")
+    reached_95_label = u("\\u905495%")
     for key in order:
-        item = pack_backtest.get(key) or {}
-        label = item.get("label", key)
-        min_hits = item.get("min_hits", 0)
-        max_hits = item.get("max_hits", 0)
-        target = item.get("target_precision_rate", targets.get("target_precision_rate", 0.95))
-        rate = item.get("success_rate", 0)
-        status = item.get("status", "rolling_adjust")
-        action = item.get("action", u("\\u672a\\u905495%\\u9580\\u6abb\\uff0c\\u81ea\\u52d5\\u6efe\\u52d5\\u8abf\\u6574"))
+        pack = packs.get(key) or {}
+        governance = pack.get("governance") or {}
+        label = pack.get("name", key)
+        min_hits = pack.get("hit_goal", governance.get("goal", 0))
+        max_hits = pack.get("hit_goal_max", 5 if key == "nine_hit_three" else min_hits)
+        target = 0.95
+        rate = governance.get("pass_rate", 0)
+        required = governance.get("required_pass_rate", 0)
+        status = pack.get("status", "research_prediction")
+        action = (
+            u("\\u672a\\u9054\\u5be6\\u6230\\u9580\\u6abb\\uff0c\\u50c5\\u5217\\u89c0\\u5bdf\\u4e26\\u6efe\\u52d5\\u964d\\u6b0a")
+            if not pack.get("official_release")
+            else u("\\u5df2\\u904e\\u5be6\\u6230\\u9580\\u6abb")
+        )
         rows.append([
             esc(label),
             f"{min_hits}~{max_hits}",
             f"{round(float(target) * 100, 2)}%",
-            f"{round(float(rate) * 100, 2)}%",
-            item.get("rounds", 0),
-            esc(status),
+            f"{round(float(rate) * 100, 2)}% / {threshold_label} {round(float(required) * 100, 2)}%",
+            governance.get("rounds", 0),
+            esc(f"{status} / {below_95_label if float(rate or 0) < target else reached_95_label}"),
             esc(action),
         ])
     return safe_rows(rows)
@@ -614,31 +639,41 @@ def ultimate_precision_rows(analysis):
 
 def today_high_probability_rows(analysis):
     packs = analysis.get("strong_packs") or {}
-    targets = ((analysis.get("industrial_engine") or {}).get("ultimate_precision_targets") or {})
-    pack_backtest = targets.get("pack_backtest") or {}
     release = ((analysis.get("industrial_engine") or {}).get("release_gate") or {})
     rows = []
     for key in ["strong_single", "two_hit_one", "three_hit_two", "five_hit_two", "nine_hit_three"]:
         pack = packs.get(key) or {}
-        item = pack_backtest.get(key) or {}
-        status = item.get("status", "rolling_adjust")
-        high = status == "passed_95" and release.get("status") == "official"
+        governance = pack.get("governance") or {}
+        status = pack.get("status") or ("released" if pack.get("official_release") else "research_prediction")
+        pass_rate = safe_float(governance.get("pass_rate", 0))
+        required = safe_float(governance.get("required_pass_rate", 0))
+        edge = safe_float(governance.get("pass_rate_edge_vs_random", 0))
+        threshold_label = u("\\u9580\\u6abb")
+        high = bool(pack.get("official_release")) and release.get("status") == "official"
+        rate_text = (
+            f"{round(pass_rate * 100, 2)}% / {threshold_label} {round(required * 100, 2)}% / "
+            f"edge {round(edge * 100, 2)}%"
+        )
+        action = (
+            u("\\u9ad8\\u6a5f\\u7387\\u5f37\\u5316\\u986f\\u793a")
+            if high
+            else u("\\u672a\\u904e\\u6b63\\u5f0f\\u5be6\\u6230\\u9580\\u6abb\\uff0c\\u50c5\\u5217\\u89c0\\u5bdf\\u5019\\u9078")
+        )
         rows.append([
-            esc(item.get("label", pack.get("goal_label", key))),
+            esc(pack.get("name", key)),
             fmt_numbers(pack.get("numbers", [])),
             esc(pack_confidence_note(analysis, pack.get("numbers", []))),
-            f"{round(float(item.get('success_rate', 0)) * 100, 2)}%",
-            esc(release.get("status", "")),
-            u("\\u9ad8\\u6a5f\\u7387\\u5f37\\u5316\\u986f\\u793a") if high else u("\\u9ad8\\u4fe1\\u5fc3\\u5019\\u9078\\u5df2\\u52a0\\u8a3b\\uff0c\\u672a\\u904e\\u6b63\\u5f0f\\u95dc\\u5361\\u5247\\u4ee5\\u89c0\\u5bdf\\u986f\\u793a"),
+            rate_text,
+            esc(f"{release.get('status', '')} / {status}"),
+            action,
         ])
     return safe_rows(rows)
 
 
 def today_high_probability_block(analysis):
-    targets = ((analysis.get("industrial_engine") or {}).get("ultimate_precision_targets") or {})
-    pack_backtest = targets.get("pack_backtest") or {}
     release = ((analysis.get("industrial_engine") or {}).get("release_gate") or {})
-    official_high = any(item.get("status") == "passed_95" for item in pack_backtest.values()) and release.get("status") == "official"
+    packs = analysis.get("strong_packs") or {}
+    official_high = any(pack.get("official_release") for pack in packs.values()) and release.get("status") == "official"
     high_candidates = [item for item in high_confidence_candidates(analysis, limit=15) if is_high_confidence_candidate(item)]
     any_high = official_high or bool(high_candidates)
     badge = (
@@ -667,8 +702,14 @@ def today_high_probability_block(analysis):
 
 def high_confidence_candidate_block(analysis):
     rows = []
+    focus_numbers = []
+    focus_details = []
     for item in high_confidence_candidates(analysis, limit=10):
         reasons = u("\\u3001").join(item.get("reasons", []))
+        if len(focus_numbers) < 5:
+            level, detail, *_ = candidate_confidence_parts(item)
+            focus_numbers.append(item.get("number"))
+            focus_details.append(f"{int(item.get('number')):02d}:{level}")
         rows.append([
             item.get("_display_rank", "-"),
             f"{int(item.get('number')):02d}",
@@ -676,10 +717,70 @@ def high_confidence_candidate_block(analysis):
             esc(reasons),
             u("\\u5df2\\u5728\\u672c\\u65e5\\u9810\\u6e2c\\u5206\\u9801\\u8207\\u624b\\u6a5f\\u9996\\u9801\\u52a0\\u8a3b\\u986f\\u793a"),
         ])
+    focus = (
+        f'<div class="signal-focus"><div class="signal-title">{u("\\u672c\\u671f\\u4e3b\\u4fe1\\u5fc3\\u724c")}</div>'
+        f'<div class="signal-numbers">{fmt_numbers(focus_numbers)}</div>'
+        f'<div class="signal-detail">{esc(" / ".join(focus_details))}</div></div>'
+        if focus_numbers else ""
+    )
     return (
         f'<section class="band high-alert"><h2>{u("\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b\\u8aaa\\u660e")}</h2>'
         f'<p>{u("\\u51e1\\u4fe1\\u5fc3\\u6307\\u6578\\u3001\\u6a21\\u578b\\u6a5f\\u7387\\u3001\\u7a69\\u5b9a\\u5171\\u8b58\\u6216\\u4ea4\\u53c9\\u9a57\\u8b49\\u9054\\u6a19\\u8005\\uff0c\\u5fc5\\u9808\\u5728\\u9810\\u6e2c\\u5340\\u660e\\u986f\\u52a0\\u8a3b\\u3002")}</p>'
+        f'{focus}'
         f'{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u4f86\\u6e90\\u7406\\u7531"), u("\\u986f\\u793a\\u72c0\\u614b")], safe_rows(rows))}</section>'
+    )
+
+
+def explicit_action_block(analysis):
+    packs = analysis.get("strong_packs") or {}
+    latest = analysis.get("latest_draw") or {}
+    freshness = analysis.get("freshness") or {}
+    target = freshness.get("target_taiwan_safe_update_time") or analysis.get("target_draw_date") or "-"
+    data_day = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
+    avoid_items = (((analysis.get("industrial_engine") or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])
+    avoid_numbers = [item.get("number") for item in avoid_items[:10] if item.get("number") is not None]
+
+    def action_card(title, numbers, sub):
+        value = fmt_numbers(numbers) if numbers else "-"
+        return (
+            '<section class="card hot-main">'
+            f"<h2>{esc(title)}</h2>"
+            f'<div class="value">{esc(value)}</div>'
+            f'<p class="sub">{esc(sub)}</p>'
+            "</section>"
+        )
+
+    rows = []
+    for idx, item in enumerate(high_confidence_candidates(analysis, limit=10), 1):
+        level, detail, _css, confidence, probability, _stability, passed, total = candidate_confidence_parts(item)
+        reasons = u("\\u3001").join(item.get("reasons", []))
+        rows.append([
+            f"{int(item.get('number')):02d}",
+            item.get("_display_rank", idx),
+            f"{round(probability, 2)}%",
+            round(safe_float(item.get("score", confidence)), 4),
+            level,
+            f"{passed}/{total}",
+            esc(reasons),
+            esc(detail),
+        ])
+    cards = [
+        action_card(u("\\u660e\\u78ba\\u7368\\u652f"), (packs.get("strong_single") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "2" + u("\\u4e2d") + "1", (packs.get("two_hit_one") or {}).get("numbers", []), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "3" + u("\\u4e2d") + "2~3", (packs.get("three_hit_two") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "5" + u("\\u4e2d") + "2", (packs.get("five_hit_two") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e94\\u865f\\u653b\\u64ca\\u7d44")),
+        action_card(u("\\u660e\\u78ba") + "9" + u("\\u4e2d") + "3", (packs.get("nine_hit_three") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e5d\\u865f\\u8986\\u84cb\\u7d44")),
+        action_card(u("\\u9632\\u5b88\\u907f\\u958b"), avoid_numbers, u("\\u4f4e\\u5206\\u8207\\u5f31\\u8a0a\\u865f\\u98a8\\u63a7")),
+    ]
+    return (
+        '<section class="band hotbox">'
+        f'<h2>{u("\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848")}（{u("\\u8cc7\\u6599\\u65e5")} {esc(data_day)} / {u("\\u76ee\\u6a19\\u53f0\\u7063\\u6642\\u9593")} {esc(target)}）</h2>'
+        f'<p><strong>{u("\\u672c\\u5340\\u4f9d\\u6700\\u65b0\\u4e3b\\u6230\\u5831\\u898f\\u683c\\u6392\\u5217")}</strong> / {u("\\u6240\\u6709\\u865f\\u78bc\\u4ecd\\u4ee5\\u5929\\u5929\\u6a02\\u6a21\\u578b\\u91cd\\u7b97")}</p>'
+        f'<div class="grid">{"".join(cards)}</div>'
+        f'<h3>{u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\u7279\\u5225\\u5f37\\u8abf")}</h3>'
+        f'{table([u("\\u865f\\u78bc"), u("\\u6392\\u540d"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u5206\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u4ea4\\u53c9\\u901a\\u904e"), u("\\u660e\\u78ba\\u539f\\u56e0"), u("\\u5099\\u8a3b")], safe_rows(rows))}'
+        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3 Top10")}：{fmt_numbers([item.get("number") for item in (analysis.get("candidates") or [])[:10]])}</p>'
+        "</section>"
     )
 
 
@@ -696,8 +797,10 @@ def precision_governor_rows(analysis):
     prev = ((analysis.get("industrial_engine") or {}).get("previous_prediction_guard") or {})
     audit = ((analysis.get("industrial_engine") or {}).get("model_audit") or {})
     strict = ((analysis.get("industrial_engine") or {}).get("strict_validation_gate") or {})
+    maturity = ((analysis.get("industrial_engine") or {}).get("practical_maturity") or {})
     return [
         [u("\\u767c\\u5e03\\u72c0\\u614b"), release.get("status", "-"), release.get("actual_backtest_edge", "-"), u("\\u672a\\u904e\\u9580\\u6abb\\u5247\\u53ea\\u5217\\u89c0\\u5bdf"), "-"],
+        [u("\\u5be6\\u6230\\u6210\\u719f\\u5ea6"), maturity.get("status", "-"), maturity.get("top10_avg_maturity", "-"), u("\\u672a\\u9054\\u9580\\u6abb\\u7981\\u6b62\\u6b63\\u5f0f\\u9ad8\\u4fe1\\u5fc3"), esc(maturity.get("action", "-"))],
         [u("\\u6628\\u65e5\\u91cd\\u8907\\u5b88\\u9580"), prev.get("current_top10_overlap", "-"), prev.get("current_top15_overlap", "-"), u("\\u9632\\u6b62\\u76f4\\u63a5\\u62ff\\u6628\\u65e5\\u7576\\u4eca\\u65e5"), "-"],
         [u("\\u56b4\\u8b39\\u865f\\u78bc\\u9a57\\u8b49"), strict.get("validated_count", "-"), strict.get("rejected_count", "-"), u("\\u672a\\u901a\\u904e\\u9a57\\u8b49\\u7981\\u6b62\\u9032\\u5165\\u6b63\\u5f0f\\u5019\\u9078"), esc(strict.get("policy", "-"))],
         [u("\\u98a8\\u96aa\\u5be9\\u6838"), audit.get("risk_level", "-"), esc(audit.get("verdict", "-")), u("\\u6a19\\u793a\\u98a8\\u96aa"), "-"],
@@ -735,16 +838,40 @@ def per_number_validation_rows(analysis):
     rows = []
     for idx, item in enumerate((analysis.get("candidates") or [])[:15], 1):
         strict = item.get("strict_validation") or {}
+        maturity = item.get("practical_maturity") or {}
         rows.append([
             idx,
             f"{int(item.get('number')):02d}",
             item.get("confidence_index", item.get("score", "")),
             confidence_note(item),
+            esc(f"{maturity.get('score', '-')} / {maturity.get('tier', '-')}"),
             item.get("omission", ""),
             item.get("stability_count", "-"),
             esc(f"{strict.get('status', '-')}: {u('\\u3001').join(strict.get('gates', []))}"),
         ])
     return rows
+
+
+def practical_maturity_rows(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    maturity = industrial.get("practical_maturity") or {}
+    rows = [[
+        u("\\u7e3d\\u9ad4\\u72c0\\u614b"),
+        maturity.get("status", "-"),
+        f"Top10 {maturity.get('top10_avg_maturity', '-')} / Top15 {maturity.get('top15_avg_maturity', '-')}",
+        esc(maturity.get("required", "-")),
+        esc(maturity.get("action", "-")),
+    ]]
+    for idx, item in enumerate(maturity.get("top10_numbers", [])[:10], 1):
+        number = item.get("number")
+        rows.append([
+            f"#{idx}",
+            f"{int(number):02d}" if number is not None else "-",
+            item.get("maturity", "-"),
+            esc(item.get("tier", "-")),
+            f"{item.get('cross_validation_passed', 0)} {u('\\u95dc')}",
+        ])
+    return safe_rows(rows)
 
 
 def adaptive_weight_rows(analysis):
@@ -776,16 +903,16 @@ def rolling_model_rows(analysis):
     release = industrial.get("release_gate") or {}
     prev = industrial.get("previous_prediction_guard") or {}
     review = analysis.get("failure_review") or {}
-    backtest = analysis.get("backtest") or {}
+    backtest = industrial_backtest(analysis)
     weights = industrial.get("weights") or {}
-    ultimate = industrial.get("ultimate_precision_targets") or {}
-    five = (ultimate.get("pack_backtest") or {}).get("five_hit_two") or {}
-    tournament = (ultimate.get("pack_backtest") or {}).get("five_strategy_tournament") or {}
-    strategy = ultimate.get("five_stability_strategy", five.get("selected_strategy", "-"))
+    five_pack = (analysis.get("strong_packs") or {}).get("five_hit_two") or {}
+    five = five_pack.get("governance") or {}
+    strategy = five.get("best_variant", "-")
+    threshold_label = u("\\u9580\\u6abb")
     rows = [
         [
             u("\\u7a69\\u5b9a5\\u4e2d2~3\\u7b56\\u7565\\u7af6\\u8cfd"),
-            f"{strategy} / {u('\\u9054\\u6210\\u7387')} {round(float(five.get('success_rate', 0)) * 100, 2)}%",
+            f"{strategy} / {u('\\u9054\\u6210\\u7387')} {round(float(five.get('pass_rate', 0)) * 100, 2)}% / {threshold_label} {round(float(five.get('required_pass_rate', 0)) * 100, 2)}%",
             u("\\u6bcf\\u6b21\\u66f4\\u65b0\\u81ea\\u52d5\\u6311\\u9078\\u8fd1\\u671f\\u56de\\u6e2c\\u6700\\u7a69\\u76845\\u78bc\\u7b56\\u7565"),
             u("\\u5df2\\u555f\\u7528"),
         ],
@@ -816,13 +943,67 @@ def rolling_model_rows(analysis):
     ]
     for item in review.get("actions", []) or []:
         rows.append([u("\\u6aa2\\u8a0e\\u4fee\\u6b63"), esc(item), u("\\u7d0d\\u5165\\u4e0b\\u671f\\u6a21\\u578b\\u8abf\\u6574"), u("\\u5df2\\u57f7\\u884c")])
-    for key, item in sorted(tournament.items()):
+    for key, item in sorted((five.get("variant_results") or {}).items()):
         rows.append([
             f"5{u('\\u78bc')} {esc(key)}",
-            f"{round(float(item.get('success_rate', 0)) * 100, 2)}% / {item.get('rounds', 0)}",
+            f"{round(float(item.get('pass_rate', 0)) * 100, 2)}% / {item.get('rounds', 0)}",
             u("\\u7b56\\u7565\\u7af6\\u8cfd\\u56de\\u6e2c\\u7d50\\u679c"),
             u("\\u5df2\\u8a08\\u7b97"),
         ])
+    return safe_rows(rows)
+
+
+def monthly_review_rows(analysis):
+    monthly = ((analysis.get("failure_review") or {}).get("monthly_review") or {})
+    if not monthly.get("has_review"):
+        return [[u("\\u672c\\u6708\\u6a23\\u672c"), 0, "-", u("\\u5c1a\\u7121\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c")]]
+    return safe_rows([
+        [u("\\u6708\\u4efd"), monthly.get("month"), u("\\u6a23\\u672c"), monthly.get("sample_size")],
+        [u("Top5"), monthly.get("avg_top5_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
+        [u("Top10"), monthly.get("avg_top10_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), esc(monthly.get("top10_distribution"))],
+        [u("Top15"), monthly.get("avg_top15_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
+        [u("\\u672c\\u6708\\u53cd\\u8986\\u843d\\u7a7a\\u865f"), fmt_numbers(monthly.get("monthly_failed_numbers", [])), u("\\u4e0b\\u671f\\u8edf\\u964d\\u6b0a"), u("\\u5df2\\u5957\\u7528")],
+        [u("\\u672c\\u6708\\u5f8c\\u6bb5\\u547d\\u4e2d\\u865f"), fmt_numbers([item.get("number") for item in monthly.get("monthly_late_hit_numbers", [])]), u("\\u53ef\\u4f5cTop10\\u64e0\\u5165\\u89c0\\u5bdf"), u("\\u5df2\\u5957\\u7528")],
+    ])
+
+
+def monthly_pack_rows(analysis):
+    monthly = ((analysis.get("failure_review") or {}).get("monthly_review") or {})
+    pack_summary = monthly.get("pack_summary") or {}
+    labels = {
+        "strong_single": u("\\u5f37\\u73681\\u4e2d1"),
+        "two_hit_one": "2" + u("\\u4e2d") + "1",
+        "three_hit_two": "3" + u("\\u4e2d") + "2~3",
+        "five_hit_two": "5" + u("\\u4e2d") + "2~3",
+        "nine_hit_three": "9" + u("\\u4e2d") + "3~5",
+        "legacy_three_hit_one": u("\\u820a\\u898f\\u683c3\\u78bc\\u7d44\\uff08\\u5df2\\u505c\\u7528\\uff09"),
+    }
+    rows = []
+    for key in ["strong_single", "two_hit_one", "three_hit_two", "five_hit_two", "nine_hit_three", "legacy_three_hit_one"]:
+        item = pack_summary.get(key)
+        if not item:
+            continue
+        rows.append([
+            labels.get(key, key),
+            item.get("rounds", 0),
+            f"{round(float(item.get('pass_rate', 0)) * 100, 2)}%",
+            item.get("avg_hits", 0),
+            item.get("zero_hit_rate", 0),
+            esc(item.get("status")),
+        ])
+    return safe_rows(rows)
+
+
+def monthly_best_plan_rows(analysis):
+    monthly = ((analysis.get("failure_review") or {}).get("monthly_review") or {})
+    plan = monthly.get("best_rolling_plan") or {}
+    rows = []
+    if not plan:
+        return [[u("\\u6700\\u4f73\\u65b9\\u6848"), "-", "-", u("\\u5f85\\u672c\\u6708\\u6a23\\u672c\\u7d2f\\u7a4d")]]
+    rows.append([u("\\u6a21\\u5f0f"), esc(plan.get("mode")), u("\\u4e3b\\u5c64"), esc(plan.get("primary_watch_layer"))])
+    rows.append([u("\\u76f8\\u5c0d\\u7a69\\u5b9a\\u7d44"), esc(plan.get("relative_stable_pack")), u("\\u6b63\\u5f0f\\u9ad8\\u6a5f\\u7387"), u("\\u7981\\u6b62") if plan.get("no_official_high_probability") else u("\\u53ef\\u653e\\u884c")])
+    for item in plan.get("actions", []):
+        rows.append([u("\\u52d5\\u4f5c"), esc(item), u("\\u72c0\\u614b"), u("\\u5df2\\u5957\\u7528")])
     return safe_rows(rows)
 
 
@@ -850,10 +1031,11 @@ def eight_zone_rows(analysis):
 def model_improvement_rows(analysis):
     industrial = analysis.get("industrial_engine") or {}
     ibt = industrial.get("backtest") or {}
+    release = industrial.get("release_gate") or {}
     unlikely = industrial.get("unlikely_backtest") or {}
     return [
-        [u("\\u7d9c\\u5408\\u6a21\\u578b"), ibt.get("top10_avg_hits", 0), ibt.get("top15_avg_hits", 0), ibt.get("top10_edge_vs_random", 0), u("\\u6301\\u7e8c\\u6efe\\u52d5\\u56de\\u6e2c")],
-        [u("\\u66ab\\u907f\\u865f\\u6aa2\\u67e5"), unlikely.get("sample_size", 0), unlikely.get("avg_hits", 0), unlikely.get("warning", u("\\u5df2\\u5b8c\\u6210\\u98a8\\u63a7\\u6aa2\\u67e5")), u("\\u907f\\u514d\\u904e\\u5ea6\\u6392\\u9664")],
+        [u("\\u7d9c\\u5408\\u6a21\\u578b"), ibt.get("top10_avg_hits", 0), ibt.get("top15_avg_hits", 0), release.get("actual_backtest_edge", 0), u("\\u6301\\u7e8c\\u6efe\\u52d5\\u56de\\u6e2c")],
+        [u("\\u66ab\\u907f\\u865f\\u6aa2\\u67e5"), unlikely.get("rounds", 0), unlikely.get("avg_accidental_hits", 0), unlikely.get("edge_vs_random", u("\\u5df2\\u5b8c\\u6210\\u98a8\\u63a7\\u6aa2\\u67e5")), u("\\u907f\\u514d\\u904e\\u5ea6\\u6392\\u9664")],
     ]
 
 
@@ -885,6 +1067,7 @@ def make_markdown(analysis, settled):
     release = industrial.get("release_gate") or {}
     stability = industrial.get("stability_consensus") or {}
     audit = industrial.get("model_audit") or {}
+    maturity_summary = industrial.get("practical_maturity") or {}
     lines = [
         "# " + u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831"),
         "",
@@ -892,22 +1075,28 @@ def make_markdown(analysis, settled):
         f"- {u('\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6')}:{freshness.get('status')} / {u('\\u6700\\u65b0\\u65e5\\u671f')} {freshness.get('latest_draw_date')}",
         f"- {u('\\u6700\\u65b0\\u671f\\u5225')}:{latest.get('period')} ({latest.get('draw_date')})",
         f"- {u('\\u6700\\u65b0\\u865f\\u78bc')}:{fmt_numbers(latest.get('numbers'))}",
+        f"- {u('\\u6700\\u65b0\\u958b\\u734e\\u4f86\\u6e90')}:{freshness.get('latest_source') or latest.get('source') or '-'}",
+        f"- {u('\\u6700\\u65b0\\u4f86\\u6e90\\u78ba\\u8a8d')}:{freshness.get('latest_source_confirmed')}",
         f"- {u('\\u9810\\u6e2c\\u76ee\\u6a19\\u65e5')}:{analysis.get('target_draw_date')}",
-        f"- {u('\\u767c\\u5e03\\u7b49\\u7d1a')}:{release.get('status')} / {u('\\u50c5\\u4f9b\\u89c0\\u5bdf') if not analysis.get('official_release_allowed') else u('\\u6b63\\u5f0f\\u767c\\u5e03')}",
+        f"- {u('\\u767c\\u5e03\\u7b49\\u7d1a')}:{release.get('status')} / {release_label(analysis)}",
         f"- Top10 {u('\\u7a69\\u5b9a\\u5171\\u8b58\\u7387')}:{stability.get('top10_retention')}",
+        f"- {u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}:{maturity_summary.get('status')} / Top10 {maturity_summary.get('top10_avg_maturity')} / {maturity_summary.get('action')}",
         f"- {u('\\u98a8\\u96aa\\u7b49\\u7d1a')}:{audit.get('risk_level')}",
         "",
         "## " + u("\\u4eca\\u65e5\\u89c0\\u5bdf\\u5019\\u9078"),
     ]
     for pack in (analysis.get("strong_packs") or {}).values():
-        lines.append(f"- {pack.get('name')}:{fmt_numbers(pack.get('numbers'))}")
+        maturity = pack.get("maturity") or {}
+        maturity_text = f"{maturity.get('avg_score', '-')} / {'passed' if maturity.get('passed') else 'watch_only'}"
+        lines.append(f"- {pack.get('name')}:{fmt_numbers(pack.get('numbers'))} / {u('\\u6210\\u719f\\u5ea6')} {maturity_text}")
     lines.extend(["", "## " + u("\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u52a0\\u8a3b")])
     for item in high_confidence_candidates(analysis, limit=10):
         _, detail, *_ = candidate_confidence_parts(item)
         lines.append(f"- {int(item.get('number')):02d}: {detail}")
     lines.extend(["", "## " + u("\\u5019\\u9078 Top15")])
     for idx, item in enumerate((analysis.get("candidates") or [])[:15], 1):
-        lines.append(f"{idx}. {int(item.get('number')):02d} / {item.get('confidence_index', item.get('score'))} / {u('\\u907a\\u6f0f')} {item.get('omission')}")
+        maturity = item.get("practical_maturity") or {}
+        lines.append(f"{idx}. {int(item.get('number')):02d} / {item.get('confidence_index', item.get('score'))} / {u('\\u6210\\u719f\\u5ea6')} {maturity.get('score', '-')} {maturity.get('tier', '-')} / {u('\\u907a\\u6f0f')} {item.get('omission')}")
     if settled:
         lines.extend([
             "",
@@ -959,8 +1148,24 @@ def page(title, subtitle, content):
     .high-alert {{ border:3px solid #dc2626; background:#fff1f2; box-shadow:0 0 0 4px #fee2e2 inset; }}
     .high-alert .value {{ color:#b91c1c; font-size:32px; }}
     .high-alert .badge {{ display:inline-block; padding:6px 12px; border-radius:6px; background:#dc2626; color:white; font-weight:900; margin:4px 6px 4px 0; }}
+    .hotbox {{ border:2px solid #dc2626; background:#fff7ed; box-shadow:0 0 0 3px rgba(220,38,38,.08); }}
+    .hotbox h2 {{ color:#991b1b; }}
+    .hot-main {{ background:#fff1f2; font-weight:800; }}
+    .signal-focus {{ margin:12px 0; padding:14px; border:4px solid #b91c1c; border-radius:8px; background:#fff; }}
+    .signal-title {{ color:#991b1b; font-weight:900; }}
+    .signal-numbers {{ color:#991b1b; font-size:38px; line-height:1.25; font-weight:900; letter-spacing:0; }}
+    .signal-detail {{ color:#7f1d1d; font-weight:900; }}
     .mobile-action {{ display:block; text-align:center; padding:14px; background:#166534; color:#fff!important; text-decoration:none; border-radius:6px; font-weight:800; }}
     .mobile-action.secondary {{ background:#1d4ed8; }}
+    .tabbar {{ position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; background:#f6f7fb; padding:10px 0 14px; }}
+    .tabbar button {{ border:1px solid #cbd5e1; background:white; color:#0f172a; border-radius:8px; padding:10px 14px; font-weight:800; cursor:pointer; }}
+    .tabbar button.active {{ background:#0f172a; color:white; border-color:#0f172a; }}
+    .tab-panel {{ display:none; }}
+    .tab-panel.active {{ display:block; }}
+    .tab-panel > .band:first-child {{ margin-top:0; }}
+    details.advanced {{ margin-top:16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; padding:12px; }}
+    details.advanced > summary {{ cursor:pointer; font-weight:900; color:#0f172a; }}
+    details.advanced .band {{ margin-top:12px; }}
     .tabs {{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }}
     .tabs a {{ display:block; text-align:center; padding:12px; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:900; text-decoration:none; }}
     .tabs a.active {{ background:#166534; color:white; }}
@@ -972,6 +1177,86 @@ def page(title, subtitle, content):
 <header><h1>{esc(title)}</h1><p>{subtitle}</p></header>
 <main>{content}</main>
 </body></html>"""
+
+
+def apply_latest_battle_tabs(report_html):
+    nav = (
+        '<main>\n'
+        '<nav class="tabbar" aria-label="' + u("\\u6230\\u5831\\u5206\\u9801") + '">'
+        '<button type="button" class="active" data-tab="prediction">' + u("\\u4e0b\\u671f\\u9810\\u6e2c") + '</button>'
+        '<button type="button" data-tab="review">' + u("\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e") + '</button>'
+        '<button type="button" data-tab="models">' + u("\\u6a21\\u578b\\u56de\\u6e2c\\u8207\\u6539\\u5584\\u898f\\u5283") + '</button>'
+        '</nav>'
+        '<div id="prediction" class="tab-panel active"></div>'
+        '<div id="review" class="tab-panel"></div>'
+        '<div id="models" class="tab-panel"></div>'
+    )
+    script = f"""
+<script>
+(() => {{
+  const main = document.querySelector("main");
+  const panels = {{
+    prediction: document.getElementById("prediction"),
+    review: document.getElementById("review"),
+    models: document.getElementById("models")
+  }};
+  const tabbar = document.querySelector(".tabbar");
+  const classify = (element) => {{
+    if (element === tabbar || element.classList.contains("tab-panel")) return null;
+    const title = (element.querySelector("h2")?.textContent || "").trim();
+    if (element.classList.contains("grid")) return "prediction";
+    if (/上期|檢討|KPI|校準|滾動|歷史對比|本月|未命中/.test(title)) return "review";
+    if (/模型|回測|航太|版路|穩定共識|8區|連動|輪組|成熟度|權重|改善規劃|工業級/.test(title)) return "models";
+    if (/重要日期|明確作戰|高機率|本期發布|日期基準|下期預測|候選|低機率|今日|本日|終極目標|獨支|逐號/.test(title)) return "prediction";
+    return "prediction";
+  }};
+  Array.from(main.children).forEach((element) => {{
+    const target = classify(element);
+    if (target) panels[target].appendChild(element);
+  }});
+  document.querySelectorAll(".tabbar button").forEach((button) => {{
+    button.addEventListener("click", () => {{
+      document.querySelectorAll(".tabbar button").forEach((item) => item.classList.remove("active"));
+      Object.values(panels).forEach((panel) => panel.classList.remove("active"));
+      button.classList.add("active");
+      panels[button.dataset.tab].classList.add("active");
+      window.scrollTo({{ top: 0, behavior: "smooth" }});
+    }});
+  }});
+  const compactPanel = (panel, keepPattern, detailTitle) => {{
+    const details = document.createElement("details");
+    details.className = "advanced";
+    const summary = document.createElement("summary");
+    summary.textContent = detailTitle;
+    details.appendChild(summary);
+    Array.from(panel.children).forEach((element) => {{
+      if (element.classList.contains("grid")) return;
+      const title = (element.querySelector("h2")?.textContent || "").trim();
+      if (!keepPattern.test(title)) details.appendChild(element);
+    }});
+    if (details.children.length > 1) panel.appendChild(details);
+  }};
+  compactPanel(
+    panels.prediction,
+    /重要日期|明確作戰|高機率|本期發布|日期基準|下期預測專區|精準度治理器|候選 Top 15|低機率/,
+    "{u("\\u9032\\u968e\\u9810\\u6e2c\\u7d30\\u7bc0")}"
+  );
+  compactPanel(
+    panels.review,
+    /上期命中檢討摘要|上期命中檢討專區|每日檢討後滾動調整|研究命中 KPI|上期未命中/,
+    "{u("\\u9032\\u968e\\u6aa2\\u8a0e\\u7d30\\u7bc0")}"
+  );
+  compactPanel(
+    panels.models,
+    /模型回測與改善規劃|自動權重校準|近期穩定度回測|進階預測模型|穩定共識/,
+    "{u("\\u9032\\u968e\\u6a21\\u578b\\u7d30\\u7bc0")}"
+  );
+}})();
+</script>
+"""
+    if '<nav class="tabbar"' in report_html:
+        return report_html
+    return report_html.replace("<main>", nav, 1).replace("</main>", "</main>" + script, 1)
 
 
 def build_report():
@@ -988,7 +1273,7 @@ def build_report():
     stability = industrial.get("stability_consensus") or {}
     audit = industrial.get("model_audit") or {}
     regime = industrial.get("regime_analysis") or {}
-    backtest = analysis.get("backtest") or {}
+    backtest = industrial_backtest(analysis)
     latest_tw_time = freshness.get("latest_taiwan_safe_update_time", "-")
     target_tw_time = freshness.get("target_taiwan_safe_update_time", "-")
     title = u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831")
@@ -998,7 +1283,7 @@ def build_report():
         f"{u('\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593')} {esc(latest_tw_time)} / "
         f"{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09')} {esc(target_tw_time)}"
     )
-    release_text = u("\\u6b63\\u5f0f\\u767c\\u5e03") if analysis.get("official_release_allowed") else u("\\u50c5\\u4f9b\\u89c0\\u5bdf\\uff0c\\u7981\\u6b62\\u6b63\\u5f0f\\u4e3b\\u63a8")
+    release_text = release_label(analysis)
     fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
     md = make_markdown(analysis, settled)
 
@@ -1019,6 +1304,8 @@ def build_report():
             [u("\\u6700\\u65b0\\u958b\\u734e\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593"), esc(latest_tw_time)],
             [u("\\u6700\\u65b0\\u671f / \\u65e5"), f"{esc(latest.get('period'))} / {esc(latest.get('draw_date'))}"],
             [u("\\u6700\\u65b0\\u958b\\u734e\\u865f"), mark_numbers(latest.get("numbers"), latest.get("numbers"))],
+            [u("\\u6700\\u65b0\\u958b\\u734e\\u4f86\\u6e90"), esc(freshness.get("latest_source") or latest.get("source") or "-")],
+            [u("\\u6700\\u65b0\\u4f86\\u6e90\\u78ba\\u8a8d"), esc(freshness.get("latest_source_confirmed"))],
             [u("\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09"), esc(target_tw_time)],
             [u("\\u4e0b\\u671f\\u5c0d\\u61c9\\u52a0\\u5dde\\u958b\\u734e\\u65e5"), esc(analysis.get("target_draw_date"))],
             [u("\\u6642\\u5340\\u898f\\u5247"), esc(freshness.get("timezone_rule"))],
@@ -1046,6 +1333,7 @@ def build_report():
         ],
     )
     content = f'<section class="band"><h2>{u("\\u91cd\\u8981\\u65e5\\u671f\\u5100\\u8868\\u677f")}</h2>{important_dates}</section>'
+    content += explicit_action_block(analysis)
     content += conclusion
     content += f'<section class="band"><h2>{u("\\u65e5\\u671f\\u57fa\\u6e96\\u7e3d\\u8868")}</h2>{date_table}</section>'
     content += f'<section class="band notice"><h2>{u("\\u7814\\u7a76\\u547d\\u4e2d KPI \\u8207\\u7981\\u6b62\\u865b\\u5831\\u9580\\u6abb")}</h2><p>{u("\\u9019\\u4e9b\\u662f\\u7814\\u7a76\\u76ee\\u6a19\\uff0c\\u4e0d\\u662f\\u6a02\\u900f\\u5fc5\\u4e2d\\u4fdd\\u8b49\\u3002")}</p>{table(["KPI", u("\\u6a23\\u672c"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96a8\\u6a5f\\u57fa\\u6e96"), u("\\u5dee\\u503c")], kpi_rows)}</section>'
@@ -1055,6 +1343,7 @@ def build_report():
     content += f'<section class="band notice"><h2>{u("\\u7d42\\u6975\\u76ee\\u6a19\\uff1a95%\\u7cbe\\u6e96\\u7a69\\u5b9a\\u6cbb\\u7406")}</h2><p>{u("\\u672c\\u5340\\u662f\\u767c\\u5e03\\u9580\\u6abb\\uff0c\\u4e0d\\u662f\\u865b\\u5831\\u4fdd\\u8b49\\u3002\\u672a\\u905495%\\u6642\\u53ea\\u80fd\\u964d\\u7d1a\\u89c0\\u5bdf\\u8207\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u76ee\\u6a19\\u7d44"), u("\\u547d\\u4e2d\\u7bc4\\u570d"), u("\\u76ee\\u6a19\\u7387"), u("\\u56de\\u6e2c\\u9054\\u6210\\u7387"), u("\\u6a23\\u672c"), u("\\u72c0\\u614b"), u("\\u52d5\\u4f5c")], ultimate_precision_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u7368\\u652f\\u7cbe\\u6e96\\u9a57\\u8b49\\uff1a\\u9a57\\u8b49\\u3001\\u518d\\u9a57\\u8b49\\u3001\\u56de\\u6e2c\\u3001\\u4ea4\\u53c9\\u6bd4\\u5c0d\\u3001\\u518d\\u6bd4\\u5c0d")}</h2><p>{u("\\u7368\\u652f\\u4e0d\\u8207\\u4e00\\u822c\\u5f37\\u724c\\u6df7\\u5217\\uff0c\\u5fc5\\u9808\\u9010\\u95dc\\u904b\\u7b97\\u5f8c\\u624d\\u5217\\u5165\\u672c\\u5340\\u3002")}</p>{table([u("\\u95dc\\u5361"), u("\\u904b\\u7b97\\u5167\\u5bb9"), u("\\u6bd4\\u5c0d\\u57fa\\u6e96"), u("\\u7d50\\u679c"), u("\\u5f8c\\u7e8c\\u52d5\\u4f5c")], single_precision_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u9810\\u6e2c\\u6a21\\u578b\\u6efe\\u52d5\\u5f0f\\u8abf\\u6574")}</h2><p>{u("\\u672c\\u7cfb\\u7d71\\u6bcf\\u6b21\\u66f4\\u65b0\\u5f8c\\uff0c\\u6703\\u4f9d\\u4e0a\\u671f\\u7d50\\u7b97\\u3001\\u56de\\u6e2c\\u5dee\\u503c\\u3001\\u91cd\\u8907\\u5b88\\u9580\\u8207\\u6b0a\\u91cd\\u8868\\u81ea\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6efe\\u52d5\\u9805\\u76ee"), u("\\u672c\\u6b21\\u7d50\\u679c"), u("\\u6a21\\u578b\\u8abf\\u6574"), u("\\u72c0\\u614b")], rolling_model_rows(analysis))}</section>'
+    content += f'<section class="band notice"><h2>{u("\\u672c\\u6708\\u9810\\u6e2c\\u7e3d\\u6aa2\\u8a0e\\u8207\\u6700\\u4f73\\u6efe\\u52d5\\u65b9\\u6848")}</h2><p>{u("\\u672c\\u5340\\u4f9d\\u672c\\u6708\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c\\u7d71\\u8a08\\uff0c\\u76f4\\u63a5\\u5f71\\u97ff\\u4e0b\\u671f\\u6b0a\\u91cd\\u8207\\u5f37\\u724c\\u767c\\u5e03\\u95dc\\u5361\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c"), u("\\u5224\\u8b80"), u("\\u72c0\\u614b")], monthly_review_rows(analysis))}{table([u("\\u5f37\\u724c"), u("\\u6a23\\u672c"), u("\\u901a\\u904e\\u7387"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96f6\\u547d\\u4e2d\\u7387"), u("\\u6708\\u5ea6\\u5224\\u5b9a")], monthly_pack_rows(analysis))}{table([u("\\u985e\\u5225"), u("\\u5167\\u5bb9"), u("\\u7ba1\\u5236"), u("\\u72c0\\u614b")], monthly_best_plan_rows(analysis))}</section>'
     content += f'<section class="band"><h2>1{u("\\u4e2d")}1 / 5{u("\\u4e2d")}2~3 / 9{u("\\u4e2d")}3~5 {u("\\u6838\\u5fc3\\u7a69\\u5b9a\\u6a21\\u578b")}</h2><p>{u("\\u7a69\\u5b9a\\u76ee\\u6a19\\uff1a\\u6bcf\\u671f\\u6700\\u5c11\\u8981\\u671d5\\u4e2d2~3\\u7684\\u7a69\\u5b9a\\u7d44\\u5408\\u63a8\\u9032\\uff0c\\u672a\\u9054\\u6a19\\u5247\\u7e7c\\u7e8c\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6a21\\u578b"), u("\\u865f\\u78bc"), u("\\u76ee\\u6a19"), u("\\u7406\\u8ad6\\u6a5f\\u7387"), u("\\u7d04\\u7565\\u8d54\\u7387")], core_model_rows(analysis))}</section>'
     content += f'<section class="band"><h2>Top10 {u("\\u64e0\\u5165\\u6821\\u6e96")}</h2>{table([u("\\u539f\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u7a69\\u5b9a\\u6578"), u("\\u6821\\u6e96\\u5224\\u65b7")], top10_promotion_rows(analysis))}</section>'
     content += '<div class="grid">'
@@ -1071,8 +1360,9 @@ def build_report():
     content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u9032\\u968e\\u9810\\u6e2c\\u6a21\\u578b")}</h2><p>{esc(adv.get("warning"))}</p><p>{u("\\u9032\\u968e\\u6a21\\u578b\\u5171\\u8b58 Top12")}:{fmt_numbers(adv.get("consensus_top12", []))}</p>{table([u("\\u6a21\\u578b"), "Top10", u("Top10 \\u56de\\u6e2c"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u65b9\\u6cd5")], advanced_rows(analysis))}</section>'
     content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u89c0\\u5bdf\\u5019\\u9078\\uff08\\u4e0d\\u5217\\u6b63\\u5f0f\\u4e3b\\u63a8\\uff09")}</h2><p>{esc(release_text)}</p></section><div class="grid">{pack_cards(analysis)}</div>'
     content += f'<section class="band"><h2>{u("\\u7cbe\\u6e96\\u5ea6\\u6cbb\\u7406\\u5668\\uff1a\\u5f37\\u724c\\u767c\\u5e03\\u5be9\\u6838")}</h2>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c1"), u("\\u6578\\u503c2"), u("\\u898f\\u5247"), u("\\u5099\\u8a3b")], precision_governor_rows(analysis))}</section>'
+    content += f'<section class="band notice"><h2>{u("\\u5be6\\u6230\\u9810\\u6e2c\\u6210\\u719f\\u5ea6\\u5f37\\u5316")}</h2><p>{u("\\u4f4e\\u6210\\u719f\\u3001\\u4f4e\\u4ea4\\u53c9\\u9a57\\u8b49\\u3001\\u4e0a\\u671f\\u5931\\u8aa4\\u672a\\u4fee\\u6b63\\u7684\\u865f\\u78bc\\uff0c\\u6703\\u76f4\\u63a5\\u964d\\u6b0a\\u6216\\u964d\\u7d1a\\u89c0\\u5bdf\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u865f\\u78bc/\\u72c0\\u614b"), u("\\u6210\\u719f\\u5ea6"), u("\\u5c64\\u7d1a/\\u9580\\u6abb"), u("\\u4ea4\\u53c9\\u9a57\\u8b49/\\u52d5\\u4f5c")], practical_maturity_rows(analysis))}</section>'
     content += f'<section class="band"><h2>{u("\\u56b4\\u8b39\\u9a57\\u8b49\\u95dc\\u5361\\uff1a\\u672a\\u9a57\\u8b49\\u865f\\u78bc\\u7981\\u6b62\\u51fa\\u73fe")}</h2>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c1"), u("\\u6578\\u503c2"), u("\\u539f\\u56e0/\\u4f9d\\u64da"), u("\\u72c0\\u614b")], strict_validation_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u9810\\u6e2c\\u865f\\u78bc\\u9010\\u865f\\u7cbe\\u7b97\\u9a57\\u8b49")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u907a\\u6f0f"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7406\\u7531")], per_number_validation_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u9810\\u6e2c\\u865f\\u78bc\\u9010\\u865f\\u7cbe\\u7b97\\u9a57\\u8b49")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u5be6\\u6230\\u6210\\u719f\\u5ea6"), u("\\u907a\\u6f0f"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7406\\u7531")], per_number_validation_rows(analysis))}</section>'
     content += f'<section class="band"><h2>{u("\\u81ea\\u52d5\\u6b0a\\u91cd\\u6821\\u6e96\\uff1a\\u8fd1\\u671f\\u5be6\\u6230\\u7279\\u5fb5\\u8abf\\u6b0a")}</h2>{table([u("\\u6b0a\\u91cd\\u9805"), u("\\u6578\\u503c"), u("\\u4f86\\u6e90"), u("\\u52d5\\u4f5c"), u("\\u5099\\u8a3b")], adaptive_weight_rows(analysis))}</section>'
     content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u5de5\\u696d\\u7d1a\\u6a21\\u578b\\u5be9\\u8a08")}</h2><p><span class="risk">{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}:{esc(audit.get("risk_level"))}</span></p><p>{esc(audit.get("verdict"))}</p><p>{u("\\u958b\\u734e\\u578b\\u614b")}:{esc(u("\\u3001").join(regime.get("messages", [])))}</p></section>'
     content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u865f\\u78bc")}</h2>{table(["#", u("\\u865f\\u78bc"), u("\\u66ab\\u907f\\u6307\\u6578"), u("\\u51fa\\u73fe\\u8a55\\u5206"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u7a69\\u5b9a\\u6b21\\u6578"), u("\\u66ab\\u907f\\u539f\\u56e0")], unlikely_rows(analysis))}</section>'
@@ -1171,10 +1461,11 @@ def split_prediction_review(report_html):
 def save_reports():
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_html, report_md, history_html = build_report()
+    tabbed_report_html = apply_latest_battle_tabs(report_html)
     prediction_html, review_html = split_prediction_review(report_html)
-    MAIN_HTML.write_text(report_html, encoding="utf-8")
-    LATEST_HTML.write_text(report_html, encoding="utf-8")
-    DASHBOARD_HTML.write_text(report_html, encoding="utf-8")
+    MAIN_HTML.write_text(tabbed_report_html, encoding="utf-8")
+    LATEST_HTML.write_text(tabbed_report_html, encoding="utf-8")
+    DASHBOARD_HTML.write_text(tabbed_report_html, encoding="utf-8")
     PREDICTION_HTML.write_text(prediction_html, encoding="utf-8")
     REVIEW_HTML.write_text(review_html, encoding="utf-8")
     MAIN_MD.write_text(report_md, encoding="utf-8")
