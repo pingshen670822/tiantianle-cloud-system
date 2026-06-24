@@ -73,7 +73,7 @@ if ($FastRefresh) {
   Step "Force run: bypass freshness skip and recompute full model"
 }
 
-Step "Step 1/5 prepare data and latest cache"
+Step "Step 1/6 prepare data and latest cache"
 $GrabberDirName = -join @([char]0x6293, [char]0x53D6, [char]0x5668)
 $DailyGrabberDirName = -join @([char]0x5929, [char]0x5929, [char]0x6A02, [char]0x6293, [char]0x53D6, [char]0x5668)
 $UserCsv = Join-Path ([Environment]::GetFolderPath("Desktop")) (Join-Path $GrabberDirName (Join-Path $DailyGrabberDirName "fantasy5_full_history.csv"))
@@ -119,7 +119,7 @@ if ($NetworkOnly) { $RunArgs += "--network-only" }
 if ($ValidateOnly) { $RunArgs += "--validate-only" }
 if ($All) { $RunArgs += "--all" }
 
-Step "Step 2/5 run main system"
+Step "Step 2/6 run main system"
 if ($FastRefresh) {
   Step "main system skipped: existing prediction is still current before safe update time"
 } else {
@@ -134,7 +134,7 @@ if ($FastRefresh) {
   if ($MainExitCode -ne 0) { throw "main system failed after retry: $MainExitCode" }
 }
 
-Step "Step 3/5 build mobile pages"
+Step "Step 3/6 build mobile pages"
 & $PythonExe ".\pages_build.py"
 if ($LASTEXITCODE -ne 0) { throw "mobile page build failed: $LASTEXITCODE" }
 
