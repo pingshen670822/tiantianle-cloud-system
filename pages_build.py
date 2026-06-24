@@ -8,6 +8,7 @@ import struct
 import subprocess
 import zlib
 from datetime import datetime
+from itertools import combinations
 from pathlib import Path
 
 
@@ -306,6 +307,117 @@ def confidence_level(item):
     return level, detail, css
 
 
+def ultra_precision_candidate_score(item):
+    confidence = safe_float(item.get("confidence_index", item.get("score", 0)))
+    if 0 < confidence <= 1:
+        confidence *= 100
+    probability = safe_float(item.get("model_probability_percent", 0))
+    stability = safe_int(item.get("stability_count", 0))
+    cross = item.get("cross_validation") or {}
+    passed = safe_int(cross.get("passed_count", 0))
+    total = max(1, safe_int(cross.get("total_count", 0)))
+    maturity = item.get("practical_maturity") or {}
+    maturity_score = safe_float(maturity.get("score", 0))
+    frontload = safe_float(item.get("top9_frontload_score", 0))
+    base_score = safe_float(item.get("score", 0))
+    score = 0.0
+    score += max(0.0, min(1.0, (confidence - 50) / 49)) * 27
+    score += min(probability / 18.5, 1.0) * 18
+    score += min(stability / 5, 1.0) * 17
+    score += (passed / total) * 19
+    score += min(maturity_score / 82, 1.0) * 11
+    score += min(frontload, 1.0) * 5
+    score += min(base_score, 1.0) * 3
+    guard = item.get("previous_prediction_guard") or {}
+    repeat = item.get("repeat_guard") or {}
+    if guard and not guard.get("passed"):
+        score -= 7
+    if repeat and not repeat.get("passed"):
+        score -= 6
+    tier = str(maturity.get("tier", ""))
+    if tier == "blocked_low_maturity":
+        score -= 12
+    elif tier == "research_only":
+        score -= 3
+    if u("\\u0054\\u006f\\u0070\\u0039\\u524d\\u79fb\\u6821\\u6e96") in (item.get("reasons") or []):
+        score += 1.5
+    return round(max(0.0, score), 2)
+
+
+def ultra_precision_recommendations(candidates):
+    pool = [item for item in candidates[:9] if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)]
+    scored = sorted(
+        [
+            {"number": int(item.get("number")), "score": ultra_precision_candidate_score(item), "item": item}
+            for item in pool
+            if item.get("number") is not None
+        ],
+        key=lambda row: (row["score"], safe_float(row["item"].get("score", 0)), -row["number"]),
+        reverse=True,
+    )
+    score_map = {row["number"]: row["score"] for row in scored}
+    item_map = {row["number"]: row["item"] for row in scored}
+
+    def zone(number):
+        if number <= 10:
+            return "01-10"
+        if number <= 20:
+            return "11-20"
+        if number <= 30:
+            return "21-30"
+        return "31-39"
+
+    def combo_score(numbers):
+        values = [score_map[number] for number in numbers]
+        if not values:
+            return 0
+        tails = [number % 10 for number in numbers]
+        zones = [zone(number) for number in numbers]
+        penalty = (len(tails) - len(set(tails))) * 2.6
+        penalty += max(0, max((zones.count(label) for label in set(zones)), default=0) - 2) * 2.2
+        stability = sum(min(safe_int(item_map[number].get("stability_count")), 5) for number in numbers) / len(numbers)
+        cross_passed = sum(safe_int((item_map[number].get("cross_validation") or {}).get("passed_count")) for number in numbers) / len(numbers)
+        return round((sum(values) / len(values)) * 0.72 + min(values) * 0.18 + stability + cross_passed * 0.75 - penalty, 2)
+
+    def best_combo(size):
+        if len(score_map) < size:
+            return {"numbers": [], "score": 0}
+        if size == 1:
+            row = max(scored, key=lambda item: item["score"])
+            return {"numbers": [row["number"]], "score": row["score"]}
+        return max(
+            ({"numbers": list(combo), "score": combo_score(combo)} for combo in combinations(score_map, size)),
+            key=lambda row: (row["score"], sum(score_map[n] for n in row["numbers"])),
+        )
+
+    return {"single": best_combo(1), "two": best_combo(2), "three": best_combo(3), "ranked": scored}
+
+
+def build_ultra_precision_block(candidates):
+    rec = ultra_precision_recommendations(candidates)
+    labels = [
+        ("single", u("\\u7368\\u96bb1\\u4e2d1")),
+        ("two", "2" + u("\\u4e2d") + "1~2"),
+        ("three", "3" + u("\\u4e2d") + "1~3"),
+    ]
+    rows = []
+    for key, label in labels:
+        item = rec.get(key) or {}
+        rows.append(
+            "<tr>"
+            f"<th>{esc(label)}</th>"
+            f"<td>{esc(fmt_numbers(item.get('numbers') or []))}</td>"
+            f"<td>{esc(item.get('score', 0))}</td>"
+            f"<td>{u('\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u4e8c\\u6b21\\u7cbe\\u7b97')}</td>"
+            "</tr>"
+        )
+    return (
+        f"<section class=\"band high-note\"><h2>{u('\\u8d85\\u5f37\\u4fe1\\u5fc3\\u9ad8\\u6a5f\\u7387\\u5f37\\u63a8\\u7cbe\\u7b97')}</h2>"
+        f"<p>{u('\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u7cbe\\u7b97\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3\\u3002')}</p>"
+        f"<table><tr><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u5f37\\u63a8\\u865f\\u78bc')}</th><th>{u('\\u7cbe\\u7b97\\u5206')}</th><th>{u('\\u898f\\u5247')}</th></tr>{''.join(rows)}</table></section>"
+    )
+
+
 def build_confidence_rows(candidates):
     rows = []
     for idx, item in enumerate(candidates[:9], 1):
@@ -363,6 +475,7 @@ def build_home_page():
     top9 = fmt_numbers([item.get("number") for item in candidates[:9]])
     confidence_rows = build_confidence_rows(candidates)
     signal_focus = build_signal_focus(candidates)
+    ultra_precision_block = build_ultra_precision_block(candidates)
     pack_rows = []
     for key, label in [
         ("strong_single", u("\\u7368\\u652f\\u7cbe\\u6e961\\u4e2d1")),
@@ -422,6 +535,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="reports/latest_battle_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {signal_focus}
+{ultra_precision_block}
 <section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u65e5')}</h2><div class="value">{esc(latest.get('draw_date'))}</div></section>

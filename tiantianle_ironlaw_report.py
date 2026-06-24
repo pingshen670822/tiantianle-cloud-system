@@ -6,6 +6,7 @@ import re
 import sqlite3
 from collections import Counter
 from datetime import datetime
+from itertools import combinations
 from pathlib import Path
 
 
@@ -134,6 +135,152 @@ def pack_confidence_note(analysis, numbers):
     if mid_notes:
         return u("\\u4e2d\\u9ad8\\u4fe1\\u5fc3\\u52a0\\u8a3b\\uff1a") + "；".join(mid_notes[:4])
     return u("\\u672c\\u7d44\\u7121\\u9ad8\\u4fe1\\u5fc3\\u865f\\uff0c\\u4f9d\\u89c0\\u5bdf\\u7b49\\u7d1a\\u986f\\u793a")
+
+
+def ultra_precision_candidate_score(item):
+    confidence = safe_float(item.get("confidence_index", item.get("score", 0)))
+    if 0 < confidence <= 1:
+        confidence *= 100
+    probability = safe_float(item.get("model_probability_percent", 0))
+    stability = safe_int(item.get("stability_count", 0))
+    cross = item.get("cross_validation") or {}
+    passed = safe_int(cross.get("passed_count", 0))
+    total = max(1, safe_int(cross.get("total_count", 0)))
+    maturity = item.get("practical_maturity") or {}
+    maturity_score = safe_float(maturity.get("score", 0))
+    frontload = safe_float(item.get("top9_frontload_score", 0))
+    base_score = safe_float(item.get("score", 0))
+    score = 0.0
+    score += max(0.0, min(1.0, (confidence - 50) / 49)) * 27
+    score += min(probability / 18.5, 1.0) * 18
+    score += min(stability / 5, 1.0) * 17
+    score += (passed / total) * 19
+    score += min(maturity_score / 82, 1.0) * 11
+    score += min(frontload, 1.0) * 5
+    score += min(base_score, 1.0) * 3
+    guard = item.get("previous_prediction_guard") or {}
+    repeat = item.get("repeat_guard") or {}
+    if guard and not guard.get("passed"):
+        score -= 7
+    if repeat and not repeat.get("passed"):
+        score -= 6
+    tier = str(maturity.get("tier", ""))
+    if tier == "blocked_low_maturity":
+        score -= 12
+    elif tier == "research_only":
+        score -= 3
+    if u("\\u0054\\u006f\\u0070\\u0039\\u524d\\u79fb\\u6821\\u6e96") in (item.get("reasons") or []):
+        score += 1.5
+    return round(max(0.0, score), 2)
+
+
+def ultra_precision_recommendations(analysis):
+    candidates = [
+        item for item in (analysis.get("candidates") or [])[:9]
+        if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)
+    ]
+    scored = sorted(
+        [
+            {
+                "number": int(item.get("number")),
+                "score": ultra_precision_candidate_score(item),
+                "item": item,
+            }
+            for item in candidates
+            if item.get("number") is not None
+        ],
+        key=lambda row: (row["score"], safe_float(row["item"].get("score", 0)), -row["number"]),
+        reverse=True,
+    )
+    score_map = {row["number"]: row["score"] for row in scored}
+    item_map = {row["number"]: row["item"] for row in scored}
+
+    def zone(number):
+        if number <= 10:
+            return "01-10"
+        if number <= 20:
+            return "11-20"
+        if number <= 30:
+            return "21-30"
+        return "31-39"
+
+    def combo_score(numbers):
+        values = [score_map[number] for number in numbers]
+        if not values:
+            return 0
+        tails = [number % 10 for number in numbers]
+        zones = [zone(number) for number in numbers]
+        duplicate_tail_penalty = (len(tails) - len(set(tails))) * 2.6
+        zone_penalty = max(0, max((zones.count(label) for label in set(zones)), default=0) - 2) * 2.2
+        stability = sum(min(safe_int(item_map[number].get("stability_count")), 5) for number in numbers) / len(numbers)
+        cross_passed = sum(safe_int((item_map[number].get("cross_validation") or {}).get("passed_count")) for number in numbers) / len(numbers)
+        score = (sum(values) / len(values)) * 0.72 + min(values) * 0.18 + stability * 1.0 + cross_passed * 0.75
+        return round(score - duplicate_tail_penalty - zone_penalty, 2)
+
+    def best_combo(size):
+        if len(score_map) < size:
+            return {"numbers": [], "score": 0}
+        if size == 1:
+            row = max(scored, key=lambda item: item["score"])
+            return {"numbers": [row["number"]], "score": row["score"]}
+        best = max(
+            ({"numbers": list(combo), "score": combo_score(combo)} for combo in combinations(score_map, size)),
+            key=lambda row: (row["score"], sum(score_map[n] for n in row["numbers"])),
+        )
+        return best
+
+    return {
+        "single": best_combo(1),
+        "two": best_combo(2),
+        "three": best_combo(3),
+        "ranked": scored,
+        "policy": "Top9-only ultra precision second pass; no Top10-15 high confidence promotion",
+    }
+
+
+def ultra_precision_rows(analysis):
+    rec = ultra_precision_recommendations(analysis)
+    labels = [
+        ("single", u("\\u7368\\u96bb1\\u4e2d1")),
+        ("two", "2" + u("\\u4e2d") + "1~2"),
+        ("three", "3" + u("\\u4e2d") + "1~3"),
+    ]
+    rows = []
+    for key, label in labels:
+        item = rec.get(key) or {}
+        rows.append([
+            label,
+            fmt_numbers(item.get("numbers", [])),
+            item.get("score", 0),
+            u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u4e8c\\u6b21\\u7cbe\\u7b97"),
+            u("\\u5f37\\u63a8\\u89c0\\u5bdf\\uff0c\\u975e\\u4fdd\\u8b49\\u5fc5\\u4e2d"),
+        ])
+    return rows
+
+
+def ultra_precision_block(analysis):
+    rec = ultra_precision_recommendations(analysis)
+    ranked_rows = []
+    for row in rec.get("ranked", [])[:9]:
+        item = row.get("item") or {}
+        maturity = item.get("practical_maturity") or {}
+        cross = item.get("cross_validation") or {}
+        ranked_rows.append([
+            f"{int(row.get('number')):02d}",
+            row.get("score"),
+            item.get("confidence_index", "-"),
+            item.get("model_probability_percent", "-"),
+            item.get("stability_count", "-"),
+            f"{cross.get('passed_count', 0)}/{cross.get('total_count', 0)}",
+            maturity.get("score", "-"),
+            esc(u("\\u3001").join(item.get("reasons", []))),
+        ])
+    return (
+        f'<section class="band high-alert"><h2>{u("\\u8d85\\u5f37\\u4fe1\\u5fc3\\u9ad8\\u6a5f\\u7387\\u5f37\\u63a8\\u7cbe\\u7b97")}</h2>'
+        f'<p>{u("\\u672c\\u5340\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u505a\\u4e8c\\u6b21\\u7cbe\\u7b97\\uff0c\\u4e0d\\u4f7f\\u7528\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u5099\\u67e5\\u865f\\u4f86\\u653e\\u5927\\u4fe1\\u5fc3\\u3002")}</p>'
+        f'{table([u("\\u76ee\\u6a19"), u("\\u5f37\\u63a8\\u865f\\u78bc"), u("\\u4e8c\\u6b21\\u7cbe\\u7b97\\u5206"), u("\\u898f\\u5247"), u("\\u72c0\\u614b")], ultra_precision_rows(analysis))}'
+        f'{table([u("\\u865f\\u78bc"), u("\\u7cbe\\u7b97\\u5206"), u("\\u4fe1\\u5fc3"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u7a69\\u5b9a"), u("\\u4ea4\\u53c9"), u("\\u6210\\u719f"), u("\\u4f86\\u6e90")], ranked_rows)}</section>'
+    )
 
 
 def metric_count(value):
@@ -739,6 +886,7 @@ def high_confidence_candidate_block(analysis):
 
 def explicit_action_block(analysis):
     packs = analysis.get("strong_packs") or {}
+    ultra = ultra_precision_recommendations(analysis)
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
     target = freshness.get("target_taiwan_safe_update_time") or analysis.get("target_draw_date") or "-"
@@ -771,9 +919,9 @@ def explicit_action_block(analysis):
             esc(detail),
         ])
     cards = [
-        action_card(u("\\u660e\\u78ba\\u7368\\u652f"), (packs.get("strong_single") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "2" + u("\\u4e2d") + "1", (packs.get("two_hit_one") or {}).get("numbers", []), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "3" + u("\\u4e2d") + "2~3", (packs.get("three_hit_two") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97\\u7368\\u96bb"), (ultra.get("single") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97") + "2" + u("\\u4e2d") + "1", (ultra.get("two") or {}).get("numbers", []), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
+        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97") + "3" + u("\\u4e2d") + "1~3", (ultra.get("three") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
         action_card(u("\\u660e\\u78ba") + "5" + u("\\u4e2d") + "2", (packs.get("five_hit_two") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e94\\u865f\\u653b\\u64ca\\u7d44")),
         action_card(u("\\u660e\\u78ba") + "9" + u("\\u4e2d") + "3", (packs.get("nine_hit_three") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e5d\\u865f\\u8986\\u84cb\\u7d44")),
         action_card(u("\\u9632\\u5b88\\u907f\\u958b"), avoid_numbers, u("\\u4f4e\\u5206\\u8207\\u5f31\\u8a0a\\u865f\\u98a8\\u63a7")),
@@ -1362,6 +1510,7 @@ def build_report():
     content += f'<section class="band"><h2>{u("\\u65e5\\u671f\\u57fa\\u6e96\\u7e3d\\u8868")}</h2>{date_table}</section>'
     content += f'<section class="band notice"><h2>{u("\\u7814\\u7a76\\u547d\\u4e2d KPI \\u8207\\u7981\\u6b62\\u865b\\u5831\\u9580\\u6abb")}</h2><p>{u("\\u9019\\u4e9b\\u662f\\u7814\\u7a76\\u76ee\\u6a19\\uff0c\\u4e0d\\u662f\\u6a02\\u900f\\u5fc5\\u4e2d\\u4fdd\\u8b49\\u3002")}</p>{table(["KPI", u("\\u6a23\\u672c"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96a8\\u6a5f\\u57fa\\u6e96"), u("\\u5dee\\u503c")], kpi_rows)}</section>'
     content += f'<section class="band chapter"><h2>{u("\\u4eca\\u65e5\\u9810\\u6e2c\\u904b\\u7b97\\u5340")}</h2><p>{u("\\u672c\\u5340\\u53ea\\u5448\\u73fe\\u672c\\u671f\\u8207\\u4e0b\\u671f\\u9810\\u6e2c\\u6c7a\\u7b56\\u3002")}</p></section>'
+    content += ultra_precision_block(analysis)
     content += today_high_probability_block(analysis)
     content += high_confidence_candidate_block(analysis)
     content += f'<section class="band notice"><h2>{u("\\u7d42\\u6975\\u76ee\\u6a19\\uff1a95%\\u7cbe\\u6e96\\u7a69\\u5b9a\\u6cbb\\u7406")}</h2><p>{u("\\u672c\\u5340\\u662f\\u767c\\u5e03\\u9580\\u6abb\\uff0c\\u4e0d\\u662f\\u865b\\u5831\\u4fdd\\u8b49\\u3002\\u672a\\u905495%\\u6642\\u53ea\\u80fd\\u964d\\u7d1a\\u89c0\\u5bdf\\u8207\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u76ee\\u6a19\\u7d44"), u("\\u547d\\u4e2d\\u7bc4\\u570d"), u("\\u76ee\\u6a19\\u7387"), u("\\u56de\\u6e2c\\u9054\\u6210\\u7387"), u("\\u6a23\\u672c"), u("\\u72c0\\u614b"), u("\\u52d5\\u4f5c")], ultimate_precision_rows(analysis))}</section>'
