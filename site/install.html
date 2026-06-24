@@ -42,7 +42,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt', function(e){e.preventDefault();deferredPrompt=e;});
 async function launchTiantianle(){
   if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
-  location.href='index.html';
+  location.href='首頁.html';
 }
 document.getElementById('installBtn').addEventListener('click', launchTiantianle);
 document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);

@@ -1,7 +1,7 @@
 # 系統健康檢查
 
 - 引擎版本：tiantianle_ironlaw_industrial_v1
-- 產生時間：2026-06-24T11:32:18+08:00
+- 產生時間：2026-06-24T20:05:52+08:00
 - 狀態：ok
 - 最新開獎日：2026-06-23
 - 預測目標日：2026-06-24
@@ -12,19 +12,19 @@
 - 過期待結算預測：0
 - 正式預測紀錄：11
 - 已結算預測紀錄：10
-- 預測快照紀錄：76
+- 預測快照紀錄：77
 - 自動網路更新：skipped_fast_update
 - 更新通道可用：True
 - 資料完整性：ok
-- 最新資料來源：consensus_latest:cache:lotterynet+lotteryusa+lotto8
+- 最新資料來源：official:calottery
 - 最新來源確認：True
-- 單一來源隔離：248
+- 單一來源隔離：241
 - 未來日期隔離：0
 - 衝突資料隔離：0
 - 發布關卡：watch_only
 - 主系統完整度：100%
-- 本次線上新增：0
-- 本次快取新增：0
+- 本次線上新增：1
+- 本次快取新增：5
 
 ## 警告
 - official_release_gate_watch_only
