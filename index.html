@@ -32,22 +32,22 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260624144749">
+    <link rel="manifest" href="manifest.webmanifest?v=20260624152820">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head>
 <body>
-<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-06-24T14:47:49+08:00 / 最新開獎 2026-06-23 / 下期預測時間（台灣） 2026-06-25 09:50</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-06-24T15:28:20+08:00 / 最新開獎 2026-06-23 / 下期預測時間（台灣） 2026-06-25 09:50</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="reset.html?v=20260624144749">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="reset.html?v=20260624152820">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>https://pingshen670822.github.io/tiantianle-cloud-system/</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">Build 20260624144749</p>
+      <p class="cloud-note" id="mobileUpdateStatus">Build 20260624152820</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -72,11 +72,11 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 <section class="card"><h2>發布狀態</h2><div class="value">watch_only</div><p class="small">非正式保證</p></section>
 <section class="card"><h2>實戰成熟度</h2><div class="value">60.0</div><p class="small">watch_only</p></section>
 </div>
-<section class="band"><h2>本期核心預測摘要</h2><p><strong>Top9核心:</strong> 11 21 26 33 35 01 25 32 17</p><table><tr><th>模型</th><th>號碼</th><th>目標</th><th>成熟度</th></tr><tr><th>獨支精準1中1</th><td>21</td><td>1</td><td>67.0 / watch_only</td></tr><tr><th>2中1~2</th><td>11 21</td><td>1</td><td>73.8 / watch_only</td></tr><tr><th>3中2~3</th><td>11 21 33</td><td>2</td><td>71.1 / watch_only</td></tr><tr><th>5中2~3</th><td>11 21 26 33 35</td><td>2</td><td>68.0 / watch_only</td></tr><tr><th>9中3~5</th><td>01 11 17 21 25 26 32 33 35</td><td>3</td><td>62.9 / watch_only</td></tr></table></section>
+<section class="band"><h2>本期核心預測摘要</h2><p><strong>Top9核心:</strong> 11 21 26 33 35 01 25 32 17</p><table><tr><th>模型</th><th>號碼</th><th>目標</th><th>成熟度</th></tr><tr><th>超強精算獨隻1中1</th><td>11</td><td>1</td><td>二次精算 88.28 / watch_only</td></tr><tr><th>超強精算2中1~2</th><td>11 21</td><td>1~2</td><td>二次精算 85.46 / watch_only</td></tr><tr><th>超強精算3中1~3</th><td>11 21 26</td><td>1~3</td><td>二次精算 81.55 / watch_only</td></tr><tr><th>5中2~3</th><td>11 21 26 33 35</td><td>2</td><td>68.0 / watch_only</td></tr><tr><th>9中3~5</th><td>01 11 17 21 25 26 32 33 35</td><td>3</td><td>62.9 / watch_only</td></tr></table></section>
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260624144749';
+    window.TIANTIANLE_BUILD_VERSION = '20260624152820';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -104,7 +104,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('index.html?v=20260624144749&force=' + Date.now());
+      location.replace('index.html?v=20260624152820&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -121,7 +121,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260624144749', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260624152820', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});

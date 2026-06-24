@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiantianle-ironlaw-20260624144749';
+const CACHE_NAME = 'tiantianle-ironlaw-20260624152820';
 const APP_SHELL = ['index.html','prediction.html','review.html','prediction-history.html','latest_analysis.json','version.json','system_health_report.md','manifest.webmanifest','offline.html','reset.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {
   const keys = await caches.keys();
@@ -9,7 +9,7 @@ async function deleteOldCaches() {
   await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
 }
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20260624144749')).catch(() => cache.addAll(APP_SHELL))));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20260624152820')).catch(() => cache.addAll(APP_SHELL))));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isFreshFile) {
-    url.searchParams.set('v', '20260624144749');
+    url.searchParams.set('v', '20260624152820');
     event.respondWith(fetch(url.toString(), { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }).then(response => {
       return response;
     }).catch(() => caches.match(event.request).then(hit => hit || caches.match('offline.html'))));
