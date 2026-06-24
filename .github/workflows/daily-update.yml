@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   schedule:
     # Taiwan post-draw retry window, for California daylight saving draw updates.
+    - cron: "48 1 * * *"
+    - cron: "49 1 * * *"
     - cron: "50 1 * * *"
     - cron: "55 1 * * *"
     - cron: "0 2 * * *"
@@ -15,6 +17,8 @@ on:
     - cron: "30 2 * * *"
     - cron: "40 2 * * *"
     # Taiwan post-draw retry window, for California standard time draw updates.
+    - cron: "48 2 * * *"
+    - cron: "49 2 * * *"
     - cron: "50 2 * * *"
     - cron: "55 2 * * *"
     - cron: "0 3 * * *"
@@ -58,8 +62,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          for attempt in $(seq 1 10); do
-            echo "post-draw update attempt ${attempt}/10"
+          for attempt in $(seq 1 35); do
+            echo "post-draw update attempt ${attempt}/35"
             python "美國加州天天樂_20260618_第1版.py"
             python pages_build.py
             if python - <<'PY'
@@ -78,6 +82,10 @@ jobs:
           if safe_text:
               safe_time = datetime.strptime(safe_text, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Taipei"))
               if now < safe_time:
+                  seconds = (safe_time - now).total_seconds()
+                  if seconds <= 300:
+                      print(f"near safe update time; keep polling: now={now:%Y-%m-%d %H:%M}, safe={safe_text}")
+                      sys.exit(1)
                   print(f"before safe update time: now={now:%Y-%m-%d %H:%M}, safe={safe_text}")
                   sys.exit(0)
           if not target or latest == target:
@@ -89,11 +97,11 @@ jobs:
             then
               break
             fi
-            if [ "$attempt" = "10" ]; then
+            if [ "$attempt" = "35" ]; then
               echo "latest draw still not available after retry window; later schedule will retry"
               break
             fi
-            sleep 180
+            sleep 60
           done
       - name: Commit updated data
         run: |
