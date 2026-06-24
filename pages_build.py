@@ -281,7 +281,10 @@ def confidence_level(item):
     maturity = item.get("practical_maturity") or {}
     maturity_score = safe_float(maturity.get("score", 0))
     maturity_tier = str(maturity.get("tier", "-") or "-")
-    if maturity_score < 58:
+    rank = safe_int(item.get("rank", 99), 99)
+    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
+    top9_note = u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3") if top9_core else u("\\u0054\\u006f\\u0070\\u0039\\u5916\\u5099\\u67e5")
+    if not top9_core or maturity_score < 58:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
     elif confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3 and maturity_score >= 70:
@@ -298,14 +301,14 @@ def confidence_level(item):
         f"{u('\\u6a21\\u578b\\u6a5f\\u7387')} {round(probability, 2)}% / "
         f"{u('\\u7a69\\u5b9a\\u5171\\u8b58')} {stability} / "
         f"{u('\\u4ea4\\u53c9\\u9a57\\u8b49')} {passed}/{total} {status} / "
-        f"{u('\\u6210\\u719f\\u5ea6')} {round(maturity_score, 1)} {maturity_tier}"
+        f"{u('\\u6210\\u719f\\u5ea6')} {round(maturity_score, 1)} {maturity_tier} / {top9_note}"
     )
     return level, detail, css
 
 
 def build_confidence_rows(candidates):
     rows = []
-    for idx, item in enumerate(candidates[:15], 1):
+    for idx, item in enumerate(candidates[:9], 1):
         level, detail, css = confidence_level(item)
         if level == u("\\u89c0\\u5bdf"):
             continue
@@ -325,7 +328,7 @@ def build_confidence_rows(candidates):
 
 def build_signal_focus(candidates):
     focus = []
-    for item in candidates[:15]:
+    for item in candidates[:9]:
         level, detail, css = confidence_level(item)
         if level == u("\\u89c0\\u5bdf"):
             continue
@@ -357,7 +360,7 @@ def build_home_page():
     release = industrial.get("release_gate") or {}
     packs = data.get("strong_packs") or {}
     candidates = data.get("candidates") or []
-    top10 = fmt_numbers([item.get("number") for item in candidates[:10]])
+    top9 = fmt_numbers([item.get("number") for item in candidates[:9]])
     confidence_rows = build_confidence_rows(candidates)
     signal_focus = build_signal_focus(candidates)
     pack_rows = []
@@ -419,7 +422,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="reports/latest_battle_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {signal_focus}
-<section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u5f37\\u5236\\u986f\\u793a\\u8aaa\\u660e\\uff0c\\u4e26\\u4fdd\\u7559\\u767c\\u5e03\\u95dc\\u5361\\u72c0\\u614b\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
+<section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u65e5')}</h2><div class="value">{esc(latest.get('draw_date'))}</div></section>
 <section class="card"><h2>{u('\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593')}</h2><div class="value">{esc(freshness.get('latest_taiwan_safe_update_time'))}</div></section>
@@ -428,7 +431,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="card"><h2>{u('\\u767c\\u5e03\\u72c0\\u614b')}</h2><div class="value">{esc(release.get('status', '-'))}</div><p class="small">{u('\\u6b63\\u5f0f\\u767c\\u5e03') if data.get('official_release_allowed') else u('\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49')}</p></section>
 <section class="card"><h2>{u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}</h2><div class="value">{esc(maturity.get('top10_avg_maturity', '-'))}</div><p class="small">{esc(maturity.get('status', '-'))}</p></section>
 </div>
-<section class="band"><h2>{u('\\u672c\\u671f\\u6838\\u5fc3\\u9810\\u6e2c\\u6458\\u8981')}</h2><p><strong>Top10:</strong> {esc(top10)}</p><table><tr><th>{u('\\u6a21\\u578b')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u6210\\u719f\\u5ea6')}</th></tr>{''.join(pack_rows)}</table></section>
+<section class="band"><h2>{u('\\u672c\\u671f\\u6838\\u5fc3\\u9810\\u6e2c\\u6458\\u8981')}</h2><p><strong>Top9{u('\\u6838\\u5fc3')}:</strong> {esc(top9)}</p><table><tr><th>{u('\\u6a21\\u578b')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u6210\\u719f\\u5ea6')}</th></tr>{''.join(pack_rows)}</table></section>
 </main>
 </body></html>"""
 

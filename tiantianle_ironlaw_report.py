@@ -64,7 +64,13 @@ def candidate_confidence_parts(item):
     passed = safe_int(cross.get("passed_count", 0))
     total = safe_int(cross.get("total_count", 0))
     status = str(cross.get("status", "-") or "-")
-    if confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3:
+    rank = safe_int(item.get("rank", item.get("_display_rank", 99)), 99)
+    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
+    top9_note = u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3") if top9_core else u("\\u0054\\u006f\\u0070\\u0039\\u5916\\u5099\\u67e5")
+    if not top9_core:
+        level = u("\\u89c0\\u5bdf")
+        css = "confidence-watch"
+    elif confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3:
         level = u("\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-high"
     elif confidence >= 85 or probability >= 15 or stability >= 5:
@@ -77,7 +83,7 @@ def candidate_confidence_parts(item):
         f"{u('\\u4fe1\\u5fc3\\u6307\\u6578')} {round(confidence, 2)} / "
         f"{u('\\u6a21\\u578b\\u6a5f\\u7387')} {round(probability, 2)}% / "
         f"{u('\\u7a69\\u5b9a\\u5171\\u8b58')} {stability} / "
-        f"{u('\\u4ea4\\u53c9\\u9a57\\u8b49')} {passed}/{total} {status}"
+        f"{u('\\u4ea4\\u53c9\\u9a57\\u8b49')} {passed}/{total} {status} / {top9_note}"
     )
     return level, detail, css, confidence, probability, stability, passed, total
 
@@ -99,9 +105,9 @@ def is_display_confidence_candidate(item):
     return level in {u("\\u9ad8\\u4fe1\\u5fc3"), u("\\u4e2d\\u9ad8\\u4fe1\\u5fc3")}
 
 
-def high_confidence_candidates(analysis, limit=10):
+def high_confidence_candidates(analysis, limit=9):
     rows = []
-    for idx, item in enumerate((analysis.get("candidates") or [])[:15], 1):
+    for idx, item in enumerate((analysis.get("candidates") or [])[:9], 1):
         if is_display_confidence_candidate(item):
             copied = dict(item)
             copied["_display_rank"] = idx
@@ -536,8 +542,8 @@ def rank_calibration_rows(analysis):
     candidates = analysis.get("candidates") or []
     return [
         ["Top1-5", len(candidates[:5]), fmt_numbers([x.get("number") for x in candidates[:5]]), backtest.get("top10_avg_hits", "-"), u("\\u6301\\u7e8c\\u89c0\\u5bdf")],
-        ["Top6-10", len(candidates[5:10]), fmt_numbers([x.get("number") for x in candidates[5:10]]), backtest.get("random_top10_expectation", "-"), u("\\u6aa2\\u67e5\\u64e0\\u5165\\u80fd\\u529b")],
-        ["Top11-15", len(candidates[10:15]), fmt_numbers([x.get("number") for x in candidates[10:15]]), backtest.get("top15_avg_hits", "-"), u("\\u4f5c\\u70ba\\u6649\\u5347\\u5019\\u9078")],
+        ["Top6-9", len(candidates[5:9]), fmt_numbers([x.get("number") for x in candidates[5:9]]), backtest.get("random_top10_expectation", "-"), u("\\u524d9\\u6838\\u5fc3\\u58d3\\u7e2e")],
+        ["Top10-15", len(candidates[9:15]), fmt_numbers([x.get("number") for x in candidates[9:15]]), backtest.get("top15_avg_hits", "-"), u("\\u5099\\u67e5\\uff0c\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3")],
     ]
 
 
@@ -725,7 +731,7 @@ def high_confidence_candidate_block(analysis):
     )
     return (
         f'<section class="band high-alert"><h2>{u("\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b\\u8aaa\\u660e")}</h2>'
-        f'<p>{u("\\u51e1\\u4fe1\\u5fc3\\u6307\\u6578\\u3001\\u6a21\\u578b\\u6a5f\\u7387\\u3001\\u7a69\\u5b9a\\u5171\\u8b58\\u6216\\u4ea4\\u53c9\\u9a57\\u8b49\\u9054\\u6a19\\u8005\\uff0c\\u5fc5\\u9808\\u5728\\u9810\\u6e2c\\u5340\\u660e\\u986f\\u52a0\\u8a3b\\u3002")}</p>'
+        f'<p>{u("\\u51e1\\u4fe1\\u5fc3\\u6307\\u6578\\u3001\\u6a21\\u578b\\u6a5f\\u7387\\u3001\\u7a69\\u5b9a\\u5171\\u8b58\\u6216\\u4ea4\\u53c9\\u9a57\\u8b49\\u9054\\u6a19\\u8005\\uff0c\\u5fc5\\u9808\\u4f4d\\u65bc\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u624d\\u80fd\\u52a0\\u8a3b\\u70ba\\u9ad8\\u4fe1\\u5fc3\\uff1b\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u80fd\\u5217\\u5099\\u67e5\\u3002")}</p>'
         f'{focus}'
         f'{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u4f86\\u6e90\\u7406\\u7531"), u("\\u986f\\u793a\\u72c0\\u614b")], safe_rows(rows))}</section>'
     )
@@ -779,16 +785,34 @@ def explicit_action_block(analysis):
         f'<div class="grid">{"".join(cards)}</div>'
         f'<h3>{u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\u7279\\u5225\\u5f37\\u8abf")}</h3>'
         f'{table([u("\\u865f\\u78bc"), u("\\u6392\\u540d"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u5206\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u4ea4\\u53c9\\u901a\\u904e"), u("\\u660e\\u78ba\\u539f\\u56e0"), u("\\u5099\\u8a3b")], safe_rows(rows))}'
-        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3 Top10")}：{fmt_numbers([item.get("number") for item in (analysis.get("candidates") or [])[:10]])}</p>'
+        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3 Top9")}：{fmt_numbers([item.get("number") for item in (analysis.get("candidates") or [])[:9]])}</p>'
         "</section>"
     )
 
 
 def top10_promotion_rows(analysis):
+    audit = ((analysis.get("industrial_engine") or {}).get("top9_frontload_audit") or {})
     candidates = analysis.get("candidates") or []
     rows = []
-    for idx, item in enumerate(candidates[10:15], 11):
-        rows.append([idx, f"{int(item.get('number')):02d}", item.get("confidence_index", item.get("score", "")), item.get("stability_count", "-"), u("\\u82e5\\u7a69\\u5b9a\\u5171\\u8b58\\u589e\\u52a0\\u5247\\u53ef\\u6649\\u5347")])
+    for item in audit.get("promoted_to_top9", []) or []:
+        rows.append([
+            f"{item.get('from_rank')} -> {item.get('to_rank')}",
+            f"{int(item.get('number')):02d}",
+            item.get("frontload_score", "-"),
+            f"{u('\\u5f8c\\u6bb5\\u547d\\u4e2d')} {item.get('late_hit_count', 0)} / {u('\\u6f0f\\u6293\\u56de\\u6536')} {item.get('missed_actual_count', 0)}",
+            u("\\u5df2\\u62c9\\u5165\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3"),
+        ])
+    for item in audit.get("demoted_from_top9", []) or []:
+        rows.append([
+            f"{item.get('from_rank')} -> {item.get('to_rank')}",
+            f"{int(item.get('number')):02d}",
+            item.get("frontload_score", "-"),
+            u("\\u524d9\\u5f31\\u52e2\\u88ab\\u64e0\\u51fa"),
+            u("\\u6539\\u5217\\u5099\\u67e5"),
+        ])
+    if not rows:
+        for idx, item in enumerate(candidates[:9], 1):
+            rows.append([idx, f"{int(item.get('number')):02d}", item.get("top9_frontload_score", "-"), item.get("stability_count", "-"), u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u4fdd\\u7559")])
     return safe_rows(rows)
 
 
@@ -1345,7 +1369,7 @@ def build_report():
     content += f'<section class="band notice"><h2>{u("\\u9810\\u6e2c\\u6a21\\u578b\\u6efe\\u52d5\\u5f0f\\u8abf\\u6574")}</h2><p>{u("\\u672c\\u7cfb\\u7d71\\u6bcf\\u6b21\\u66f4\\u65b0\\u5f8c\\uff0c\\u6703\\u4f9d\\u4e0a\\u671f\\u7d50\\u7b97\\u3001\\u56de\\u6e2c\\u5dee\\u503c\\u3001\\u91cd\\u8907\\u5b88\\u9580\\u8207\\u6b0a\\u91cd\\u8868\\u81ea\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6efe\\u52d5\\u9805\\u76ee"), u("\\u672c\\u6b21\\u7d50\\u679c"), u("\\u6a21\\u578b\\u8abf\\u6574"), u("\\u72c0\\u614b")], rolling_model_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u672c\\u6708\\u9810\\u6e2c\\u7e3d\\u6aa2\\u8a0e\\u8207\\u6700\\u4f73\\u6efe\\u52d5\\u65b9\\u6848")}</h2><p>{u("\\u672c\\u5340\\u4f9d\\u672c\\u6708\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c\\u7d71\\u8a08\\uff0c\\u76f4\\u63a5\\u5f71\\u97ff\\u4e0b\\u671f\\u6b0a\\u91cd\\u8207\\u5f37\\u724c\\u767c\\u5e03\\u95dc\\u5361\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c"), u("\\u5224\\u8b80"), u("\\u72c0\\u614b")], monthly_review_rows(analysis))}{table([u("\\u5f37\\u724c"), u("\\u6a23\\u672c"), u("\\u901a\\u904e\\u7387"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96f6\\u547d\\u4e2d\\u7387"), u("\\u6708\\u5ea6\\u5224\\u5b9a")], monthly_pack_rows(analysis))}{table([u("\\u985e\\u5225"), u("\\u5167\\u5bb9"), u("\\u7ba1\\u5236"), u("\\u72c0\\u614b")], monthly_best_plan_rows(analysis))}</section>'
     content += f'<section class="band"><h2>1{u("\\u4e2d")}1 / 5{u("\\u4e2d")}2~3 / 9{u("\\u4e2d")}3~5 {u("\\u6838\\u5fc3\\u7a69\\u5b9a\\u6a21\\u578b")}</h2><p>{u("\\u7a69\\u5b9a\\u76ee\\u6a19\\uff1a\\u6bcf\\u671f\\u6700\\u5c11\\u8981\\u671d5\\u4e2d2~3\\u7684\\u7a69\\u5b9a\\u7d44\\u5408\\u63a8\\u9032\\uff0c\\u672a\\u9054\\u6a19\\u5247\\u7e7c\\u7e8c\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6a21\\u578b"), u("\\u865f\\u78bc"), u("\\u76ee\\u6a19"), u("\\u7406\\u8ad6\\u6a5f\\u7387"), u("\\u7d04\\u7565\\u8d54\\u7387")], core_model_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>Top10 {u("\\u64e0\\u5165\\u6821\\u6e96")}</h2>{table([u("\\u539f\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u7a69\\u5b9a\\u6578"), u("\\u6821\\u6e96\\u5224\\u65b7")], top10_promotion_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>Top9 {u("\\u524d\\u79fb\\u6821\\u6e96")}</h2>{table([u("\\u6392\\u540d\\u8b8a\\u5316"), u("\\u865f\\u78bc"), u("\\u524d9\\u6821\\u6e96\\u5206"), u("\\u4f9d\\u64da"), u("\\u6821\\u6e96\\u5224\\u65b7")], top10_promotion_rows(analysis))}</section>'
     content += '<div class="grid">'
     content += f'<section class="card"><h2>{u("\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6")}</h2><div class="value">{esc(fresh_text)}</div><p class="sub">{esc(freshness.get("latest_draw_date"))}</p></section>'
     content += f'<section class="card"><h2>{u("\\u767c\\u5e03\\u7b49\\u7d1a")}</h2><div class="value">{esc(release_text)}</div><p class="sub">{esc(release.get("status"))}</p></section>'

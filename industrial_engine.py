@@ -1636,6 +1636,170 @@ def top10_promotion_audit(candidates, review=None):
     }
 
 
+def top9_frontload_candidates(candidates, review=None):
+    if not candidates:
+        return [], {
+            "policy": "top9_high_confidence_frontload",
+            "status": "empty_candidates",
+            "top9_numbers": [],
+            "reserve_10_15_numbers": [],
+            "promoted_to_top9": [],
+            "demoted_from_top9": [],
+        }
+
+    rolling = rolling_adjustment_data(review)
+    boosted_reasons = {item.get("reason") for item in rolling.get("boosted_reasons", []) if item.get("reason")}
+    late_hit_counts = {
+        int(item.get("number")): int(item.get("late_hit_count", 0) or 0)
+        for item in rolling.get("late_hit_numbers", [])
+        if item.get("number")
+    }
+    missed_actual_counts = {
+        int(item.get("number")): int(item.get("missed_count", 0) or 0)
+        for item in rolling.get("missed_actual_numbers", [])
+        if item.get("number")
+    }
+    failed = failed_number_set(review)
+    mode = slump_mode(review)
+    original = {int(item["number"]): dict(item) for item in candidates}
+    original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
+    raw_frontload = {}
+
+    for idx, item in enumerate(candidates, 1):
+        number = int(item["number"])
+        reasons = set(item.get("reasons", []))
+        confidence = item.get("confidence_index", 0)
+        if 0 < confidence <= 1:
+            confidence *= 100
+        confidence_norm = clamp((confidence - 50) / 49, 0.0, 1.0)
+        stability_norm = clamp(item.get("stability_count", 0) / 5, 0.0, 1.0)
+        maturity = item.get("practical_maturity") or {}
+        maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100, 0.0, 1.0)
+        cross = item.get("cross_validation") or {}
+        cross_total = max(1, int(cross.get("total_count", 0) or 0))
+        cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / cross_total, 0.0, 1.0)
+        rank_anchor = clamp((len(candidates) - idx + 1) / max(len(candidates), 1), 0.0, 1.0)
+        front_score = (
+            item.get("score", 0) * 0.46
+            + confidence_norm * 0.15
+            + stability_norm * 0.13
+            + maturity_norm * 0.10
+            + cross_norm * 0.09
+            + rank_anchor * 0.07
+        )
+
+        if idx <= 9:
+            front_score += 0.025
+        elif 10 <= idx <= 15:
+            front_score += 0.025
+            if number in late_hit_counts:
+                front_score += 0.105 + min(0.075, late_hit_counts[number] * 0.025)
+            if number in missed_actual_counts:
+                front_score += 0.075 + min(0.06, missed_actual_counts[number] * 0.02)
+            if reasons & boosted_reasons:
+                front_score += 0.065
+            if item.get("stability_count", 0) >= 3:
+                front_score += 0.035
+            if float(maturity.get("score", 0) or 0) >= 70:
+                front_score += 0.025
+        else:
+            if number in late_hit_counts:
+                front_score += 0.045
+            if number in missed_actual_counts:
+                front_score += 0.035
+
+        risk = item_soft_risk_penalty(item, failed)
+        if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
+            risk += 0.045
+        front_score -= risk * (1.2 if mode == "critical" else 1.0)
+        raw_frontload[number] = front_score
+
+    normalized_frontload = normalize(raw_frontload)
+    ranked_numbers = sorted(
+        normalized_frontload,
+        key=lambda number: (
+            normalized_frontload[number],
+            original[number].get("score", 0),
+            original[number].get("confidence_index", 0),
+            -number,
+        ),
+        reverse=True,
+    )
+    top9_numbers = set(ranked_numbers[:9])
+    previous_top9 = {int(item["number"]) for item in candidates[:9]}
+    promoted = []
+    demoted = []
+    adjusted = []
+
+    for new_rank, number in enumerate(ranked_numbers, 1):
+        item = dict(original[number])
+        old_rank = original_rank[number]
+        front_score = normalized_frontload[number]
+        old_score = float(item.get("score", 0) or 0)
+        blended_score = clamp(old_score * 0.48 + front_score * 0.52, 0.0, 1.0)
+        if new_rank <= 9 and old_rank > 9:
+            blended_score = clamp(max(blended_score, old_score + 0.035), 0.0, 1.0)
+        elif new_rank > 9 and old_rank <= 9:
+            blended_score = clamp(blended_score - 0.025, 0.0, 1.0)
+
+        reasons = list(item.get("reasons", []))
+        if new_rank <= 9:
+            if old_rank > 9:
+                promoted.append(
+                    {
+                        "number": number,
+                        "from_rank": old_rank,
+                        "to_rank": new_rank,
+                        "frontload_score": round(front_score, 4),
+                        "late_hit_count": late_hit_counts.get(number, 0),
+                        "missed_actual_count": missed_actual_counts.get(number, 0),
+                    }
+                )
+                reasons.insert(0, "\u0054\u006f\u0070\u0039\u524d\u79fb\u6821\u6e96")
+            elif "\u0054\u006f\u0070\u0039\u6838\u5fc3\u4fdd\u7559" not in reasons:
+                reasons.append("\u0054\u006f\u0070\u0039\u6838\u5fc3\u4fdd\u7559")
+            action = "top9_core"
+        else:
+            if old_rank <= 9:
+                demoted.append(
+                    {
+                        "number": number,
+                        "from_rank": old_rank,
+                        "to_rank": new_rank,
+                        "frontload_score": round(front_score, 4),
+                    }
+                )
+                reasons.insert(0, "\u0054\u006f\u0070\u0039\u672a\u904e\u95dc\u964d\u81f3\u5099\u67e5")
+            elif 10 <= new_rank <= 15 and "\u0054\u006f\u0070\u0031\u0030\u002d\u0031\u0035\u5099\u67e5" not in reasons:
+                reasons.append("\u0054\u006f\u0070\u0031\u0030\u002d\u0031\u0035\u5099\u67e5")
+            action = "reserve_10_15" if new_rank <= 15 else "reserve_only"
+
+        item["pre_top9_rank"] = old_rank
+        item["rank"] = new_rank
+        item["top9_core"] = bool(number in top9_numbers)
+        item["top9_frontload_score"] = round(front_score, 4)
+        item["top9_frontload_action"] = action
+        item["score"] = round(blended_score, 4)
+        item["confidence_index"] = round(50 + blended_score * 49, 1)
+        item["model_probability_percent"] = conservative_probability_percent(blended_score)
+        item["reasons"] = reasons[:5]
+        adjusted.append(item)
+
+    return adjusted, {
+        "policy": "top9_high_confidence_frontload",
+        "status": "active",
+        "rule": "high confidence display and pack priority are compressed into ranks 1-9; ranks 10-15 are reserve only",
+        "top9_numbers": [item["number"] for item in adjusted[:9]],
+        "reserve_10_15_numbers": [item["number"] for item in adjusted[9:15]],
+        "promoted_to_top9": promoted,
+        "demoted_from_top9": demoted,
+        "late_hit_numbers_used": [
+            {"number": number, "late_hit_count": count}
+            for number, count in sorted(late_hit_counts.items(), key=lambda pair: (-pair[1], pair[0]))[:12]
+        ],
+    }
+
+
 def empty_pack(name, goal, reason):
     return {
         "name": name,
@@ -1881,6 +2045,25 @@ def strong_packs(candidates, review=None, governance=None):
             "governance": {},
         }
 
+    def complete_pack_numbers(key, numbers, size):
+        selected = []
+        for number in numbers or []:
+            if number not in selected:
+                selected.append(number)
+        if len(selected) >= size:
+            return sorted(selected[:size])
+        if key == "nine_hit_three":
+            pool = candidates[:9]
+        else:
+            pool = candidates[: max(size, 12)]
+        for item in pool:
+            number = item["number"]
+            if number not in selected:
+                selected.append(number)
+            if len(selected) >= size:
+                break
+        return sorted(selected[:size])
+
     specs = {
         "strong_single": ("\u6700\u5f37\u55ae\u652f", 1, 1, 0.78, 1, 82.0),
         "two_hit_one": ("\u6700\u5f372\u4e2d1", 1, 2, 0.76, 2, 76.0),
@@ -1912,6 +2095,7 @@ def strong_packs(candidates, review=None, governance=None):
             fallback_numbers = group_by_variant(key, fallback_pool, review, variant)
             if len(fallback_numbers) < size and fallback_pool:
                 fallback_numbers = top_rank_group(fallback_pool, size, review)
+            fallback_numbers = complete_pack_numbers(key, fallback_numbers, size)
             packs[key] = attach_maturity(watch_pack(name, goal, fallback_numbers, score_map, "strict confidence and maturity pool failed; output as daily research prediction"), fallback_numbers, key, min_maturity)
             packs[key]["governance"] = recent_stat
             packs[key]["monthly_governance"] = monthly_stats.get(key, {})
@@ -1919,6 +2103,7 @@ def strong_packs(candidates, review=None, governance=None):
         numbers = group_by_variant(key, allowed_pool, review, variant)
         if not numbers and allowed_pool:
             numbers = [allowed_pool[0]["number"]] if size == 1 else optimized_group(allowed_pool, size, review)
+        numbers = complete_pack_numbers(key, numbers, size)
         avg_score = sum(score_map[n] for n in numbers) / len(numbers) if numbers else 0
         monthly_stat = monthly_stats.get(key, {})
         monthly_blocked = bool(monthly_stat) and monthly_stat.get("status") == "strict_downshift"
@@ -2396,6 +2581,7 @@ def compute_industrial_analysis(draws, review=None):
     weights, weight_calibration = adaptive_feature_weights(draws, review)
     base_candidates, weights = score_numbers(draws, review, weights_override=weights)
     candidates, stability = stability_consensus(draws, base_candidates, review)
+    candidates, top9_frontload_audit = top9_frontload_candidates(candidates, review)
     pack_governance = pack_recent_governance(draws, weights_override=weights)
     packs = strong_packs(candidates, review, pack_governance)
     maturity = practical_maturity_summary(candidates)
@@ -2427,6 +2613,7 @@ def compute_industrial_analysis(draws, review=None):
     else:
         release_status = "watch_only"
     previous = previous_prediction_set(review)
+    top9_overlap = sorted(previous & {item["number"] for item in candidates[:9]})
     top10_overlap = sorted(previous & {item["number"] for item in candidates[:10]})
     top15_overlap = sorted(previous & {item["number"] for item in candidates[:15]})
     reentry_passed = sorted(
@@ -2436,20 +2623,23 @@ def compute_industrial_analysis(draws, review=None):
     unlikely = unlikely_number_analysis(draws, candidates, stability, review)
     promotion_audit = top10_promotion_audit(candidates, review)
     return {
-        "engine_version": "industrial_v6_precision_governor_strict_release",
+        "engine_version": "industrial_v7_top9_frontload_precision_governor",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
             "policy": "soft_penalty_previous_top15_with_recovery_revalidation",
             "previous_top15": sorted(previous),
             "reentry_passed": reentry_passed,
+            "current_top9_overlap": top9_overlap,
             "current_top10_overlap": top10_overlap,
             "current_top15_overlap": top15_overlap,
+            "top9_overlap_rate": round(len(top9_overlap) / 9, 3),
             "top10_overlap_rate": round(len(top10_overlap) / 10, 3),
             "top15_overlap_rate": round(len(top15_overlap) / 15, 3),
         },
         "stability_consensus": stability,
         "adaptive_weight_calibration": weight_calibration,
+        "top9_frontload_audit": top9_frontload_audit,
         "top10_promotion_audit": promotion_audit,
         "dependency_analysis": {
             "method": "three_fold_conditional_lift_with_fdr",
