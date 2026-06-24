@@ -182,14 +182,19 @@ def publish(token):
 
 
 def main():
-    token = device_token()
+    token_path = BASE / "mobile_access_token.txt"
+    if token_path.exists():
+        token = token_path.read_text(encoding="utf-8", errors="ignore").strip()
+    else:
+        token = device_token()
+        token_path.write_text(token, encoding="utf-8")
     sha, count = publish(token)
     url = "https://pingshen670822.github.io/tiantianle-cloud-system/"
     (BASE / "tiantianle-mobile-cloud-url.txt").write_text(url + "\n", encoding="ascii")
     print("")
-    print(f"Published {count} approved files.")
-    print("Commit: " + sha)
-    print("Mobile URL: " + url)
+    print(f"已發布 {count} 個手機雲端檔案。")
+    print("雲端版本: " + sha)
+    print("手機網址: " + url)
 
 
 if __name__ == "__main__":

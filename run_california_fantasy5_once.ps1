@@ -3,6 +3,7 @@ param(
   [switch]$NetworkOnly,
   [switch]$ValidateOnly,
   [switch]$All,
+  [switch]$ForceRun,
   [switch]$NoOpen
 )
 
@@ -10,16 +11,27 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
 
-$env:TIANTIANLE_CORE_BACKTEST_ROUNDS = "120"
-$env:TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS = "120"
-$env:TIANTIANLE_ADVANCED_BACKTEST_ROUNDS = "80"
-$env:TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS = "80"
-$env:TIANTIANLE_GROUP_BACKTEST_SHORT = "60"
-$env:TIANTIANLE_GROUP_BACKTEST_MID = "120"
-$env:TIANTIANLE_GROUP_BACKTEST_LONG = "240"
+if ($All) {
+  $env:TIANTIANLE_CORE_BACKTEST_ROUNDS = "120"
+  $env:TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS = "120"
+  $env:TIANTIANLE_ADVANCED_BACKTEST_ROUNDS = "80"
+  $env:TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS = "80"
+  $env:TIANTIANLE_GROUP_BACKTEST_SHORT = "60"
+  $env:TIANTIANLE_GROUP_BACKTEST_MID = "120"
+  $env:TIANTIANLE_GROUP_BACKTEST_LONG = "240"
+} else {
+  $env:TIANTIANLE_CORE_BACKTEST_ROUNDS = "60"
+  $env:TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS = "60"
+  $env:TIANTIANLE_ADVANCED_BACKTEST_ROUNDS = "40"
+  $env:TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS = "40"
+  $env:TIANTIANLE_GROUP_BACKTEST_SHORT = "30"
+  $env:TIANTIANLE_GROUP_BACKTEST_MID = "60"
+  $env:TIANTIANLE_GROUP_BACKTEST_LONG = "120"
+}
 
 $ReportsDir = Join-Path $ScriptDir "reports"
 $SiteDir = Join-Path $ScriptDir "site"
+$env:PYTHONFAULTHANDLER = "1"
 $HistoryDir = Join-Path $ScriptDir "history_import"
 $CacheDir = Join-Path $ScriptDir "data\latest_cache"
 New-Item -ItemType Directory -Force -Path $ReportsDir, $SiteDir, $HistoryDir, $CacheDir | Out-Null
@@ -32,7 +44,7 @@ function Step {
 }
 
 function Test-FastRefreshAllowed {
-  if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly -or $All) {
+  if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly -or $All -or $ForceRun) {
     return $false
   }
   $AnalysisPath = Join-Path $ReportsDir "latest_analysis.json"
@@ -57,6 +69,8 @@ Set-Content -Path $RunLog -Encoding UTF8 -Value ("one-click start: " + (Get-Date
 $FastRefresh = Test-FastRefreshAllowed
 if ($FastRefresh) {
   Step "Fast refresh: before Taiwan safe update time; skip network fetch and full model recompute"
+} elseif ($ForceRun) {
+  Step "Force run: bypass freshness skip and recompute full model"
 }
 
 Step "Step 1/5 prepare data and latest cache"
@@ -70,6 +84,7 @@ if (Test-Path -LiteralPath $UserCsv) {
 
 if (-not $FastRefresh) {
   $LatestPages = @(
+    @{ Name = "calottery_official.html"; Url = 'https://www.calottery.com/en/draw-games/fantasy-5' },
     @{ Name = "lotto8_latest.html"; Url = 'https://www.lotto-8.com/usa/listltoFT5.asp?indexpage=1&orderby=new' },
     @{ Name = "lottolyzer_latest.html"; Url = 'https://en.lottolyzer.com/history/united-states/fantasy-5-california/' },
     @{ Name = "lotteryusa_latest.html"; Url = 'https://www.lotteryusa.com/california/fantasy-5/' },
@@ -108,15 +123,22 @@ Step "Step 2/5 run main system"
 if ($FastRefresh) {
   Step "main system skipped: existing prediction is still current before safe update time"
 } else {
-  & $PythonExe @RunArgs
-  if ($LASTEXITCODE -ne 0) { throw "main system failed: $LASTEXITCODE" }
+  $MainExitCode = 1
+  for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
+    & $PythonExe "-X" "faulthandler" @RunArgs
+    $MainExitCode = $LASTEXITCODE
+    if ($MainExitCode -eq 0) { break }
+    Step ("main system retry " + $Attempt + "/2 after exit " + $MainExitCode)
+    Start-Sleep -Seconds 3
+  }
+  if ($MainExitCode -ne 0) { throw "main system failed after retry: $MainExitCode" }
 }
 
 Step "Step 3/5 build mobile pages"
 & $PythonExe ".\pages_build.py"
 if ($LASTEXITCODE -ne 0) { throw "mobile page build failed: $LASTEXITCODE" }
 
-Step "Step 4/5 verify outputs"
+Step "Step 4/6 verify outputs"
 $RequiredOutputs = @(
   (Join-Path $ReportsDir "latest_analysis.json"),
   (Join-Path $ReportsDir "tiantianle_ironlaw_battle_report.html"),
@@ -138,7 +160,20 @@ if (Test-Path -LiteralPath $PyCache) {
   Step "runtime cache cleaned"
 }
 
-Step "Step 5/5 open latest page"
+Step "Step 5/6 publish mobile cloud"
+if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
+  Step "cloud publish skipped for diagnostic-only mode"
+} else {
+  $PublishScript = Join-Path $ScriptDir "publish_mobile_site_only.py"
+  if (-not (Test-Path -LiteralPath $PublishScript)) {
+    throw "cloud publish script missing"
+  }
+  & $PythonExe $PublishScript
+  if ($LASTEXITCODE -ne 0) { throw "cloud publish failed: $LASTEXITCODE" }
+  Step "cloud mobile site published"
+}
+
+Step "Step 6/6 open latest page"
 if (-not $NoOpen) {
   if ($ValidateOnly) {
     Start-Process (Join-Path $ReportsDir "source_validation_report.md")

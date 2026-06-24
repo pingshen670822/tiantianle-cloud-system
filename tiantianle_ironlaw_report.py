@@ -9,6 +9,8 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
+from 中文顯示工具 import localize_plain_text, localize_visible_html, write_alias
+
 
 ROOT = Path(__file__).resolve().parent
 REPORT_DIR = ROOT / "reports"
@@ -544,8 +546,9 @@ def pack_cards(analysis):
 
 def single_precision_rows(analysis):
     packs = analysis.get("strong_packs") or {}
+    ultra_single = (ultra_precision_recommendations(analysis).get("single") or {})
     single = packs.get("strong_single") or {}
-    numbers = single.get("numbers") or []
+    numbers = ultra_single.get("numbers") or single.get("numbers") or []
     number = numbers[0] if numbers else None
     candidates = analysis.get("candidates") or []
     candidate = {}
@@ -741,10 +744,21 @@ def rolling_adjustment_rows(analysis):
 def core_model_rows(analysis):
     packs = analysis.get("strong_packs") or {}
     rows = []
+    ultra = ultra_precision_recommendations(analysis)
+    for ultra_key, label, goal in [
+        ("single", "\\u8d85\\u5f37\\u7cbe\\u7b97\\u7368\\u96bb1\\u4e2d1", "1"),
+        ("two", "\\u8d85\\u5f37\\u7cbe\\u7b972\\u4e2d1~2", "1-2"),
+        ("three", "\\u8d85\\u5f37\\u7cbe\\u7b973\\u4e2d1~3", "1-3"),
+    ]:
+        item = ultra.get(ultra_key) or {}
+        rows.append([
+            u(label),
+            fmt_numbers(item.get("numbers", [])),
+            goal,
+            f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97\\u5206')} {item.get('score', 0)}",
+            "Top9",
+        ])
     labels = {
-        "strong_single": "\\u7368\\u652f\\u7cbe\\u6e961\\u4e2d1",
-        "two_hit_one": "2\\u4e2d1~2",
-        "three_hit_two": "3\\u4e2d2~3",
         "five_hit_two": "5\\u4e2d2~3",
         "nine_hit_three": "9\\u4e2d3~5",
     }
@@ -794,7 +808,23 @@ def today_high_probability_rows(analysis):
     packs = analysis.get("strong_packs") or {}
     release = ((analysis.get("industrial_engine") or {}).get("release_gate") or {})
     rows = []
-    for key in ["strong_single", "two_hit_one", "three_hit_two", "five_hit_two", "nine_hit_three"]:
+    ultra = ultra_precision_recommendations(analysis)
+    for ultra_key, label in [
+        ("single", u("\\u8d85\\u5f37\\u7cbe\\u7b97\\u7368\\u96bb1\\u4e2d1")),
+        ("two", u("\\u8d85\\u5f37\\u7cbe\\u7b972\\u4e2d1~2")),
+        ("three", u("\\u8d85\\u5f37\\u7cbe\\u7b973\\u4e2d1~3")),
+    ]:
+        item = ultra.get(ultra_key) or {}
+        numbers = item.get("numbers") or []
+        rows.append([
+            label,
+            fmt_numbers(numbers),
+            esc(pack_confidence_note(analysis, numbers)),
+            f"{u('\\u0054\\u006f\\u0070\\u0039\\u4e8c\\u6b21\\u7cbe\\u7b97\\u5206')} {item.get('score', 0)}",
+            esc(f"{release.get('status', '')} / ultra_precision"),
+            u("\\u9ad8\\u4fe1\\u5fc3\\u5f37\\u63a8\\u89c0\\u5bdf\\uff0c\\u975e\\u4fdd\\u8b49\\u5fc5\\u4e2d"),
+        ])
+    for key in ["five_hit_two", "nine_hit_three"]:
         pack = packs.get(key) or {}
         governance = pack.get("governance") or {}
         status = pack.get("status") or ("released" if pack.get("official_release") else "research_prediction")
@@ -1634,8 +1664,12 @@ def split_prediction_review(report_html):
 def save_reports():
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_html, report_md, history_html = build_report()
-    tabbed_report_html = apply_latest_battle_tabs(report_html)
+    tabbed_report_html = localize_visible_html(apply_latest_battle_tabs(report_html))
     prediction_html, review_html = split_prediction_review(report_html)
+    prediction_html = localize_visible_html(prediction_html)
+    review_html = localize_visible_html(review_html)
+    report_md = localize_plain_text(report_md)
+    history_html = localize_visible_html(history_html)
     MAIN_HTML.write_text(tabbed_report_html, encoding="utf-8")
     LATEST_HTML.write_text(tabbed_report_html, encoding="utf-8")
     DASHBOARD_HTML.write_text(tabbed_report_html, encoding="utf-8")
@@ -1643,6 +1677,17 @@ def save_reports():
     REVIEW_HTML.write_text(review_html, encoding="utf-8")
     MAIN_MD.write_text(report_md, encoding="utf-8")
     HISTORY_HTML.write_text(history_html, encoding="utf-8")
+    for source, aliases in {
+        MAIN_HTML: ["天天樂完整戰報.html", "最新完整戰報.html"],
+        LATEST_HTML: ["天天樂最新戰報.html"],
+        DASHBOARD_HTML: ["天天樂儀表板.html"],
+        PREDICTION_HTML: ["下期預測.html", "天天樂下期預測.html"],
+        REVIEW_HTML: ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
+        MAIN_MD: ["最新戰報.md", "天天樂最新戰報.md"],
+        HISTORY_HTML: ["預測歷史對比.html", "天天樂預測歷史對比.html"],
+    }.items():
+        for alias in aliases:
+            write_alias(source, alias)
     return MAIN_HTML
 
 

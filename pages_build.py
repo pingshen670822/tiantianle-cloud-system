@@ -11,6 +11,8 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
+from 中文顯示工具 import localize_visible_html, write_alias
+
 
 ROOT = Path(__file__).resolve().parent
 REPORT_DIR = ROOT / "reports"
@@ -92,7 +94,7 @@ def inject_mobile_panel(html):
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">{u('\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\u6700\\u65b0\\u9801')}</button>
       <a class="cloud-update-link" href="reset.html?v={version}">{u('\\u624b\\u6a5f\\u6c92\\u66f4\\u65b0\\u9ede\\u9019\\u88e1\\u6e05\\u9664\\u820a\\u5feb\\u53d6')}</a>
       <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{page_url}</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">Build {version}</p>
+      <p class="cloud-note" id="mobileUpdateStatus">{u('\\u7248\\u672c')} {version}</p>
       {local_note}
     </section>
     <a class="mobile-action sticky-launch" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0')}</a>
@@ -139,12 +141,12 @@ def inject_mobile_panel(html):
     }
     const REFRESH_CHECK_MS = 30000;
     async function forceRefresh() {
-      setMobileStatus('Updating ' + new Date().toLocaleTimeString());
+      setMobileStatus('更新中 ' + new Date().toLocaleTimeString());
       await clearMobileCaches();
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('index.html?v={version}&force=' + Date.now());
+      location.replace('首頁.html?v={version}&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -155,7 +157,7 @@ def inject_mobile_panel(html):
         if (stamp && stamp !== window.TIANTIANLE_BUILD_VERSION && !sessionStorage.getItem('tiantianle_refreshed_' + stamp)) {
           sessionStorage.setItem('tiantianle_refreshed_' + stamp, '1');
           await clearMobileCaches();
-          location.replace('index.html?v=' + stamp + '&auto=' + Date.now());
+          location.replace('首頁.html?v=' + stamp + '&auto=' + Date.now());
         }
       } catch (err) {}
     }
@@ -201,6 +203,27 @@ def copy_text(src, dst):
         dst.write_text(src.read_text(encoding="utf-8", errors="replace"), encoding="utf-8")
 
 
+def prefer_chinese_links(html_text):
+    replacements = {
+        'href="index.html"': 'href="首頁.html"',
+        'href="prediction.html"': 'href="下期預測.html"',
+        'href="review.html"': 'href="上期未命中檢討.html"',
+        'href="prediction-history.html"': 'href="預測歷史對比.html"',
+        'href="tiantianle_prediction_history.html"': 'href="預測歷史對比.html"',
+        'href="reports/latest_battle_report.html"': 'href="reports/天天樂完整戰報.html"',
+        'href="reset.html': 'href="清除快取.html',
+        'href="install.html': 'href="安裝手機版.html',
+    }
+    result = html_text
+    for old, new in replacements.items():
+        result = result.replace(old, new)
+    return result
+
+
+def finalize_user_html(html_text):
+    return prefer_chinese_links(localize_visible_html(html_text))
+
+
 def reset_dir(path):
     if path.exists():
         shutil.rmtree(path)
@@ -244,7 +267,9 @@ def write_version_file():
             )
         except Exception:
             pass
-    (SITE_DIR / "version.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    version_text = json.dumps(payload, ensure_ascii=False, indent=2)
+    (SITE_DIR / "version.json").write_text(version_text, encoding="utf-8")
+    (SITE_DIR / "版本.json").write_text(version_text, encoding="utf-8")
 
 
 def esc(value):
@@ -476,11 +501,24 @@ def build_home_page():
     confidence_rows = build_confidence_rows(candidates)
     signal_focus = build_signal_focus(candidates)
     ultra_precision_block = build_ultra_precision_block(candidates)
+    ultra = ultra_precision_recommendations(candidates)
     pack_rows = []
+
+    def add_pack_row(label, numbers, goal, maturity_text):
+        pack_rows.append(
+            f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(numbers or []))}</td>"
+            f"<td>{esc(goal)}</td><td>{esc(maturity_text)}</td></tr>"
+        )
+
+    for ultra_key, label, goal in [
+        ("single", u("\\u8d85\\u5f37\\u7cbe\\u7b97\\u7368\\u96bb1\\u4e2d1"), "1"),
+        ("two", u("\\u8d85\\u5f37\\u7cbe\\u7b972\\u4e2d1~2"), "1~2"),
+        ("three", u("\\u8d85\\u5f37\\u7cbe\\u7b973\\u4e2d1~3"), "1~3"),
+    ]:
+        item = ultra.get(ultra_key) or {}
+        add_pack_row(label, item.get("numbers") or [], goal, f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97')} {item.get('score', 0)} / watch_only")
+
     for key, label in [
-        ("strong_single", u("\\u7368\\u652f\\u7cbe\\u6e961\\u4e2d1")),
-        ("two_hit_one", "2" + u("\\u4e2d") + "1~2"),
-        ("three_hit_two", "3" + u("\\u4e2d") + "2~3"),
         ("five_hit_two", "5" + u("\\u4e2d") + "2~3"),
         ("nine_hit_three", "9" + u("\\u4e2d") + "3~5"),
     ]:
@@ -491,7 +529,7 @@ def build_home_page():
         if maturity_status is None and "passed" in pack_maturity:
             maturity_status = "passed" if pack_maturity.get("passed") else "watch_only"
         maturity_text = f"{maturity_value} / {maturity_status or '-'}"
-        pack_rows.append(f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(pack.get('numbers') or []))}</td><td>{esc(pack.get('hit_goal'))}</td><td>{esc(maturity_text)}</td></tr>")
+        add_pack_row(label, pack.get("numbers") or [], pack.get("hit_goal"), maturity_text)
     page_title = u("\\u5929\\u5929\\u6a02 \\u624b\\u6a5f\\u96f2\\u7aef\\u9996\\u9801")
     subtitle = (
         f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(data.get('generated_at_taiwan'))} / "
@@ -526,13 +564,13 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <header><h1>{esc(page_title)}</h1><p>{subtitle}</p></header>
 <main>
 <nav class="tabs">
-<a class="active" href="index.html">{u('\\u9996\\u9801')}</a>
-<a href="prediction.html">{u('\\u4e0b\\u671f\\u9810\\u6e2c')}</a>
-<a href="review.html">{u('\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a>
+<a class="active" href="首頁.html">{u('\\u9996\\u9801')}</a>
+<a href="下期預測.html">{u('\\u4e0b\\u671f\\u9810\\u6e2c')}</a>
+<a href="上期未命中檢討.html">{u('\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a>
 </nav>
-<section class="band"><a class="primary" href="prediction.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
-<section class="band"><a class="primary danger" href="review.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
-<section class="band"><a class="primary secondary" href="reports/latest_battle_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
+<section class="band"><a class="primary" href="下期預測.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
+<section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
+<section class="band"><a class="primary secondary" href="reports/天天樂完整戰報.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {signal_focus}
 {ultra_precision_block}
@@ -592,12 +630,13 @@ def write_pwa_files():
 <style>body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:28px;background:#f6f7fb;color:#111827}}.box{{max-width:680px;margin:auto;background:white;border:1px solid #d8dee9;border-radius:8px;padding:18px}}</style></head>
 <body><div class="box"><h1>{u('\\u5929\\u5929\\u6a02')}</h1><p>{u('\\u76ee\\u524d\\u96e2\\u7dda\\uff0c\\u5df2\\u986f\\u793a\\u6700\\u8fd1\\u5feb\\u53d6\\u5167\\u5bb9\\u3002\\u8981\\u66f4\\u65b0\\u6700\\u65b0\\u9810\\u6e2c\\uff0c\\u8acb\\u9023\\u7dda\\u5f8c\\u518d\\u958b\\u555f\\u3002')}</p></div></body></html>"""
     (SITE_DIR / "offline.html").write_text(offline, encoding="utf-8")
+    (SITE_DIR / "離線頁.html").write_text(offline, encoding="utf-8")
     reset = f"""<!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <title>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u66f4\\u65b0')}</title>
 <style>body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}}main{{max-width:680px;margin:auto;padding:28px}}.box{{background:#fff;border:1px solid #d8dee9;border-radius:8px;padding:18px}}.status{{font-weight:900;color:#166534}}a{{display:block;margin-top:14px;padding:14px;background:#166534;color:#fff;text-align:center;border-radius:8px;text-decoration:none;font-weight:900}}</style></head>
-<body><main><div class="box"><h1>{u('\\u5929\\u5929\\u6a02')}</h1><p class="status" id="status">{u('\\u6b63\\u5728\\u6e05\\u9664\\u624b\\u6a5f\\u820a\\u5feb\\u53d6\\u4e26\\u91cd\\u8b80\\u96f2\\u7aef\\u6700\\u65b0\\u7248')}</p><a href="index.html?v={version}&manual=1">{u('\\u7acb\\u5373\\u9032\\u5165\\u6700\\u65b0\\u7248')}</a></div></main>
+<body><main><div class="box"><h1>{u('\\u5929\\u5929\\u6a02')}</h1><p class="status" id="status">{u('\\u6b63\\u5728\\u6e05\\u9664\\u624b\\u6a5f\\u820a\\u5feb\\u53d6\\u4e26\\u91cd\\u8b80\\u96f2\\u7aef\\u6700\\u65b0\\u7248')}</p><a href="首頁.html?v={version}&manual=1">{u('\\u7acb\\u5373\\u9032\\u5165\\u6700\\u65b0\\u7248')}</a></div></main>
 <script>
 (async function(){{
   var status = document.getElementById('status');
@@ -614,12 +653,13 @@ def write_pwa_files():
   }} catch (err) {{
     status.textContent = '{u('\\u5df2\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\uff0c\\u6b63\\u5728\\u9032\\u5165\\u6700\\u65b0\\u7248')}';
   }}
-  location.replace('index.html?v={version}&reset=' + Date.now());
+  location.replace('首頁.html?v={version}&reset=' + Date.now());
 }})();
 </script></body></html>"""
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
+    (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','prediction.html','review.html','prediction-history.html','latest_analysis.json','version.json','system_health_report.md','manifest.webmanifest','offline.html','reset.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','prediction-history.html','預測歷史對比.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -713,7 +753,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt', function(e){e.preventDefault();deferredPrompt=e;});
 async function launchTiantianle(){
   if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
-  location.href='index.html';
+  location.href='首頁.html';
 }
 document.getElementById('installBtn').addEventListener('click', launchTiantianle);
 document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
@@ -730,23 +770,42 @@ def main():
     history = REPORT_DIR / "tiantianle_prediction_history.html"
     prediction = REPORT_DIR / "prediction.html"
     review = REPORT_DIR / "review.html"
-    index_html = inject_mobile_panel(build_home_page())
+    index_html = finalize_user_html(inject_mobile_panel(build_home_page()))
     (SITE_DIR / "index.html").write_text(index_html, encoding="utf-8")
+    (SITE_DIR / "首頁.html").write_text(index_html, encoding="utf-8")
     if prediction.exists():
-        (SITE_DIR / "prediction.html").write_text(inject_mobile_panel(prediction.read_text(encoding="utf-8", errors="replace")), encoding="utf-8")
+        prediction_html = finalize_user_html(inject_mobile_panel(prediction.read_text(encoding="utf-8", errors="replace")))
+        (SITE_DIR / "prediction.html").write_text(prediction_html, encoding="utf-8")
+        (SITE_DIR / "下期預測.html").write_text(prediction_html, encoding="utf-8")
     if review.exists():
-        (SITE_DIR / "review.html").write_text(inject_mobile_panel(review.read_text(encoding="utf-8", errors="replace")), encoding="utf-8")
-    copy_text(history, SITE_DIR / "prediction-history.html")
+        review_html = finalize_user_html(inject_mobile_panel(review.read_text(encoding="utf-8", errors="replace")))
+        (SITE_DIR / "review.html").write_text(review_html, encoding="utf-8")
+        (SITE_DIR / "上期未命中檢討.html").write_text(review_html, encoding="utf-8")
+    if history.exists():
+        history_html = finalize_user_html(history.read_text(encoding="utf-8", errors="replace"))
+        (SITE_DIR / "prediction-history.html").write_text(history_html, encoding="utf-8")
+        (SITE_DIR / "預測歷史對比.html").write_text(history_html, encoding="utf-8")
     copy_text(REPORT_DIR / "latest_analysis.json", SITE_DIR / "latest_analysis.json")
+    write_alias(SITE_DIR / "latest_analysis.json", "最新分析資料.json")
     copy_text(REPORT_DIR / "system_health_report.md", SITE_DIR / "system_health_report.md")
+    write_alias(SITE_DIR / "system_health_report.md", "系統健康報告.md")
     write_version_file()
     copy_public_tree(REPORT_DIR, SITE_DIR / "reports")
+    for source, aliases in {
+        SITE_DIR / "reports" / "latest_battle_report.html": ["天天樂完整戰報.html", "天天樂最新戰報.html"],
+        SITE_DIR / "reports" / "prediction.html": ["下期預測.html", "天天樂下期預測.html"],
+        SITE_DIR / "reports" / "review.html": ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
+        SITE_DIR / "reports" / "latest_battle_report.md": ["最新戰報.md", "天天樂最新戰報.md"],
+        SITE_DIR / "reports" / "tiantianle_prediction_history.html": ["預測歷史對比.html", "天天樂預測歷史對比.html"],
+    }.items():
+        for alias in aliases:
+            write_alias(source, alias)
     version = build_version()
     manifest = {
         "name": u("\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u7368\\u7acb\\u7248"),
         "short_name": u("\\u5929\\u5929\\u6a02"),
         "id": "./",
-        "start_url": f"index.html?v={version}&pwa=1",
+        "start_url": f"首頁.html?v={version}&pwa=1",
         "scope": "./",
         "display": "standalone",
         "orientation": "portrait",
@@ -760,6 +819,7 @@ def main():
     (SITE_DIR / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     write_pwa_files()
     write_install_page()
+    write_alias(SITE_DIR / "install.html", "安裝手機版.html")
     print(SITE_DIR / "index.html")
 
 
