@@ -2,7 +2,7 @@
   "name": "天天樂手機獨立版",
   "short_name": "天天樂",
   "id": "./",
-  "start_url": "index.html?v=20260623122112&pwa=1",
+  "start_url": "index.html?v=20260624085954&pwa=1",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

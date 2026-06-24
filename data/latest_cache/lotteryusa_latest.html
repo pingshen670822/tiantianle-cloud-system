@@ -976,8 +976,8 @@ src="https://www.facebook.com/tr?id=1259023099701751&ev=PageView&noscript=1"
 							draw
 						</div>
 						<time class="c-state-short-info__subtitle">
-																				Tomorrow, Jun 23, 2026
-												</time>
+																						Today at 6:30 pm PDT
+													</time>
 
 					</div>
 				</div>
@@ -1853,26 +1853,26 @@ document.addEventListener("DOMContentLoaded", function(){
                             <div class="c-ball__row">
 
                 <ul class='c-ball__list'>
-                                            <li class="c-ball c-ball--sm" data-value="7">
-                            7
+                                            <li class="c-ball c-ball--sm" data-value="9">
+                            9
                         </li>
-                                            <li class="c-ball c-ball--sm" data-value="13">
-                            13
+                                            <li class="c-ball c-ball--sm" data-value="10">
+                            10
                         </li>
-                                            <li class="c-ball c-ball--sm" data-value="18">
-                            18
+                                            <li class="c-ball c-ball--sm" data-value="23">
+                            23
                         </li>
-                                            <li class="c-ball c-ball--sm" data-value="31">
-                            31
+                                            <li class="c-ball c-ball--sm" data-value="33">
+                            33
                         </li>
-                                            <li class="c-ball c-ball--sm" data-value="34">
-                            34
+                                            <li class="c-ball c-ball--sm" data-value="38">
+                            38
                         </li>
                                                         </ul>
 
                 
                     
-<div class="c-copy-to-clipboard"  data-controller="copyToClipboard live" id="copy-1-1-1782180361" data-live-name-value="CopyToClipboard" data-live-url-value="/_components/CopyToClipboard" data-live-props-value="{&quot;@attributes&quot;:{&quot;id&quot;:&quot;copy-1-1-1782180361&quot;,&quot;text&quot;:&quot;                        Your Quick Picks from LotteryUSA.com:\n                        7, 13, 18, 31, 34                    &quot;,&quot;buttonClasses&quot;:&quot;c-ball__copy-button c-ball__copy-button--md&quot;},&quot;@checksum&quot;:&quot;nsBxHZ4NvIvzolBtKxx9k9NLol8ROd7AYFvequ8iq0s=&quot;}">
+<div class="c-copy-to-clipboard"  data-controller="copyToClipboard live" id="copy-1-1-1782262657" data-live-name-value="CopyToClipboard" data-live-url-value="/_components/CopyToClipboard" data-live-props-value="{&quot;@attributes&quot;:{&quot;id&quot;:&quot;copy-1-1-1782262657&quot;,&quot;text&quot;:&quot;                        Your Quick Picks from LotteryUSA.com:\n                        9, 10, 23, 33, 38                    &quot;,&quot;buttonClasses&quot;:&quot;c-ball__copy-button c-ball__copy-button--md&quot;},&quot;@checksum&quot;:&quot;TmM1XpniYDpURearoH\/IQKUXmJgIgVk2Pt4Mnol68tM=&quot;}">
   <button class="c-copy-to-clipboard__button c-ball__copy-button c-ball__copy-button--md" type="button"
     data-action="live#update click->copyToClipboard#copy">
         <svg class="c-copy-to-clipboard-button__icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
@@ -1886,7 +1886,7 @@ document.addEventListener("DOMContentLoaded", function(){
     </span>
       </button>
   <textarea class="c-copy-to-clipboard__input">                        Your Quick Picks from LotteryUSA.com:
-                        7, 13, 18, 31, 34                    </textarea>
+                        9, 10, 23, 33, 38                    </textarea>
 </div>
                 
             </div>
@@ -2966,7 +2966,7 @@ Contact us</a></section>
 			Please note: These results are unofficial. Always check with the official source for lottery numbers in a particular state. Lottery USA is an independent lottery results service and is neither endorsed, affiliated nor approved by any state, multi-state lottery operator or organization whatsoever. All trademarks remain the property of their rightful owners and used for informational purposes only. Copyright 1995-2026 Lotto Logic LTD., All Rights Reserved.
 		</p>
 		<p class="c-global-footer__updated">Updated:
-			<time datetime="2026-06-22T21:00">Mon, Jun 22, 2026 @ 9:00 PM</time>
+			<time datetime="2026-06-23T19:30">Tue, Jun 23, 2026 @ 7:30 PM</time>
 		</p>
 </div>
 </footer>
@@ -3153,7 +3153,29 @@ window.addEventListener('load', () => {
   }
 
 });
+</script>
 
+<script>
+window.addEventListener("load", function () {
+  const themeSetting = localStorage.getItem("theme") || "system";
+
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const osTheme = prefersDark ? "dark" : "light";
+
+  const actualTheme =
+    themeSetting === "system"
+      ? osTheme
+      : themeSetting;
+
+  if (typeof gtag === "function") {
+    gtag("set", "user_properties", {
+      theme_setting: themeSetting,
+      effective_theme: actualTheme,
+      os_theme: osTheme
+    });
+  }
+});
 </script>
 <script src="https://assets.lotteryusa.com/js/cookieAudit.2e53458.js"></script>
 		</body>
