@@ -1,5 +1,7 @@
 import base64
+import ctypes
 import json
+import os
 import pathlib
 import ssl
 import sys
@@ -13,6 +15,8 @@ REPO = "pingshen670822/tiantianle-cloud-system"
 CLIENT_ID = "178c6fc778ccc68e1d6a"
 BLOCKED_NAME_PARTS = ("token", "secret", "credential", "password", "github_device_login")
 BLOCKED_NAMES = {".env", ".env.local", ".env.production"}
+FILE_ATTRIBUTE_HIDDEN = 0x2
+INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
 
 
 def request_json(url, data=None, method=None, headers=None, token=None, tolerate=()):
@@ -96,6 +100,22 @@ def github_api(path, token, method="GET", data=None, tolerate=()):
         token=token,
         tolerate=tolerate,
     )
+
+
+def write_text_even_if_hidden(path, text, encoding="utf-8"):
+    path = pathlib.Path(path)
+    if os.name == "nt" and path.exists():
+        attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
+        if attrs != INVALID_FILE_ATTRIBUTES and attrs & FILE_ATTRIBUTE_HIDDEN:
+            ctypes.windll.kernel32.SetFileAttributesW(str(path), attrs & ~FILE_ATTRIBUTE_HIDDEN)
+            try:
+                path.write_text(text, encoding=encoding)
+            finally:
+                new_attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
+                if new_attrs != INVALID_FILE_ATTRIBUTES:
+                    ctypes.windll.kernel32.SetFileAttributesW(str(path), new_attrs | FILE_ATTRIBUTE_HIDDEN)
+            return
+    path.write_text(text, encoding=encoding)
 
 
 def approved_files():
@@ -190,7 +210,7 @@ def main():
         token_path.write_text(token, encoding="utf-8")
     sha, count = publish(token)
     url = "https://pingshen670822.github.io/tiantianle-cloud-system/"
-    (BASE / "tiantianle-mobile-cloud-url.txt").write_text(url + "\n", encoding="ascii")
+    write_text_even_if_hidden(BASE / "tiantianle-mobile-cloud-url.txt", url + "\n", encoding="ascii")
     print("")
     print(f"已發布 {count} 個手機雲端檔案。")
     print("雲端版本: " + sha)

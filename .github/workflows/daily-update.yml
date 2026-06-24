@@ -46,7 +46,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Update Tiantianle data and reports
+      - name: Update Tiantianle data and reports with post-draw retry
         env:
           TIANTIANLE_CORE_BACKTEST_ROUNDS: "60"
           TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS: "60"
@@ -55,9 +55,46 @@ jobs:
           TIANTIANLE_GROUP_BACKTEST_SHORT: "30"
           TIANTIANLE_GROUP_BACKTEST_MID: "60"
           TIANTIANLE_GROUP_BACKTEST_LONG: "120"
-        run: python "美國加州天天樂_20260618_第1版.py"
-      - name: Build mobile site
-        run: python pages_build.py
+        shell: bash
+        run: |
+          set -e
+          for attempt in $(seq 1 10); do
+            echo "post-draw update attempt ${attempt}/10"
+            python "美國加州天天樂_20260618_第1版.py"
+            python pages_build.py
+            if python - <<'PY'
+          import json
+          import sys
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          with open("reports/latest_analysis.json", encoding="utf-8") as fh:
+              analysis = json.load(fh)
+          freshness = analysis.get("freshness") or {}
+          latest = freshness.get("latest_draw_date") or (analysis.get("latest_draw") or {}).get("draw_date")
+          target = analysis.get("target_draw_date")
+          safe_text = freshness.get("target_taiwan_safe_update_time")
+          now = datetime.now(ZoneInfo("Asia/Taipei"))
+          if safe_text:
+              safe_time = datetime.strptime(safe_text, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Taipei"))
+              if now < safe_time:
+                  print(f"before safe update time: now={now:%Y-%m-%d %H:%M}, safe={safe_text}")
+                  sys.exit(0)
+          if not target or latest == target:
+              print(f"latest draw reached target: latest={latest}, target={target}")
+              sys.exit(0)
+          print(f"latest source still old: latest={latest}, target={target}; retrying")
+          sys.exit(1)
+          PY
+            then
+              break
+            fi
+            if [ "$attempt" = "10" ]; then
+              echo "latest draw still not available after retry window; later schedule will retry"
+              break
+            fi
+            sleep 180
+          done
       - name: Commit updated data
         run: |
           git config user.name "tiantianle automation"
