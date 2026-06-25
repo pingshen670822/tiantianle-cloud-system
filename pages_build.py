@@ -519,6 +519,19 @@ def build_home_page():
     signal_focus = build_signal_focus(candidates)
     ultra_precision_block = build_ultra_precision_block(candidates, data)
     ultra = ultra_precision_recommendations(candidates, data)
+    gap_diagnosis = industrial.get("prediction_gap_diagnosis") or {}
+    gap_rows = []
+    for item in (gap_diagnosis.get("missing_elements") or [])[:6]:
+        gap_rows.append(
+            f"<tr><th>{esc(item.get('category', '-'))}</th><td>{esc(item.get('evidence', '-'))}</td>"
+            f"<td>{esc(item.get('fix', '-'))}</td></tr>"
+        )
+    if not gap_rows:
+        gap_rows.append(
+            f"<tr><th>{u('\\u76ee\\u524d\\u8a3a\\u65b7')}</th><td>{u('\\u672a\\u898b\\u91cd\\u5927\\u7d50\\u69cb\\u7f3a\\u53e3')}</td>"
+            f"<td>{u('\\u7e7c\\u7e8c\\u6bcf\\u671f\\u6efe\\u52d5\\u91cd\\u7b97')}</td></tr>"
+        )
+    gap_action_text = u("\\u3001").join((gap_diagnosis.get("active_action_labels") or gap_diagnosis.get("active_actions") or [])[:6]) or "-"
     pack_rows = []
 
     def add_pack_row(label, numbers, goal, maturity_text):
@@ -569,8 +582,9 @@ main{{max-width:980px;margin:auto;padding:18px}}.band{{background:white;border:1
 .tabs{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}}.tabs a{{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}}.tabs a.active{{background:#166534;color:white}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}}.card{{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px}}.card h2{{margin:0 0 8px;font-size:15px;color:#475569}}.value{{font-size:22px;font-weight:900}}
 table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left}}th{{background:#f1f5f9}}
-.high-note{{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}}.high-note h2{{color:#991b1b}}.small{{font-size:13px;color:#475569}}
-.signal-focus{{border:4px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 5px #fee2e2 inset}}.signal-focus h2{{color:#991b1b}}.signal-numbers{{font-size:34px;line-height:1.25;font-weight:900;color:#991b1b;letter-spacing:0}}.signal-detail{{font-weight:900;color:#7f1d1d}}
+  .high-note{{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}}.high-note h2{{color:#991b1b}}.small{{font-size:13px;color:#475569}}
+  .diagnosis{{border:3px solid #1d4ed8;background:#eff6ff}}.diagnosis h2{{color:#1e3a8a}}
+  .signal-focus{{border:4px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 5px #fee2e2 inset}}.signal-focus h2{{color:#991b1b}}.signal-numbers{{font-size:34px;line-height:1.25;font-weight:900;color:#991b1b;letter-spacing:0}}.signal-detail{{font-weight:900;color:#7f1d1d}}
 .confidence-high{{display:inline-block;padding:4px 8px;border-radius:6px;background:#dc2626;color:white;font-weight:900}}.confidence-mid{{display:inline-block;padding:4px 8px;border-radius:6px;background:#f97316;color:white;font-weight:900}}
 .primary{{display:block;text-align:center;padding:18px;border-radius:8px;background:#166534;color:white!important;font-size:20px;font-weight:900;text-decoration:none}}
 .secondary{{background:#1d4ed8}}.danger{{background:#991b1b}}.url{{word-break:break-all;color:#14532d;font-weight:800}}
@@ -591,6 +605,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {signal_focus}
 {ultra_precision_block}
+<section class="band diagnosis"><h2>{u('\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7')}</h2><p><strong>{u('\\u65b0\\u589e\\u6a21\\u578b')}:</strong> {esc(gap_diagnosis.get('new_model_added', '-'))} / <strong>{u('\\u72c0\\u614b')}:</strong> {esc(gap_diagnosis.get('status_label', gap_diagnosis.get('status', '-')))}</p><p class="small">{esc(gap_diagnosis.get('message', '-'))}</p><p class="small"><strong>{u('\\u5df2\\u555f\\u7528\\u52d5\\u4f5c')}:</strong> {esc(gap_action_text)}</p><table><tr><th>{u('\\u7f3a\\u53e3')}</th><th>{u('\\u8b49\\u64da')}</th><th>{u('\\u5df2\\u88dc\\u5f37')}</th></tr>{''.join(gap_rows)}</table></section>
 <section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u65e5')}</h2><div class="value">{esc(latest.get('draw_date'))}</div></section>

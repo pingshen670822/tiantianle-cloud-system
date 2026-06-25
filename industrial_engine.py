@@ -10,7 +10,7 @@ NUMBER_MAX = 39
 DRAW_SIZE = 5
 BASE_PROBABILITY = DRAW_SIZE / NUMBER_MAX
 EXPECTED_GAP = NUMBER_MAX / DRAW_SIZE
-POSITIVE_EDGE_CORE_FEATURES = ("bayesian_posterior", "distribution_balance", "freq_300", "omission")
+POSITIVE_EDGE_CORE_FEATURES = ("bayesian_posterior", "distribution_balance", "freq_300", "omission", "regime_gap_bridge")
 
 
 def zone_label(number):
@@ -523,6 +523,50 @@ def zone_parity_pressure_scores(draws, lookback=720):
     })
 
 
+def regime_gap_bridge_scores(draws, lookback=1800):
+    if len(draws) < 120:
+        return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    latest_profile = draw_profile(draws[-1]["numbers"])
+    latest_set = set(draws[-1]["numbers"])
+    recent = draws[-90:] if len(draws) >= 90 else draws
+    zone_counts = Counter()
+    tail_counts = Counter()
+    for draw in recent:
+        for number in draw["numbers"]:
+            zone_counts[zone_label(number)] += 1
+            tail_counts[number % 10] += 1
+    zone_pressure = normalize({label: 1.0 / max(zone_counts.get(label, 0), 1) for label in ["01-10", "11-20", "21-30", "31-39"]})
+    tail_pressure = normalize({tail: 1.0 / max(tail_counts.get(tail, 0), 1) for tail in range(10)})
+    omissions = omission(draws)
+    omission_norm = normalize({n: math.log1p(omissions[n]) for n in omissions})
+    transition_votes = Counter()
+    start = max(0, len(draws) - lookback - 1)
+    for idx in range(start, len(draws) - 1):
+        profile = draw_profile(draws[idx]["numbers"])
+        similarity = profile_similarity(profile, latest_profile)
+        if similarity < 0.44:
+            continue
+        current_set = set(draws[idx]["numbers"])
+        weight = similarity ** 1.65
+        for number in draws[idx + 1]["numbers"]:
+            repeat_adjust = -0.10 if number in current_set else 0.12
+            transition_votes[number] += weight * (1.0 + repeat_adjust)
+    transition_norm = normalize({n: transition_votes.get(n, 0.0) for n in range(NUMBER_MIN, NUMBER_MAX + 1)})
+    values = {}
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        latest_neighbor = 1.0 if any(abs(number - anchor) <= 2 for anchor in latest_set) else 0.0
+        repeat_penalty = 0.16 if number in latest_set else 0.0
+        values[number] = (
+            transition_norm[number] * 0.44
+            + zone_pressure[zone_label(number)] * 0.20
+            + tail_pressure[number % 10] * 0.15
+            + omission_norm[number] * 0.14
+            + latest_neighbor * 0.07
+            - repeat_penalty
+        )
+    return normalize(values)
+
+
 def missed_hit_recovery_scores(review):
     if not review or not review.get("has_review"):
         return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
@@ -768,6 +812,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
     distribution_balance = distribution_balance_scores(draws)
     shape_follow = shape_follow_scores(draws)
     zone_parity_pressure = zone_parity_pressure_scores(draws)
+    regime_gap_bridge = regime_gap_bridge_scores(draws)
     missed_hit_recovery = missed_hit_recovery_scores(review)
     rank_error_correction = rank_error_correction_scores(review)
     cross_consensus = cross_model_consensus_scores([
@@ -788,6 +833,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         distribution_balance,
         shape_follow,
         zone_parity_pressure,
+        regime_gap_bridge,
         missed_hit_recovery,
         rank_error_correction,
     ])
@@ -801,6 +847,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         distribution_balance,
         shape_follow,
         zone_parity_pressure,
+        regime_gap_bridge,
         rank_error_correction,
     ])
     next_date = next_draw_date(draws[-1]["draw_date"])
@@ -827,6 +874,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         feature_scores[number]["distribution_balance"] = distribution_balance[number]
         feature_scores[number]["shape_follow"] = shape_follow[number]
         feature_scores[number]["zone_parity_pressure"] = zone_parity_pressure[number]
+        feature_scores[number]["regime_gap_bridge"] = regime_gap_bridge[number]
         feature_scores[number]["missed_hit_recovery"] = missed_hit_recovery[number]
         feature_scores[number]["rank_error_correction"] = rank_error_correction[number]
         feature_scores[number]["date"] = date_score[number]
@@ -865,6 +913,7 @@ def industrial_weights(review=None):
         "distribution_balance": 0.046,
         "shape_follow": 0.072,
         "zone_parity_pressure": 0.062,
+        "regime_gap_bridge": 0.086,
         "missed_hit_recovery": 0.054,
         "rank_error_correction": 0.075,
         "positive_edge_core": 0.18,
@@ -890,6 +939,7 @@ def industrial_weights(review=None):
                 "distribution_balance": 0.084,
                 "shape_follow": 0.052,
                 "zone_parity_pressure": 0.096,
+                "regime_gap_bridge": 0.172,
                 "missed_hit_recovery": 0.128,
                 "rank_error_correction": 0.162,
                 "positive_edge_core": 0.28,
@@ -916,6 +966,7 @@ def industrial_weights(review=None):
             "bayesian_posterior",
             "validated_dependency",
             "distribution_balance",
+            "regime_gap_bridge",
             "pair",
             "zone_parity_pressure",
         ]:
@@ -950,6 +1001,7 @@ MODEL_SOURCE_LABELS = {
     "distribution_balance": "\u5206\u5e03\u5e73\u8861",
     "shape_follow": "\u724c\u578b\u76f8\u4f3c\u8ddf\u96a8",
     "zone_parity_pressure": "\u5340\u9593\u5947\u5076\u58d3\u529b",
+    "regime_gap_bridge": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
     "missed_hit_recovery": "\u6f0f\u547d\u4e2d\u56de\u6536",
     "rank_error_correction": "\u6392\u540d\u932f\u4f4d\u4fee\u6b63",
     "positive_edge_core": "\u6b63\u908a\u969b\u6838\u5fc3",
@@ -992,6 +1044,7 @@ def number_cross_validation(values):
         ("distribution_balance", "\u5206\u5e03\u5e73\u8861", values.get("distribution_balance", 0) >= 0.52),
         ("shape_follow", "\u724c\u578b\u76f8\u4f3c\u8ddf\u96a8", values.get("shape_follow", 0) >= 0.52),
         ("zone_parity_pressure", "\u5340\u9593\u5947\u5076\u58d3\u529b", values.get("zone_parity_pressure", 0) >= 0.52),
+        ("regime_gap_bridge", "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5", values.get("regime_gap_bridge", 0) >= 0.52),
         ("missed_hit_recovery", "\u6f0f\u547d\u4e2d\u56de\u6536", values.get("missed_hit_recovery", 0) >= 0.52),
         ("rank_error_correction", "\u6392\u540d\u932f\u4f4d\u4fee\u6b63", values.get("rank_error_correction", 0) >= 0.52),
         ("positive_edge_core", "\u6b63\u908a\u969b\u6838\u5fc3", values.get("positive_edge_core", 0) >= 0.58),
@@ -1264,6 +1317,8 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             reasons[number].append("\u724c\u578b\u76f8\u4f3c\u8ddf\u96a8")
         if values["zone_parity_pressure"] >= 0.7:
             reasons[number].append("\u5340\u9593\u5947\u5076\u58d3\u529b")
+        if values["regime_gap_bridge"] >= 0.7:
+            reasons[number].append("\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5")
         if values["missed_hit_recovery"] >= 0.7:
             reasons[number].append("\u6f0f\u547d\u4e2d\u56de\u6536")
         if values["rank_error_correction"] >= 0.7:
@@ -1679,6 +1734,7 @@ PRECISION_VARIANT_LABELS = {
     "frontload": "\u524d\u4e5d\u540d\u524d\u79fb",
     "omission_recovery": "\u907a\u6f0f\u56de\u6536",
     "tail_zone_balance": "\u5c3e\u6578\u5340\u9593\u5e73\u8861",
+    "regime_gap_bridge": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
     "failure_corrector": "\u4e0a\u671f\u5931\u8aa4\u4fee\u6b63",
 }
 
@@ -1723,6 +1779,9 @@ def precision_variant_item_score(item, variant, review=None):
     elif variant == "tail_zone_balance":
         balance_signal = precision_source_signal(item, {"tail_zone", "distribution_balance", "zone_parity_pressure"})
         value = balance_signal * 0.40 + cross_norm * 0.22 + base * 0.18 + maturity_norm * 0.12 + stability_norm * 0.08
+    elif variant == "regime_gap_bridge":
+        bridge_signal = precision_source_signal(item, {"regime_gap_bridge", "shape_follow", "zone_parity_pressure", "omission"})
+        value = bridge_signal * 0.44 + precision_norm * 0.20 + cross_norm * 0.16 + maturity_norm * 0.10 + frontload * 0.10
     elif variant == "failure_corrector":
         recovery = 0.0
         if number in late_hit_numbers:
@@ -2757,6 +2816,127 @@ def model_audit(backtest_result, review=None):
     }
 
 
+def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_governance, weight_calibration, backtest_result, validated_links, review=None):
+    missing = []
+    actions = []
+    action_labels = {
+        "boost_regime_gap_bridge": "\u52a0\u6b0a\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+        "tighten_pack_tournament": "\u6536\u7dca\u5f37\u724c\u5c0f\u7d44\u7af6\u8cfd",
+        "precision_watch_gate": "\u5c0f\u7d44\u672a\u904e\u95dc\u6539\u5217\u89c0\u5bdf",
+        "reduce_dependency_overtrust": "\u964d\u4f4e\u9023\u52d5\u904e\u5ea6\u4f9d\u8cf4",
+        "rebalance_top9_pool": "\u91cd\u5e73\u8861\u524d\u4e5d\u540d\u5340\u9593\u8207\u5c3e\u6578",
+        "force_failure_feedback": "\u5f37\u5236\u5957\u7528\u4e0a\u671f\u5931\u8aa4\u56de\u994b",
+        "keep_current_tournament": "\u7dad\u6301\u73fe\u884c\u6efe\u52d5\u7af6\u8cfd",
+    }
+    pack_labels = {
+        "strong_single": "\u5f37\u7368",
+        "two_hit_one": "\u4e8c\u4e2d\u4e00",
+        "three_hit_two": "\u4e09\u4e2d\u4e8c",
+        "five_hit_two": "\u4e94\u4e2d\u4e8c",
+        "nine_hit_three": "\u4e5d\u4e2d\u4e09",
+    }
+
+    def add_gap(category, evidence, impact, fix, action):
+        missing.append({
+            "category": category,
+            "evidence": evidence,
+            "impact": impact,
+            "fix": fix,
+        })
+        actions.append(action)
+
+    random_top10 = backtest_result.get("random_top10_expectation", DRAW_SIZE * 10 / NUMBER_MAX)
+    top10_avg = backtest_result.get("top10_avg_hits", 0)
+    top10_edge = top10_avg - random_top10
+    if top10_edge < 0.08:
+        add_gap(
+            "\u524d\u5341\u540d\u908a\u969b\u4e0d\u8db3",
+            f"Top10 {round(top10_avg, 3)} / \u96a8\u6a5f {round(random_top10, 3)} / edge {round(top10_edge, 4)}",
+            "\u9ad8\u6a5f\u7387\u865f\u5bb9\u6613\u843d\u5728Top10\u4ee5\u5f8c",
+            "\u555f\u7528\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5\uff0c\u628a\u4e0a\u671f\u724c\u578b\u3001\u8fd1\u671f\u5340\u9593\u7f3a\u53e3\u8207\u76f8\u4f3c\u6b77\u53f2\u4e0b\u4e00\u671f\u5408\u4f75\u52a0\u6b0a",
+            "boost_regime_gap_bridge",
+        )
+
+    pack_stats = (pack_governance or {}).get("pack_stats", {})
+    for key, item in pack_stats.items():
+        size = int(item.get("size", 0) or 0)
+        if size not in {1, 2, 3, 5, 9}:
+            continue
+        edge_avg = float(item.get("avg_hits_edge_vs_random", 0) or 0)
+        edge_pass = float(item.get("pass_rate_edge_vs_random", 0) or 0)
+        if not item.get("research_passed") or edge_avg < 0.05 or edge_pass < -0.02:
+            pack_name = pack_labels.get(key, key)
+            add_gap(
+                "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
+                f"{pack_name}: \u901a\u904e\u512a\u52e2 {round(edge_pass, 3)} / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 {round(edge_avg, 3)} / \u96f6\u547d\u4e2d {item.get('zero_hit_rate', '-')}",
+                "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
+                "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078",
+                "tighten_pack_tournament",
+            )
+
+    selected = (precision_tournament or {}).get("selected_models", {})
+    for target, item in selected.items():
+        recent60 = item.get("recent_60") or {}
+        pass_rate = float(recent60.get("pass_rate", 0) or 0)
+        random_success = float(item.get("random_success_probability", 0) or 0)
+        zero_rate = float(recent60.get("zero_hit_rate", 0) or 0)
+        if pass_rate < random_success + 0.035 or zero_rate > 0.72:
+            add_gap(
+                "\u5c0f\u7d44\u7cbe\u7b97\u8fd1\u671f\u7a69\u5b9a\u5ea6\u4e0d\u8db3",
+                f"{target}: 60\u671f\u901a\u904e {round(pass_rate, 3)} / \u96a8\u6a5f {round(random_success, 3)} / \u96f6\u547d\u4e2d {round(zero_rate, 3)}",
+                "\u7368\u96bb\u30012\u78bc\u30013\u78bc\u6703\u51fa\u73fe\u9ad8\u5206\u4f46\u672a\u7a69\u5b9a\u7684\u60c5\u6cc1",
+                "\u628a\u672a\u904e\u7684\u5c0f\u7d44\u7dad\u6301watch_only\uff0c\u4e26\u8b93\u578b\u614b\u7f3a\u53e3\u6a21\u578b\u53c3\u8207\u4e0b\u671f\u7af6\u8cfd",
+                "precision_watch_gate",
+            )
+
+    if len(validated_links or []) < 3:
+        add_gap(
+            "\u6a23\u672c\u5916\u9023\u52d5\u4e0d\u8db3",
+            f"\u901a\u904eFDR\u9023\u52d5 {len(validated_links or [])}",
+            "\u4e0a\u671f\u865f\u78bc\u5c0d\u4e0b\u671f\u7684\u62d6\u724c\u652f\u6490\u504f\u5f31",
+            "\u5c07\u9023\u52d5\u6a21\u578b\u4fdd\u5b88\u964d\u6b0a\uff0c\u6539\u7528\u5340\u9593\u7f3a\u53e3\u3001\u578b\u614b\u76f8\u4f3c\u8207\u907a\u6f0f\u56de\u6536\u88dc\u4f4d",
+            "reduce_dependency_overtrust",
+        )
+
+    top9 = [int(item.get("number")) for item in (candidates or [])[:9] if item.get("number") is not None]
+    zone_counts = Counter(zone_label(number) for number in top9)
+    tail_counts = Counter(number % 10 for number in top9)
+    if zone_counts and (max(zone_counts.values()) >= 4 or max(tail_counts.values()) >= 3):
+        add_gap(
+            "\u5019\u9078\u6c60\u96c6\u4e2d\u5ea6\u904e\u9ad8",
+            f"Top9\u5340\u9593 {dict(zone_counts)} / \u5c3e\u6578 {dict(tail_counts)}",
+            "\u9ad8\u5206\u865f\u904e\u5ea6\u64e0\u5728\u540c\u5340\u6216\u540c\u5c3e\uff0c\u5bb9\u6613\u8b93\u547d\u4e2d\u5206\u6563\u5230Top10-15",
+            "\u57289\u78bc\u5167\u52a0\u5165\u5340\u9593\u8207\u5c3e\u6578\u5206\u6563\u60e9\u7f70\uff0c\u4e26\u628a\u5f8c\u6bb5\u9ad8\u8a0a\u865f\u62c9\u56deTop9\u7af6\u722d",
+            "rebalance_top9_pool",
+        )
+
+    if review and review.get("severity") in {"warning", "critical"}:
+        add_gap(
+            "\u8fd1\u671f\u5be6\u6230\u5931\u8aa4\u9700\u5f37\u5236\u56de\u994b",
+            f"severity {review.get('severity')} / actions {len(review.get('actions') or [])}",
+            "\u5982\u679c\u4e0a\u671f\u5931\u8aa4\u672a\u88ab\u5438\u6536\uff0c\u4e0b\u671f\u5bb9\u6613\u91cd\u8907\u540c\u6a23\u7d50\u69cb",
+            "\u5df2\u5c07\u672a\u547d\u4e2d\u7406\u7531\u3001\u5f8c\u6bb5\u547d\u4e2d\u865f\u3001\u91cd\u8907\u843d\u7a7a\u865f\u7d0d\u5165\u6efe\u52d5\u8abf\u6574",
+            "force_failure_feedback",
+        )
+
+    status = "ok" if not missing else "needs_strengthening"
+    if not actions:
+        actions.append("keep_current_tournament")
+    return {
+        "status": status,
+        "status_label": "\u9700\u7e7c\u7e8c\u88dc\u5f37" if status != "ok" else "\u7d50\u69cb\u6b63\u5e38",
+        "new_model_key": "regime_gap_bridge",
+        "new_model_added": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+        "missing_elements": missing,
+        "active_actions": sorted(set(actions)),
+        "active_action_labels": [action_labels.get(action, action) for action in sorted(set(actions))],
+        "top_boosted_features": (weight_calibration or {}).get("top_boosted_features", [])[:6],
+        "top_penalized_features": (weight_calibration or {}).get("top_penalized_features", [])[:6],
+        "top9_numbers": top9,
+        "message": "\u7cfb\u7d71\u5df2\u628a\u547d\u4e2d\u4e0d\u8db3\u554f\u984c\u62c6\u6210\u53ef\u56de\u6e2c\u3001\u53ef\u964d\u6b0a\u3001\u53ef\u7af6\u8cfd\u7684\u9805\u76ee",
+    }
+
+
 def build_covering_wheel(numbers, ticket_size=5, cover_size=3, max_tickets=12):
     numbers = sorted(numbers)
     target_subsets = {tuple(combo) for combo in combinations(numbers, cover_size)}
@@ -3112,8 +3292,19 @@ def compute_industrial_analysis(draws, review=None):
     )
     unlikely = unlikely_number_analysis(draws, candidates, stability, review)
     promotion_audit = top10_promotion_audit(candidates, review)
+    audit_summary = model_audit(audit, review)
+    gap_diagnosis = prediction_gap_diagnosis(
+        draws,
+        candidates,
+        precision_tournament,
+        pack_governance,
+        weight_calibration,
+        audit,
+        validated_links,
+        review,
+    )
     return {
-        "engine_version": "industrial_v7_top9_frontload_precision_governor",
+        "engine_version": "industrial_v8_regime_gap_bridge_diagnosis",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -3166,9 +3357,10 @@ def compute_industrial_analysis(draws, review=None):
         "unlikely_backtest": unlikely_backtest(draws),
         "precision_governor": pack_governance,
         "precision_model_tournament": precision_tournament,
+        "prediction_gap_diagnosis": gap_diagnosis,
         "precision_micro_models": precision_micro,
         "practical_maturity": maturity,
-        "model_audit": model_audit(audit, review),
+        "model_audit": audit_summary,
         "regime_analysis": regime_analysis(draws),
         "candidates": candidates,
         "strong_prediction_packs": packs,

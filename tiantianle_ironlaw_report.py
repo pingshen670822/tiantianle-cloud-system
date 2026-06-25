@@ -1025,6 +1025,38 @@ def precision_governor_rows(analysis):
     ]
 
 
+def prediction_gap_diagnosis_rows(analysis):
+    diagnosis = ((analysis.get("industrial_engine") or {}).get("prediction_gap_diagnosis") or {})
+    rows = [[
+        u("\\u65b0\\u589e\\u88dc\\u5f37\\u6a21\\u578b"),
+        esc(diagnosis.get("new_model_added", "-")),
+        esc(diagnosis.get("status_label", diagnosis.get("status", "-"))),
+        esc(diagnosis.get("message", "-")),
+    ]]
+    for item in diagnosis.get("missing_elements", [])[:12]:
+        rows.append([
+            esc(item.get("category", "-")),
+            esc(item.get("evidence", "-")),
+            esc(item.get("impact", "-")),
+            esc(item.get("fix", "-")),
+        ])
+    if len(rows) == 1:
+        rows.append([
+            u("\\u76ee\\u524d\\u6aa2\\u6e2c"),
+            u("\\u672a\\u898b\\u91cd\\u5927\\u7d50\\u69cb\\u7f3a\\u53e3"),
+            u("\\u6301\\u7e8c\\u6efe\\u52d5\\u7af6\\u8cfd"),
+            u("\\u6bcf\\u671f\\u91cd\\u65b0\\u904b\\u7b97"),
+        ])
+    for action in (diagnosis.get("active_action_labels") or diagnosis.get("active_actions") or [])[:8]:
+        rows.append([
+            u("\\u5df2\\u555f\\u7528\\u52d5\\u4f5c"),
+            esc(action),
+            u("\\u5df2\\u7d0d\\u5165\\u4e0b\\u671f\\u6b0a\\u91cd"),
+            u("\\u624b\\u6a5f\\u8207\\u96fb\\u8166\\u540c\\u6b65"),
+        ])
+    return safe_rows(rows)
+
+
 def strict_validation_rows(analysis):
     strict = ((analysis.get("industrial_engine") or {}).get("strict_validation_gate") or {})
     rows = [[
@@ -1562,6 +1594,7 @@ def build_report():
     content += f'<section class="band notice"><h2>{u("\\u7d42\\u6975\\u76ee\\u6a19\\uff1a95%\\u7cbe\\u6e96\\u7a69\\u5b9a\\u6cbb\\u7406")}</h2><p>{u("\\u672c\\u5340\\u662f\\u767c\\u5e03\\u9580\\u6abb\\uff0c\\u4e0d\\u662f\\u865b\\u5831\\u4fdd\\u8b49\\u3002\\u672a\\u905495%\\u6642\\u53ea\\u80fd\\u964d\\u7d1a\\u89c0\\u5bdf\\u8207\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u76ee\\u6a19\\u7d44"), u("\\u547d\\u4e2d\\u7bc4\\u570d"), u("\\u76ee\\u6a19\\u7387"), u("\\u56de\\u6e2c\\u9054\\u6210\\u7387"), u("\\u6a23\\u672c"), u("\\u72c0\\u614b"), u("\\u52d5\\u4f5c")], ultimate_precision_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u7368\\u652f\\u7cbe\\u6e96\\u9a57\\u8b49\\uff1a\\u9a57\\u8b49\\u3001\\u518d\\u9a57\\u8b49\\u3001\\u56de\\u6e2c\\u3001\\u4ea4\\u53c9\\u6bd4\\u5c0d\\u3001\\u518d\\u6bd4\\u5c0d")}</h2><p>{u("\\u7368\\u652f\\u4e0d\\u8207\\u4e00\\u822c\\u5f37\\u724c\\u6df7\\u5217\\uff0c\\u5fc5\\u9808\\u9010\\u95dc\\u904b\\u7b97\\u5f8c\\u624d\\u5217\\u5165\\u672c\\u5340\\u3002")}</p>{table([u("\\u95dc\\u5361"), u("\\u904b\\u7b97\\u5167\\u5bb9"), u("\\u6bd4\\u5c0d\\u57fa\\u6e96"), u("\\u7d50\\u679c"), u("\\u5f8c\\u7e8c\\u52d5\\u4f5c")], single_precision_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u9810\\u6e2c\\u6a21\\u578b\\u6efe\\u52d5\\u5f0f\\u8abf\\u6574")}</h2><p>{u("\\u672c\\u7cfb\\u7d71\\u6bcf\\u6b21\\u66f4\\u65b0\\u5f8c\\uff0c\\u6703\\u4f9d\\u4e0a\\u671f\\u7d50\\u7b97\\u3001\\u56de\\u6e2c\\u5dee\\u503c\\u3001\\u91cd\\u8907\\u5b88\\u9580\\u8207\\u6b0a\\u91cd\\u8868\\u81ea\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6efe\\u52d5\\u9805\\u76ee"), u("\\u672c\\u6b21\\u7d50\\u679c"), u("\\u6a21\\u578b\\u8abf\\u6574"), u("\\u72c0\\u614b")], rolling_model_rows(analysis))}</section>'
+    content += f'<section class="band notice"><h2>{u("\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7\\u8207\\u88dc\\u5f37")}</h2><p>{u("\\u672c\\u5340\\u53ea\\u5217\\u672c\\u671f\\u9810\\u6e2c\\u7d50\\u69cb\\u7f3a\\u53e3\\u8207\\u5df2\\u555f\\u7528\\u7684\\u88dc\\u5f37\\u52d5\\u4f5c\\uff0c\\u4e0d\\u8207\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e\\u6df7\\u5728\\u4e00\\u8d77\\u3002")}</p>{table([u("\\u985e\\u5225"), u("\\u8b49\\u64da"), u("\\u5f71\\u97ff"), u("\\u5df2\\u4fee\\u6b63\\u88dc\\u5f37")], prediction_gap_diagnosis_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>{u("\\u672c\\u6708\\u9810\\u6e2c\\u7e3d\\u6aa2\\u8a0e\\u8207\\u6700\\u4f73\\u6efe\\u52d5\\u65b9\\u6848")}</h2><p>{u("\\u672c\\u5340\\u4f9d\\u672c\\u6708\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c\\u7d71\\u8a08\\uff0c\\u76f4\\u63a5\\u5f71\\u97ff\\u4e0b\\u671f\\u6b0a\\u91cd\\u8207\\u5f37\\u724c\\u767c\\u5e03\\u95dc\\u5361\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c"), u("\\u5224\\u8b80"), u("\\u72c0\\u614b")], monthly_review_rows(analysis))}{table([u("\\u5f37\\u724c"), u("\\u6a23\\u672c"), u("\\u901a\\u904e\\u7387"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96f6\\u547d\\u4e2d\\u7387"), u("\\u6708\\u5ea6\\u5224\\u5b9a")], monthly_pack_rows(analysis))}{table([u("\\u985e\\u5225"), u("\\u5167\\u5bb9"), u("\\u7ba1\\u5236"), u("\\u72c0\\u614b")], monthly_best_plan_rows(analysis))}</section>'
     content += f'<section class="band"><h2>1{u("\\u4e2d")}1 / 5{u("\\u4e2d")}2~3 / 9{u("\\u4e2d")}3~5 {u("\\u6838\\u5fc3\\u7a69\\u5b9a\\u6a21\\u578b")}</h2><p>{u("\\u7a69\\u5b9a\\u76ee\\u6a19\\uff1a\\u6bcf\\u671f\\u6700\\u5c11\\u8981\\u671d5\\u4e2d2~3\\u7684\\u7a69\\u5b9a\\u7d44\\u5408\\u63a8\\u9032\\uff0c\\u672a\\u9054\\u6a19\\u5247\\u7e7c\\u7e8c\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6a21\\u578b"), u("\\u865f\\u78bc"), u("\\u76ee\\u6a19"), u("\\u7406\\u8ad6\\u6a5f\\u7387"), u("\\u7d04\\u7565\\u8d54\\u7387")], core_model_rows(analysis))}</section>'
     content += f'<section class="band"><h2>Top9 {u("\\u524d\\u79fb\\u6821\\u6e96")}</h2>{table([u("\\u6392\\u540d\\u8b8a\\u5316"), u("\\u865f\\u78bc"), u("\\u524d9\\u6821\\u6e96\\u5206"), u("\\u4f9d\\u64da"), u("\\u6821\\u6e96\\u5224\\u65b7")], top10_promotion_rows(analysis))}</section>'
