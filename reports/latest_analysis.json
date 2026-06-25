@@ -1,7 +1,7 @@
 {
   "engine_version": "tiantianle_ironlaw_industrial_v1",
-  "generated_at_taiwan": "2026-06-25T16:31:16+08:00",
-  "generated_at_california": "2026-06-25T01:31:16-07:00",
+  "generated_at_taiwan": "2026-06-25T16:44:37+08:00",
+  "generated_at_california": "2026-06-25T01:44:37-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11838,
@@ -13,12 +13,12 @@
       19,
       36
     ],
-    "source": "consensus_latest:cache:lotterynet+lotteryusa"
+    "source": "official:calottery"
   },
   "target_draw_date": "2026-06-25",
   "freshness": {
     "california_today": "2026-06-25",
-    "california_time": "01:31:16",
+    "california_time": "01:44:37",
     "allowed_latest_draw_date": "2026-06-24",
     "age_days": 0,
     "status": "ok",
@@ -30,7 +30,7 @@
     "target_taiwan_safe_update_date": "2026-06-26",
     "timezone_rule": "California draw 18:30; safe update 18:50 PT. Taiwan is 09:50 during daylight time and 10:50 during standard time.",
     "official_prediction_allowed": true,
-    "latest_source": "consensus_latest:cache:lotterynet+lotteryusa",
+    "latest_source": "official:calottery",
     "latest_source_confirmed": true,
     "source_confirmation_status": "confirmed"
   },
