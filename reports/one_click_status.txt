@@ -1,5 +1,4 @@
-﻿one-click start: 2026-06-25 08:52:07
-Force run: bypass freshness skip and recompute full model
+﻿one-click start: 2026-06-25 09:50:00
 Step 1/6 prepare data and latest cache
 history csv synced
 cache skipped: calottery_official.html
