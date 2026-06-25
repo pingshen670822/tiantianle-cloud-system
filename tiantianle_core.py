@@ -1234,6 +1234,7 @@ def compute_tiantianle_core_analysis(draws, review=None, industrial=None):
         "official_candidates": official_candidates,
         "suggested_sets": build_sets(official_candidates) if len(official_candidates) >= 18 else [],
         "strong_prediction_packs": strong_packs,
+        "precision_micro_models": industrial.get("precision_micro_models", {}),
         "two_stage_group_model": two_stage_model,
     }
 

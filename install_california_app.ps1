@@ -20,7 +20,7 @@ $ChineseStartBat = Join-Path $InstallRoot ($ChineseAppName + ".bat")
 $Lines = @(
   "@echo off",
   "cd /d `"$InstallRoot`"",
-  "powershell -NoProfile -ExecutionPolicy Bypass -File `"$InstallRoot\run_california_fantasy5_once.ps1`"",
+  "powershell -NoProfile -ExecutionPolicy Bypass -File `"$InstallRoot\run_california_fantasy5_once.ps1`" -ForceRun",
   "pause"
 )
 Set-Content -Path $StartBat -Value $Lines -Encoding ASCII

@@ -177,6 +177,14 @@ def ultra_precision_candidate_score(item):
 
 
 def ultra_precision_recommendations(analysis):
+    engine_precision = (
+        analysis.get("precision_micro_models")
+        or ((analysis.get("industrial_engine") or {}).get("precision_micro_models"))
+        or ((analysis.get("primary_tiantianle_core") or {}).get("precision_micro_models"))
+        or {}
+    )
+    if engine_precision.get("single") or engine_precision.get("two") or engine_precision.get("three"):
+        return engine_precision
     candidates = [
         item for item in (analysis.get("candidates") or [])[:9]
         if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)
@@ -250,11 +258,19 @@ def ultra_precision_rows(analysis):
     rows = []
     for key, label in labels:
         item = rec.get(key) or {}
+        recent_60 = item.get("recent_60") or {}
+        random_rate = item.get("random_success_probability")
+        model_text = item.get("selected_model_label") or item.get("selected_model") or u("\\u7d9c\\u5408\\u7cbe\\u7b97")
+        recent_text = (
+            f"{u('\\u8fd160\\u671f')} {recent_60.get('pass_rate', '-')}"
+            + (f" / {u('\\u96a8\\u6a5f')} {random_rate}" if random_rate is not None else "")
+        )
         rows.append([
             label,
             fmt_numbers(item.get("numbers", [])),
             item.get("score", 0),
-            u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u4e8c\\u6b21\\u7cbe\\u7b97"),
+            model_text,
+            recent_text,
             u("\\u5f37\\u63a8\\u89c0\\u5bdf\\uff0c\\u975e\\u4fdd\\u8b49\\u5fc5\\u4e2d"),
         ])
     return rows
@@ -279,8 +295,8 @@ def ultra_precision_block(analysis):
         ])
     return (
         f'<section class="band high-alert"><h2>{u("\\u8d85\\u5f37\\u4fe1\\u5fc3\\u9ad8\\u6a5f\\u7387\\u5f37\\u63a8\\u7cbe\\u7b97")}</h2>'
-        f'<p>{u("\\u672c\\u5340\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u505a\\u4e8c\\u6b21\\u7cbe\\u7b97\\uff0c\\u4e0d\\u4f7f\\u7528\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u5099\\u67e5\\u865f\\u4f86\\u653e\\u5927\\u4fe1\\u5fc3\\u3002")}</p>'
-        f'{table([u("\\u76ee\\u6a19"), u("\\u5f37\\u63a8\\u865f\\u78bc"), u("\\u4e8c\\u6b21\\u7cbe\\u7b97\\u5206"), u("\\u898f\\u5247"), u("\\u72c0\\u614b")], ultra_precision_rows(analysis))}'
+        f'<p>{u("\\u672c\\u5340\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u505a\\u4e8c\\u6b21\\u7cbe\\u7b97\\uff0c\\u4e26\\u7528\\u8fd1\\u0033\\u0030\\u002f\\u0036\\u0030\\u002f\\u0031\\u0032\\u0030\\u671f\\u5be6\\u6230\\u7af6\\u8cfd\\u9078\\u6a21\\u578b\\uff1b\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u4ecd\\u53ea\\u80fd\\u5099\\u67e5\\u3002")}</p>'
+        f'{table([u("\\u76ee\\u6a19"), u("\\u5f37\\u63a8\\u865f\\u78bc"), u("\\u7cbe\\u7b97\\u5206"), u("\\u672c\\u671f\\u63a1\\u7528\\u6a21\\u578b"), u("\\u5be6\\u6230\\u57fa\\u6e96"), u("\\u72c0\\u614b")], ultra_precision_rows(analysis))}'
         f'{table([u("\\u865f\\u78bc"), u("\\u7cbe\\u7b97\\u5206"), u("\\u4fe1\\u5fc3"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u7a69\\u5b9a"), u("\\u4ea4\\u53c9"), u("\\u6210\\u719f"), u("\\u4f86\\u6e90")], ranked_rows)}</section>'
     )
 

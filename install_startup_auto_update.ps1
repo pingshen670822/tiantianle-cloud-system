@@ -6,10 +6,11 @@ $StartupDir = [Environment]::GetFolderPath("Startup")
 $Launcher = Join-Path $StartupDir "Tiantianle_Ironlaw_AutoUpdate.cmd"
 $Lines = @(
   "@echo off",
+  "chcp 65001 >nul",
   "start `"`" /min powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RunScript`" -NoOpen"
 )
 try {
-  Set-Content -LiteralPath $Launcher -Value $Lines -Encoding ASCII
+  Set-Content -LiteralPath $Launcher -Value $Lines -Encoding UTF8
 } catch {
   $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
   if (-not $IsAdmin) {

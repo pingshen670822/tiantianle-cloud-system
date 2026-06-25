@@ -369,7 +369,16 @@ def ultra_precision_candidate_score(item):
     return round(max(0.0, score), 2)
 
 
-def ultra_precision_recommendations(candidates):
+def ultra_precision_recommendations(candidates, analysis=None):
+    analysis = analysis or {}
+    engine_precision = (
+        analysis.get("precision_micro_models")
+        or ((analysis.get("industrial_engine") or {}).get("precision_micro_models"))
+        or ((analysis.get("primary_tiantianle_core") or {}).get("precision_micro_models"))
+        or {}
+    )
+    if engine_precision.get("single") or engine_precision.get("two") or engine_precision.get("three"):
+        return engine_precision
     pool = [item for item in candidates[:9] if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)]
     scored = sorted(
         [
@@ -418,8 +427,8 @@ def ultra_precision_recommendations(candidates):
     return {"single": best_combo(1), "two": best_combo(2), "three": best_combo(3), "ranked": scored}
 
 
-def build_ultra_precision_block(candidates):
-    rec = ultra_precision_recommendations(candidates)
+def build_ultra_precision_block(candidates, analysis=None):
+    rec = ultra_precision_recommendations(candidates, analysis)
     labels = [
         ("single", u("\\u7368\\u96bb1\\u4e2d1")),
         ("two", "2" + u("\\u4e2d") + "1~2"),
@@ -428,18 +437,26 @@ def build_ultra_precision_block(candidates):
     rows = []
     for key, label in labels:
         item = rec.get(key) or {}
+        recent_60 = item.get("recent_60") or {}
+        random_rate = item.get("random_success_probability")
+        model_text = item.get("selected_model_label") or item.get("selected_model") or u("\\u7d9c\\u5408\\u7cbe\\u7b97")
+        recent_text = (
+            f"{u('\\u8fd160\\u671f')} {recent_60.get('pass_rate', '-')}"
+            + (f" / {u('\\u96a8\\u6a5f')} {random_rate}" if random_rate is not None else "")
+        )
         rows.append(
             "<tr>"
             f"<th>{esc(label)}</th>"
             f"<td>{esc(fmt_numbers(item.get('numbers') or []))}</td>"
             f"<td>{esc(item.get('score', 0))}</td>"
-            f"<td>{u('\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u4e8c\\u6b21\\u7cbe\\u7b97')}</td>"
+            f"<td>{esc(model_text)}</td>"
+            f"<td>{esc(recent_text)}</td>"
             "</tr>"
         )
     return (
         f"<section class=\"band high-note\"><h2>{u('\\u8d85\\u5f37\\u4fe1\\u5fc3\\u9ad8\\u6a5f\\u7387\\u5f37\\u63a8\\u7cbe\\u7b97')}</h2>"
-        f"<p>{u('\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u7cbe\\u7b97\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3\\u3002')}</p>"
-        f"<table><tr><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u5f37\\u63a8\\u865f\\u78bc')}</th><th>{u('\\u7cbe\\u7b97\\u5206')}</th><th>{u('\\u898f\\u5247')}</th></tr>{''.join(rows)}</table></section>"
+        f"<p>{u('\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u7cbe\\u7b97\\uff0c\\u4e26\\u7528\\u8fd1\\u0033\\u0030\\u002f\\u0036\\u0030\\u002f\\u0031\\u0032\\u0030\\u671f\\u5be6\\u6230\\u7af6\\u8cfd\\u9078\\u6a21\\u578b\\uff1b\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3\\u3002')}</p>"
+        f"<table><tr><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u5f37\\u63a8\\u865f\\u78bc')}</th><th>{u('\\u7cbe\\u7b97\\u5206')}</th><th>{u('\\u63a1\\u7528\\u6a21\\u578b')}</th><th>{u('\\u5be6\\u6230\\u57fa\\u6e96')}</th></tr>{''.join(rows)}</table></section>"
     )
 
 
@@ -500,8 +517,8 @@ def build_home_page():
     top9 = fmt_numbers([item.get("number") for item in candidates[:9]])
     confidence_rows = build_confidence_rows(candidates)
     signal_focus = build_signal_focus(candidates)
-    ultra_precision_block = build_ultra_precision_block(candidates)
-    ultra = ultra_precision_recommendations(candidates)
+    ultra_precision_block = build_ultra_precision_block(candidates, data)
+    ultra = ultra_precision_recommendations(candidates, data)
     pack_rows = []
 
     def add_pack_row(label, numbers, goal, maturity_text):

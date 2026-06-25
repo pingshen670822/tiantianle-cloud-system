@@ -1609,6 +1609,493 @@ def group_by_variant(key, candidates, review=None, variant=None):
     return optimized_group(candidates, size_by_key.get(key, 5), review)
 
 
+def precision_micro_candidate_score(item, review=None):
+    confidence = float(item.get("confidence_index", item.get("score", 0)) or 0)
+    if 0 < confidence <= 1:
+        confidence *= 100
+    probability = float(item.get("model_probability_percent", 0) or 0)
+    stability = int(item.get("stability_count", 0) or 0)
+    cross = item.get("cross_validation") or {}
+    cross_total = max(1, int(cross.get("total_count", 0) or 0))
+    cross_passed = int(cross.get("passed_count", 0) or 0)
+    maturity = item.get("practical_maturity") or {}
+    maturity_score = float(maturity.get("score", 0) or 0)
+    frontload = float(item.get("top9_frontload_score", 0) or 0)
+    base_score = float(item.get("score", 0) or 0)
+    reasons = set(item.get("reasons") or [])
+    rolling = rolling_adjustment_data(review)
+    boosted_reasons = {row.get("reason") for row in rolling.get("boosted_reasons", []) if row.get("reason")}
+    penalized_reasons = {row.get("reason") for row in rolling.get("penalized_reasons", []) if row.get("reason")}
+    repeated_failed_numbers = {int(row.get("number")) for row in rolling.get("repeated_failed_numbers", []) if row.get("number")}
+    late_hit_numbers = {int(row.get("number")) for row in rolling.get("late_hit_numbers", []) if row.get("number")}
+    missed_actual_numbers = {int(row.get("number")) for row in rolling.get("missed_actual_numbers", []) if row.get("number")}
+    number = int(item.get("number"))
+
+    score = 0.0
+    score += clamp((confidence - 50) / 49, 0.0, 1.0) * 24
+    score += clamp(probability / 18.5, 0.0, 1.0) * 15
+    score += clamp(stability / 5, 0.0, 1.0) * 15
+    score += clamp(cross_passed / cross_total, 0.0, 1.0) * 18
+    score += clamp(maturity_score / 82, 0.0, 1.0) * 13
+    score += clamp(frontload, 0.0, 1.0) * 8
+    score += clamp(base_score, 0.0, 1.0) * 7
+
+    if reasons & boosted_reasons:
+        score += 2.4
+    if number in late_hit_numbers:
+        score += 2.0
+    if number in missed_actual_numbers:
+        score += 1.6
+    if item.get("top9_core"):
+        score += 1.2
+
+    guard = item.get("previous_prediction_guard") or {}
+    repeat = item.get("repeat_guard") or {}
+    tier = str(maturity.get("tier", ""))
+    if guard and not guard.get("passed"):
+        score -= 7.5
+    if repeat and not repeat.get("passed"):
+        score -= 6.5
+    if tier == "blocked_low_maturity":
+        score -= 14
+    elif tier == "research_only":
+        score -= 4
+    if reasons & penalized_reasons:
+        score -= min(10.0, len(reasons & penalized_reasons) * 4.0)
+    if number in repeated_failed_numbers and number not in late_hit_numbers and number not in missed_actual_numbers:
+        score -= 8.0
+    if item_soft_risk_penalty(item, failed_number_set(review)) >= 0.1:
+        score -= 2.5
+    if int(item.get("rank", 99) or 99) > 9:
+        score -= 20
+    return round(clamp(score, 0.0, 100.0), 2)
+
+
+PRECISION_VARIANT_LABELS = {
+    "ensemble_precision": "\u7d9c\u5408\u7cbe\u7b97",
+    "raw_score": "\u539f\u59cb\u7d9c\u5408\u5206",
+    "cross_validation": "\u4ea4\u53c9\u9a57\u8b49\u512a\u5148",
+    "maturity": "\u5be6\u6230\u6210\u719f\u5ea6\u512a\u5148",
+    "frontload": "\u524d\u4e5d\u540d\u524d\u79fb",
+    "omission_recovery": "\u907a\u6f0f\u56de\u6536",
+    "tail_zone_balance": "\u5c3e\u6578\u5340\u9593\u5e73\u8861",
+    "failure_corrector": "\u4e0a\u671f\u5931\u8aa4\u4fee\u6b63",
+}
+
+
+def precision_source_signal(item, names):
+    sources = item.get("model_sources") or []
+    score = 0.0
+    for source in sources:
+        if source.get("model") in names:
+            score = max(score, float(source.get("signal", 0) or 0), float(source.get("contribution", 0) or 0) * 16)
+    return score
+
+
+def precision_variant_item_score(item, variant, review=None):
+    maturity = item.get("practical_maturity") or {}
+    cross = item.get("cross_validation") or {}
+    cross_total = max(1, int(cross.get("total_count", 0) or 0))
+    cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / cross_total, 0.0, 1.0)
+    maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100, 0.0, 1.0)
+    stability_norm = clamp(int(item.get("stability_count", 0) or 0) / 5, 0.0, 1.0)
+    base = float(item.get("score", 0) or 0)
+    frontload = float(item.get("top9_frontload_score", 0) or 0)
+    omission_norm = clamp(int(item.get("omission", 0) or 0) / 18, 0.0, 1.0)
+    precision_norm = precision_micro_candidate_score(item, review) / 100
+    rolling = rolling_adjustment_data(review)
+    late_hit_numbers = {int(row.get("number")) for row in rolling.get("late_hit_numbers", []) if row.get("number")}
+    missed_actual_numbers = {int(row.get("number")) for row in rolling.get("missed_actual_numbers", []) if row.get("number")}
+    repeated_failed_numbers = {int(row.get("number")) for row in rolling.get("repeated_failed_numbers", []) if row.get("number")}
+    number = int(item.get("number"))
+
+    if variant == "raw_score":
+        value = base * 0.78 + stability_norm * 0.12 + cross_norm * 0.10
+    elif variant == "cross_validation":
+        value = cross_norm * 0.48 + base * 0.24 + stability_norm * 0.16 + maturity_norm * 0.12
+    elif variant == "maturity":
+        value = maturity_norm * 0.45 + cross_norm * 0.20 + base * 0.22 + stability_norm * 0.13
+    elif variant == "frontload":
+        value = frontload * 0.50 + base * 0.25 + cross_norm * 0.15 + maturity_norm * 0.10
+    elif variant == "omission_recovery":
+        recovery_signal = precision_source_signal(item, {"omission", "missed_hit_recovery", "rank_error_correction"})
+        value = omission_norm * 0.32 + recovery_signal * 0.25 + base * 0.18 + cross_norm * 0.15 + maturity_norm * 0.10
+    elif variant == "tail_zone_balance":
+        balance_signal = precision_source_signal(item, {"tail_zone", "distribution_balance", "zone_parity_pressure"})
+        value = balance_signal * 0.40 + cross_norm * 0.22 + base * 0.18 + maturity_norm * 0.12 + stability_norm * 0.08
+    elif variant == "failure_corrector":
+        recovery = 0.0
+        if number in late_hit_numbers:
+            recovery += 0.16
+        if number in missed_actual_numbers:
+            recovery += 0.12
+        if number in repeated_failed_numbers:
+            recovery -= 0.22
+        value = precision_norm * 0.38 + cross_norm * 0.20 + maturity_norm * 0.15 + frontload * 0.15 + recovery + base * 0.12
+    else:
+        value = precision_norm * 0.50 + cross_norm * 0.16 + maturity_norm * 0.14 + stability_norm * 0.10 + frontload * 0.10
+
+    if str(maturity.get("tier", "")) == "blocked_low_maturity":
+        value -= 0.24
+    return round(clamp(value, -1.0, 1.35), 5)
+
+
+def precision_variant_combo_score(numbers, item_map, variant, review=None):
+    if not numbers:
+        return -999
+    values = [precision_variant_item_score(item_map[number], variant, review) for number in numbers]
+    tails = [number % 10 for number in numbers]
+    zones = [zone_label(number) for number in numbers]
+    parity_count = Counter(number % 2 for number in numbers)
+    duplicate_tail_penalty = (len(tails) - len(set(tails))) * 0.045
+    zone_penalty = max(0, max((zones.count(label) for label in set(zones)), default=0) - 2) * 0.055
+    parity_penalty = max(0, max(parity_count.values(), default=0) - 2) * 0.035
+    floor_bonus = min(values) * 0.18
+    avg_value = sum(values) / len(values)
+    return round(avg_value * 0.82 + floor_bonus - duplicate_tail_penalty - zone_penalty - parity_penalty, 5)
+
+
+def precision_variant_numbers(candidates, size, variant, review=None):
+    pool = [
+        item for item in candidates[:9]
+        if item.get("number") is not None and item.get("top9_core", int(item.get("rank", 99) or 99) <= 9)
+    ]
+    if len(pool) < size:
+        return []
+    item_map = {int(item["number"]): item for item in pool}
+    if size == 1:
+        best = max(
+            pool,
+            key=lambda item: (
+                precision_variant_item_score(item, variant, review),
+                float(item.get("score", 0) or 0),
+                -int(item["number"]),
+            ),
+        )
+        return [int(best["number"])]
+    best_combo = max(
+        combinations(item_map, size),
+        key=lambda combo: (
+            precision_variant_combo_score(combo, item_map, variant, review),
+            sum(precision_micro_candidate_score(item_map[number], review) for number in combo),
+            -sum(combo),
+        ),
+    )
+    return sorted(best_combo)
+
+
+def precision_model_tournament(draws, review=None, weights_override=None, rounds=None):
+    if len(draws) < 160:
+        return {
+            "status": "insufficient_data",
+            "rounds": 0,
+            "selected_models": {},
+            "message": "history is not enough for precision model tournament",
+        }
+    if rounds is None:
+        raw_rounds = os.environ.get("TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS") or os.environ.get("TIANTIANLE_GROUP_BACKTEST_MID") or "120"
+        try:
+            rounds = int(raw_rounds)
+        except (TypeError, ValueError):
+            rounds = 120
+    rounds = max(30, min(int(rounds), 180))
+    variants = list(PRECISION_VARIANT_LABELS)
+    specs = {
+        "single": {"size": 1, "goal": 1, "target": "1_hit_1"},
+        "two": {"size": 2, "goal": 1, "target": "2_hit_1_to_2"},
+        "three": {"size": 3, "goal": 1, "target": "3_hit_1_to_3"},
+    }
+    stats = {
+        target: {
+            variant: {"rounds": 0, "hits": 0, "passes": 0, "zero_hits": 0, "history": []}
+            for variant in variants
+        }
+        for target in specs
+    }
+    start = max(120, len(draws) - rounds - 1)
+    for idx in range(start, len(draws) - 1):
+        train = draws[: idx + 1]
+        actual = set(draws[idx + 1]["numbers"])
+        historical_candidates, _ = score_numbers(train, None, include_dependency=False, weights_override=weights_override)
+        historical_candidates, _ = top9_frontload_candidates(historical_candidates, None)
+        for target, spec in specs.items():
+            for variant in variants:
+                numbers = precision_variant_numbers(historical_candidates, spec["size"], variant, None)
+                hits = len(set(numbers) & actual)
+                row = stats[target][variant]
+                row["rounds"] += 1
+                row["hits"] += hits
+                row["passes"] += 1 if hits >= spec["goal"] else 0
+                row["zero_hits"] += 1 if hits == 0 else 0
+                row["history"].append(hits)
+
+    selected_models = {}
+    variant_results = {}
+    for target, spec in specs.items():
+        random_success = pack_probability(spec["size"], spec["goal"]).get("probability", 0)
+        random_avg_hits = DRAW_SIZE * spec["size"] / NUMBER_MAX
+        variant_results[target] = {}
+        for variant, row in stats[target].items():
+            rounds_done = row["rounds"] or 1
+            history = row["history"]
+            windows = {}
+            for window in [30, 60, 120]:
+                sample = history[-window:]
+                sample_rounds = len(sample)
+                sample_passes = sum(1 for hits in sample if hits >= spec["goal"])
+                sample_hits = sum(sample)
+                sample_zero = sum(1 for hits in sample if hits == 0)
+                windows[str(window)] = {
+                    "rounds": sample_rounds,
+                    "pass_rate": round(sample_passes / sample_rounds, 3) if sample_rounds else 0,
+                    "avg_hits": round(sample_hits / sample_rounds, 3) if sample_rounds else 0,
+                    "zero_hit_rate": round(sample_zero / sample_rounds, 3) if sample_rounds else 0,
+                }
+            pass_rate = row["passes"] / rounds_done
+            avg_hits = row["hits"] / rounds_done
+            zero_rate = row["zero_hits"] / rounds_done
+            recent_30 = windows["30"]
+            recent_60 = windows["60"]
+            recent_120 = windows["120"]
+            score = (
+                recent_30["pass_rate"] * 0.36
+                + recent_60["pass_rate"] * 0.30
+                + recent_120["pass_rate"] * 0.16
+                + pass_rate * 0.08
+                + clamp((recent_60["avg_hits"] - random_avg_hits) + 0.45, 0.0, 1.2) * 0.08
+                - recent_30["zero_hit_rate"] * 0.10
+            )
+            eliminated = (
+                recent_30["rounds"] >= 20
+                and recent_60["rounds"] >= 30
+                and recent_30["pass_rate"] < random_success * 0.72
+                and recent_60["pass_rate"] < random_success * 0.86
+            )
+            status = "eliminated_recent_underperform" if eliminated else (
+                "eligible" if recent_60["pass_rate"] >= random_success and recent_60["avg_hits"] >= random_avg_hits else "watch_only"
+            )
+            variant_results[target][variant] = {
+                "label": PRECISION_VARIANT_LABELS[variant],
+                "rounds": row["rounds"],
+                "pass_rate": round(pass_rate, 3),
+                "avg_hits": round(avg_hits, 3),
+                "zero_hit_rate": round(zero_rate, 3),
+                "random_success_probability": round(random_success, 3),
+                "random_avg_hits": round(random_avg_hits, 3),
+                "edge_vs_random": round(pass_rate - random_success, 3),
+                "avg_hits_edge_vs_random": round(avg_hits - random_avg_hits, 3),
+                "windows": windows,
+                "selection_score": round(score, 4),
+                "status": status,
+            }
+        best_variant, best_result = max(
+            variant_results[target].items(),
+            key=lambda pair: (
+                0 if pair[1]["status"] == "eliminated_recent_underperform" else 1,
+                pair[1]["selection_score"],
+                pair[1]["windows"]["60"]["pass_rate"],
+                pair[1]["avg_hits"],
+                -pair[1]["zero_hit_rate"],
+            ),
+        )
+        selected_models[target] = {
+            "target": spec["target"],
+            "size": spec["size"],
+            "goal": spec["goal"],
+            "selected_variant": best_variant,
+            "selected_label": PRECISION_VARIANT_LABELS[best_variant],
+            "status": best_result["status"],
+            "selection_score": best_result["selection_score"],
+            "recent_30": best_result["windows"]["30"],
+            "recent_60": best_result["windows"]["60"],
+            "recent_120": best_result["windows"]["120"],
+            "random_success_probability": best_result["random_success_probability"],
+            "random_avg_hits": best_result["random_avg_hits"],
+            "action": "use_selected_model" if best_result["status"] != "eliminated_recent_underperform" else "force_watch_only",
+        }
+    return {
+        "status": "evaluated",
+        "version": "precision_tournament_v20260625",
+        "rounds": max((row["rounds"] for target in stats.values() for row in target.values()), default=0),
+        "windows": [30, 60, 120],
+        "policy": "recent 30/60/120 settled performance selects 1, 2 and 3-number precision models; underperforming variants are eliminated",
+        "selected_models": selected_models,
+        "variant_results": variant_results,
+    }
+
+
+def precision_micro_models(candidates, review=None, governance=None, tournament=None):
+    pool = [
+        item for item in candidates[:9]
+        if item.get("number") is not None and item.get("top9_core", int(item.get("rank", 99) or 99) <= 9)
+    ]
+    scored = sorted(
+        [
+            {
+                "number": int(item["number"]),
+                "score": precision_micro_candidate_score(item, review),
+                "item": item,
+            }
+            for item in pool
+        ],
+        key=lambda row: (row["score"], float(row["item"].get("score", 0) or 0), -row["number"]),
+        reverse=True,
+    )
+    score_map = {row["number"]: row["score"] for row in scored}
+    item_map = {row["number"]: row["item"] for row in scored}
+    failed = failed_number_set(review)
+
+    def combo_score(numbers):
+        if not numbers:
+            return 0
+        values = [score_map[number] for number in numbers]
+        tails = [number % 10 for number in numbers]
+        zones = [zone_label(number) for number in numbers]
+        parity_count = Counter(number % 2 for number in numbers)
+        duplicate_tail_penalty = (len(tails) - len(set(tails))) * 2.8
+        zone_penalty = max(0, max((zones.count(label) for label in set(zones)), default=0) - 2) * 2.5
+        parity_penalty = max(0, max(parity_count.values(), default=0) - 2) * 1.8
+        failed_penalty = sum(1 for number in numbers if number in failed) * 2.2
+        stability = sum(min(int(item_map[number].get("stability_count", 0) or 0), 5) for number in numbers) / len(numbers)
+        cross_passed = sum(
+            int((item_map[number].get("cross_validation") or {}).get("passed_count", 0) or 0)
+            for number in numbers
+        ) / len(numbers)
+        maturity = sum(
+            float((item_map[number].get("practical_maturity") or {}).get("score", 0) or 0)
+            for number in numbers
+        ) / len(numbers)
+        score = (
+            (sum(values) / len(values)) * 0.58
+            + min(values) * 0.20
+            + stability * 1.1
+            + cross_passed * 0.85
+            + clamp(maturity / 100, 0.0, 1.0) * 6
+        )
+        return round(score - duplicate_tail_penalty - zone_penalty - parity_penalty - failed_penalty, 2)
+
+    selected_models = (tournament or {}).get("selected_models") or {}
+
+    def best_combo(size, target_key):
+        if len(score_map) < size:
+            return {
+                "numbers": [],
+                "score": 0,
+                "status": "withheld_no_top9_pool",
+                "reason": "top9 precision pool is not enough",
+            }
+        selected = selected_models.get(target_key) or {}
+        variant = selected.get("selected_variant") or "ensemble_precision"
+        variant_numbers = precision_variant_numbers(candidates, size, variant, review)
+        if variant_numbers:
+            score = combo_score(variant_numbers) if size > 1 else score_map.get(variant_numbers[0], 0)
+            status = "high_confidence_watch" if score >= 76 and selected.get("status") != "eliminated_recent_underperform" else "precision_watch"
+            return {
+                "numbers": sorted(variant_numbers),
+                "score": round(score, 2),
+                "status": status,
+                "single_scores": {str(number): score_map.get(number, 0) for number in sorted(variant_numbers)},
+                "rule": "top9_only_live_recomputed_precision_micro_model_with_30_60_120_tournament",
+                "selected_model": variant,
+                "selected_model_label": selected.get("selected_label", PRECISION_VARIANT_LABELS.get(variant, variant)),
+                "recent_30": selected.get("recent_30", {}),
+                "recent_60": selected.get("recent_60", {}),
+                "recent_120": selected.get("recent_120", {}),
+                "random_success_probability": selected.get("random_success_probability"),
+                "high_confidence_note": "highlight_when_score_over_76_but_no_lottery_guarantee",
+            }
+        if size == 1:
+            row = max(scored, key=lambda item: (item["score"], float(item["item"].get("score", 0) or 0), -item["number"]))
+            numbers = [row["number"]]
+            score = row["score"]
+        else:
+            best = max(
+                (
+                    {"numbers": list(combo), "score": combo_score(combo)}
+                    for combo in combinations(score_map, size)
+                ),
+                key=lambda row: (row["score"], sum(score_map[n] for n in row["numbers"]), -sum(row["numbers"])),
+            )
+            numbers = best["numbers"]
+            score = best["score"]
+        return {
+            "numbers": sorted(numbers),
+            "score": round(score, 2),
+            "status": "high_confidence_watch" if score >= 76 else "precision_watch",
+            "single_scores": {str(number): score_map.get(number, 0) for number in sorted(numbers)},
+            "rule": "top9_only_live_recomputed_precision_micro_model",
+            "selected_model": "fallback_ensemble_precision",
+            "selected_model_label": "\u5099\u63f4\u7d9c\u5408\u7cbe\u7b97",
+            "high_confidence_note": "highlight_when_score_over_76_but_no_lottery_guarantee",
+        }
+
+    result = {
+        "version": "precision_micro_v20260625",
+        "policy": "Top9-only precision micro model; recomputed every run; 30/60/120 settled tournament selects the active model; Top10-15 cannot be promoted into high-confidence display",
+        "per_draw_recompute": True,
+        "top9_pool": [row["number"] for row in scored],
+        "single": best_combo(1, "single"),
+        "two": best_combo(2, "two"),
+        "three": best_combo(3, "three"),
+        "ranked": scored,
+        "model_tournament": tournament or {},
+        "governance": {
+            "source": "industrial_engine_candidates_after_top9_frontload",
+            "release_light": (governance or {}).get("release_light"),
+            "research_release_light": (governance or {}).get("research_release_light"),
+            "settlement": "stored_as_precision_micro_packs_for_next_draw_review",
+        },
+    }
+    result["single"]["target"] = "1_hit_1"
+    result["two"]["target"] = "2_hit_1_to_2"
+    result["three"]["target"] = "3_hit_1_to_3"
+    return result
+
+
+def attach_precision_micro_packs(packs, precision_micro, candidates):
+    score_map = {item["number"]: item.get("score", 0) for item in candidates}
+
+    def micro_pack(model_key, name, goal):
+        item = precision_micro.get(model_key) or {}
+        numbers = sorted(int(number) for number in (item.get("numbers") or []))
+        if not numbers:
+            return empty_pack(name, goal, "precision micro model did not produce a top9-qualified pack")
+        avg_score = sum(score_map.get(number, 0) for number in numbers) / len(numbers)
+        return {
+            "name": name,
+            "hit_goal": goal,
+            "hit_goal_max": len(numbers),
+            "numbers": numbers,
+            "score_sum": round(sum(score_map.get(number, 0) for number in numbers), 4),
+            "avg_score": round(avg_score, 4),
+            "precision_score": item.get("score", 0),
+            "status": item.get("status", "precision_watch"),
+            "official_release": False,
+            "withheld_reason": "precision micro pack is highlighted and settled, but never presented as guaranteed",
+            "theoretical_probability": pack_probability(len(numbers), goal),
+            "zones": Counter(zone_label(number) for number in numbers),
+            "tails": Counter(number % 10 for number in numbers),
+            "governance": {
+                "policy": precision_micro.get("policy"),
+                "version": precision_micro.get("version"),
+                "target": item.get("target"),
+                "rule": item.get("rule"),
+                "selected_model": item.get("selected_model"),
+                "selected_model_label": item.get("selected_model_label"),
+                "recent_30": item.get("recent_30"),
+                "recent_60": item.get("recent_60"),
+                "recent_120": item.get("recent_120"),
+                "random_success_probability": item.get("random_success_probability"),
+                "high_confidence_note": item.get("high_confidence_note"),
+            },
+        }
+
+    packs["precision_single"] = micro_pack("single", "\u7cbe\u7b97\u7368\u96bb1\u4e2d1", 1)
+    packs["precision_two_hit_one"] = micro_pack("two", "\u7cbe\u7b972\u4e2d1~2", 1)
+    packs["precision_three_hit_one"] = micro_pack("three", "\u7cbe\u7b973\u4e2d1~3", 1)
+    return packs
+
+
 def top10_promotion_audit(candidates, review=None):
     rolling = rolling_adjustment_data(review)
     boosted_reasons = {item.get("reason") for item in rolling.get("boosted_reasons", [])}
@@ -2583,7 +3070,10 @@ def compute_industrial_analysis(draws, review=None):
     candidates, stability = stability_consensus(draws, base_candidates, review)
     candidates, top9_frontload_audit = top9_frontload_candidates(candidates, review)
     pack_governance = pack_recent_governance(draws, weights_override=weights)
+    precision_tournament = precision_model_tournament(draws, review, weights_override=weights)
+    precision_micro = precision_micro_models(candidates, review, pack_governance, precision_tournament)
     packs = strong_packs(candidates, review, pack_governance)
+    packs = attach_precision_micro_packs(packs, precision_micro, candidates)
     maturity = practical_maturity_summary(candidates)
     audit = industrial_backtest(draws, weights_override=weights)
     advanced_models = advanced_model_summary(draws)
@@ -2675,6 +3165,8 @@ def compute_industrial_analysis(draws, review=None):
         "unlikely_number_analysis": unlikely,
         "unlikely_backtest": unlikely_backtest(draws),
         "precision_governor": pack_governance,
+        "precision_model_tournament": precision_tournament,
+        "precision_micro_models": precision_micro,
         "practical_maturity": maturity,
         "model_audit": model_audit(audit, review),
         "regime_analysis": regime_analysis(draws),

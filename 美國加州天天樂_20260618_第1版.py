@@ -51,6 +51,9 @@ PACK_GOALS = {
     "three_hit_two": 2,
     "five_hit_two": 2,
     "nine_hit_three": 3,
+    "precision_single": 1,
+    "precision_two_hit_one": 1,
+    "precision_three_hit_one": 1,
 }
 CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
@@ -1784,6 +1787,7 @@ def analyze(draws, review=None):
         "candidates": candidates,
         "official_candidates": candidates,
         "strong_packs": tiantianle_core["strong_prediction_packs"],
+        "precision_micro_models": tiantianle_core.get("precision_micro_models", industrial.get("precision_micro_models", {})),
         "suggested_sets": tiantianle_core["suggested_sets"],
         "two_stage_group_model": tiantianle_core["two_stage_group_model"],
         "relationships": tiantianle_core["relationships"],

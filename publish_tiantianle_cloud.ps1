@@ -101,11 +101,23 @@ function Test-GhRepository {
 
 function Copy-TreeWithoutGit {
   param([string]$From, [string]$To)
+  function Test-PublishAllowed {
+    param([System.IO.FileSystemInfo]$Item)
+    $Name = $Item.Name
+    $Lower = $Name.ToLowerInvariant()
+    if ($Name -in @(".git", ".gh-cli", "__pycache__", "backups", "logs")) { return $false }
+    if ($Lower -in @(".env", ".env.local", ".env.production", ".gitconfig-gh")) { return $false }
+    if ($Lower -like "*.zip") { return $false }
+    foreach ($Blocked in @("token", "secret", "credential", "password", "github_device_login")) {
+      if ($Lower.Contains($Blocked)) { return $false }
+    }
+    return $true
+  }
   New-Item -ItemType Directory -Path $To -Force | Out-Null
-  Get-ChildItem -LiteralPath $To -Force | Where-Object { $_.Name -ne ".git" -and $_.Name -ne ".gh-cli" -and $_.Name -ne "__pycache__" -and $_.Name -ne "backups" -and $_.Name -ne "logs" } | ForEach-Object {
+  Get-ChildItem -LiteralPath $To -Force | Where-Object { $_.Name -ne ".git" } | ForEach-Object {
     Remove-Item -LiteralPath $_.FullName -Recurse -Force
   }
-  Get-ChildItem -LiteralPath $From -Force | Where-Object { $_.Name -ne ".git" -and $_.Name -ne ".gh-cli" -and $_.Name -ne "__pycache__" -and $_.Name -ne "backups" -and $_.Name -ne "logs" -and $_.Name -notlike "*.zip" -and $_.Name -ne "tiantianle_ironlaw_20260617_current" } | ForEach-Object {
+  Get-ChildItem -LiteralPath $From -Force | Where-Object { (Test-PublishAllowed $_) -and $_.Name -ne "tiantianle_ironlaw_20260617_current" } | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $To -Recurse -Force
   }
 }
