@@ -1,6 +1,0 @@
-.gh-cli/
-__pycache__/
-*.pyc
-*.pyo
-*.tmp
-*.log
