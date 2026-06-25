@@ -1,7 +1,7 @@
 {
   "engine_version": "tiantianle_ironlaw_industrial_v1",
-  "generated_at_taiwan": "2026-06-26T07:01:47+08:00",
-  "generated_at_california": "2026-06-25T16:01:47-07:00",
+  "generated_at_taiwan": "2026-06-26T07:08:03+08:00",
+  "generated_at_california": "2026-06-25T16:08:03-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11838,
@@ -18,7 +18,7 @@
   "target_draw_date": "2026-06-25",
   "freshness": {
     "california_today": "2026-06-25",
-    "california_time": "16:01:47",
+    "california_time": "16:08:03",
     "allowed_latest_draw_date": "2026-06-24",
     "age_days": 0,
     "status": "ok",
@@ -5129,6 +5129,7 @@
     },
     "prediction_gap_diagnosis": {
       "status": "needs_strengthening",
+      "status_label": "\u9700\u7e7c\u7e8c\u88dc\u5f37",
       "new_model_key": "regime_gap_bridge",
       "new_model_added": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
       "missing_elements": [
@@ -5140,31 +5141,31 @@
         },
         {
           "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-          "evidence": "strong_single: pass edge 0.03 / avg edge 0.03 / zero 0.842",
+          "evidence": "\u5f37\u7368: \u901a\u904e\u512a\u52e2 0.03 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.03 / \u96f6\u547d\u4e2d 0.842",
           "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
           "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
         },
         {
           "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-          "evidence": "two_hit_one: pass edge 0.04 / avg edge 0.038 / zero 0.717",
+          "evidence": "\u4e8c\u4e2d\u4e00: \u901a\u904e\u512a\u52e2 0.04 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.038 / \u96f6\u547d\u4e2d 0.717",
           "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
           "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
         },
         {
           "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-          "evidence": "three_hit_two: pass edge 0.006 / avg edge 0.032 / zero 0.631",
+          "evidence": "\u4e09\u4e2d\u4e8c: \u901a\u904e\u512a\u52e2 0.006 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.032 / \u96f6\u547d\u4e2d 0.631",
           "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
           "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
         },
         {
           "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-          "evidence": "five_hit_two: pass edge 0.003 / avg edge 0.031 / zero 0.458",
+          "evidence": "\u4e94\u4e2d\u4e8c: \u901a\u904e\u512a\u52e2 0.003 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.031 / \u96f6\u547d\u4e2d 0.458",
           "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
           "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
         },
         {
           "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-          "evidence": "nine_hit_three: pass edge 0.002 / avg edge 0.065 / zero 0.197",
+          "evidence": "\u4e5d\u4e2d\u4e09: \u901a\u904e\u512a\u52e2 0.002 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.065 / \u96f6\u547d\u4e2d 0.197",
           "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
           "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
         },
@@ -5206,6 +5207,14 @@
         "rebalance_top9_pool",
         "reduce_dependency_overtrust",
         "tighten_pack_tournament"
+      ],
+      "active_action_labels": [
+        "\u52a0\u6b0a\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+        "\u5f37\u5236\u5957\u7528\u4e0a\u671f\u5931\u8aa4\u56de\u994b",
+        "\u5c0f\u7d44\u672a\u904e\u95dc\u6539\u5217\u89c0\u5bdf",
+        "\u91cd\u5e73\u8861\u524d\u4e5d\u540d\u5340\u9593\u8207\u5c3e\u6578",
+        "\u964d\u4f4e\u9023\u52d5\u904e\u5ea6\u4f9d\u8cf4",
+        "\u6536\u7dca\u5f37\u724c\u5c0f\u7d44\u7af6\u8cfd"
       ],
       "top_boosted_features": [
         {
@@ -18932,6 +18941,7 @@
       },
       "prediction_gap_diagnosis": {
         "status": "needs_strengthening",
+        "status_label": "\u9700\u7e7c\u7e8c\u88dc\u5f37",
         "new_model_key": "regime_gap_bridge",
         "new_model_added": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
         "missing_elements": [
@@ -18943,31 +18953,31 @@
           },
           {
             "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-            "evidence": "strong_single: pass edge 0.03 / avg edge 0.03 / zero 0.842",
+            "evidence": "\u5f37\u7368: \u901a\u904e\u512a\u52e2 0.03 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.03 / \u96f6\u547d\u4e2d 0.842",
             "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
             "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
           },
           {
             "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-            "evidence": "two_hit_one: pass edge 0.04 / avg edge 0.038 / zero 0.717",
+            "evidence": "\u4e8c\u4e2d\u4e00: \u901a\u904e\u512a\u52e2 0.04 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.038 / \u96f6\u547d\u4e2d 0.717",
             "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
             "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
           },
           {
             "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-            "evidence": "three_hit_two: pass edge 0.006 / avg edge 0.032 / zero 0.631",
+            "evidence": "\u4e09\u4e2d\u4e8c: \u901a\u904e\u512a\u52e2 0.006 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.032 / \u96f6\u547d\u4e2d 0.631",
             "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
             "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
           },
           {
             "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-            "evidence": "five_hit_two: pass edge 0.003 / avg edge 0.031 / zero 0.458",
+            "evidence": "\u4e94\u4e2d\u4e8c: \u901a\u904e\u512a\u52e2 0.003 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.031 / \u96f6\u547d\u4e2d 0.458",
             "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
             "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
           },
           {
             "category": "\u5f37\u724c\u5be6\u6230\u9580\u6abb\u672a\u7a69",
-            "evidence": "nine_hit_three: pass edge 0.002 / avg edge 0.065 / zero 0.197",
+            "evidence": "\u4e5d\u4e2d\u4e09: \u901a\u904e\u512a\u52e2 0.002 / \u5e73\u5747\u547d\u4e2d\u512a\u52e2 0.065 / \u96f6\u547d\u4e2d 0.197",
             "impact": "\u5f37\u724c\u6703\u56e0\u8fd1\u671f\u843d\u7a7a\u800c\u88ab\u964d\u7d1a\u6216\u9700\u8981\u8f49\u63db\u7b56\u7565",
             "fix": "\u4fdd\u7559\u5c0f\u7d44\u7af6\u8cfd\uff0c\u5c0d\u5f31\u52e2\u7d44\u555f\u7528\u9580\u6abb\u964d\u7d1a\u8207\u578b\u614b\u6a4b\u63a5\u5019\u9078"
           },
@@ -19009,6 +19019,14 @@
           "rebalance_top9_pool",
           "reduce_dependency_overtrust",
           "tighten_pack_tournament"
+        ],
+        "active_action_labels": [
+          "\u52a0\u6b0a\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+          "\u5f37\u5236\u5957\u7528\u4e0a\u671f\u5931\u8aa4\u56de\u994b",
+          "\u5c0f\u7d44\u672a\u904e\u95dc\u6539\u5217\u89c0\u5bdf",
+          "\u91cd\u5e73\u8861\u524d\u4e5d\u540d\u5340\u9593\u8207\u5c3e\u6578",
+          "\u964d\u4f4e\u9023\u52d5\u904e\u5ea6\u4f9d\u8cf4",
+          "\u6536\u7dca\u5f37\u724c\u5c0f\u7d44\u7af6\u8cfd"
         ],
         "top_boosted_features": [
           {
