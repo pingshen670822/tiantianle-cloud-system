@@ -1,4 +1,4 @@
-﻿one-click start: 2026-06-26 10:18:02
+﻿one-click start: 2026-06-26 10:20:02
 Fast refresh: before Taiwan safe update time; skip network fetch and full model recompute
 Step 1/6 prepare data and latest cache
 history csv synced
