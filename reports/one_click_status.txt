@@ -1,4 +1,4 @@
-﻿one-click start: 2026-06-26 12:28:09
+﻿one-click start: 2026-06-26 12:33:48
 Force run: bypass freshness skip and recompute full model
 Step 1/6 prepare data and latest cache
 history csv synced
