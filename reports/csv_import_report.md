@@ -1,7 +1,7 @@
 # 歷史 CSV 備援匯入報告
 
-- 產生時間：2026-06-26T12:09:44+08:00
-- 掃描資料夾：/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/history_import
+- 產生時間：2026-06-26T12:33:57+08:00
+- 掃描資料夾：C:\Users\MSI\Documents\Codex\天天樂鐵律專用版-20260615\history_import
 - 檔案數：2
 
 | 檔案 | 狀態 | 新增 | 跳過 | 錯誤 |

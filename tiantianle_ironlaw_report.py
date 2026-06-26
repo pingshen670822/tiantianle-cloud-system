@@ -1126,9 +1126,21 @@ def practical_maturity_rows(analysis):
 
 def adaptive_weight_rows(analysis):
     weights = ((analysis.get("industrial_engine") or {}).get("weights") or {})
+    labels = {
+        "similar_draw_knn": u("\\u76f8\\u4f3c\\u6b77\\u53f2\\u8fd1\\u9130"),
+        "omission_phase_rebound": u("\\u907a\\u6f0f\\u76f8\\u4f4d\\u56de\\u5f48"),
+        "regime_gap_bridge": u("\\u578b\\u614b\\u7f3a\\u53e3\\u6a4b\\u63a5"),
+        "positive_edge_core": u("\\u6b63\\u908a\\u969b\\u6838\\u5fc3"),
+        "bayesian_posterior": u("\\u8c9d\\u6c0f\\u5f8c\\u9a57"),
+        "distribution_balance": u("\\u5206\\u5e03\\u5e73\\u8861"),
+        "cross_consensus": u("\\u591a\\u6a21\\u578b\\u5171\\u8b58"),
+        "monte_carlo_stability": u("\\u8499\\u5730\\u5361\\u7f85\\u7a69\\u5b9a"),
+        "rank_error_correction": u("\\u6392\\u540d\\u932f\\u4f4d\\u4fee\\u6b63"),
+        "missed_hit_recovery": u("\\u6f0f\\u547d\\u4e2d\\u56de\\u6536"),
+    }
     rows = []
     for key, value in sorted(weights.items()):
-        rows.append([esc(key), value, u("\\u4f86\\u81ea\\u5929\\u5929\\u6a02\\u56de\\u6e2c"), u("\\u6efe\\u52d5\\u4fdd\\u7559"), "-"])
+        rows.append([esc(labels.get(key, key)), value, u("\\u4f86\\u81ea\\u5929\\u5929\\u6a02\\u56de\\u6e2c"), u("\\u6efe\\u52d5\\u4fdd\\u7559"), "-"])
     return safe_rows(rows[:20])
 
 

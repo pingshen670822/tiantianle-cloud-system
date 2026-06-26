@@ -10,7 +10,15 @@ NUMBER_MAX = 39
 DRAW_SIZE = 5
 BASE_PROBABILITY = DRAW_SIZE / NUMBER_MAX
 EXPECTED_GAP = NUMBER_MAX / DRAW_SIZE
-POSITIVE_EDGE_CORE_FEATURES = ("bayesian_posterior", "distribution_balance", "freq_300", "omission", "regime_gap_bridge")
+POSITIVE_EDGE_CORE_FEATURES = (
+    "bayesian_posterior",
+    "distribution_balance",
+    "freq_300",
+    "omission",
+    "regime_gap_bridge",
+    "similar_draw_knn",
+    "omission_phase_rebound",
+)
 
 
 def zone_label(number):
@@ -567,6 +575,93 @@ def regime_gap_bridge_scores(draws, lookback=1800):
     return normalize(values)
 
 
+def jaccard_similarity(left, right):
+    union = left | right
+    return len(left & right) / len(union) if union else 0.0
+
+
+def similar_draw_knn_scores(draws, lookback=2400, neighbors=120):
+    if len(draws) < 180:
+        return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    latest_set = set(draws[-1]["numbers"])
+    latest_profile = draw_profile(draws[-1]["numbers"])
+    start = max(0, len(draws) - lookback - 1)
+    matches = []
+    span = max(len(draws) - start, 1)
+    for idx in range(start, len(draws) - 1):
+        current_set = set(draws[idx]["numbers"])
+        profile_score = profile_similarity(draw_profile(draws[idx]["numbers"]), latest_profile)
+        set_score = jaccard_similarity(current_set, latest_set)
+        neighbor_score = sum(
+            1 for number in current_set if any(abs(number - anchor) <= 2 for anchor in latest_set)
+        ) / DRAW_SIZE
+        similarity = profile_score * 0.48 + set_score * 0.34 + neighbor_score * 0.18
+        if similarity < 0.42:
+            continue
+        recency = 0.82 + 0.24 * ((idx - start + 1) / span)
+        matches.append((similarity * similarity * recency, idx))
+    matches.sort(reverse=True)
+    votes = Counter()
+    for rank, (weight, idx) in enumerate(matches[:neighbors], 1):
+        rank_weight = weight * (1.0 - min(rank, neighbors) / (neighbors * 1.75))
+        current_set = set(draws[idx]["numbers"])
+        for number in draws[idx + 1]["numbers"]:
+            repeat_bias = 0.90 if number in current_set else 1.08
+            latest_repeat_penalty = 0.82 if number in latest_set else 1.0
+            votes[number] += rank_weight * repeat_bias * latest_repeat_penalty
+    return normalize({n: votes.get(n, 0.0) for n in range(NUMBER_MIN, NUMBER_MAX + 1)})
+
+
+def omission_phase_bucket(gap):
+    if gap <= 1:
+        return "fresh"
+    if gap <= 4:
+        return "short"
+    if gap <= 8:
+        return "normal"
+    if gap <= 15:
+        return "ready"
+    if gap <= 28:
+        return "overdue"
+    return "extreme"
+
+
+def omission_phase_rebound_scores(draws, lookback=1200):
+    if len(draws) < 160:
+        return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    current_gaps = omission(draws)
+    current_bucket = {number: omission_phase_bucket(gap) for number, gap in current_gaps.items()}
+    start = max(0, len(draws) - lookback - 1)
+    last_seen = {n: None for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    opportunities = Counter()
+    hits = Counter()
+    for idx, draw in enumerate(draws[:-1]):
+        for number in draw["numbers"]:
+            last_seen[number] = idx
+        if idx < start:
+            continue
+        next_numbers = set(draws[idx + 1]["numbers"])
+        recency = 0.82 + 0.24 * ((idx - start + 1) / max(len(draws) - start, 1))
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+            gap = idx - last_seen[number] if last_seen[number] is not None else idx + 1
+            if omission_phase_bucket(gap) != current_bucket[number]:
+                continue
+            opportunities[number] += recency
+            if number in next_numbers:
+                hits[number] += recency
+    values = {}
+    gap_norm = normalize({n: math.log1p(current_gaps[n]) for n in current_gaps})
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        support = opportunities.get(number, 0.0)
+        phase_rate = (hits.get(number, 0.0) + BASE_PROBABILITY * 10) / (support + 10)
+        lift = phase_rate - BASE_PROBABILITY
+        support_weight = min(1.0, math.log1p(support) / math.log1p(lookback))
+        overdue_bonus = 0.08 if current_bucket[number] in {"ready", "overdue"} else 0.0
+        extreme_penalty = 0.08 if current_bucket[number] == "extreme" else 0.0
+        values[number] = max(0.0, lift) * 4.2 * support_weight + gap_norm[number] * 0.28 + overdue_bonus - extreme_penalty
+    return normalize(values)
+
+
 def missed_hit_recovery_scores(review):
     if not review or not review.get("has_review"):
         return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
@@ -813,6 +908,8 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
     shape_follow = shape_follow_scores(draws)
     zone_parity_pressure = zone_parity_pressure_scores(draws)
     regime_gap_bridge = regime_gap_bridge_scores(draws)
+    similar_draw_knn = similar_draw_knn_scores(draws)
+    omission_phase_rebound = omission_phase_rebound_scores(draws)
     missed_hit_recovery = missed_hit_recovery_scores(review)
     rank_error_correction = rank_error_correction_scores(review)
     cross_consensus = cross_model_consensus_scores([
@@ -834,6 +931,8 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         shape_follow,
         zone_parity_pressure,
         regime_gap_bridge,
+        similar_draw_knn,
+        omission_phase_rebound,
         missed_hit_recovery,
         rank_error_correction,
     ])
@@ -848,6 +947,8 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         shape_follow,
         zone_parity_pressure,
         regime_gap_bridge,
+        similar_draw_knn,
+        omission_phase_rebound,
         rank_error_correction,
     ])
     next_date = next_draw_date(draws[-1]["draw_date"])
@@ -875,6 +976,8 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         feature_scores[number]["shape_follow"] = shape_follow[number]
         feature_scores[number]["zone_parity_pressure"] = zone_parity_pressure[number]
         feature_scores[number]["regime_gap_bridge"] = regime_gap_bridge[number]
+        feature_scores[number]["similar_draw_knn"] = similar_draw_knn[number]
+        feature_scores[number]["omission_phase_rebound"] = omission_phase_rebound[number]
         feature_scores[number]["missed_hit_recovery"] = missed_hit_recovery[number]
         feature_scores[number]["rank_error_correction"] = rank_error_correction[number]
         feature_scores[number]["date"] = date_score[number]
@@ -914,6 +1017,8 @@ def industrial_weights(review=None):
         "shape_follow": 0.072,
         "zone_parity_pressure": 0.062,
         "regime_gap_bridge": 0.086,
+        "similar_draw_knn": 0.074,
+        "omission_phase_rebound": 0.068,
         "missed_hit_recovery": 0.054,
         "rank_error_correction": 0.075,
         "positive_edge_core": 0.18,
@@ -940,6 +1045,8 @@ def industrial_weights(review=None):
                 "shape_follow": 0.052,
                 "zone_parity_pressure": 0.096,
                 "regime_gap_bridge": 0.172,
+                "similar_draw_knn": 0.142,
+                "omission_phase_rebound": 0.136,
                 "missed_hit_recovery": 0.128,
                 "rank_error_correction": 0.162,
                 "positive_edge_core": 0.28,
@@ -967,6 +1074,8 @@ def industrial_weights(review=None):
             "validated_dependency",
             "distribution_balance",
             "regime_gap_bridge",
+            "similar_draw_knn",
+            "omission_phase_rebound",
             "pair",
             "zone_parity_pressure",
         ]:
@@ -1002,6 +1111,8 @@ MODEL_SOURCE_LABELS = {
     "shape_follow": "\u724c\u578b\u76f8\u4f3c\u8ddf\u96a8",
     "zone_parity_pressure": "\u5340\u9593\u5947\u5076\u58d3\u529b",
     "regime_gap_bridge": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+    "similar_draw_knn": "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130",
+    "omission_phase_rebound": "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48",
     "missed_hit_recovery": "\u6f0f\u547d\u4e2d\u56de\u6536",
     "rank_error_correction": "\u6392\u540d\u932f\u4f4d\u4fee\u6b63",
     "positive_edge_core": "\u6b63\u908a\u969b\u6838\u5fc3",
@@ -1045,6 +1156,8 @@ def number_cross_validation(values):
         ("shape_follow", "\u724c\u578b\u76f8\u4f3c\u8ddf\u96a8", values.get("shape_follow", 0) >= 0.52),
         ("zone_parity_pressure", "\u5340\u9593\u5947\u5076\u58d3\u529b", values.get("zone_parity_pressure", 0) >= 0.52),
         ("regime_gap_bridge", "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5", values.get("regime_gap_bridge", 0) >= 0.52),
+        ("similar_draw_knn", "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130", values.get("similar_draw_knn", 0) >= 0.52),
+        ("omission_phase_rebound", "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48", values.get("omission_phase_rebound", 0) >= 0.52),
         ("missed_hit_recovery", "\u6f0f\u547d\u4e2d\u56de\u6536", values.get("missed_hit_recovery", 0) >= 0.52),
         ("rank_error_correction", "\u6392\u540d\u932f\u4f4d\u4fee\u6b63", values.get("rank_error_correction", 0) >= 0.52),
         ("positive_edge_core", "\u6b63\u908a\u969b\u6838\u5fc3", values.get("positive_edge_core", 0) >= 0.58),
@@ -1319,6 +1432,10 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             reasons[number].append("\u5340\u9593\u5947\u5076\u58d3\u529b")
         if values["regime_gap_bridge"] >= 0.7:
             reasons[number].append("\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5")
+        if values["similar_draw_knn"] >= 0.7:
+            reasons[number].append("\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130")
+        if values["omission_phase_rebound"] >= 0.7:
+            reasons[number].append("\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48")
         if values["missed_hit_recovery"] >= 0.7:
             reasons[number].append("\u6f0f\u547d\u4e2d\u56de\u6536")
         if values["rank_error_correction"] >= 0.7:
@@ -1735,6 +1852,8 @@ PRECISION_VARIANT_LABELS = {
     "omission_recovery": "\u907a\u6f0f\u56de\u6536",
     "tail_zone_balance": "\u5c3e\u6578\u5340\u9593\u5e73\u8861",
     "regime_gap_bridge": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+    "similar_history_knn": "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130",
+    "omission_phase": "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48",
     "failure_corrector": "\u4e0a\u671f\u5931\u8aa4\u4fee\u6b63",
 }
 
@@ -1782,6 +1901,12 @@ def precision_variant_item_score(item, variant, review=None):
     elif variant == "regime_gap_bridge":
         bridge_signal = precision_source_signal(item, {"regime_gap_bridge", "shape_follow", "zone_parity_pressure", "omission"})
         value = bridge_signal * 0.44 + precision_norm * 0.20 + cross_norm * 0.16 + maturity_norm * 0.10 + frontload * 0.10
+    elif variant == "similar_history_knn":
+        similar_signal = precision_source_signal(item, {"similar_draw_knn", "regime_gap_bridge", "shape_follow", "markov_chain"})
+        value = similar_signal * 0.46 + frontload * 0.18 + cross_norm * 0.16 + precision_norm * 0.12 + maturity_norm * 0.08
+    elif variant == "omission_phase":
+        phase_signal = precision_source_signal(item, {"omission_phase_rebound", "omission", "cycle_timing", "bayesian_posterior"})
+        value = phase_signal * 0.42 + omission_norm * 0.22 + cross_norm * 0.14 + precision_norm * 0.12 + maturity_norm * 0.10
     elif variant == "failure_corrector":
         recovery = 0.0
         if number in late_hit_numbers:
@@ -2826,6 +2951,8 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
         "reduce_dependency_overtrust": "\u964d\u4f4e\u9023\u52d5\u904e\u5ea6\u4f9d\u8cf4",
         "rebalance_top9_pool": "\u91cd\u5e73\u8861\u524d\u4e5d\u540d\u5340\u9593\u8207\u5c3e\u6578",
         "force_failure_feedback": "\u5f37\u5236\u5957\u7528\u4e0a\u671f\u5931\u8aa4\u56de\u994b",
+        "boost_similarity_knn": "\u555f\u7528\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130\u88dc\u5f37",
+        "boost_omission_phase": "\u555f\u7528\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48\u88dc\u5f37",
         "keep_current_tournament": "\u7dad\u6301\u73fe\u884c\u6efe\u52d5\u7af6\u8cfd",
     }
     pack_labels = {
@@ -2853,9 +2980,10 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
             "\u524d\u5341\u540d\u908a\u969b\u4e0d\u8db3",
             f"Top10 {round(top10_avg, 3)} / \u96a8\u6a5f {round(random_top10, 3)} / edge {round(top10_edge, 4)}",
             "\u9ad8\u6a5f\u7387\u865f\u5bb9\u6613\u843d\u5728Top10\u4ee5\u5f8c",
-            "\u555f\u7528\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5\uff0c\u628a\u4e0a\u671f\u724c\u578b\u3001\u8fd1\u671f\u5340\u9593\u7f3a\u53e3\u8207\u76f8\u4f3c\u6b77\u53f2\u4e0b\u4e00\u671f\u5408\u4f75\u52a0\u6b0a",
+            "\u555f\u7528\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5\u3001\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130\u3001\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48\uff0c\u5c07\u4e0a\u671f\u724c\u578b\u8207\u6b77\u53f2\u540c\u76f8\u4f4d\u4e0b\u671f\u547d\u4e2d\u7d71\u8a08\u5408\u4f75\u52a0\u6b0a",
             "boost_regime_gap_bridge",
         )
+        actions.extend(["boost_similarity_knn", "boost_omission_phase"])
 
     pack_stats = (pack_governance or {}).get("pack_stats", {})
     for key, item in pack_stats.items():
@@ -2898,6 +3026,27 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
             "reduce_dependency_overtrust",
         )
 
+    model_source_counts = Counter()
+    for item in (candidates or [])[:9]:
+        for source in item.get("model_sources") or []:
+            model_source_counts[source.get("model")] += 1
+    if model_source_counts.get("similar_draw_knn", 0) < 2:
+        add_gap(
+            "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130\u8a0a\u865f\u4e0d\u8db3",
+            f"Top9\u4e2d\u8fd1\u9130\u8a0a\u865f {model_source_counts.get('similar_draw_knn', 0)}",
+            "\u6700\u50cf\u7684\u6b77\u53f2\u724c\u672a\u80fd\u652f\u6490\u8db3\u5920\u591a\u524d\u4e5d\u540d",
+            "\u5df2\u8b93\u8fd1\u9130\u6a21\u578b\u9032\u5165\u7af6\u8cfd\uff0c\u82e5\u56de\u6e2c\u512a\u65bc\u96a8\u6a5f\u6703\u81ea\u52d5\u589e\u6b0a",
+            "boost_similarity_knn",
+        )
+    if model_source_counts.get("omission_phase_rebound", 0) < 2:
+        add_gap(
+            "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48\u8a0a\u865f\u4e0d\u8db3",
+            f"Top9\u4e2d\u76f8\u4f4d\u8a0a\u865f {model_source_counts.get('omission_phase_rebound', 0)}",
+            "\u907a\u6f0f\u9031\u671f\u6a21\u578b\u672a\u80fd\u5c07\u6709\u6548\u865f\u78bc\u63a8\u5165\u524d\u4e5d\u540d",
+            "\u5df2\u5c07\u6bcf\u9846\u865f\u78bc\u7576\u524d\u907a\u6f0f\u6876\u8207\u6b77\u53f2\u540c\u6876\u4e0b\u671f\u547d\u4e2d\u7387\u5408\u4f75\u904b\u7b97",
+            "boost_omission_phase",
+        )
+
     top9 = [int(item.get("number")) for item in (candidates or [])[:9] if item.get("number") is not None]
     zone_counts = Counter(zone_label(number) for number in top9)
     tail_counts = Counter(number % 10 for number in top9)
@@ -2926,7 +3075,8 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
         "status": status,
         "status_label": "\u9700\u7e7c\u7e8c\u88dc\u5f37" if status != "ok" else "\u7d50\u69cb\u6b63\u5e38",
         "new_model_key": "regime_gap_bridge",
-        "new_model_added": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+        "new_model_keys": ["regime_gap_bridge", "similar_draw_knn", "omission_phase_rebound"],
+        "new_model_added": "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5\u3001\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130\u3001\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48",
         "missing_elements": missing,
         "active_actions": sorted(set(actions)),
         "active_action_labels": [action_labels.get(action, action) for action in sorted(set(actions))],
@@ -3031,11 +3181,15 @@ def advanced_model_summary(draws):
         "markov_chain": markov_chain_scores(draws),
         "time_series": time_series_scores(draws),
         "neural_network": neural_network_scores(draws),
+        "similar_draw_knn": similar_draw_knn_scores(draws),
+        "omission_phase_rebound": omission_phase_rebound_scores(draws),
     }
     labels = {
         "markov_chain": "\u99ac\u53ef\u592b\u93c8",
         "time_series": "\u6642\u9593\u5e8f\u5217",
         "neural_network": "\u795e\u7d93\u7db2\u8def",
+        "similar_draw_knn": "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130",
+        "omission_phase_rebound": "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48",
     }
     rows = []
     vote = Counter()
@@ -3050,6 +3204,8 @@ def advanced_model_summary(draws):
                 "markov_chain": "\u4f9d\u4e0a\u671f\u865f\u78bc\u5efa\u7acb\u72c0\u614b\u8f49\u79fb\u77e9\u9663",
                 "time_series": "\u4ee5\u5feb\u6162 EWMA \u8ffd\u8e64\u865f\u78bc\u52d5\u80fd",
                 "neural_network": "\u4ee5\u983b\u7387\u3001\u907a\u6f0f\u3001\u8f49\u79fb\u8207\u52d5\u80fd\u505a\u975e\u7dda\u6027\u7d9c\u5408",
+                "similar_draw_knn": "\u627e\u51fa\u8207\u6700\u65b0\u724c\u578b\u3001\u865f\u7d44\u3001\u9130\u865f\u6700\u76f8\u4f3c\u7684\u6b77\u53f2\u724c\uff0c\u7d71\u8a08\u5176\u4e0b\u4e00\u671f",
+                "omission_phase_rebound": "\u4ee5\u6bcf\u9846\u865f\u78bc\u7576\u524d\u907a\u6f0f\u76f8\u4f4d\u5c0d\u7167\u6b77\u53f2\u540c\u76f8\u4f4d\u4e0b\u4e00\u671f\u547d\u4e2d\u7387",
             }[key],
         })
     consensus = [number for number, _ in vote.most_common(12)]
@@ -3064,7 +3220,7 @@ def advanced_model_backtest(draws, rounds=None):
     rounds = runtime_rounds("TIANTIANLE_ADVANCED_BACKTEST_ROUNDS", 80) if rounds is None else rounds
     if len(draws) < 140:
         return {"rounds": 0}
-    model_names = ["markov_chain", "time_series", "neural_network"]
+    model_names = ["markov_chain", "time_series", "neural_network", "similar_draw_knn", "omission_phase_rebound"]
     totals = {name: {"top10_hits": 0, "rounds": 0} for name in model_names}
     start = max(120, len(draws) - rounds - 1)
     for idx in range(start, len(draws) - 1):
@@ -3074,6 +3230,8 @@ def advanced_model_backtest(draws, rounds=None):
             "markov_chain": markov_chain_scores(train),
             "time_series": time_series_scores(train),
             "neural_network": neural_network_scores(train),
+            "similar_draw_knn": similar_draw_knn_scores(train),
+            "omission_phase_rebound": omission_phase_rebound_scores(train),
         }
         for name, scores in scores_by_model.items():
             top10 = set(rank_values(scores)[:10])
@@ -3304,7 +3462,7 @@ def compute_industrial_analysis(draws, review=None):
         review,
     )
     return {
-        "engine_version": "industrial_v8_regime_gap_bridge_diagnosis",
+        "engine_version": "industrial_v9_knn_phase_rebound_diagnosis",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
