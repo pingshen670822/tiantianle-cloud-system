@@ -1,7 +1,7 @@
 {
   "engine_version": "tiantianle_ironlaw_industrial_v1",
-  "generated_at_taiwan": "2026-06-26T12:43:24+08:00",
-  "generated_at_california": "2026-06-25T21:43:24-07:00",
+  "generated_at_taiwan": "2026-06-26T19:52:50+08:00",
+  "generated_at_california": "2026-06-26T04:52:50-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11839,
@@ -17,8 +17,8 @@
   },
   "target_draw_date": "2026-06-26",
   "freshness": {
-    "california_today": "2026-06-25",
-    "california_time": "21:43:24",
+    "california_today": "2026-06-26",
+    "california_time": "04:52:50",
     "allowed_latest_draw_date": "2026-06-25",
     "age_days": 0,
     "status": "ok",
