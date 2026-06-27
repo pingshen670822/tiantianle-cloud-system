@@ -1,6 +1,6 @@
 # 歷史 CSV 備援匯入報告
 
-- 產生時間：2026-06-27T18:35:26+08:00
+- 產生時間：2026-06-28T01:41:47+08:00
 - 掃描資料夾：/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/history_import
 - 檔案數：2
 
