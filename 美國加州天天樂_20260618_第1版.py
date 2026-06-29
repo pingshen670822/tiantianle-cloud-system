@@ -1,4 +1,5 @@
-import csv
+﻿import csv
+import hashlib
 import html
 import json
 import math
@@ -59,7 +60,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "tiantianle_ironlaw_industrial_v1"
+ENGINE_VERSION = "天天樂鐵律工業版第2版_20260629"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -1733,6 +1734,205 @@ def failure_review(conn):
     }
 
 
+def _score_to_percent(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if 0 < number <= 1:
+        number *= 100
+    return number
+
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _status_label(value):
+    labels = {
+        "official": "正式通過",
+        "verified": "已驗證",
+        "released": "已發布",
+        "research_prediction": "研究預測",
+        "high_confidence_watch": "高信心觀察",
+        "precision_watch": "精算觀察",
+        "watch_only": "觀察中",
+        "research_only": "研究觀察",
+        "blocked_low_maturity": "成熟度不足",
+        "strict_downshift": "嚴格降級",
+        "red": "紅燈",
+        "yellow": "黃燈",
+        "green": "綠燈",
+        "passed": "通過",
+        "failed": "未通過",
+    }
+    return labels.get(str(value), str(value or "-"))
+
+
+def _candidate_confidence_profile(item):
+    confidence = _score_to_percent(item.get("confidence_index", item.get("score", 0)))
+    probability = _score_to_percent(item.get("model_probability_percent", 0))
+    stability = _safe_int(item.get("stability_count", 0))
+    cross = item.get("cross_validation") or {}
+    passed = _safe_int(cross.get("passed_count", 0))
+    total = _safe_int(cross.get("total_count", 0))
+    maturity = item.get("practical_maturity") or {}
+    maturity_score = _score_to_percent(maturity.get("score", 0))
+    tier = str(maturity.get("tier", ""))
+    rank = _safe_int(item.get("rank", 99), 99)
+    top9 = bool(item.get("top9_core", rank <= 9)) and rank <= 9
+    guard = item.get("previous_prediction_guard") or {}
+    repeat = item.get("repeat_guard") or {}
+    guard_ok = not guard or bool(guard.get("passed"))
+    repeat_ok = not repeat or bool(repeat.get("passed"))
+    high_gate = (
+        top9
+        and confidence >= 88
+        and (probability >= 15 or stability >= 5)
+        and passed >= 3
+        and maturity_score >= 58
+        and tier != "blocked_low_maturity"
+        and guard_ok
+        and repeat_ok
+    )
+    formal_gate = high_gate and confidence >= 90 and stability >= 4 and passed >= 5 and tier == "mature"
+    if formal_gate:
+        level = "正式高信心"
+    elif high_gate:
+        level = "高信心觀察"
+    elif top9 and confidence >= 85:
+        level = "中高信心觀察"
+    else:
+        level = "一般觀察"
+    return {
+        "number": int(item.get("number")),
+        "rank": rank,
+        "confidence_index": round(confidence, 2),
+        "model_probability_percent": round(probability, 2),
+        "stability_count": stability,
+        "cross_validation_passed": passed,
+        "cross_validation_total": total,
+        "maturity_score": round(maturity_score, 2),
+        "maturity_level": _status_label(tier),
+        "top9_core": top9,
+        "high_confidence_gate_passed": high_gate,
+        "formal_gate_passed": formal_gate,
+        "confidence_level": level,
+        "reasons": item.get("reasons", []),
+    }
+
+
+def _build_strict_recommendation_policy(candidates, industrial, official_release_allowed):
+    profiles = [_candidate_confidence_profile(item) for item in (candidates or [])[:15] if item.get("number") is not None]
+    formal = [item for item in profiles if item["formal_gate_passed"]]
+    high_watch = [item for item in profiles if item["high_confidence_gate_passed"]]
+    release = (industrial or {}).get("release_gate") or {}
+    release_status = release.get("status", "watch_only")
+    if official_release_allowed and formal:
+        mode = "正式高信心推薦"
+        message = "本期有通過正式門檻的高信心號碼。"
+    elif high_watch:
+        mode = "高信心觀察"
+        message = "本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。"
+    else:
+        mode = "嚴格觀察"
+        message = "本期沒有通過高信心門檻的正式推薦號碼，系統已禁止冒稱強推。"
+    return {
+        "mode": mode,
+        "message": message,
+        "visible_rule": "只允許前九名核心且通過信心、機率、穩定、交叉驗證、成熟度守門的號碼進入高信心區；第十至十五名不得升格。",
+        "release_gate_status": _status_label(release_status),
+        "official_release_allowed": bool(official_release_allowed),
+        "formal_recommendations": formal,
+        "high_confidence_watch": high_watch,
+        "all_candidate_profiles": profiles,
+    }
+
+
+def _avoid_confidence_profile(item):
+    avoid = _score_to_percent(item.get("avoid_index", item.get("avoid_score", 0)))
+    appearance = _score_to_percent(item.get("appearance_score", 0))
+    rank = _safe_int(item.get("candidate_rank", 99), 99)
+    stability = _safe_int(item.get("stability_count", 0))
+    weak = _safe_int(item.get("weak_signal_count", 0))
+    score = min(100.0, avoid * 65 + max(0, rank - 24) * 2.0 + weak * 3.0 + (5 - min(stability, 5)) * 2.0)
+    if score >= 88:
+        label = "高避開信心"
+    elif score >= 76:
+        label = "中高避開信心"
+    else:
+        label = "觀察避開"
+    return {
+        "number": int(item.get("number")),
+        "avoid_index": round(avoid, 4),
+        "avoid_confidence": round(score, 2),
+        "confidence_label": label,
+        "appearance_score": round(appearance, 4),
+        "candidate_rank": rank,
+        "stability_count": stability,
+        "weak_signal_count": weak,
+        "reasons": item.get("reasons", []),
+        "warning": "低機率代表模型建議避開，不代表絕對不會開出。",
+    }
+
+
+def _build_low_probability_avoid(industrial, candidates):
+    source_items = [dict(item) for item in (((industrial or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])]
+    used = {int(item.get("number")) for item in source_items if item.get("number") is not None}
+    for item in reversed(candidates or []):
+        number = int(item.get("number"))
+        if number in used:
+            continue
+        source_items.append({
+            "number": number,
+            "avoid_score": max(0.0, 1.0 - float(item.get("score", 0) or 0)),
+            "appearance_score": float(item.get("score", 0) or 0),
+            "candidate_rank": int(item.get("rank", 99)),
+            "stability_count": int(item.get("stability_count", 0) or 0),
+            "weak_signal_count": 1,
+            "reasons": ["候選排序後段", "高信心守門未通過"],
+        })
+        used.add(number)
+        if len(source_items) >= 15:
+            break
+    profiles = [_avoid_confidence_profile(item) for item in source_items[:15]]
+    return {
+        "warning": "低機率與不中清單是風控避開模型，不是絕對保證。",
+        "groups": {
+            "五不中": profiles[:5],
+            "十不中": profiles[:10],
+            "十五不中": profiles[:15],
+        },
+        "backtest": (industrial or {}).get("unlikely_backtest") or {},
+    }
+
+
+def _build_recalculation_manifest(draws, candidates, industrial, review, freshness):
+    top15 = [int(item.get("number")) for item in (candidates or [])[:15]]
+    payload = {
+        "latest_draw_date": draws[-1]["draw_date"],
+        "latest_numbers": draws[-1]["numbers"],
+        "target_draw_date": next_date(draws[-1]["draw_date"]),
+
+        "top15": top15,
+        "industrial_engine": (industrial or {}).get("engine_version"),
+        "review_severity": (review or {}).get("severity"),
+        "target_taiwan_safe_update_time": (freshness or {}).get("target_taiwan_safe_update_time"),
+    }
+    fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return {
+        "status": "已重新運算",
+        "every_draw_recomputed": True,
+        "previous_prediction_reused": False,
+        "backtest_recomputed": True,
+        "review_recomputed": bool(review and review.get("has_review")),
+        "fingerprint": fingerprint,
+        "basis": payload,
+        "visible_note": "本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。",
+    }
 def analyze(draws, review=None):
     industrial = compute_industrial_analysis(draws, review)
     tiantianle_core = compute_tiantianle_core_analysis(draws, review, industrial=industrial)
@@ -1762,6 +1962,10 @@ def analyze(draws, review=None):
         and industrial.get("release_gate", {}).get("status") == "official"
         and aerospace.get("release_assurance", {}).get("status") == "verified"
     )
+    strict_policy = _build_strict_recommendation_policy(candidates, industrial, official_release_allowed)
+    avoid_policy = _build_low_probability_avoid(industrial, candidates)
+    recalculation = _build_recalculation_manifest(draws, candidates, industrial, review, freshness)
+    top_numbers = [int(item.get("number")) for item in candidates]
     history_status = "complete" if len(draws) >= FULL_HISTORY_MIN_ROWS else ("partial" if len(draws) >= 180 else "seed_only")
     completeness = {
         "status": history_status,
@@ -1771,11 +1975,30 @@ def analyze(draws, review=None):
     }
     return {
         "engine_version": ENGINE_VERSION,
+        "industrial_engine_version": industrial.get("engine_version"),
         "generated_at_taiwan": iso_local(taiwan_now()),
         "generated_at_california": iso_local(california_now()),
         "game": "\u5929\u5929\u6a02",
         "latest_draw": draws[-1],
         "target_draw_date": next_date(draws[-1]["draw_date"]),
+        "prediction_draw_taiwan_time": freshness.get("target_taiwan_safe_update_time"),
+        "latest_draw_taiwan_update_time": freshness.get("latest_taiwan_safe_update_time"),
+        "recalculation_manifest": recalculation,
+        "strict_recommendation_policy": strict_policy,
+        "low_probability_avoid": avoid_policy,
+        "prediction": {
+            "top5": top_numbers[:5],
+            "top9": top_numbers[:9],
+            "top10": top_numbers[:10],
+            "top15": top_numbers[:15],
+            "formal_high_confidence": [item["number"] for item in strict_policy["formal_recommendations"]],
+            "high_confidence_watch": [item["number"] for item in strict_policy["high_confidence_watch"]],
+            "low_probability_5_not_hit": [item["number"] for item in avoid_policy["groups"]["五不中"]],
+            "low_probability_10_not_hit": [item["number"] for item in avoid_policy["groups"]["十不中"]],
+            "low_probability_15_not_hit": [item["number"] for item in avoid_policy["groups"]["十五不中"]],
+            "recommendation_mode": strict_policy["mode"],
+            "recommendation_message": strict_policy["message"],
+        },
         "freshness": freshness,
         "official_release_allowed": official_release_allowed,
         "draw_count": len(draws),
@@ -1955,6 +2178,7 @@ def prediction_health(conn, analysis, network_diag=None, latest_fetch=None, cach
     completeness_score = min(100, completeness_score)
     health = {
         "engine_version": ENGINE_VERSION,
+        "industrial_engine_version": (analysis.get("industrial_engine") or {}).get("engine_version"),
         "generated_at": iso_local(taiwan_now()),
         "latest_draw_date": analysis["latest_draw"]["draw_date"],
         "target_draw_date": analysis["target_draw_date"],
@@ -2394,3 +2618,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+

@@ -1,33 +1,25 @@
-name: daily-tiantianle-update
+﻿name: daily-tiantianle-update
 
 on:
   workflow_dispatch:
   schedule:
-    # Taiwan post-draw retry window, for California daylight saving draw updates.
+    # 台灣夏令開獎後嚴格更新窗：09:48-10:00，目標 10:00 前完成最新開獎與下期預測。
     - cron: "48 1 * * *"
     - cron: "49 1 * * *"
     - cron: "50 1 * * *"
+    - cron: "52 1 * * *"
     - cron: "55 1 * * *"
+    - cron: "58 1 * * *"
     - cron: "0 2 * * *"
-    - cron: "5 2 * * *"
-    - cron: "10 2 * * *"
-    - cron: "15 2 * * *"
-    - cron: "20 2 * * *"
-    - cron: "25 2 * * *"
-    - cron: "30 2 * * *"
-    - cron: "40 2 * * *"
-    # Taiwan post-draw retry window, for California standard time draw updates.
+    # 台灣冬令開獎後嚴格更新窗：10:48-11:00。
     - cron: "48 2 * * *"
     - cron: "49 2 * * *"
     - cron: "50 2 * * *"
     - cron: "55 2 * * *"
     - cron: "0 3 * * *"
-    - cron: "5 3 * * *"
-    - cron: "10 3 * * *"
-    - cron: "15 3 * * *"
-    - cron: "20 3 * * *"
-    - cron: "30 3 * * *"
-    # Evening safety refresh.
+    # 台灣 13:00 強制完整重新運算、回測、檢討、戰報重建。
+    - cron: "0 5 * * *"
+    # 台灣 21:45 保險檢查。
     - cron: "45 13 * * *"
 
 permissions:
@@ -62,8 +54,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          for attempt in $(seq 1 35); do
-            echo "post-draw update attempt ${attempt}/35"
+          for attempt in $(seq 1 10); do
+            echo "post-draw update attempt ${attempt}/10"
             python "美國加州天天樂_20260618_第1版.py"
             python pages_build.py
             if python - <<'PY'
@@ -97,8 +89,8 @@ jobs:
             then
               break
             fi
-            if [ "$attempt" = "35" ]; then
-              echo "latest draw still not available after retry window; later schedule will retry"
+            if [ "$attempt" = "10" ]; then
+              echo "latest draw still not available by the strict 10:00 window; 13:00 mandatory recalculation will retry and rebuild"
               break
             fi
             sleep 60
@@ -119,3 +111,4 @@ jobs:
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

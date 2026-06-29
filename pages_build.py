@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import json
 import html
@@ -501,6 +501,49 @@ def build_signal_focus(candidates):
     )
 
 
+def build_mobile_avoid_rows(data, group_name):
+    avoid = data.get("low_probability_avoid") or {}
+    groups = avoid.get("groups") or {}
+    rows = []
+    for idx, item in enumerate((groups.get(group_name) or [])[:15], 1):
+        rows.append(
+            f"<tr><th>{idx}</th><td>{int(item.get('number')):02d}</td>"
+            f"<td>{esc(item.get('avoid_confidence', '-'))}</td><td>{esc(item.get('confidence_label', '-'))}</td>"
+            f"<td>{esc('、'.join(item.get('reasons', [])))}</td></tr>"
+        )
+    if not rows:
+        rows.append(f"<tr><td colspan='5'>{u('\\u672c\\u671f\\u5df2\\u904b\\u7b97\\uff0c\\u6682\\u7121\\u984d\\u5916\\u907f\\u958b\\u865f')}</td></tr>")
+    return "".join(rows)
+
+
+def build_mobile_recalculation_block(data):
+    manifest = data.get("recalculation_manifest") or {}
+    basis = manifest.get("basis") or {}
+    policy = data.get("strict_recommendation_policy") or {}
+    prediction = data.get("prediction") or {}
+    high = prediction.get("formal_high_confidence") or prediction.get("high_confidence_watch") or []
+    return (
+        f"<section class='band diagnosis'><h2>{u('\\u6bcf\\u671f\\u91cd\\u7b97\\u8b49\\u660e')}</h2>"
+        f"<p><strong>{esc(manifest.get('status', '-'))}</strong>：{esc(manifest.get('visible_note', '-'))}</p>"
+        f"<p>{u('\\u91cd\\u7b97\\u6307\\u7d0b')}：{esc(manifest.get('fingerprint', '-'))}</p>"
+        f"<p>{u('\\u4f9d\\u64da\\u958b\\u734e')}：{esc(basis.get('latest_draw_date', ''))} {esc(fmt_numbers(basis.get('latest_numbers', [])))}</p>"
+        f"<p>{u('\\u63a8\\u85a6\\u6a21\\u5f0f')}：{esc(policy.get('mode', prediction.get('recommendation_mode', '-')))} / {esc(policy.get('message', prediction.get('recommendation_message', '-')))}</p>"
+        f"<p><strong>{u('\\u9ad8\\u4fe1\\u5fc3\\u865f\\u78bc')}：</strong>{esc(fmt_numbers(high))}</p></section>"
+    )
+
+
+def build_mobile_avoid_block(data):
+    avoid = data.get("low_probability_avoid") or {}
+    backtest = avoid.get("backtest") or {}
+    header = f"<tr><th>#</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u907f\\u958b\\u4fe1\\u5fc3')}</th><th>{u('\\u7b49\\u7d1a')}</th><th>{u('\\u7406\\u7531')}</th></tr>"
+    return (
+        f"<section class='band danger-zone'><h2>{u('\\u4f4e\\u6a5f\\u7387\\u4e0d\\u4e2d\\u5206\\u6790')}</h2>"
+        f"<p>{esc(avoid.get('warning', u('\\u4f4e\\u6a5f\\u7387\\u662f\\u98a8\\u63a7\\u907f\\u958b\\uff0c\\u4e0d\\u662f\\u7d55\\u5c0d\\u4fdd\\u8b49\\u3002')))}</p>"
+        f"<p>{u('\\u56de\\u6e2c')}：{u('\\u6a23\\u672c')} {esc(backtest.get('rounds', '-'))} / {u('\\u96f6\\u8aa4\\u5165\\u7387')} {esc(backtest.get('zero_hit_rate', '-'))}</p>"
+        f"<h3>{u('\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '五不中')}</table>"
+        f"<h3>{u('\\u5341\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十不中')}</table>"
+        f"<h3>{u('\\u5341\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十五不中')}</table></section>"
+    )
 def build_home_page():
     repo, workflow_url, page_url = cloud_links()
     data = {}
@@ -583,7 +626,7 @@ main{{max-width:980px;margin:auto;padding:18px}}.band{{background:white;border:1
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}}.card{{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px}}.card h2{{margin:0 0 8px;font-size:15px;color:#475569}}.value{{font-size:22px;font-weight:900}}
 table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left}}th{{background:#f1f5f9}}
   .high-note{{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}}.high-note h2{{color:#991b1b}}.small{{font-size:13px;color:#475569}}
-  .diagnosis{{border:3px solid #1d4ed8;background:#eff6ff}}.diagnosis h2{{color:#1e3a8a}}
+  .diagnosis{{border:3px solid #1d4ed8;background:#eff6ff}}.diagnosis h2{{color:#1e3a8a}}.danger-zone{{border:3px solid #991b1b;background:#fff1f2}}.danger-zone h2{{color:#7f1d1d}}
   .signal-focus{{border:4px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 5px #fee2e2 inset}}.signal-focus h2{{color:#991b1b}}.signal-numbers{{font-size:34px;line-height:1.25;font-weight:900;color:#991b1b;letter-spacing:0}}.signal-detail{{font-weight:900;color:#7f1d1d}}
 .confidence-high{{display:inline-block;padding:4px 8px;border-radius:6px;background:#dc2626;color:white;font-weight:900}}.confidence-mid{{display:inline-block;padding:4px 8px;border-radius:6px;background:#f97316;color:white;font-weight:900}}
 .primary{{display:block;text-align:center;padding:18px;border-radius:8px;background:#166534;color:white!important;font-size:20px;font-weight:900;text-decoration:none}}
@@ -603,8 +646,10 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/天天樂完整戰報.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
+{build_mobile_recalculation_block(data)}
 {signal_focus}
 {ultra_precision_block}
+{build_mobile_avoid_block(data)}
 <section class="band diagnosis"><h2>{u('\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7')}</h2><p><strong>{u('\\u65b0\\u589e\\u6a21\\u578b')}:</strong> {esc(gap_diagnosis.get('new_model_added', '-'))} / <strong>{u('\\u72c0\\u614b')}:</strong> {esc(gap_diagnosis.get('status_label', gap_diagnosis.get('status', '-')))}</p><p class="small">{esc(gap_diagnosis.get('message', '-'))}</p><p class="small"><strong>{u('\\u5df2\\u555f\\u7528\\u52d5\\u4f5c')}:</strong> {esc(gap_action_text)}</p><table><tr><th>{u('\\u7f3a\\u53e3')}</th><th>{u('\\u8b49\\u64da')}</th><th>{u('\\u5df2\\u88dc\\u5f37')}</th></tr>{''.join(gap_rows)}</table></section>
 <section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
@@ -857,3 +902,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
