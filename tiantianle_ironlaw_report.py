@@ -1012,14 +1012,20 @@ def high_confidence_candidate_block(analysis):
 
 
 def explicit_action_block(analysis):
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
     packs = analysis.get("strong_packs") or {}
-    ultra = ultra_precision_recommendations(analysis)
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
-    target = freshness.get("target_taiwan_safe_update_time") or analysis.get("target_draw_date") or "-"
-    data_day = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
-    avoid_items = (((analysis.get("industrial_engine") or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])
-    avoid_numbers = [item.get("number") for item in avoid_items[:10] if item.get("number") is not None]
+    target = decision.get("target_taiwan_safe_update_time") or freshness.get("target_taiwan_safe_update_time") or analysis.get("target_draw_date") or "-"
+    data_day = latest.get("draw_date") or freshness.get("latest_draw_date") or decision.get("latest_draw_date") or "-"
+    avoid_packs = decision.get("avoid_packs") or ((analysis.get("low_probability_avoid") or {}).get("avoid_packs") or {})
+    defensive_avoid = decision.get("defensive_avoid") or (avoid_packs.get("ten_miss") or {}).get("numbers") or []
+
+    def pack_numbers(key, fallback_key=None):
+        numbers = decision.get(key) or []
+        if not numbers and fallback_key:
+            numbers = (packs.get(fallback_key) or {}).get("numbers") or []
+        return numbers
 
     def action_card(title, numbers, sub):
         value = fmt_numbers(numbers) if numbers else "-"
@@ -1031,39 +1037,86 @@ def explicit_action_block(analysis):
             "</section>"
         )
 
-    rows = []
-    for idx, item in enumerate(high_confidence_candidates(analysis, limit=10), 1):
-        level, detail, _css, confidence, probability, _stability, passed, total = candidate_confidence_parts(item)
-        reasons = u("\\u3001").join(item.get("reasons", []))
-        rows.append([
-            f"{int(item.get('number')):02d}",
-            item.get("_display_rank", idx),
-            f"{round(probability, 2)}%",
-            round(safe_float(item.get("score", confidence)), 4),
-            level,
-            f"{passed}/{total}",
-            esc(reasons),
-            esc(detail),
+    high_rows = []
+    high_source = decision.get("high_confidence_numbers") or []
+    if not high_source:
+        for idx, item in enumerate(high_confidence_candidates(analysis, limit=9), 1):
+            level, detail, _css, confidence, probability, _stability, passed, total = candidate_confidence_parts(item)
+            high_source.append({
+                "number": item.get("number"),
+                "rank": item.get("_display_rank", idx),
+                "model_probability_percent": probability,
+                "confidence_index": confidence,
+                "confidence_level": level,
+                "cross_validation_passed": f"{passed}/{total}",
+                "reason": detail,
+                "note": u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\uff0c\\u4f46\\u9700\\u4f9d\\u98a8\\u63a7\\u4f7f\\u7528")
+            })
+    for idx, item in enumerate(high_source[:9], 1):
+        number = item.get("number")
+        if number is None:
+            continue
+        high_rows.append([
+            f"{int(number):02d}",
+            esc(item.get("rank", idx)),
+            f"{round(safe_float(item.get('model_probability_percent')), 2)}%",
+            esc(item.get("confidence_index", "-")),
+            esc(item.get("confidence_level", "-")),
+            esc(item.get("stability_count", "-")),
+            esc(item.get("cross_validation_passed", "-")),
+            esc(item.get("reason", "-")),
+            esc(item.get("note", "-")),
         ])
+
+    avoid_pack_rows = []
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        pack = avoid_packs.get(key) or {}
+        avoid_pack_rows.append([
+            label,
+            mark_numbers(pack.get("numbers") or []),
+            esc(pack.get("confidence_label", "-")),
+            esc(pack.get("confidence_index", "-")),
+            esc(pack.get("avg_avoid_score", "-")),
+            esc(pack.get("min_avoid_score", "-")),
+        ])
+
+    time_rows = []
+    for row in decision.get("time_table", []) or []:
+        time_rows.append([esc(row.get("item", "-")), esc(row.get("content", "-"))])
+    if not time_rows:
+        time_rows = [
+            [u("\\u6bcf\\u65e5\\u958b\\u734e\\u6642\\u9593"), u("\\u590f\\u4ee4\\u53f0\\u7063\\u6642\\u9593\\u4e0a\\u534809:50\\uff1b\\u51ac\\u4ee4\\u53f0\\u7063\\u6642\\u9593\\u4e0a\\u534810:50\\u3002")],
+            [u("\\u958b\\u734e\\u5f8c\\u66f4\\u65b0\\u622a\\u6b62"), u("\\u4e0a\\u534810:00\\u524d\\u5b8c\\u6210\\u958b\\u734e\\u532f\\u5165\\u3001\\u547d\\u4e2d\\u7d50\\u7b97\\u3001\\u91cd\\u65b0\\u904b\\u7b97\\u8207\\u624b\\u6a5f\\u540c\\u6b65\\u3002")],
+            [u("\\u5348\\u9593\\u5b8c\\u6574\\u91cd\\u7b97"), u("\\u6bcf\\u65e5\\u4e0b\\u534813:00\\u5f37\\u5236\\u91cd\\u65b0\\u56de\\u6e2c\\u3001\\u6821\\u6b63\\u6a21\\u578b\\u3001\\u91cd\\u5efa\\u6230\\u5831\\u8207\\u624b\\u6a5f\\u7248\\u3002")],
+        ]
+
     cards = [
-        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97\\u7368\\u96bb"), (ultra.get("single") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
-        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97") + "2" + u("\\u4e2d") + "1", (ultra.get("two") or {}).get("numbers", []), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
-        action_card(u("\\u8d85\\u5f37\\u7cbe\\u7b97") + "3" + u("\\u4e2d") + "1~3", (ultra.get("three") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "5" + u("\\u4e2d") + "2", (packs.get("five_hit_two") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e94\\u865f\\u653b\\u64ca\\u7d44")),
-        action_card(u("\\u660e\\u78ba") + "9" + u("\\u4e2d") + "3", (packs.get("nine_hit_three") or {}).get("numbers", []), u("\\u672c\\u671f\\u4e5d\\u865f\\u8986\\u84cb\\u7d44")),
-        action_card(u("\\u9632\\u5b88\\u907f\\u958b"), avoid_numbers, u("\\u4f4e\\u5206\\u8207\\u5f31\\u8a0a\\u865f\\u98a8\\u63a7")),
+        action_card(u("\\u660e\\u78ba\\u7368\\u96bb"), pack_numbers("primary_single", "strong_single"), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "2" + u("\\u4e2d") + "1", pack_numbers("two_hit_one", "two_hit_one"), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "3" + u("\\u4e2d") + "1~3", pack_numbers("three_hit_one", "three_hit_two"), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
+        action_card(u("\\u660e\\u78ba") + "5" + u("\\u4e2d") + "2", pack_numbers("five_hit_two", "five_hit_two"), u("\\u672c\\u671f\\u4e94\\u865f\\u653b\\u64ca\\u7d44")),
+        action_card(u("\\u660e\\u78ba") + "9" + u("\\u4e2d") + "3", pack_numbers("nine_hit_three", "nine_hit_three"), u("\\u672c\\u671f\\u4e5d\\u865f\\u8986\\u84cb\\u7d44")),
+        action_card(u("\\u9632\\u5b88\\u907f\\u958b"), defensive_avoid, u("\\u4f4e\\u5206\\u8207\\u5f31\\u8a0a\\u865f\\u98a8\\u63a7")),
     ]
+    core_numbers = decision.get("high_confidence_core") or [item.get("number") for item in high_source[:9] if item.get("number") is not None]
     return (
+        '<section class="band notice">'
+        f'<h2>{u("\\u6bcf\\u65e5\\u66f4\\u65b0\\u9435\\u5f8b\\u6642\\u9593\\u8868")}</h2>'
+        f'{table([u("\\u9805\\u76ee"), u("\\u5167\\u5bb9")], time_rows)}'
+        '</section>'
         '<section class="band hotbox">'
         f'<h2>{u("\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848")}（{u("\\u8cc7\\u6599\\u65e5")} {esc(data_day)} / {u("\\u76ee\\u6a19\\u53f0\\u7063\\u6642\\u9593")} {esc(target)}）</h2>'
-        f'<p><strong>{u("\\u672c\\u5340\\u4f9d\\u6700\\u65b0\\u4e3b\\u6230\\u5831\\u898f\\u683c\\u6392\\u5217")}</strong> / {u("\\u6240\\u6709\\u865f\\u78bc\\u4ecd\\u4ee5\\u5929\\u5929\\u6a02\\u6a21\\u578b\\u91cd\\u7b97")}</p>'
+        f'<p><strong>{esc(decision.get("conclusion", decision.get("action_label", "高信心觀察強化")))}</strong></p>'
+        f'<p>{esc(decision.get("release_rule", u("\\u9ad8\\u4fe1\\u5fc3\\u724c\\u5fc5\\u9808\\u901a\\u904e\\u591a\\u91cd\\u5b88\\u9580\\u5f8c\\u624d\\u986f\\u793a\\u3002")))}</p>'
+        f'<p>{esc(decision.get("recompute_rule", u("\\u6bcf\\u671f\\u958b\\u734e\\u5f8c\\u91cd\\u65b0\\u904b\\u7b97\\uff0c\\u7981\\u6b62\\u6cbf\\u7528\\u4e0a\\u671f\\u9810\\u6e2c\\u3002")))}</p>'
         f'<div class="grid">{"".join(cards)}</div>'
         f'<h3>{u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\u7279\\u5225\\u5f37\\u8abf")}</h3>'
-        f'{table([u("\\u865f\\u78bc"), u("\\u6392\\u540d"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u5206\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u4ea4\\u53c9\\u901a\\u904e"), u("\\u660e\\u78ba\\u539f\\u56e0"), u("\\u5099\\u8a3b")], safe_rows(rows))}'
-        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3 Top9")}：{fmt_numbers([item.get("number") for item in (analysis.get("candidates") or [])[:9]])}</p>'
-        "</section>"
+        f'{table([u("\\u865f\\u78bc"), u("\\u6392\\u540d"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u4fe1\\u5fc3\\u6307\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u7a69\\u5b9a"), u("\\u4ea4\\u53c9\\u901a\\u904e"), u("\\u660e\\u78ba\\u539f\\u56e0"), u("\\u5099\\u8a3b")], safe_rows(high_rows))}'
+        f'<h3>{u("\\u4f4e\\u6a5f\\u7387\\u907f\\u96aa\\u5305")}</h3>'
+        f'{table([u("\\u907f\\u96aa\\u5305"), u("\\u865f\\u78bc"), u("\\u4fe1\\u5fc3\\u6307\\u6a19"), u("\\u5e73\\u5747\\u907f\\u958b\\u5206"), u("\\u5e73\\u5747\\u6682\\u907f\\u5206"), u("\\u6700\\u4f4e\\u6682\\u907f\\u5206")], avoid_pack_rows)}'
+        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3\\u4e5d\\u78bc")}：{fmt_numbers(core_numbers)}</p>'
+        '</section>'
     )
-
 
 def top10_promotion_rows(analysis):
     audit = ((analysis.get("industrial_engine") or {}).get("top9_frontload_audit") or {})

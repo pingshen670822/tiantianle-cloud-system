@@ -60,7 +60,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "天天樂鐵律工業版第2版_20260629"
+ENGINE_VERSION = "天天樂最新版鐵律第3版_20260629"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -1879,6 +1879,39 @@ def _avoid_confidence_profile(item):
     }
 
 
+def _avoid_pack_summary(label, items):
+    rows = list(items or [])
+    numbers = [int(item.get("number")) for item in rows if item.get("number") is not None]
+    if not rows:
+        return {
+            "name": label,
+            "numbers": [],
+            "confidence_label": "待重新運算",
+            "confidence_index": 0,
+            "avg_avoid_score": 0,
+            "min_avoid_score": 0,
+            "size": 0,
+        }
+    avg_confidence = round(sum(float(item.get("avoid_confidence", 0) or 0) for item in rows) / len(rows), 2)
+    avg_avoid = round(sum(float(item.get("avoid_index", 0) or 0) for item in rows) / len(rows), 2)
+    min_avoid = round(min(float(item.get("avoid_index", 0) or 0) for item in rows), 2)
+    if avg_confidence >= 88:
+        confidence_label = "高避開信心"
+    elif avg_confidence >= 76:
+        confidence_label = "中高避開信心"
+    else:
+        confidence_label = "觀察避開"
+    return {
+        "name": label,
+        "numbers": numbers,
+        "confidence_label": confidence_label,
+        "confidence_index": avg_confidence,
+        "avg_avoid_score": avg_avoid,
+        "min_avoid_score": min_avoid,
+        "size": len(numbers),
+    }
+
+
 def _build_low_probability_avoid(industrial, candidates):
     source_items = [dict(item) for item in (((industrial or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])]
     used = {int(item.get("number")) for item in source_items if item.get("number") is not None}
@@ -1899,16 +1932,93 @@ def _build_low_probability_avoid(industrial, candidates):
         if len(source_items) >= 15:
             break
     profiles = [_avoid_confidence_profile(item) for item in source_items[:15]]
+    groups = {
+        "五不中": profiles[:5],
+        "十不中": profiles[:10],
+        "十五不中": profiles[:15],
+    }
+    avoid_packs = {
+        "five_miss": _avoid_pack_summary("5不中", groups["五不中"]),
+        "ten_miss": _avoid_pack_summary("10不中", groups["十不中"]),
+        "fifteen_miss": _avoid_pack_summary("15不中", groups["十五不中"]),
+    }
     return {
-        "warning": "低機率與不中清單是風控避開模型，不是絕對保證。",
-        "groups": {
-            "五不中": profiles[:5],
-            "十不中": profiles[:10],
-            "十五不中": profiles[:15],
-        },
+        "warning": "低機率與不中清單是風控避開模型，不是絕對保證；每期仍會重新驗證與回測。",
+        "groups": groups,
+        "avoid_packs": avoid_packs,
         "backtest": (industrial or {}).get("unlikely_backtest") or {},
     }
 
+
+def _pack_numbers(strong_packs, key, fallback, limit):
+    pack = (strong_packs or {}).get(key) or {}
+    numbers = pack.get("numbers") or []
+    if not numbers:
+        numbers = fallback[:limit]
+    return [int(n) for n in numbers[:limit]]
+
+
+def _decision_high_confidence_numbers(strict_policy, candidates):
+    rows = list((strict_policy or {}).get("formal_recommendations") or [])
+    if not rows:
+        rows = list((strict_policy or {}).get("high_confidence_watch") or [])
+    if not rows:
+        rows = [_candidate_confidence_profile(item) for item in (candidates or [])[:5]]
+    compact = []
+    for item in rows[:9]:
+        compact.append({
+            "number": int(item.get("number")),
+            "rank": _safe_int(item.get("rank", item.get("candidate_rank", 99)), 99),
+            "confidence_index": round(float(item.get("confidence_index", 0) or 0), 2),
+            "model_probability_percent": round(float(item.get("model_probability_percent", 0) or 0), 2),
+            "stability_count": _safe_int(item.get("stability_count", 0)),
+            "cross_validation_passed": _safe_int(item.get("cross_validation_passed", item.get("cross_passed", 0))),
+            "maturity_score": round(float(item.get("maturity_score", 0) or 0), 2),
+            "confidence_level": item.get("confidence_level") or item.get("level") or "高信心觀察",
+            "reason": item.get("reason") or "多模型交叉通過",
+            "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。",
+        })
+    return compact
+
+
+def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, candidates, freshness, industrial):
+    top_numbers = [int(item.get("number")) for item in (candidates or [])]
+    high_rows = _decision_high_confidence_numbers(strict_policy, candidates)
+    high_numbers = [int(item.get("number")) for item in high_rows]
+    fallback = high_numbers or top_numbers
+    formal = bool((strict_policy or {}).get("formal_recommendations"))
+    grade = "甲級" if formal else ("乙級" if high_numbers else "丙級")
+    action_label = "正式高信心推薦" if formal else ("高信心觀察強化" if high_numbers else "嚴格觀察等待再驗證")
+    avoid_packs = (avoid_policy or {}).get("avoid_packs") or {}
+    defensive_avoid = (avoid_packs.get("ten_miss") or {}).get("numbers") or [item.get("number") for item in ((avoid_policy or {}).get("groups") or {}).get("十不中", [])]
+    return {
+        "version": "天天樂最新版鐵律第3版_20260629",
+        "action_label": action_label,
+        "grade": grade,
+        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示",
+        "primary_single": _pack_numbers(strong_packs, "strong_single", fallback, 1),
+        "two_hit_one": _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
+        "three_hit_one": _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
+        "five_hit_two": _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
+        "nine_hit_three": _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
+        "high_confidence_numbers": high_rows,
+        "high_confidence_core": high_numbers[:9],
+        "defensive_avoid": [int(n) for n in defensive_avoid[:10] if n is not None],
+        "avoid_packs": avoid_packs,
+        "release_rule": "只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。",
+        "recompute_rule": "每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。",
+        "engine": (industrial or {}).get("engine_version"),
+        "time_table": [
+            {"item": "每日開獎時間", "content": "夏令台灣時間上午09:50；冬令台灣時間上午10:50。"},
+            {"item": "開獎後更新截止", "content": "夏令上午10:00前必須完成最新開獎匯入、命中結算、重新運算、電腦戰報與手機版同步。"},
+            {"item": "午間完整重算", "content": "每日下午13:00強制完整重新運算、重新回測、校正模型、重建戰報與手機版。"},
+            {"item": "預測有效期間", "content": "上午10:00至下午13:00完成問題修正；下午13:00後以完整回測校正版為準。"},
+            {"item": "禁止事項", "content": "禁止未重新運算就沿用前一期預測；若資料未更新，必須持續追最新開獎資料並留下狀態紀錄。"},
+        ],
+        "latest_draw_date": (freshness or {}).get("latest_draw_date"),
+        "latest_taiwan_safe_update_time": (freshness or {}).get("latest_taiwan_safe_update_time"),
+        "target_taiwan_safe_update_time": (freshness or {}).get("target_taiwan_safe_update_time"),
+    }
 
 def _build_recalculation_manifest(draws, candidates, industrial, review, freshness):
     top15 = [int(item.get("number")) for item in (candidates or [])[:15]]
@@ -1966,6 +2076,7 @@ def analyze(draws, review=None):
     avoid_policy = _build_low_probability_avoid(industrial, candidates)
     recalculation = _build_recalculation_manifest(draws, candidates, industrial, review, freshness)
     top_numbers = [int(item.get("number")) for item in candidates]
+    latest_ironlaw = _build_latest_ironlaw_decision(strict_policy, avoid_policy, tiantianle_core["strong_prediction_packs"], candidates, freshness, industrial)
     history_status = "complete" if len(draws) >= FULL_HISTORY_MIN_ROWS else ("partial" if len(draws) >= 180 else "seed_only")
     completeness = {
         "status": history_status,
@@ -1986,6 +2097,8 @@ def analyze(draws, review=None):
         "recalculation_manifest": recalculation,
         "strict_recommendation_policy": strict_policy,
         "low_probability_avoid": avoid_policy,
+        "latest_ironlaw": latest_ironlaw,
+        "decisive_battle_plan": latest_ironlaw,
         "prediction": {
             "top5": top_numbers[:5],
             "top9": top_numbers[:9],
@@ -2618,6 +2731,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

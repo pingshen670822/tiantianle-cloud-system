@@ -532,6 +532,48 @@ def build_mobile_recalculation_block(data):
     )
 
 
+
+def build_mobile_ironlaw_block(data):
+    decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
+    if not decision:
+        return ""
+    high_numbers = decision.get("high_confidence_core") or [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
+    avoid_numbers = decision.get("defensive_avoid") or []
+    avoid_packs = decision.get("avoid_packs") or ((data.get("low_probability_avoid") or {}).get("avoid_packs") or {})
+
+    def action_row(label, numbers):
+        return f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(numbers) or '-')}</td></tr>"
+
+    pack_rows = []
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        pack = avoid_packs.get(key) or {}
+        pack_rows.append(
+            f"<tr><td>{esc(label)}</td><td>{esc(fmt_numbers(pack.get('numbers') or []))}</td><td>{esc(pack.get('confidence_label', '-'))}</td><td>{esc(pack.get('confidence_index', '-'))}</td></tr>"
+        )
+    time_rows = []
+    for item in decision.get("time_table", []) or []:
+        time_rows.append(f"<tr><td>{esc(item.get('item', '-'))}</td><td>{esc(item.get('content', '-'))}</td></tr>")
+    if not time_rows:
+        time_rows = [
+            f"<tr><td>{u('\\u958b\\u734e\\u5f8c\\u66f4\\u65b0')}</td><td>{u('\\u590f\\u4ee4\\u53f0\\u7063\\u6642\\u9593\\u4e0a\\u534810:00\\u524d\\u5b8c\\u6210\\u540c\\u6b65\\u3002')}</td></tr>",
+            f"<tr><td>{u('\\u5348\\u9593\\u91cd\\u7b97')}</td><td>{u('\\u6bcf\\u65e5\\u4e0b\\u534813:00\\u5b8c\\u6210\\u56de\\u6e2c\\u8207\\u91cd\\u5efa\\u624b\\u6a5f\\u7248\\u3002')}</td></tr>",
+        ]
+    return (
+        f"<section class='band signal-focus'><h2>{u('\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848')}</h2>"
+        f"<p><strong>{esc(decision.get('conclusion', decision.get('action_label', '-')))}</strong></p>"
+        f"<table>"
+        f"{action_row(u('\\u660e\\u78ba\\u7368\\u96bb'), decision.get('primary_single') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '2' + u('\\u4e2d') + '1', decision.get('two_hit_one') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '3' + u('\\u4e2d') + '1~3', decision.get('three_hit_one') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '5' + u('\\u4e2d') + '2', decision.get('five_hit_two') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '3', decision.get('nine_hit_three') or [])}"
+        f"{action_row(u('\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c'), high_numbers[:9])}"
+        f"{action_row(u('\\u9632\\u5b88\\u907f\\u958b'), avoid_numbers[:10])}"
+        f"</table>"
+        f"<h3>{u('\\u4f4e\\u6a5f\\u7387\\u907f\\u96aa\\u5305')}</h3><table><tr><th>{u('\\u985e\\u5225')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u4fe1\\u5fc3')}</th><th>{u('\\u6307\\u6a19')}</th></tr>{''.join(pack_rows)}</table>"
+        f"<h3>{u('\\u6bcf\\u65e5\\u66f4\\u65b0\\u9435\\u5f8b\\u6642\\u9593\\u8868')}</h3><table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u5167\\u5bb9')}</th></tr>{''.join(time_rows)}</table>"
+        f"</section>"
+    )
 def build_mobile_avoid_block(data):
     avoid = data.get("low_probability_avoid") or {}
     backtest = avoid.get("backtest") or {}
@@ -647,6 +689,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="reports/天天樂完整戰報.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {build_mobile_recalculation_block(data)}
+{build_mobile_ironlaw_block(data)}
 {signal_focus}
 {ultra_precision_block}
 {build_mobile_avoid_block(data)}
