@@ -2507,7 +2507,11 @@ def watch_pack(name, goal, numbers, score_map, reason):
     }
 
 
-def pack_recent_governance(draws, rounds=360, weights_override=None):
+def pack_recent_governance(draws, rounds=None, weights_override=None):
+    if rounds is None:
+        rounds = runtime_rounds("TIANTIANLE_PACK_GOVERNANCE_ROUNDS", 60)
+    else:
+        rounds = max(30, min(720, int(rounds)))
     if len(draws) < 150:
         return {
             "status": "insufficient_data",

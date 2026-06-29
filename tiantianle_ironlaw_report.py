@@ -373,6 +373,18 @@ def draw_after(conn, date_text):
     return {"draw_date": row[0], "numbers": list(row[1:6])}
 
 
+def draw_on(conn, date_text):
+    if not date_text:
+        return None
+    row = conn.execute(
+        "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date=?",
+        (date_text,),
+    ).fetchone()
+    if not row:
+        return None
+    return {"draw_date": row[0], "numbers": list(row[1:6])}
+
+
 def snapshot_rows(conn):
     rows = conn.execute(
         """
@@ -388,9 +400,12 @@ def snapshot_rows(conn):
             packs = json.loads(row[4] or "{}")
         except Exception:
             continue
-        actual = draw_after(conn, row[1])
+        target_actual = draw_on(conn, row[2])
+        actual = target_actual or draw_after(conn, row[1])
         actual_numbers = actual["numbers"] if actual else []
         ranked = [item.get("number") for item in candidates if isinstance(item, dict)]
+        hit_numbers = sorted(set(ranked[:15]) & set(actual_numbers)) if actual else []
+        missed_actual_numbers = sorted(set(actual_numbers) - set(ranked[:15])) if actual else []
         items.append(
             {
                 "id": row[0],
@@ -405,16 +420,72 @@ def snapshot_rows(conn):
                 "top5_hits": len(set(ranked[:5]) & set(actual_numbers)) if actual else None,
                 "top10_hits": len(set(ranked[:10]) & set(actual_numbers)) if actual else None,
                 "top15_hits": len(set(ranked[:15]) & set(actual_numbers)) if actual else None,
+                "hit_numbers": hit_numbers,
+                "missed_actual_numbers": missed_actual_numbers,
+                "review_source": "target_date" if target_actual else "next_draw_after_based_on",
+                "exact_target_review": bool(target_actual),
             }
         )
     return items
 
 
-def latest_settled_snapshot(items):
+def latest_settled_snapshot(items, latest_draw_date=None):
+    if latest_draw_date:
+        for item in items:
+            if item.get("actual_date") == latest_draw_date and item.get("actual_numbers"):
+                return item
+        return {}
     for item in items:
         if item.get("actual_numbers"):
             return item
     return {}
+
+
+def latest_settled_prediction_for_actual_date(conn, latest_draw_date):
+    if not latest_draw_date:
+        return {}
+    row = conn.execute(
+        """
+        SELECT id,based_on_date,target_date,candidates_json,strong_packs_json,created_at,
+               actual_date,actual_numbers_json,top5_hits,top10_hits,top15_hits,
+               strong_pack_hits_json,status
+        FROM predictions
+        WHERE status='settled' AND actual_date=?
+        ORDER BY id DESC LIMIT 1
+        """,
+        (latest_draw_date,),
+    ).fetchone()
+    if not row:
+        return {}
+    try:
+        candidates = json.loads(row[3] or "[]")
+        packs = json.loads(row[4] or "{}")
+        actual_numbers = json.loads(row[7] or "[]")
+        strong_pack_hits = json.loads(row[11] or "{}")
+    except Exception:
+        return {}
+    ranked = [item.get("number") for item in candidates if isinstance(item, dict)]
+    hit_numbers = sorted(set(ranked[:15]) & set(actual_numbers))
+    missed_actual_numbers = sorted(set(actual_numbers) - set(ranked[:15]))
+    return {
+        "id": row[0],
+        "based_on_date": row[1],
+        "target_date": row[2],
+        "candidates": candidates,
+        "strong_packs": packs,
+        "created_at": row[5],
+        "reason": "predictions_settled_exact_latest_draw",
+        "actual_date": row[6],
+        "actual_numbers": actual_numbers,
+        "top5_hits": row[8],
+        "top10_hits": row[9],
+        "top15_hits": row[10],
+        "strong_pack_hits": strong_pack_hits,
+        "hit_numbers": hit_numbers,
+        "missed_actual_numbers": missed_actual_numbers,
+        "review_source": "\u5168\u6b77\u53f2\u56de\u6e2c\u7d50\u7b97\u8868\uff1a\u6700\u65b0\u958b\u734e\u65e5\u7cbe\u6e96\u5c0d\u61c9",
+        "exact_target_review": True,
+    }
 
 
 def candidate_reason_stats(snapshot):
@@ -1793,11 +1864,12 @@ def build_report():
     analysis = load_json(ANALYSIS_JSON)
     if not analysis:
         raise RuntimeError("missing latest_analysis.json")
-    with sqlite3.connect(DB_PATH) as conn:
-        snapshots = snapshot_rows(conn)
-    settled = latest_settled_snapshot(snapshots)
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
+    latest_draw_date = latest.get("draw_date") or freshness.get("latest_draw_date")
+    with sqlite3.connect(DB_PATH) as conn:
+        snapshots = snapshot_rows(conn)
+        settled = latest_settled_prediction_for_actual_date(conn, latest_draw_date) or latest_settled_snapshot(snapshots, latest_draw_date)
     industrial = analysis.get("industrial_engine") or {}
     release = industrial.get("release_gate") or {}
     stability = industrial.get("stability_consensus") or {}
@@ -1826,98 +1898,62 @@ def build_report():
       <p>{u('\\u767c\\u5e03\\u5224\\u5b9a')}: Top10 {u('\\u7a69\\u5b9a\\u5171\\u8b58')} {esc(stability.get('top10_retention'))} / edge {esc(release.get('actual_backtest_edge'))} / {esc(release.get('status'))}</p>
       <p>{u('\\u63d0\\u9192\\uff1a\\u672c\\u6230\\u5831\\u70ba\\u6b77\\u53f2\\u7d71\\u8a08\\u5206\\u6790\\uff0c\\u4e0d\\u4fdd\\u8b49\\u958b\\u51fa\\u3002')}</p>
     </section>"""
-    date_table = table(
-        [u("\\u9805\\u76ee"), u("\\u5167\\u5bb9")],
-        [
-            [u("\\u5831\\u8868\\u7522\\u751f\\u6642\\u9593"), esc(analysis.get("generated_at_taiwan"))],
-            [u("\\u7f8e\\u570b\\u52a0\\u5dde\\u6700\\u65b0\\u958b\\u734e\\u65e5"), esc(freshness.get("latest_draw_date"))],
-            [u("\\u6700\\u65b0\\u958b\\u734e\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593"), esc(latest_tw_time)],
-            [u("\\u6700\\u65b0\\u671f / \\u65e5"), f"{esc(latest.get('period'))} / {esc(latest.get('draw_date'))}"],
-            [u("\\u6700\\u65b0\\u958b\\u734e\\u865f"), mark_numbers(latest.get("numbers"), latest.get("numbers"))],
-            [u("\\u6700\\u65b0\\u958b\\u734e\\u4f86\\u6e90"), esc(freshness.get("latest_source") or latest.get("source") or "-")],
-            [u("\\u6700\\u65b0\\u4f86\\u6e90\\u78ba\\u8a8d"), esc(freshness.get("latest_source_confirmed"))],
-            [u("\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09"), esc(target_tw_time)],
-            [u("\\u4e0b\\u671f\\u5c0d\\u61c9\\u52a0\\u5dde\\u958b\\u734e\\u65e5"), esc(analysis.get("target_draw_date"))],
-            [u("\\u6642\\u5340\\u898f\\u5247"), esc(freshness.get("timezone_rule"))],
-            [u("\\u6700\\u8fd1\\u7d50\\u7b97\\u5c0d\\u61c9"), f"{esc(settled.get('based_on_date'))} -> {esc(settled.get('actual_date'))}" if settled else "-"],
-        ],
-    )
-    settled_block = ""
-    if settled:
-        settled_block = f"""
-        <section class="band notice">
-          <h2>{u('\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u6458\\u8981')}</h2>
-          <p>{u('\\u5be6\\u969b\\u958b\\u734e')}:{mark_numbers(settled.get('actual_numbers'), settled.get('actual_numbers'))} / Top5 {settled.get('top5_hits')} / Top10 {settled.get('top10_hits')} / Top15 {settled.get('top15_hits')}</p>
-        </section>"""
-    kpi_rows = [
-        ["Top10", backtest.get("rounds", ""), backtest.get("top10_avg_hits", ""), backtest.get("random_top10_expectation", ""), round((backtest.get("top10_avg_hits", 0) or 0) - (backtest.get("random_top10_expectation", 0) or 0), 4)],
-        ["Top15", backtest.get("rounds", ""), backtest.get("top15_avg_hits", ""), "-", "-"],
+    history_info = analysis.get("history_completeness") or {}
+    backtest = industrial_backtest(analysis)
+    latest_review_ok = bool(settled and settled.get("actual_date") == latest_draw_date)
+    review_pair = f"{settled.get('based_on_date')} -> {settled.get('actual_date')}" if settled else "-"
+    full_history_rows = [
+        ["\u904b\u7b97\u6bcd\u9ad4", f"{analysis.get('draw_count', 0)} \u7b46", "\u5168\u6b77\u53f2\u8cc7\u6599\u5eab", "\u672c\u671f\u9810\u6e2c\u8207\u56de\u6e2c\u90fd\u4f7f\u7528\u5b8c\u6574\u8cc7\u6599\u8868"],
+        ["\u8cc7\u6599\u7bc4\u570d", f"{history_info.get('status', '-')}", f"\u6700\u4f4e\u9580\u6abb {history_info.get('required_minimum', '-')}", "\u7981\u6b62\u53ea\u7528\u8fd1\u5e7e\u671f\u4ee3\u66ff\u5168\u6b77\u53f2"],
+        ["\u6700\u65b0\u958b\u734e", esc(latest_draw_date), mark_numbers(latest.get("numbers"), latest.get("numbers")), esc(freshness.get("latest_source") or latest.get("source") or "-")],
+        ["\u4e0a\u671f\u6aa2\u8a0e\u9396\u5b9a", esc(review_pair), "\u5df2\u5c0d\u6700\u65b0\u958b\u734e\u65e5" if latest_review_ok else "\u7981\u6b62\u820a\u671f\u9802\u66ff", esc(settled.get("review_source", "-") if settled else "\u5c1a\u7121\u6700\u65b0\u7d50\u7b97")],
+        ["\u4e0b\u671f\u9810\u6e2c", esc(analysis.get("target_draw_date")), esc(target_tw_time), "\u53f0\u7063\u6642\u9593\u986f\u793a"],
+        ["\u56de\u6e2c\u6458\u8981", f"{backtest.get('rounds', 0)} \u671f", f"\u524d\u5341\u5e73\u5747 {backtest.get('top10_avg_hits', '-')}", f"\u524d\u5341\u4e94\u5e73\u5747 {backtest.get('top15_avg_hits', '-')}"]
     ]
     important_dates = table(
-        [u("\\u9805\\u76ee"), u("\\u65e5\\u671f"), u("\\u72c0\\u614b"), u("\\u8aaa\\u660e")],
+        ["\u9805\u76ee", "\u65e5\u671f", "\u72c0\u614b", "\u8aaa\u660e"],
         [
-            [u("\\u5831\\u8868\\u7522\\u751f"), esc(analysis.get("generated_at_taiwan")), u("\\u5df2\\u7522\\u751f"), u("\\u672c\\u6b21\\u904b\\u7b97\\u6642\\u9593")],
-            [u("\\u7f8e\\u570b\\u52a0\\u5dde\\u8cc7\\u6599\\u6700\\u65b0"), esc(freshness.get("latest_draw_date")), esc(freshness.get("status")), f"{u('\\u53f0\\u7063\\u53ef\\u66f4\\u65b0')} {esc(latest_tw_time)}"],
-            [u("\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09"), esc(target_tw_time), esc(release.get("status")), f"{u('\\u52a0\\u5dde\\u958b\\u734e\\u65e5')} {esc(analysis.get('target_draw_date'))}"],
-            [u("\\u4e0a\\u671f\\u6aa2\\u8a0e"), esc(settled.get("actual_date", "-") if settled else "-"), u("\\u5df2\\u9023\\u52d5\\u6aa2\\u8a0e") if settled else u("\\u5f85\\u7d50\\u7b97"), u("\\u7528\\u65bc\\u6efe\\u52d5\\u8abf\\u6574")],
+            ["\u5831\u8868\u7522\u751f", esc(analysis.get("generated_at_taiwan")), "\u5df2\u7522\u751f", "\u672c\u6b21\u904b\u7b97\u6642\u9593"],
+            ["\u6700\u65b0\u958b\u734e\u65e5", esc(latest_draw_date), esc(freshness.get("status")), f"\u53f0\u7063\u53ef\u66f4\u65b0 {esc(latest_tw_time)}"],
+            ["\u4e0b\u671f\u9810\u6e2c\u6642\u9593", esc(target_tw_time), esc(release.get("status")), f"\u52a0\u5dde\u958b\u734e\u65e5 {esc(analysis.get('target_draw_date'))}"],
+            ["\u4e0a\u671f\u6aa2\u8a0e", esc(settled.get("actual_date", "-") if settled else "-"), "\u5df2\u7cbe\u6e96\u5c0d\u61c9\u6700\u65b0\u958b\u734e" if latest_review_ok else "\u5f85\u88dc\u6700\u65b0\u56de\u6e2c", "\u4e0d\u51c6\u62ff\u820a\u671f\u6aa2\u8a0e\u9802\u66ff"],
         ],
     )
-    content = f'<section class="band"><h2>{u("\\u91cd\\u8981\\u65e5\\u671f\\u5100\\u8868\\u677f")}</h2>{important_dates}</section>'
-    content += explicit_action_block(analysis)
+    if settled:
+        settled_block = f'''
+        <section class="band notice">
+          <h2>\u4e0a\u671f\u547d\u4e2d\u6aa2\u8a0e\u6458\u8981</h2>
+          <p>\u9810\u6e2c\u4f9d\u64da\uff1a{esc(settled.get('based_on_date'))} -> \u5be6\u969b\u958b\u734e\uff1a{esc(settled.get('actual_date'))}</p>
+          <p>\u5be6\u969b\u958b\u734e\uff1a{mark_numbers(settled.get('actual_numbers'), settled.get('actual_numbers'))}</p>
+          <p>\u524d\u4e94 / \u524d\u5341 / \u524d\u5341\u4e94\uff1a{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}\uff1b\u547d\u4e2d\u865f\uff1a{mark_numbers(settled.get('hit_numbers'), settled.get('actual_numbers')) or '-'}</p>
+          <p>\u672a\u6355\u6349\u865f\uff1a{fmt_numbers(settled.get('missed_actual_numbers', [])) or '-'}</p>
+          <p>\u6aa2\u8a0e\u4f86\u6e90\uff1a{esc(settled.get('review_source', '-'))}</p>
+        </section>'''
+    else:
+        settled_block = f'''
+        <section class="band notice">
+          <h2>\u4e0a\u671f\u547d\u4e2d\u6aa2\u8a0e\u6458\u8981</h2>
+          <p>\u6700\u65b0\u958b\u734e\u65e5 {esc(latest_draw_date)} \u5c1a\u7121\u5c0d\u61c9\u9810\u6e2c\u7d50\u7b97\uff0c\u5df2\u7981\u6b62\u7528\u820a\u671f\u6aa2\u8a0e\u9802\u66ff\uff1b\u7cfb\u7d71\u9700\u88dc\u6700\u65b0\u56de\u6e2c\u5f8c\u624d\u767c\u5e03\u6aa2\u8a0e\u3002</p>
+        </section>'''
+    content = f'<section class="band"><h2>\u91cd\u8981\u65e5\u671f\u5100\u8868\u677f</h2>{important_dates}</section>'
+    content += f'<section class="band notice"><h2>\u5168\u6b77\u53f2\u8cc7\u6599\u5eab\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u4f86\u6e90", "\u8655\u7406"], full_history_rows)}</section>'
     content += conclusion
-    content += f'<section class="band"><h2>{u("\\u6bcf\\u671f\\u91cd\\u7b97\\u8b49\\u660e")}</h2>{table([u("\\u9805\\u76ee"), u("\\u7d50\\u679c"), u("\\u8aaa\\u660e")], strict_recalculation_rows(analysis))}</section>'
-    content += strict_recommendation_block(analysis)
-    content += low_probability_avoid_block(analysis)
-    content += f'<section class="band"><h2>{u("\\u65e5\\u671f\\u57fa\\u6e96\\u7e3d\\u8868")}</h2>{date_table}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u7814\\u7a76\\u547d\\u4e2d KPI \\u8207\\u7981\\u6b62\\u865b\\u5831\\u9580\\u6abb")}</h2><p>{u("\\u9019\\u4e9b\\u662f\\u7814\\u7a76\\u76ee\\u6a19\\uff0c\\u4e0d\\u662f\\u6a02\\u900f\\u5fc5\\u4e2d\\u4fdd\\u8b49\\u3002")}</p>{table(["KPI", u("\\u6a23\\u672c"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96a8\\u6a5f\\u57fa\\u6e96"), u("\\u5dee\\u503c")], kpi_rows)}</section>'
-    content += f'<section class="band chapter"><h2>{u("\\u4eca\\u65e5\\u9810\\u6e2c\\u904b\\u7b97\\u5340")}</h2><p>{u("\\u672c\\u5340\\u53ea\\u5448\\u73fe\\u672c\\u671f\\u8207\\u4e0b\\u671f\\u9810\\u6e2c\\u6c7a\\u7b56\\u3002")}</p></section>'
-    content += ultra_precision_block(analysis)
+    content += explicit_action_block(analysis)
     content += today_high_probability_block(analysis)
     content += high_confidence_candidate_block(analysis)
-    content += f'<section class="band notice"><h2>{u("\\u7d42\\u6975\\u76ee\\u6a19\\uff1a95%\\u7cbe\\u6e96\\u7a69\\u5b9a\\u6cbb\\u7406")}</h2><p>{u("\\u672c\\u5340\\u662f\\u767c\\u5e03\\u9580\\u6abb\\uff0c\\u4e0d\\u662f\\u865b\\u5831\\u4fdd\\u8b49\\u3002\\u672a\\u905495%\\u6642\\u53ea\\u80fd\\u964d\\u7d1a\\u89c0\\u5bdf\\u8207\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u76ee\\u6a19\\u7d44"), u("\\u547d\\u4e2d\\u7bc4\\u570d"), u("\\u76ee\\u6a19\\u7387"), u("\\u56de\\u6e2c\\u9054\\u6210\\u7387"), u("\\u6a23\\u672c"), u("\\u72c0\\u614b"), u("\\u52d5\\u4f5c")], ultimate_precision_rows(analysis))}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u7368\\u652f\\u7cbe\\u6e96\\u9a57\\u8b49\\uff1a\\u9a57\\u8b49\\u3001\\u518d\\u9a57\\u8b49\\u3001\\u56de\\u6e2c\\u3001\\u4ea4\\u53c9\\u6bd4\\u5c0d\\u3001\\u518d\\u6bd4\\u5c0d")}</h2><p>{u("\\u7368\\u652f\\u4e0d\\u8207\\u4e00\\u822c\\u5f37\\u724c\\u6df7\\u5217\\uff0c\\u5fc5\\u9808\\u9010\\u95dc\\u904b\\u7b97\\u5f8c\\u624d\\u5217\\u5165\\u672c\\u5340\\u3002")}</p>{table([u("\\u95dc\\u5361"), u("\\u904b\\u7b97\\u5167\\u5bb9"), u("\\u6bd4\\u5c0d\\u57fa\\u6e96"), u("\\u7d50\\u679c"), u("\\u5f8c\\u7e8c\\u52d5\\u4f5c")], single_precision_rows(analysis))}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u9810\\u6e2c\\u6a21\\u578b\\u6efe\\u52d5\\u5f0f\\u8abf\\u6574")}</h2><p>{u("\\u672c\\u7cfb\\u7d71\\u6bcf\\u6b21\\u66f4\\u65b0\\u5f8c\\uff0c\\u6703\\u4f9d\\u4e0a\\u671f\\u7d50\\u7b97\\u3001\\u56de\\u6e2c\\u5dee\\u503c\\u3001\\u91cd\\u8907\\u5b88\\u9580\\u8207\\u6b0a\\u91cd\\u8868\\u81ea\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6efe\\u52d5\\u9805\\u76ee"), u("\\u672c\\u6b21\\u7d50\\u679c"), u("\\u6a21\\u578b\\u8abf\\u6574"), u("\\u72c0\\u614b")], rolling_model_rows(analysis))}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7\\u8207\\u88dc\\u5f37")}</h2><p>{u("\\u672c\\u5340\\u53ea\\u5217\\u672c\\u671f\\u9810\\u6e2c\\u7d50\\u69cb\\u7f3a\\u53e3\\u8207\\u5df2\\u555f\\u7528\\u7684\\u88dc\\u5f37\\u52d5\\u4f5c\\uff0c\\u4e0d\\u8207\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e\\u6df7\\u5728\\u4e00\\u8d77\\u3002")}</p>{table([u("\\u985e\\u5225"), u("\\u8b49\\u64da"), u("\\u5f71\\u97ff"), u("\\u5df2\\u4fee\\u6b63\\u88dc\\u5f37")], prediction_gap_diagnosis_rows(analysis))}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u672c\\u6708\\u9810\\u6e2c\\u7e3d\\u6aa2\\u8a0e\\u8207\\u6700\\u4f73\\u6efe\\u52d5\\u65b9\\u6848")}</h2><p>{u("\\u672c\\u5340\\u4f9d\\u672c\\u6708\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c\\u7d71\\u8a08\\uff0c\\u76f4\\u63a5\\u5f71\\u97ff\\u4e0b\\u671f\\u6b0a\\u91cd\\u8207\\u5f37\\u724c\\u767c\\u5e03\\u95dc\\u5361\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c"), u("\\u5224\\u8b80"), u("\\u72c0\\u614b")], monthly_review_rows(analysis))}{table([u("\\u5f37\\u724c"), u("\\u6a23\\u672c"), u("\\u901a\\u904e\\u7387"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96f6\\u547d\\u4e2d\\u7387"), u("\\u6708\\u5ea6\\u5224\\u5b9a")], monthly_pack_rows(analysis))}{table([u("\\u985e\\u5225"), u("\\u5167\\u5bb9"), u("\\u7ba1\\u5236"), u("\\u72c0\\u614b")], monthly_best_plan_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>1{u("\\u4e2d")}1 / 5{u("\\u4e2d")}2~3 / 9{u("\\u4e2d")}3~5 {u("\\u6838\\u5fc3\\u7a69\\u5b9a\\u6a21\\u578b")}</h2><p>{u("\\u7a69\\u5b9a\\u76ee\\u6a19\\uff1a\\u6bcf\\u671f\\u6700\\u5c11\\u8981\\u671d5\\u4e2d2~3\\u7684\\u7a69\\u5b9a\\u7d44\\u5408\\u63a8\\u9032\\uff0c\\u672a\\u9054\\u6a19\\u5247\\u7e7c\\u7e8c\\u6efe\\u52d5\\u8abf\\u6574\\u3002")}</p>{table([u("\\u6a21\\u578b"), u("\\u865f\\u78bc"), u("\\u76ee\\u6a19"), u("\\u7406\\u8ad6\\u6a5f\\u7387"), u("\\u7d04\\u7565\\u8d54\\u7387")], core_model_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>Top9 {u("\\u524d\\u79fb\\u6821\\u6e96")}</h2>{table([u("\\u6392\\u540d\\u8b8a\\u5316"), u("\\u865f\\u78bc"), u("\\u524d9\\u6821\\u6e96\\u5206"), u("\\u4f9d\\u64da"), u("\\u6821\\u6e96\\u5224\\u65b7")], top10_promotion_rows(analysis))}</section>'
-    content += '<div class="grid">'
-    content += f'<section class="card"><h2>{u("\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6")}</h2><div class="value">{esc(fresh_text)}</div><p class="sub">{esc(freshness.get("latest_draw_date"))}</p></section>'
-    content += f'<section class="card"><h2>{u("\\u767c\\u5e03\\u7b49\\u7d1a")}</h2><div class="value">{esc(release_text)}</div><p class="sub">{esc(release.get("status"))}</p></section>'
-    content += f'<section class="card"><h2>Top10 {u("\\u7a69\\u5b9a\\u5171\\u8b58")}</h2><div class="value">{esc(stability.get("top10_retention"))}</div><p class="sub">{u("\\u64fe\\u52d5\\u5feb\\u7167")} {esc(stability.get("snapshots"))}</p></section>'
-    content += f'<section class="card"><h2>{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}</h2><div class="value">{esc(audit.get("risk_level"))}</div><p class="sub">{esc(audit.get("verdict"))}</p></section>'
-    content += "</div>"
-    content += f'<section class="band"><h2>{u("\\u8fd1\\u671f\\u7a69\\u5b9a\\u5ea6\\u56de\\u6e2c")}</h2>{table([u("\\u671f\\u6578"), u("\\u6a23\\u672c"), "Top10", u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u9580\\u6abb")], rolling_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u7a69\\u5b9a\\u5171\\u8b58\\u7368\\u7acb\\u6846\\u67b6")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u5feb\\u7167\\u5171\\u8b58"), u("\\u5feb\\u7167\\u7387"), u("\\u8499\\u5730\\u5361\\u7f85\\u7559\\u5b58\\u7387"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7d9c\\u5408\\u6307\\u6578")], stable_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u5168\\u90e8\\u9810\\u6e2c\\u6b77\\u53f2\\u5c0d\\u6bd4")}</h2><p><a href="tiantianle_prediction_history.html">{u("\\u958b\\u555f\\u6bcf\\u671f\\u9810\\u6e2c\\u5c0d\\u6bd4")}</a></p>{table([u("\\u76ee\\u6a19\\u65e5"), u("\\u72c0\\u614b"), u("\\u4f9d\\u64da\\u65e5"), u("\\u5be6\\u969b\\u65e5"), "Top10", u("\\u5be6\\u969b\\u865f"), u("\\u547d\\u4e2d\\u865f"), "Top5", "Top10", "Top15", u("\\u5efa\\u7acb")], history_table(snapshots)[:12])}</section>'
-    content += f'<section class="band"><h2>{u("\\u822a\\u592a\\u7d1a\\u904b\\u7b97\\u4fdd\\u8b49\\u5be9\\u6838")}</h2>{aerospace_block(analysis)}</section>'
-    adv = (industrial.get("advanced_models") or {})
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u9032\\u968e\\u9810\\u6e2c\\u6a21\\u578b")}</h2><p>{esc(adv.get("warning"))}</p><p>{u("\\u9032\\u968e\\u6a21\\u578b\\u5171\\u8b58 Top12")}:{fmt_numbers(adv.get("consensus_top12", []))}</p>{table([u("\\u6a21\\u578b"), "Top10", u("Top10 \\u56de\\u6e2c"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u65b9\\u6cd5")], advanced_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u89c0\\u5bdf\\u5019\\u9078\\uff08\\u4e0d\\u5217\\u6b63\\u5f0f\\u4e3b\\u63a8\\uff09")}</h2><p>{esc(release_text)}</p></section><div class="grid">{pack_cards(analysis)}</div>'
-    content += f'<section class="band"><h2>{u("\\u7cbe\\u6e96\\u5ea6\\u6cbb\\u7406\\u5668\\uff1a\\u5f37\\u724c\\u767c\\u5e03\\u5be9\\u6838")}</h2>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c1"), u("\\u6578\\u503c2"), u("\\u898f\\u5247"), u("\\u5099\\u8a3b")], precision_governor_rows(analysis))}</section>'
-    content += f'<section class="band notice"><h2>{u("\\u5be6\\u6230\\u9810\\u6e2c\\u6210\\u719f\\u5ea6\\u5f37\\u5316")}</h2><p>{u("\\u4f4e\\u6210\\u719f\\u3001\\u4f4e\\u4ea4\\u53c9\\u9a57\\u8b49\\u3001\\u4e0a\\u671f\\u5931\\u8aa4\\u672a\\u4fee\\u6b63\\u7684\\u865f\\u78bc\\uff0c\\u6703\\u76f4\\u63a5\\u964d\\u6b0a\\u6216\\u964d\\u7d1a\\u89c0\\u5bdf\\u3002")}</p>{table([u("\\u9805\\u76ee"), u("\\u865f\\u78bc/\\u72c0\\u614b"), u("\\u6210\\u719f\\u5ea6"), u("\\u5c64\\u7d1a/\\u9580\\u6abb"), u("\\u4ea4\\u53c9\\u9a57\\u8b49/\\u52d5\\u4f5c")], practical_maturity_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u56b4\\u8b39\\u9a57\\u8b49\\u95dc\\u5361\\uff1a\\u672a\\u9a57\\u8b49\\u865f\\u78bc\\u7981\\u6b62\\u51fa\\u73fe")}</h2>{table([u("\\u9805\\u76ee"), u("\\u6578\\u503c1"), u("\\u6578\\u503c2"), u("\\u539f\\u56e0/\\u4f9d\\u64da"), u("\\u72c0\\u614b")], strict_validation_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u9810\\u6e2c\\u865f\\u78bc\\u9010\\u865f\\u7cbe\\u7b97\\u9a57\\u8b49")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u5be6\\u6230\\u6210\\u719f\\u5ea6"), u("\\u907a\\u6f0f"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7406\\u7531")], per_number_validation_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u81ea\\u52d5\\u6b0a\\u91cd\\u6821\\u6e96\\uff1a\\u8fd1\\u671f\\u5be6\\u6230\\u7279\\u5fb5\\u8abf\\u6b0a")}</h2>{table([u("\\u6b0a\\u91cd\\u9805"), u("\\u6578\\u503c"), u("\\u4f86\\u6e90"), u("\\u52d5\\u4f5c"), u("\\u5099\\u8a3b")], adaptive_weight_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u5de5\\u696d\\u7d1a\\u6a21\\u578b\\u5be9\\u8a08")}</h2><p><span class="risk">{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}:{esc(audit.get("risk_level"))}</span></p><p>{esc(audit.get("verdict"))}</p><p>{u("\\u958b\\u734e\\u578b\\u614b")}:{esc(u("\\u3001").join(regime.get("messages", [])))}</p></section>'
-    content += f'<section class="band"><h2>{u("\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u865f\\u78bc")}</h2>{table(["#", u("\\u865f\\u78bc"), u("\\u907f\\u958b\\u4fe1\\u5fc3"), u("\\u4fe1\\u5fc3\\u7b49\\u7d1a"), u("\\u51fa\\u73fe\\u8a55\\u5206"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u7a69\\u5b9a\\u6b21\\u6578"), u("\\u66ab\\u907f\\u539f\\u56e0")], unlikely_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u901a\\u904e\\u6a23\\u672c\\u5916\\u9a57\\u8b49\\u7684\\u865f\\u78bc\\u9023\\u52d5")}</h2>{table([u("\\u4f86\\u6e90\\u865f"), u("\\u76ee\\u6a19\\u865f"), u("\\u652f\\u6301"), u("\\u63d0\\u5347"), "FDR"], dependency_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u5929\\u5929\\u6a02\\u7248\\u8def\\u724c\\u7368\\u7acb\\u5206\\u6790")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u7248\\u8def\\u985e\\u5225"), u("\\u5206\\u6578"), u("\\u72c0\\u614b")], road_pattern_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>9{u("\\u4e2d")}3 {u("\\u8f2a\\u7d44\\u8986\\u84cb")}</h2>{table(["#", u("\\u7d44\\u5408")], wheel_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>8{u("\\u5340\\u4e8c\\u8f2a\\u5206\\u7d44\\u7814\\u7a76\\u6a21\\u578b")}</h2>{table([u("\\u5340"), u("\\u865f\\u78bc"), u("\\u6578\\u91cf"), u("\\u6a21\\u5f0f"), u("\\u7528\\u9014")], eight_zone_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u5019\\u9078 Top 15")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e"), u("\\u907a\\u6f0f"), u("\\u7406\\u7531")], candidate_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u865f\\u78bc\\uff08\\u98a8\\u63a7\\u89c0\\u5bdf\\uff09")}</h2>{table(["#", u("\\u865f\\u78bc"), u("\\u907f\\u958b\\u4fe1\\u5fc3"), u("\\u4fe1\\u5fc3\\u7b49\\u7d1a"), u("\\u51fa\\u73fe\\u8a55\\u5206"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u7a69\\u5b9a\\u6b21\\u6578"), u("\\u66ab\\u907f\\u539f\\u56e0")], unlikely_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u6a21\\u578b\\u56de\\u6e2c\\u8207\\u6539\\u5584\\u898f\\u5283")}</h2>{table([u("\\u6a21\\u578b"), "Top10", "Top15", u("\\u5dee\\u503c/\\u72c0\\u614b"), u("\\u6539\\u5584\\u52d5\\u4f5c")], model_improvement_rows(analysis))}</section>'
-    content += f'<section class="band chapter"><h2>{u("\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e\\u8207\\u4fee\\u6b63\\u5340")}</h2><p>{u("\\u672c\\u5340\\u53ea\\u8655\\u7406\\u4e0a\\u671f\\u7d50\\u679c\\u3001\\u672a\\u547d\\u4e2d\\u539f\\u56e0\\u3001\\u964d\\u6b0a\\u8207\\u6efe\\u52d5\\u4fee\\u6b63\\uff0c\\u4e0d\\u7576\\u4f5c\\u4eca\\u65e5\\u9810\\u6e2c\\u865f\\u78bc\\u3002")}</p></section>'
+    content += ultra_precision_block(analysis)
+    content += low_probability_avoid_block(analysis)
+    content += f'<section class="band"><h2>\u6bcf\u671f\u91cd\u65b0\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u8aaa\u660e"], strict_recalculation_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>\u672c\u671f\u5019\u9078\u524d\u5341\u4e94\u540d</h2>{table(["\u6392\u540d", "\u865f\u78bc", "\u6307\u6578", "\u9ad8\u4fe1\u5fc3\u8aaa\u660e", "\u907a\u6f0f", "\u7406\u7531"], candidate_rows(analysis))}</section>'
+    content += f'<section class="band notice"><h2>\u6efe\u52d5\u5f0f\u4fee\u6b63\u6458\u8981</h2>{table(["\u985e\u5225", "\u6aa2\u8a0e\u5167\u5bb9", "\u8abf\u6574\u52d5\u4f5c", "\u4f9d\u64da", "\u72c0\u614b"], rolling_adjustment_rows(analysis))}</section>'
+    content += f'<section class="band chapter"><h2>\u4e0a\u671f\u672a\u547d\u4e2d\u6aa2\u8a0e\u8207\u4fee\u6b63\u5340</h2><p>\u672c\u5340\u53ea\u8655\u7406\u4e0a\u671f\u7d50\u679c\u3001\u672a\u547d\u4e2d\u539f\u56e0\u3001\u964d\u6b0a\u8207\u6efe\u52d5\u4fee\u6b63\uff0c\u4e0d\u6df7\u5165\u672c\u671f\u9810\u6e2c\u3002</p></section>'
     content += settled_block
-    content += f'<section class="band"><h2>{u("\\u9810\\u6e2c\\u6392\\u540d\\u6821\\u6e96\\u6aa2\\u8a0e")}</h2>{table([u("\\u5340\\u9593"), u("\\u6578\\u91cf"), u("\\u865f\\u78bc"), u("\\u56de\\u6e2c\\u53c3\\u8003"), u("\\u4fee\\u6b63\\u52d5\\u4f5c")], rank_calibration_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u6bcf\\u65e5\\u6aa2\\u8a0e\\u5f8c\\u6efe\\u52d5\\u8abf\\u6574")}</h2>{table([u("\\u985e\\u5225"), u("\\u6aa2\\u8a0e\\u5167\\u5bb9"), u("\\u8abf\\u6574\\u52d5\\u4f5c"), u("\\u4f9d\\u64da"), u("\\u72c0\\u614b")], rolling_adjustment_rows(analysis))}</section>'
     if settled:
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u5c08\\u5340")}</h2><p>{u("\\u9810\\u6e2c\\u4f9d\\u64da")} {esc(settled.get("based_on_date"))} -> {u("\\u5be6\\u969b\\u958b\\u734e")} {esc(settled.get("actual_date"))}</p>{table([u("\\u865f\\u78bc"), u("\\u72c0\\u614b"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u547d\\u4e2d\\u4f86\\u6e90\\u95dc\\u806f\\u89e3\\u6790")], actual_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u6b63\\u5f0f\\u9810\\u6e2c\\u9010\\u865f\\u6aa2\\u8a0e")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u7d50\\u679c"), u("\\u4fe1\\u5fc3"), u("\\u907a\\u6f0f"), u("\\u539f\\u59cb\\u4f86\\u6e90"), u("\\u6aa2\\u8a0e\\u52d5\\u4f5c")], candidate_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u5f37\\u724c\\u7d44\\u6210\\u6557\\u6aa2\\u8a0e")}</h2>{table([u("\\u5f37\\u724c"), u("\\u539f\\u9810\\u6e2c"), u("\\u76ee\\u6a19"), u("\\u5be6\\u969b"), u("\\u7d50\\u679c"), u("\\u547d\\u4e2d\\u865f"), u("\\u672a\\u547d\\u4e2d\\u865f")], pack_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u9810\\u6e2c\\u4f86\\u6e90\\u7406\\u7531\\u6210\\u6557\\u7d71\\u8a08")}</h2>{table([u("\\u4f86\\u6e90\\u7406\\u7531"), u("\\u547d\\u4e2d"), u("\\u672a\\u547d\\u4e2d"), u("\\u6d89\\u53ca\\u865f\\u78bc"), u("\\u4fee\\u6b63\\u65b9\\u5411")], candidate_reason_stats(settled))}</section>'
-    content += f'<section class="band"><h2>{u("\\u539f\\u59cb\\u6230\\u5831")}</h2><pre>{html.escape(md)}</pre></section>'
+        content += f'<section class="band"><h2>\u4e0a\u671f\u5be6\u969b\u958b\u734e\u9010\u865f\u6aa2\u8a0e</h2>{table(["\u865f\u78bc", "\u72c0\u614b", "\u5019\u9078\u6392\u540d", "\u547d\u4e2d\u4f86\u6e90\u95dc\u806f\u89e3\u6790"], actual_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>\u4e0a\u671f\u6b63\u5f0f\u9810\u6e2c\u9010\u865f\u6aa2\u8a0e</h2>{table(["\u6392\u540d", "\u865f\u78bc", "\u7d50\u679c", "\u4fe1\u5fc3", "\u907a\u6f0f", "\u4f86\u6e90", "\u4fee\u6b63\u52d5\u4f5c"], candidate_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>\u4e0a\u671f\u5f37\u724c\u7d44\u6210\u6557\u6aa2\u8a0e</h2>{table(["\u5f37\u724c", "\u539f\u9810\u6e2c", "\u76ee\u6a19", "\u5be6\u969b", "\u7d50\u679c", "\u547d\u4e2d\u865f", "\u672a\u547d\u4e2d\u865f"], pack_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>\u4e0a\u671f\u7406\u7531\u6210\u6557\u7d71\u8a08</h2>{table(["\u4f86\u6e90\u7406\u7531", "\u547d\u4e2d", "\u672a\u547d\u4e2d", "\u6d89\u53ca\u865f\u78bc", "\u4fee\u6b63\u65b9\u5411"], candidate_reason_stats(settled))}</section>'
+    content += f'<section class="band notice"><h2>\u672c\u6708\u4f4e\u547d\u4e2d\u7e3d\u6aa2\u8a0e\u8207\u4fee\u6b63</h2>{table(["\u9805\u76ee", "\u6578\u503c", "\u5224\u8b80", "\u72c0\u614b"], monthly_review_rows(analysis))}{table(["\u985e\u5225", "\u5167\u5bb9", "\u7ba1\u5236", "\u72c0\u614b"], monthly_best_plan_rows(analysis))}</section>'
     return page(title, subtitle, content), md, build_history_html(snapshots)
 
 
