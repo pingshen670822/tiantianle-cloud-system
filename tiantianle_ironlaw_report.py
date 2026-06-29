@@ -1020,12 +1020,17 @@ def explicit_action_block(analysis):
     data_day = latest.get("draw_date") or freshness.get("latest_draw_date") or decision.get("latest_draw_date") or "-"
     avoid_packs = decision.get("avoid_packs") or ((analysis.get("low_probability_avoid") or {}).get("avoid_packs") or {})
     defensive_avoid = decision.get("defensive_avoid") or (avoid_packs.get("ten_miss") or {}).get("numbers") or []
+    rec = ultra_precision_recommendations(analysis)
+    candidates = analysis.get("candidates") or []
+    candidate_by_number = {int(item.get("number")): item for item in candidates if item.get("number") is not None}
 
-    def pack_numbers(key, fallback_key=None):
+    def pack_numbers(key, fallback_key=None, rec_key=None):
         numbers = decision.get(key) or []
+        if not numbers and rec_key:
+            numbers = (rec.get(rec_key) or {}).get("numbers") or []
         if not numbers and fallback_key:
             numbers = (packs.get(fallback_key) or {}).get("numbers") or []
-        return numbers
+        return [int(n) for n in numbers if str(n).strip().isdigit()]
 
     def action_card(title, numbers, sub):
         value = fmt_numbers(numbers) if numbers else "-"
@@ -1036,6 +1041,26 @@ def explicit_action_block(analysis):
             f'<p class="sub">{esc(sub)}</p>'
             "</section>"
         )
+
+    def rate_text(value):
+        if value is None or value == "":
+            return "-"
+        value = safe_float(value)
+        if 0 <= value <= 1:
+            return f"{round(value * 100, 1)}%"
+        return f"{round(value, 2)}%"
+
+    def status_text(value):
+        mapping = {
+            "official": "正式發布",
+            "formal": "正式高信心",
+            "high_confidence_watch": "高信心觀察",
+            "research_prediction": "研究觀察",
+            "watch_only": "觀察中",
+            "blocked": "暫停發布",
+            "strict_downshift": "嚴格降級",
+        }
+        return mapping.get(str(value or ""), str(value or "-"))
 
     high_rows = []
     high_source = decision.get("high_confidence_numbers") or []
@@ -1048,9 +1073,10 @@ def explicit_action_block(analysis):
                 "model_probability_percent": probability,
                 "confidence_index": confidence,
                 "confidence_level": level,
+                "stability_count": item.get("stability_count", "-"),
                 "cross_validation_passed": f"{passed}/{total}",
                 "reason": detail,
-                "note": u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\uff0c\\u4f46\\u9700\\u4f9d\\u98a8\\u63a7\\u4f7f\\u7528")
+                "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。",
             })
     for idx, item in enumerate(high_source[:9], 1):
         number = item.get("number")
@@ -1061,12 +1087,51 @@ def explicit_action_block(analysis):
             esc(item.get("rank", idx)),
             f"{round(safe_float(item.get('model_probability_percent')), 2)}%",
             esc(item.get("confidence_index", "-")),
-            esc(item.get("confidence_level", "-")),
+            esc(status_text(item.get("confidence_level", "-"))),
             esc(item.get("stability_count", "-")),
             esc(item.get("cross_validation_passed", "-")),
             esc(item.get("reason", "-")),
             esc(item.get("note", "-")),
         ])
+
+    def micro_rows():
+        rows = []
+        specs = [
+            ("single", "獨支1中1", "primary_single"),
+            ("two", "2中1", "two_hit_one"),
+            ("three", "3中1", "three_hit_one"),
+        ]
+        for rec_key, label, decision_key in specs:
+            item = rec.get(rec_key) or {}
+            numbers = pack_numbers(decision_key, rec_key=rec_key)
+            candidate_items = [candidate_by_number.get(int(n), {}) for n in numbers]
+            ranks = [safe_int(row.get("rank", row.get("_display_rank", 0))) for row in candidate_items if row]
+            cross_passed = sum(safe_int((row.get("cross_validation") or {}).get("passed_count", 0)) for row in candidate_items)
+            stability = sum(safe_int(row.get("stability_count", 0)) for row in candidate_items)
+            tails = "、".join(sorted({str(int(n) % 10) for n in numbers})) if numbers else "-"
+            zones = item.get("zones") or (packs.get(decision_key) or {}).get("zones") or {}
+            zone_text = "、".join(f"{k}:{v}" for k, v in zones.items()) if zones else "-"
+            recent_30 = item.get("recent_30") or {}
+            recent_60 = item.get("recent_60") or {}
+            recent_120 = item.get("recent_120") or {}
+            multi_window = f"30期{recent_30.get('pass_rate', '-')} / 60期{recent_60.get('pass_rate', '-')} / 120期{recent_120.get('pass_rate', '-')}"
+            rows.append([
+                label,
+                status_text(item.get("status")),
+                fmt_numbers(numbers),
+                "、".join(str(rank) for rank in ranks) if ranks else "-",
+                item.get("score", item.get("precision_score", "-")),
+                rate_text(item.get("random_success_probability") or ((item.get("theoretical_probability") or {}).get("probability"))),
+                cross_passed,
+                stability,
+                item.get("selected_model_label") or item.get("selected_model") or "綜合精算",
+                rate_text(recent_60.get("pass_rate")),
+                tails,
+                multi_window,
+                tails,
+                zone_text,
+            ])
+        return rows
 
     avoid_pack_rows = []
     for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
@@ -1085,36 +1150,43 @@ def explicit_action_block(analysis):
         time_rows.append([esc(row.get("item", "-")), esc(row.get("content", "-"))])
     if not time_rows:
         time_rows = [
-            [u("\\u6bcf\\u65e5\\u958b\\u734e\\u6642\\u9593"), u("\\u590f\\u4ee4\\u53f0\\u7063\\u6642\\u9593\\u4e0a\\u534809:50\\uff1b\\u51ac\\u4ee4\\u53f0\\u7063\\u6642\\u9593\\u4e0a\\u534810:50\\u3002")],
-            [u("\\u958b\\u734e\\u5f8c\\u66f4\\u65b0\\u622a\\u6b62"), u("\\u4e0a\\u534810:00\\u524d\\u5b8c\\u6210\\u958b\\u734e\\u532f\\u5165\\u3001\\u547d\\u4e2d\\u7d50\\u7b97\\u3001\\u91cd\\u65b0\\u904b\\u7b97\\u8207\\u624b\\u6a5f\\u540c\\u6b65\\u3002")],
-            [u("\\u5348\\u9593\\u5b8c\\u6574\\u91cd\\u7b97"), u("\\u6bcf\\u65e5\\u4e0b\\u534813:00\\u5f37\\u5236\\u91cd\\u65b0\\u56de\\u6e2c\\u3001\\u6821\\u6b63\\u6a21\\u578b\\u3001\\u91cd\\u5efa\\u6230\\u5831\\u8207\\u624b\\u6a5f\\u7248\\u3002")],
+            ["每日開獎時間", "夏令台灣時間上午09:50；冬令台灣時間上午10:50。"],
+            ["開獎後更新截止", "上午10:00前完成最新開獎匯入、命中結算、重新運算與手機同步。"],
+            ["午間完整重算", "每日下午13:00完成重新回測、校正模型、重建戰報與手機版。"],
         ]
 
+    primary_single = pack_numbers("primary_single", "strong_single", "single")
+    two_hit_one = pack_numbers("two_hit_one", "two_hit_one", "two")
+    three_hit_one = pack_numbers("three_hit_one", "three_hit_two", "three")
+    five_hit_two = pack_numbers("five_hit_two", "five_hit_two")
+    nine_hit_three = pack_numbers("nine_hit_three", "nine_hit_three")
+    core_numbers = nine_hit_three or decision.get("high_confidence_core") or [item.get("number") for item in high_source[:9] if item.get("number") is not None]
     cards = [
-        action_card(u("\\u660e\\u78ba\\u7368\\u96bb"), pack_numbers("primary_single", "strong_single"), u("\\u672c\\u671f\\u4e00\\u865f\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "2" + u("\\u4e2d") + "1", pack_numbers("two_hit_one", "two_hit_one"), u("\\u672c\\u671f\\u96d9\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "3" + u("\\u4e2d") + "1~3", pack_numbers("three_hit_one", "three_hit_two"), u("\\u672c\\u671f\\u4e09\\u865f\\u6838\\u5fc3")),
-        action_card(u("\\u660e\\u78ba") + "5" + u("\\u4e2d") + "2", pack_numbers("five_hit_two", "five_hit_two"), u("\\u672c\\u671f\\u4e94\\u865f\\u653b\\u64ca\\u7d44")),
-        action_card(u("\\u660e\\u78ba") + "9" + u("\\u4e2d") + "3", pack_numbers("nine_hit_three", "nine_hit_three"), u("\\u672c\\u671f\\u4e5d\\u865f\\u8986\\u84cb\\u7d44")),
-        action_card(u("\\u9632\\u5b88\\u907f\\u958b"), defensive_avoid, u("\\u4f4e\\u5206\\u8207\\u5f31\\u8a0a\\u865f\\u98a8\\u63a7")),
+        action_card("明確獨支", primary_single, "本期一號核心"),
+        action_card("明確2中1", two_hit_one, "本期雙核心"),
+        action_card("明確3中1", three_hit_one, "本期三號核心"),
+        action_card("明確5中2", five_hit_two, "本期五號攻擊組"),
+        action_card("明確9中3", nine_hit_three, "本期九號覆蓋組"),
+        action_card("防守避開", defensive_avoid, "低分與弱訊號風控"),
     ]
-    core_numbers = decision.get("high_confidence_core") or [item.get("number") for item in high_source[:9] if item.get("number") is not None]
     return (
         '<section class="band notice">'
-        f'<h2>{u("\\u6bcf\\u65e5\\u66f4\\u65b0\\u9435\\u5f8b\\u6642\\u9593\\u8868")}</h2>'
-        f'{table([u("\\u9805\\u76ee"), u("\\u5167\\u5bb9")], time_rows)}'
+        f'<h2>每日更新鐵律時間表</h2>'
+        f'{table(["項目", "內容"], time_rows)}'
         '</section>'
         '<section class="band hotbox">'
-        f'<h2>{u("\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848")}（{u("\\u8cc7\\u6599\\u65e5")} {esc(data_day)} / {u("\\u76ee\\u6a19\\u53f0\\u7063\\u6642\\u9593")} {esc(target)}）</h2>'
+        f'<h2>本期明確作戰答案（全歷史資料庫運算至 {esc(data_day)} / 目標台灣時間 {esc(target)}）</h2>'
         f'<p><strong>{esc(decision.get("conclusion", decision.get("action_label", "高信心觀察強化")))}</strong></p>'
-        f'<p>{esc(decision.get("release_rule", u("\\u9ad8\\u4fe1\\u5fc3\\u724c\\u5fc5\\u9808\\u901a\\u904e\\u591a\\u91cd\\u5b88\\u9580\\u5f8c\\u624d\\u986f\\u793a\\u3002")))}</p>'
-        f'<p>{esc(decision.get("recompute_rule", u("\\u6bcf\\u671f\\u958b\\u734e\\u5f8c\\u91cd\\u65b0\\u904b\\u7b97\\uff0c\\u7981\\u6b62\\u6cbf\\u7528\\u4e0a\\u671f\\u9810\\u6e2c\\u3002")))}</p>'
+        f'<p>{esc(decision.get("release_rule", "高信心牌必須通過多重守門後才顯示。"))}</p>'
+        f'<p>{esc(decision.get("recompute_rule", "每期開獎後重新運算，禁止沿用上期預測。"))}</p>'
         f'<div class="grid">{"".join(cards)}</div>'
-        f'<h3>{u("\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c\\u7279\\u5225\\u5f37\\u8abf")}</h3>'
-        f'{table([u("\\u865f\\u78bc"), u("\\u6392\\u540d"), u("\\u4fdd\\u5b88\\u6a5f\\u7387"), u("\\u4fe1\\u5fc3\\u6307\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u7a69\\u5b9a"), u("\\u4ea4\\u53c9\\u901a\\u904e"), u("\\u660e\\u78ba\\u539f\\u56e0"), u("\\u5099\\u8a3b")], safe_rows(high_rows))}'
-        f'<h3>{u("\\u4f4e\\u6a5f\\u7387\\u907f\\u96aa\\u5305")}</h3>'
-        f'{table([u("\\u907f\\u96aa\\u5305"), u("\\u865f\\u78bc"), u("\\u4fe1\\u5fc3\\u6307\\u6a19"), u("\\u5e73\\u5747\\u907f\\u958b\\u5206"), u("\\u5e73\\u5747\\u6682\\u907f\\u5206"), u("\\u6700\\u4f4e\\u6682\\u907f\\u5206")], avoid_pack_rows)}'
-        f'<p>{u("\\u672c\\u671f\\u653b\\u64ca\\u6838\\u5fc3\\u4e5d\\u78bc")}：{fmt_numbers(core_numbers)}</p>'
+        f'<h3>高機率信心牌特別強調</h3>'
+        f'{table(["號碼", "排名", "保守機率", "信心指數", "信心", "穩定", "交叉通過", "明確原因", "備註"], high_rows, "本期無通過高信心守門號碼")}'
+        f'<h3>獨支 / 2中1 / 3中1 短包超強信心精算</h3>'
+        f'{table(["短包", "狀態", "號碼", "排名", "多模型仲裁分", "保守機率", "交叉通過", "穩定次數", "召回分", "月漏回拉", "冷彈分", "多視窗", "尾轉分", "區間配額"], micro_rows())}'
+        f'<h3>低機率避險包</h3>'
+        f'{table(["避險包", "號碼", "信心指標", "平均避開分", "平均暫避分", "最低暫避分"], avoid_pack_rows)}'
+        f'<p>本期9碼攻擊核心：{fmt_numbers(core_numbers)}</p>'
         '</section>'
     )
 
@@ -1464,44 +1536,96 @@ def make_markdown(analysis, settled):
     stability = industrial.get("stability_consensus") or {}
     audit = industrial.get("model_audit") or {}
     maturity_summary = industrial.get("practical_maturity") or {}
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    rec = ultra_precision_recommendations(analysis)
+    avoid_packs = decision.get("avoid_packs") or ((analysis.get("low_probability_avoid") or {}).get("avoid_packs") or {})
+    high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
+    if not high_numbers:
+        high_numbers = decision.get("high_confidence_core") or []
     lines = [
         "# " + u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831"),
         "",
-        f"- {u('\\u7522\\u751f\\u6642\\u9593')}:{analysis.get('generated_at_taiwan')}",
-        f"- {u('\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6')}:{freshness.get('status')} / {u('\\u6700\\u65b0\\u65e5\\u671f')} {freshness.get('latest_draw_date')}",
-        f"- {u('\\u6700\\u65b0\\u671f\\u5225')}:{latest.get('period')} ({latest.get('draw_date')})",
-        f"- {u('\\u6700\\u65b0\\u865f\\u78bc')}:{fmt_numbers(latest.get('numbers'))}",
-        f"- {u('\\u6700\\u65b0\\u958b\\u734e\\u4f86\\u6e90')}:{freshness.get('latest_source') or latest.get('source') or '-'}",
-        f"- {u('\\u6700\\u65b0\\u4f86\\u6e90\\u78ba\\u8a8d')}:{freshness.get('latest_source_confirmed')}",
-        f"- {u('\\u9810\\u6e2c\\u76ee\\u6a19\\u65e5')}:{analysis.get('target_draw_date')}",
-        f"- {u('\\u767c\\u5e03\\u7b49\\u7d1a')}:{release.get('status')} / {release_label(analysis)}",
-        f"- Top10 {u('\\u7a69\\u5b9a\\u5171\\u8b58\\u7387')}:{stability.get('top10_retention')}",
-        f"- {u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}:{maturity_summary.get('status')} / Top10 {maturity_summary.get('top10_avg_maturity')} / {maturity_summary.get('action')}",
-        f"- {u('\\u98a8\\u96aa\\u7b49\\u7d1a')}:{audit.get('risk_level')}",
+        f"- 產生時間：{analysis.get('generated_at_taiwan')}",
+        f"- 資料新鮮度：{freshness.get('status')} / 最新日期 {freshness.get('latest_draw_date')}",
+        f"- 最新期別：{latest.get('period')} ({latest.get('draw_date')})",
+        f"- 最新號碼：{fmt_numbers(latest.get('numbers'))}",
+        f"- 最新開獎來源：{freshness.get('latest_source') or latest.get('source') or '-'}",
+        f"- 最新來源確認：{freshness.get('latest_source_confirmed')}",
+        f"- 預測目標日：{analysis.get('target_draw_date')}",
+        f"- 預測台灣時間：{analysis.get('prediction_draw_taiwan_time') or freshness.get('target_taiwan_safe_update_time')}",
+        f"- 發布等級：{release.get('status')} / {release_label(analysis)}",
+        f"- 穩定共識率：{stability.get('top10_retention')}",
+        f"- 實戰成熟度：{maturity_summary.get('status')} / {maturity_summary.get('top10_avg_maturity')} / {maturity_summary.get('action')}",
+        f"- 風險等級：{audit.get('risk_level')}",
         "",
-        "## " + u("\\u4eca\\u65e5\\u89c0\\u5bdf\\u5019\\u9078"),
+        "## 本期明確作戰答案",
+        f"- 作戰結論：{decision.get('action_label', '-')} / 等級 {decision.get('grade', '-')}",
+        f"- 明確獨支：{fmt_numbers(decision.get('primary_single', [])) or '-'}",
+        f"- 明確2中1：{fmt_numbers(decision.get('two_hit_one', [])) or '-'}",
+        f"- 明確3中1：{fmt_numbers(decision.get('three_hit_one', [])) or '-'}",
+        f"- 明確5中2：{fmt_numbers(decision.get('five_hit_two', [])) or '-'}",
+        f"- 明確9中3：{fmt_numbers(decision.get('nine_hit_three', [])) or '-'}",
+        f"- 高機率信心牌：{fmt_numbers(high_numbers) or '-'}",
+        f"- 防守避開：{fmt_numbers((decision.get('defensive_avoid') or [])[:10]) or '-'}",
+        "",
+        "## 高機率信心牌特別強調",
     ]
-    for pack in (analysis.get("strong_packs") or {}).values():
-        maturity = pack.get("maturity") or {}
-        maturity_text = f"{maturity.get('avg_score', '-')} / {'passed' if maturity.get('passed') else 'watch_only'}"
-        lines.append(f"- {pack.get('name')}:{fmt_numbers(pack.get('numbers'))} / {u('\\u6210\\u719f\\u5ea6')} {maturity_text}")
-    lines.extend(["", "## " + u("\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u52a0\\u8a3b")])
-    for item in high_confidence_candidates(analysis, limit=10):
-        _, detail, *_ = candidate_confidence_parts(item)
-        lines.append(f"- {int(item.get('number')):02d}: {detail}")
-    lines.extend(["", "## " + u("\\u5019\\u9078 Top15")])
+    for item in (decision.get("high_confidence_numbers") or [])[:9]:
+        lines.append(
+            f"- {int(item.get('number')):02d}：排名 {item.get('rank', '-')} / 保守機率 {item.get('model_probability_percent', '-')}% / "
+            f"信心 {item.get('confidence_index', '-')} / 穩定 {item.get('stability_count', '-')} / 交叉通過 {item.get('cross_validation_passed', '-')} / {item.get('note', '-')}"
+        )
+    if not (decision.get("high_confidence_numbers") or []):
+        for item in high_confidence_candidates(analysis, limit=9):
+            _, detail, *_ = candidate_confidence_parts(item)
+            lines.append(f"- {int(item.get('number')):02d}：{detail}")
+    def markdown_status(value):
+        mapping = {
+            "official": "正式發布",
+            "formal": "正式高信心",
+            "high_confidence_watch": "高信心觀察",
+            "research_prediction": "研究觀察",
+            "watch_only": "觀察中",
+            "blocked": "暫停發布",
+            "strict_downshift": "嚴格降級",
+        }
+        return mapping.get(str(value or ""), str(value or "-"))
+
+    lines.extend(["", "## 獨支 / 2中1 / 3中1 短包超強信心精算"])
+    for key, label in [("single", "獨支1中1"), ("two", "2中1"), ("three", "3中1")]:
+        item = rec.get(key) or {}
+        recent_60 = item.get("recent_60") or {}
+        lines.append(
+            f"- {label}：{fmt_numbers(item.get('numbers', [])) or '-'} / 狀態 {markdown_status(item.get('status'))} / "
+            f"多模型仲裁分 {item.get('score', item.get('precision_score', '-'))} / 60期通過率 {recent_60.get('pass_rate', '-')} / "
+            f"採用模型 {item.get('selected_model_label') or item.get('selected_model') or '綜合精算'}"
+        )
+    lines.extend(["", "## 低機率避險包"])
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        pack = avoid_packs.get(key) or {}
+        lines.append(
+            f"- {label}：{fmt_numbers(pack.get('numbers', [])) or '-'} / {pack.get('confidence_label', '-')} / "
+            f"信心指標 {pack.get('confidence_index', '-')} / 平均暫避分 {pack.get('avg_avoid_score', '-')}"
+        )
+    lines.extend(["", "## 每日更新鐵律時間表"])
+    for row in decision.get("time_table", []) or []:
+        lines.append(f"- {row.get('item', '-')}：{row.get('content', '-')}")
+    lines.extend(["", "## 候選前15名"])
     for idx, item in enumerate((analysis.get("candidates") or [])[:15], 1):
         maturity = item.get("practical_maturity") or {}
-        lines.append(f"{idx}. {int(item.get('number')):02d} / {item.get('confidence_index', item.get('score'))} / {u('\\u6210\\u719f\\u5ea6')} {maturity.get('score', '-')} {maturity.get('tier', '-')} / {u('\\u907a\\u6f0f')} {item.get('omission')}")
+        lines.append(
+            f"{idx}. {int(item.get('number')):02d} / 信心 {item.get('confidence_index', item.get('score'))} / "
+            f"成熟度 {maturity.get('score', '-')} {maturity.get('tier', '-')} / 遺漏 {item.get('omission')}"
+        )
     if settled:
         lines.extend([
             "",
-            "## " + u("\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e"),
-            f"- {u('\\u9810\\u6e2c\\u4f9d\\u64da')}:{settled.get('based_on_date')} -> {u('\\u5be6\\u969b\\u958b\\u734e')}:{settled.get('actual_date')}",
-            f"- Top5 / Top10 / Top15:{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}",
+            "## 上期命中檢討",
+            f"- 預測依據：{settled.get('based_on_date')} -> 實際開獎：{settled.get('actual_date')}",
+            f"- 前五 / 前十 / 前十五：{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}",
+            f"- 命中號：{fmt_numbers(settled.get('hit_numbers', [])) or '-'}",
         ])
     return "\n".join(lines) + "\n"
-
 
 def page(title, subtitle, content):
     return f"""<!doctype html>
