@@ -1,8 +1,8 @@
 # 檔案讀取檢查
 
-- 檢查：133
+- 檢查：136
 - 異常：0
-- 備註：10
+- 備註：13
 
 ## 備註
 california_fantasy5_system.py: cjk_report_text_allowed
@@ -15,3 +15,6 @@ tiantianle_ironlaw_report.py: cjk_report_text_allowed
 中文顯示工具.py: cjk_report_text_allowed
 刪除舊開機自動啟動_管理員執行.bat: cjk_report_text_allowed
 天天樂一鍵啟動.bat: cjk_report_text_allowed
+美國加州天天樂_20260618_第1版.py: cjk_report_text_allowed
+pages_build_before_strict_mobile_20260629_120825.py: cjk_report_text_allowed
+tiantianle_ironlaw_report_before_clear_tabs_20260629_120731.py: cjk_report_text_allowed
