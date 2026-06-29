@@ -44,10 +44,12 @@ jobs:
           python-version: "3.12"
       - name: Update Tiantianle data and reports with post-draw retry
         env:
-          TIANTIANLE_CORE_BACKTEST_ROUNDS: "60"
-          TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS: "60"
-          TIANTIANLE_ADVANCED_BACKTEST_ROUNDS: "40"
-          TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS: "40"
+          TIANTIANLE_CORE_BACKTEST_ROUNDS: "30"
+          TIANTIANLE_PACK_GOVERNANCE_ROUNDS: "30"
+          TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS: "30"
+          TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS: "30"
+          TIANTIANLE_ADVANCED_BACKTEST_ROUNDS: "30"
+          TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS: "30"
           TIANTIANLE_GROUP_BACKTEST_SHORT: "30"
           TIANTIANLE_GROUP_BACKTEST_MID: "60"
           TIANTIANLE_GROUP_BACKTEST_LONG: "120"
@@ -56,8 +58,9 @@ jobs:
           set -e
           for attempt in $(seq 1 10); do
             echo "post-draw update attempt ${attempt}/10"
-            python "美國加州天天樂_20260618_第1版.py"
+            timeout 180 python "美國加州天天樂_20260618_第1版.py" || python offline_full_history_recalc.py
             python pages_build.py
+            python sanitize_public_outputs.py
             if python - <<'PY'
           import json
           import sys
