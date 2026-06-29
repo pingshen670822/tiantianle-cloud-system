@@ -1216,6 +1216,41 @@ def explicit_action_block(analysis):
             esc(pack.get("min_avoid_score", "-")),
         ])
 
+    high_numbers = {int(item.get("number")) for item in high_source[:9] if item.get("number") is not None}
+    special_35 = candidate_by_number.get(35)
+    if special_35:
+        rank_35 = special_35.get("_display_rank") or special_35.get("rank") or "-"
+        cross_35 = special_35.get("cross_validation") or {}
+        passed_35 = cross_35.get("passed_count", "-")
+        total_35 = cross_35.get("total_count", "-")
+        status_35 = "本期高機率信心牌" if 35 in high_numbers else "特別追蹤／備查"
+        action_35 = (
+            "35 已進本期高信心核心。"
+            if 35 in high_numbers
+            else f"35 已加註追蹤；本期排序第 {rank_35} 名，未通過前九名高信心守門，不混入本期主推。"
+        )
+        tracking_35_rows = [[
+            "35",
+            status_35,
+            esc(rank_35),
+            rate_text(special_35.get("model_probability_percent")),
+            esc(special_35.get("confidence_index", "-")),
+            f"{passed_35}/{total_35}",
+            esc(special_35.get("stability_count", "-")),
+            action_35,
+        ]]
+    else:
+        tracking_35_rows = [[
+            "35",
+            "特別追蹤／候選外",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "本期未進候選核心，禁止寫成主推；下期重新驗證後再判定。",
+        ]]
+
     time_rows = []
     for row in decision.get("time_table", []) or []:
         time_rows.append([esc(row.get("item", "-")), esc(row.get("content", "-"))])
@@ -1253,6 +1288,8 @@ def explicit_action_block(analysis):
         f'<div class="grid">{"".join(cards)}</div>'
         f'<h3>高機率信心牌特別強調</h3>'
         f'{table(["號碼", "排名", "保守機率", "信心指數", "信心", "穩定", "交叉通過", "明確原因", "備註"], high_rows, "本期無通過高信心守門號碼")}'
+        f'<div class="signal-focus"><div class="signal-title">35特別追蹤加註</div><div class="signal-numbers">35</div><div class="signal-detail">若未進前九名高信心核心，只能列備查追蹤，不能混成本期主推。</div></div>'
+        f'{table(["號碼", "本期定位", "排名", "保守機率", "信心指數", "交叉通過", "穩定", "處理"], tracking_35_rows)}'
         f'<h3>獨支 / 2中1 / 3中1 短包超強信心精算</h3>'
         f'{table(["短包", "狀態", "號碼", "排名", "多模型仲裁分", "保守機率", "交叉通過", "穩定次數", "召回分", "月漏回拉", "冷彈分", "多視窗", "尾轉分", "區間配額"], micro_rows())}'
         f'<h3>低機率避險包</h3>'
@@ -1899,12 +1936,20 @@ def build_report():
       <p>{u('\\u63d0\\u9192\\uff1a\\u672c\\u6230\\u5831\\u70ba\\u6b77\\u53f2\\u7d71\\u8a08\\u5206\\u6790\\uff0c\\u4e0d\\u4fdd\\u8b49\\u958b\\u51fa\\u3002')}</p>
     </section>"""
     history_info = analysis.get("history_completeness") or {}
+    raw_history_status = str(history_info.get("status", "-"))
+    history_status = {
+        "complete": "完整",
+        "ok": "完整",
+        "fresh": "完整",
+        "partial": "不足",
+        "missing": "不足",
+    }.get(raw_history_status, raw_history_status)
     backtest = industrial_backtest(analysis)
     latest_review_ok = bool(settled and settled.get("actual_date") == latest_draw_date)
     review_pair = f"{settled.get('based_on_date')} -> {settled.get('actual_date')}" if settled else "-"
     full_history_rows = [
         ["\u904b\u7b97\u6bcd\u9ad4", f"{analysis.get('draw_count', 0)} \u7b46", "\u5168\u6b77\u53f2\u8cc7\u6599\u5eab", "\u672c\u671f\u9810\u6e2c\u8207\u56de\u6e2c\u90fd\u4f7f\u7528\u5b8c\u6574\u8cc7\u6599\u8868"],
-        ["\u8cc7\u6599\u7bc4\u570d", f"{history_info.get('status', '-')}", f"\u6700\u4f4e\u9580\u6abb {history_info.get('required_minimum', '-')}", "\u7981\u6b62\u53ea\u7528\u8fd1\u5e7e\u671f\u4ee3\u66ff\u5168\u6b77\u53f2"],
+        ["\u8cc7\u6599\u7bc4\u570d", esc(history_status), f"\u6700\u4f4e\u9580\u6abb {history_info.get('required_minimum', '-')}", "\u7981\u6b62\u53ea\u7528\u8fd1\u5e7e\u671f\u4ee3\u66ff\u5168\u6b77\u53f2"],
         ["\u6700\u65b0\u958b\u734e", esc(latest_draw_date), mark_numbers(latest.get("numbers"), latest.get("numbers")), esc(freshness.get("latest_source") or latest.get("source") or "-")],
         ["\u4e0a\u671f\u6aa2\u8a0e\u9396\u5b9a", esc(review_pair), "\u5df2\u5c0d\u6700\u65b0\u958b\u734e\u65e5" if latest_review_ok else "\u7981\u6b62\u820a\u671f\u9802\u66ff", esc(settled.get("review_source", "-") if settled else "\u5c1a\u7121\u6700\u65b0\u7d50\u7b97")],
         ["\u4e0b\u671f\u9810\u6e2c", esc(analysis.get("target_draw_date")), esc(target_tw_time), "\u53f0\u7063\u6642\u9593\u986f\u793a"],
@@ -1914,8 +1959,8 @@ def build_report():
         ["\u9805\u76ee", "\u65e5\u671f", "\u72c0\u614b", "\u8aaa\u660e"],
         [
             ["\u5831\u8868\u7522\u751f", esc(analysis.get("generated_at_taiwan")), "\u5df2\u7522\u751f", "\u672c\u6b21\u904b\u7b97\u6642\u9593"],
-            ["\u6700\u65b0\u958b\u734e\u65e5", esc(latest_draw_date), esc(freshness.get("status")), f"\u53f0\u7063\u53ef\u66f4\u65b0 {esc(latest_tw_time)}"],
-            ["\u4e0b\u671f\u9810\u6e2c\u6642\u9593", esc(target_tw_time), esc(release.get("status")), f"\u52a0\u5dde\u958b\u734e\u65e5 {esc(analysis.get('target_draw_date'))}"],
+            ["\u6700\u65b0\u958b\u734e\u65e5", esc(latest_draw_date), esc(fresh_text), f"\u53f0\u7063\u53ef\u66f4\u65b0 {esc(latest_tw_time)}"],
+            ["\u4e0b\u671f\u9810\u6e2c\u6642\u9593", esc(target_tw_time), esc(release_text), f"\u52a0\u5dde\u958b\u734e\u65e5 {esc(analysis.get('target_draw_date'))}"],
             ["\u4e0a\u671f\u6aa2\u8a0e", esc(settled.get("actual_date", "-") if settled else "-"), "\u5df2\u7cbe\u6e96\u5c0d\u61c9\u6700\u65b0\u958b\u734e" if latest_review_ok else "\u5f85\u88dc\u6700\u65b0\u56de\u6e2c", "\u4e0d\u51c6\u62ff\u820a\u671f\u6aa2\u8a0e\u9802\u66ff"],
         ],
     )
@@ -1937,14 +1982,8 @@ def build_report():
         </section>'''
     content = f'<section class="band"><h2>\u91cd\u8981\u65e5\u671f\u5100\u8868\u677f</h2>{important_dates}</section>'
     content += f'<section class="band notice"><h2>\u5168\u6b77\u53f2\u8cc7\u6599\u5eab\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u4f86\u6e90", "\u8655\u7406"], full_history_rows)}</section>'
-    content += conclusion
     content += explicit_action_block(analysis)
-    content += today_high_probability_block(analysis)
-    content += high_confidence_candidate_block(analysis)
-    content += ultra_precision_block(analysis)
-    content += low_probability_avoid_block(analysis)
     content += f'<section class="band"><h2>\u6bcf\u671f\u91cd\u65b0\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u8aaa\u660e"], strict_recalculation_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>\u672c\u671f\u5019\u9078\u524d\u5341\u4e94\u540d</h2>{table(["\u6392\u540d", "\u865f\u78bc", "\u6307\u6578", "\u9ad8\u4fe1\u5fc3\u8aaa\u660e", "\u907a\u6f0f", "\u7406\u7531"], candidate_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>\u6efe\u52d5\u5f0f\u4fee\u6b63\u6458\u8981</h2>{table(["\u985e\u5225", "\u6aa2\u8a0e\u5167\u5bb9", "\u8abf\u6574\u52d5\u4f5c", "\u4f9d\u64da", "\u72c0\u614b"], rolling_adjustment_rows(analysis))}</section>'
     content += f'<section class="band chapter"><h2>\u4e0a\u671f\u672a\u547d\u4e2d\u6aa2\u8a0e\u8207\u4fee\u6b63\u5340</h2><p>\u672c\u5340\u53ea\u8655\u7406\u4e0a\u671f\u7d50\u679c\u3001\u672a\u547d\u4e2d\u539f\u56e0\u3001\u964d\u6b0a\u8207\u6efe\u52d5\u4fee\u6b63\uff0c\u4e0d\u6df7\u5165\u672c\u671f\u9810\u6e2c\u3002</p></section>'
     content += settled_block
