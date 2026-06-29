@@ -10,3 +10,10 @@ cache updated: lotterynet_latest.html
 cache updated: lotterynet_year.html
 Step 2/6 run main system
 Step 3/6 build mobile pages
+Step 4/6 verify outputs
+outputs verified
+runtime cache cleaned
+Step 5/6 publish mobile cloud
+cloud mobile site published
+Step 6/6 open latest page
+one-click complete: 2026-06-29 16:13:41

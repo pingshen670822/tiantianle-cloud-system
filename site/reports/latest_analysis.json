@@ -1,8 +1,8 @@
 {
   "engine_version": "\u5929\u5929\u6a02\u6700\u65b0\u7248\u9435\u5f8b\u7b2c3\u7248_20260629",
   "industrial_engine_version": "industrial_v9_knn_phase_rebound_diagnosis",
-  "generated_at_taiwan": "2026-06-29T16:12:13+08:00",
-  "generated_at_california": "2026-06-29T01:12:13-07:00",
+  "generated_at_taiwan": "2026-06-29T16:21:30+08:00",
+  "generated_at_california": "2026-06-29T01:21:30-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11842,
@@ -14,7 +14,7 @@
       27,
       34
     ],
-    "source": "consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer"
+    "source": "official:calottery"
   },
   "target_draw_date": "2026-06-29",
   "prediction_draw_taiwan_time": "2026-06-30 09:50",
@@ -1540,7 +1540,7 @@
   },
   "freshness": {
     "california_today": "2026-06-29",
-    "california_time": "01:12:13",
+    "california_time": "01:21:30",
     "allowed_latest_draw_date": "2026-06-28",
     "age_days": 0,
     "status": "ok",
@@ -1552,7 +1552,7 @@
     "target_taiwan_safe_update_date": "2026-06-30",
     "timezone_rule": "California draw 18:30; safe update 18:50 PT. Taiwan is 09:50 during daylight time and 10:50 during standard time.",
     "official_prediction_allowed": true,
-    "latest_source": "consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer",
+    "latest_source": "official:calottery",
     "latest_source_confirmed": true,
     "source_confirmation_status": "confirmed"
   },
