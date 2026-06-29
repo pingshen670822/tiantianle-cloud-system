@@ -1,7 +1,8 @@
 {
   "engine_version": "\u5929\u5929\u6a02\u9435\u5f8b\u5de5\u696d\u7248\u7b2c2\u7248_20260629",
-  "generated_at_taiwan": "2026-06-29T12:13:04+08:00",
-  "generated_at_california": "2026-06-28T21:13:04-07:00",
+  "industrial_engine_version": "industrial_v9_knn_phase_rebound_diagnosis",
+  "generated_at_taiwan": "2026-06-29T12:43:08+08:00",
+  "generated_at_california": "2026-06-28T21:43:08-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11842,
@@ -16,9 +17,1132 @@
     "source": "consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer"
   },
   "target_draw_date": "2026-06-29",
+  "prediction_draw_taiwan_time": "2026-06-30 09:50",
+  "latest_draw_taiwan_update_time": "2026-06-29 09:50",
+  "recalculation_manifest": {
+    "status": "\u5df2\u91cd\u65b0\u904b\u7b97",
+    "every_draw_recomputed": true,
+    "previous_prediction_reused": false,
+    "backtest_recomputed": true,
+    "review_recomputed": true,
+    "fingerprint": "9b405fd19f2767bb",
+    "basis": {
+      "latest_draw_date": "2026-06-28",
+      "latest_numbers": [
+        3,
+        15,
+        25,
+        27,
+        34
+      ],
+      "target_draw_date": "2026-06-29",
+      "top15": [
+        30,
+        29,
+        1,
+        24,
+        23,
+        18,
+        12,
+        38,
+        7,
+        22,
+        26,
+        17,
+        28,
+        32,
+        6
+      ],
+      "industrial_engine": "industrial_v9_knn_phase_rebound_diagnosis",
+      "review_severity": "warning",
+      "target_taiwan_safe_update_time": "2026-06-30 09:50"
+    },
+    "visible_note": "\u672c\u671f\u4f9d\u6700\u65b0\u958b\u734e\u8cc7\u6599\u91cd\u65b0\u904b\u7b97\u3001\u91cd\u65b0\u56de\u6e2c\u3001\u91cd\u65b0\u6aa2\u8a0e\uff1b\u7981\u6b62\u6cbf\u7528\u4e0a\u671f\u9810\u6e2c\u3002"
+  },
+  "strict_recommendation_policy": {
+    "mode": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+    "message": "\u672c\u671f\u6709\u9ad8\u4fe1\u5fc3\u5019\u9078\uff0c\u4f46\u6b63\u5f0f\u767c\u5e03\u9580\u6abb\u5c1a\u672a\u5168\u904e\uff1b\u6230\u5831\u53ea\u6a19\u793a\u9ad8\u4fe1\u5fc3\u89c0\u5bdf\uff0c\u4e0d\u5305\u88dd\u6210\u4fdd\u8b49\u3002",
+    "visible_rule": "\u53ea\u5141\u8a31\u524d\u4e5d\u540d\u6838\u5fc3\u4e14\u901a\u904e\u4fe1\u5fc3\u3001\u6a5f\u7387\u3001\u7a69\u5b9a\u3001\u4ea4\u53c9\u9a57\u8b49\u3001\u6210\u719f\u5ea6\u5b88\u9580\u7684\u865f\u78bc\u9032\u5165\u9ad8\u4fe1\u5fc3\u5340\uff1b\u7b2c\u5341\u81f3\u5341\u4e94\u540d\u4e0d\u5f97\u5347\u683c\u3002",
+    "release_gate_status": "\u89c0\u5bdf\u4e2d",
+    "official_release_allowed": false,
+    "formal_recommendations": [
+      {
+        "number": 30,
+        "rank": 1,
+        "confidence_index": 98.1,
+        "model_probability_percent": 18.55,
+        "stability_count": 5,
+        "cross_validation_passed": 10,
+        "cross_validation_total": 14,
+        "maturity_score": 85.9,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u9031\u671f\u4f4d\u7f6e",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 29,
+        "rank": 2,
+        "confidence_index": 95.6,
+        "model_probability_percent": 18.05,
+        "stability_count": 4,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 90.3,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "\u65e5\u671f\u724c",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "\u5f37\u5236\u5931\u8aa4\u5f8c\u9006\u5411\u56de\u6536",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      }
+    ],
+    "high_confidence_watch": [
+      {
+        "number": 30,
+        "rank": 1,
+        "confidence_index": 98.1,
+        "model_probability_percent": 18.55,
+        "stability_count": 5,
+        "cross_validation_passed": 10,
+        "cross_validation_total": 14,
+        "maturity_score": 85.9,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u9031\u671f\u4f4d\u7f6e",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 29,
+        "rank": 2,
+        "confidence_index": 95.6,
+        "model_probability_percent": 18.05,
+        "stability_count": 4,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 90.3,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "\u65e5\u671f\u724c",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "\u5f37\u5236\u5931\u8aa4\u5f8c\u9006\u5411\u56de\u6536",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 1,
+        "rank": 3,
+        "confidence_index": 90.3,
+        "model_probability_percent": 17.03,
+        "stability_count": 5,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 62.9,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": false,
+        "confidence_level": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5340\u9593\u5947\u5076\u58d3\u529b",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 24,
+        "rank": 4,
+        "confidence_index": 90.2,
+        "model_probability_percent": 17.02,
+        "stability_count": 5,
+        "cross_validation_passed": 5,
+        "cross_validation_total": 14,
+        "maturity_score": 58.9,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": false,
+        "confidence_level": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u5171\u73fe\u95dc\u806f",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      }
+    ],
+    "all_candidate_profiles": [
+      {
+        "number": 30,
+        "rank": 1,
+        "confidence_index": 98.1,
+        "model_probability_percent": 18.55,
+        "stability_count": 5,
+        "cross_validation_passed": 10,
+        "cross_validation_total": 14,
+        "maturity_score": 85.9,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u9031\u671f\u4f4d\u7f6e",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 29,
+        "rank": 2,
+        "confidence_index": 95.6,
+        "model_probability_percent": 18.05,
+        "stability_count": 4,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 90.3,
+        "maturity_level": "mature",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": true,
+        "confidence_level": "\u6b63\u5f0f\u9ad8\u4fe1\u5fc3",
+        "reasons": [
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "\u65e5\u671f\u724c",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "\u5f37\u5236\u5931\u8aa4\u5f8c\u9006\u5411\u56de\u6536",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 1,
+        "rank": 3,
+        "confidence_index": 90.3,
+        "model_probability_percent": 17.03,
+        "stability_count": 5,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 62.9,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": false,
+        "confidence_level": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5340\u9593\u5947\u5076\u58d3\u529b",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 24,
+        "rank": 4,
+        "confidence_index": 90.2,
+        "model_probability_percent": 17.02,
+        "stability_count": 5,
+        "cross_validation_passed": 5,
+        "cross_validation_total": 14,
+        "maturity_score": 58.9,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": true,
+        "formal_gate_passed": false,
+        "confidence_level": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u5171\u73fe\u95dc\u806f",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 23,
+        "rank": 5,
+        "confidence_index": 86.5,
+        "model_probability_percent": 16.3,
+        "stability_count": 4,
+        "cross_validation_passed": 8,
+        "cross_validation_total": 14,
+        "maturity_score": 59.3,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e2d\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u5feb\u6162\u8da8\u52e2\u4e00\u81f4",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 18,
+        "rank": 6,
+        "confidence_index": 86.9,
+        "model_probability_percent": 16.37,
+        "stability_count": 4,
+        "cross_validation_passed": 4,
+        "cross_validation_total": 14,
+        "maturity_score": 65.8,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e2d\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u5171\u73fe\u95dc\u806f",
+          "\u6efe\u52d5\u6aa2\u8a0e\u5f8c\u6bb5\u547d\u4e2d\u524d\u79fb",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d",
+          "\u6efe\u52d5\u6aa2\u8a0e\u672a\u547d\u4e2d\u4f86\u6e90\u964d\u6b0a",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 12,
+        "rank": 7,
+        "confidence_index": 86.1,
+        "model_probability_percent": 16.22,
+        "stability_count": 4,
+        "cross_validation_passed": 4,
+        "cross_validation_total": 14,
+        "maturity_score": 65.2,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e2d\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u6628\u65e5\u9810\u6e2c\u865f\u901a\u904e\u56de\u6536\u91cd\u9a57",
+          "\u99ac\u53ef\u592b\u8f49\u79fb",
+          "\u5c3e\u6578\u5340\u9593",
+          "\u6392\u540d\u932f\u4f4d\u4fee\u6b63",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 38,
+        "rank": 8,
+        "confidence_index": 85.8,
+        "model_probability_percent": 16.15,
+        "stability_count": 4,
+        "cross_validation_passed": 5,
+        "cross_validation_total": 14,
+        "maturity_score": 67.8,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": true,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e2d\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+        "reasons": [
+          "\u99ac\u53ef\u592b\u8f49\u79fb",
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u76f8\u4f3c\u6b77\u53f2\u8fd1\u9130",
+          "Top9\u6838\u5fc3\u4fdd\u7559"
+        ]
+      },
+      {
+        "number": 7,
+        "rank": 9,
+        "confidence_index": 76.5,
+        "model_probability_percent": 14.36,
+        "stability_count": 5,
+        "cross_validation_passed": 3,
+        "cross_validation_total": 14,
+        "maturity_score": 43.2,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": true,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "Top9\u524d\u79fb\u6821\u6e96",
+          "\u907a\u6f0f\u88dc\u511f",
+          "\u5340\u9593\u5947\u5076\u58d3\u529b",
+          "\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5c3e\u6578\u5340\u9593\u88dc\u4f4d",
+          "\u6efe\u52d5\u6aa2\u8a0e\u672a\u547d\u4e2d\u4f86\u6e90\u964d\u6b0a"
+        ]
+      },
+      {
+        "number": 22,
+        "rank": 10,
+        "confidence_index": 72.9,
+        "model_probability_percent": 13.67,
+        "stability_count": 3,
+        "cross_validation_passed": 4,
+        "cross_validation_total": 14,
+        "maturity_score": 51.5,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "\u6642\u9593\u5e8f\u5217\u52d5\u80fd",
+          "\u5feb\u6162\u8da8\u52e2\u4e00\u81f4",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7",
+          "\u6f0f\u547d\u4e2d\u56de\u6536",
+          "Top10-15\u5099\u67e5"
+        ]
+      },
+      {
+        "number": 26,
+        "rank": 11,
+        "confidence_index": 73.8,
+        "model_probability_percent": 13.85,
+        "stability_count": 4,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 56.3,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "\u907a\u6f0f\u88dc\u511f",
+          "\u99ac\u53ef\u592b\u8f49\u79fb",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u578b\u614b\u7f3a\u53e3\u6a4b\u63a5",
+          "Top10-15\u5099\u67e5"
+        ]
+      },
+      {
+        "number": 17,
+        "rank": 12,
+        "confidence_index": 73.7,
+        "model_probability_percent": 13.82,
+        "stability_count": 4,
+        "cross_validation_passed": 6,
+        "cross_validation_total": 14,
+        "maturity_score": 53.6,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "\u99ac\u53ef\u592b\u8f49\u79fb",
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u9031\u671f\u4f4d\u7f6e",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "Top10-15\u5099\u67e5"
+        ]
+      },
+      {
+        "number": 28,
+        "rank": 13,
+        "confidence_index": 73.7,
+        "model_probability_percent": 13.82,
+        "stability_count": 5,
+        "cross_validation_passed": 7,
+        "cross_validation_total": 14,
+        "maturity_score": 44.8,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "Top9\u672a\u904e\u95dc\u964d\u81f3\u5099\u67e5",
+          "\u907a\u6f0f\u88dc\u511f",
+          "\u99ac\u53ef\u592b\u8f49\u79fb",
+          "\u8499\u5730\u5361\u7f85\u7a69\u5b9a",
+          "\u5206\u5e03\u5e73\u8861\u98a8\u63a7"
+        ]
+      },
+      {
+        "number": 32,
+        "rank": 14,
+        "confidence_index": 76.9,
+        "model_probability_percent": 14.45,
+        "stability_count": 2,
+        "cross_validation_passed": 10,
+        "cross_validation_total": 14,
+        "maturity_score": 61.9,
+        "maturity_level": "\u7814\u7a76\u89c0\u5bdf",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "\u6628\u65e5\u9810\u6e2c\u865f\u8edf\u964d\u6b0a\u91cd\u65b0\u9a57\u8b49",
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u5c3e\u6578\u5340\u9593",
+          "\u591a\u6a21\u578b\u5171\u8b58",
+          "Top10-15\u5099\u67e5"
+        ]
+      },
+      {
+        "number": 6,
+        "rank": 15,
+        "confidence_index": 70.0,
+        "model_probability_percent": 13.1,
+        "stability_count": 3,
+        "cross_validation_passed": 5,
+        "cross_validation_total": 14,
+        "maturity_score": 51.3,
+        "maturity_level": "\u6210\u719f\u5ea6\u4e0d\u8db3",
+        "top9_core": false,
+        "high_confidence_gate_passed": false,
+        "formal_gate_passed": false,
+        "confidence_level": "\u4e00\u822c\u89c0\u5bdf",
+        "reasons": [
+          "\u5171\u73fe\u95dc\u806f",
+          "\u6642\u9593\u5e8f\u5217\u52d5\u80fd",
+          "\u795e\u7d93\u7db2\u8def\u7d9c\u5408",
+          "\u5c3e\u6578\u5340\u9593",
+          "Top10-15\u5099\u67e5"
+        ]
+      }
+    ]
+  },
+  "low_probability_avoid": {
+    "warning": "\u4f4e\u6a5f\u7387\u8207\u4e0d\u4e2d\u6e05\u55ae\u662f\u98a8\u63a7\u907f\u958b\u6a21\u578b\uff0c\u4e0d\u662f\u7d55\u5c0d\u4fdd\u8b49\u3002",
+    "groups": {
+      "\u4e94\u4e0d\u4e2d": [
+        {
+          "number": 39,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 6.98,
+          "candidate_rank": 35,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 37,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.16,
+          "candidate_rank": 34,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 36,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.23,
+          "candidate_rank": 33,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 35,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 8.95,
+          "candidate_rank": 31,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 34,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 13.69,
+          "candidate_rank": 27,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        }
+      ],
+      "\u5341\u4e0d\u4e2d": [
+        {
+          "number": 39,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 6.98,
+          "candidate_rank": 35,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 37,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.16,
+          "candidate_rank": 34,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 36,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.23,
+          "candidate_rank": 33,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 35,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 8.95,
+          "candidate_rank": 31,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 34,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 13.69,
+          "candidate_rank": 27,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 31,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 6.35,
+          "candidate_rank": 36,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 27,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 14.5,
+          "candidate_rank": 26,
+          "stability_count": 0,
+          "weak_signal_count": 3,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 25,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 1.26,
+          "candidate_rank": 38,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 15,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 0.0,
+          "candidate_rank": 39,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 11,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 9.36,
+          "candidate_rank": 30,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        }
+      ],
+      "\u5341\u4e94\u4e0d\u4e2d": [
+        {
+          "number": 39,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 6.98,
+          "candidate_rank": 35,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 37,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.16,
+          "candidate_rank": 34,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 36,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.23,
+          "candidate_rank": 33,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 35,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 8.95,
+          "candidate_rank": 31,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 34,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 13.69,
+          "candidate_rank": 27,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 31,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 6.35,
+          "candidate_rank": 36,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 27,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 14.5,
+          "candidate_rank": 26,
+          "stability_count": 0,
+          "weak_signal_count": 3,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 25,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 1.26,
+          "candidate_rank": 38,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 15,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 0.0,
+          "candidate_rank": 39,
+          "stability_count": 0,
+          "weak_signal_count": 5,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u9023\u838a\u5b88\u9580\u672a\u901a\u904e",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 11,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 9.36,
+          "candidate_rank": 30,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 8,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 5.8,
+          "candidate_rank": 37,
+          "stability_count": 0,
+          "weak_signal_count": 6,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 5,
+          "avoid_index": 100.0,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 7.72,
+          "candidate_rank": 32,
+          "stability_count": 0,
+          "weak_signal_count": 2,
+          "reasons": [
+            "\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb",
+            "\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58",
+            "Top24\u5916"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 3,
+          "avoid_index": 90.46,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 9.54,
+          "candidate_rank": 29,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u5019\u9078\u6392\u5e8f\u5f8c\u6bb5",
+            "\u9ad8\u4fe1\u5fc3\u5b88\u9580\u672a\u901a\u904e"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 13,
+          "avoid_index": 89.88,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 10.12,
+          "candidate_rank": 28,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u5019\u9078\u6392\u5e8f\u5f8c\u6bb5",
+            "\u9ad8\u4fe1\u5fc3\u5b88\u9580\u672a\u901a\u904e"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        },
+        {
+          "number": 9,
+          "avoid_index": 87.34,
+          "avoid_confidence": 100.0,
+          "confidence_label": "\u9ad8\u907f\u958b\u4fe1\u5fc3",
+          "appearance_score": 12.66,
+          "candidate_rank": 25,
+          "stability_count": 0,
+          "weak_signal_count": 1,
+          "reasons": [
+            "\u5019\u9078\u6392\u5e8f\u5f8c\u6bb5",
+            "\u9ad8\u4fe1\u5fc3\u5b88\u9580\u672a\u901a\u904e"
+          ],
+          "warning": "\u4f4e\u6a5f\u7387\u4ee3\u8868\u6a21\u578b\u5efa\u8b70\u907f\u958b\uff0c\u4e0d\u4ee3\u8868\u7d55\u5c0d\u4e0d\u6703\u958b\u51fa\u3002"
+        }
+      ]
+    },
+    "backtest": {
+      "rounds": 40,
+      "avoid_size": 10,
+      "avg_accidental_hits": 1.4,
+      "random_expectation": 1.282,
+      "edge_vs_random": 0.1179,
+      "zero_hit_rate": 0.25
+    }
+  },
+  "prediction": {
+    "top5": [
+      30,
+      29,
+      1,
+      24,
+      23
+    ],
+    "top9": [
+      30,
+      29,
+      1,
+      24,
+      23,
+      18,
+      12,
+      38,
+      7
+    ],
+    "top10": [
+      30,
+      29,
+      1,
+      24,
+      23,
+      18,
+      12,
+      38,
+      7,
+      22
+    ],
+    "top15": [
+      30,
+      29,
+      1,
+      24,
+      23,
+      18,
+      12,
+      38,
+      7,
+      22,
+      26,
+      17,
+      28,
+      32,
+      6
+    ],
+    "formal_high_confidence": [
+      30,
+      29
+    ],
+    "high_confidence_watch": [
+      30,
+      29,
+      1,
+      24
+    ],
+    "low_probability_5_not_hit": [
+      39,
+      37,
+      36,
+      35,
+      34
+    ],
+    "low_probability_10_not_hit": [
+      39,
+      37,
+      36,
+      35,
+      34,
+      31,
+      27,
+      25,
+      15,
+      11
+    ],
+    "low_probability_15_not_hit": [
+      39,
+      37,
+      36,
+      35,
+      34,
+      31,
+      27,
+      25,
+      15,
+      11,
+      8,
+      5,
+      3,
+      13,
+      9
+    ],
+    "recommendation_mode": "\u9ad8\u4fe1\u5fc3\u89c0\u5bdf",
+    "recommendation_message": "\u672c\u671f\u6709\u9ad8\u4fe1\u5fc3\u5019\u9078\uff0c\u4f46\u6b63\u5f0f\u767c\u5e03\u9580\u6abb\u5c1a\u672a\u5168\u904e\uff1b\u6230\u5831\u53ea\u6a19\u793a\u9ad8\u4fe1\u5fc3\u89c0\u5bdf\uff0c\u4e0d\u5305\u88dd\u6210\u4fdd\u8b49\u3002"
+  },
   "freshness": {
     "california_today": "2026-06-28",
-    "california_time": "21:13:04",
+    "california_time": "21:43:08",
     "allowed_latest_draw_date": "2026-06-28",
     "age_days": 0,
     "status": "ok",
