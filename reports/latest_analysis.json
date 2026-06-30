@@ -1,8 +1,8 @@
 {
   "engine_version": "天天樂最新版鐵律第3版_20260629",
   "industrial_engine_version": "每日快速全歷史引擎第20260629版",
-  "generated_at_taiwan": "2026-06-30T09:26:17+08:00",
-  "generated_at_california": "2026-06-29T18:26:17-07:00",
+  "generated_at_taiwan": "2026-06-30T09:40:53+08:00",
+  "generated_at_california": "2026-06-29T18:40:53-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11842,
@@ -1435,7 +1435,7 @@
   },
   "freshness": {
     "california_today": "2026-06-29",
-    "california_time": "18:26:17",
+    "california_time": "18:40:53",
     "allowed_latest_draw_date": "2026-06-28",
     "age_days": 0,
     "status": "ok",

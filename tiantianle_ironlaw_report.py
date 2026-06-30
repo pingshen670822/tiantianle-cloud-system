@@ -2340,7 +2340,7 @@ def make_markdown(analysis, settled):
         f"- 實戰成熟度：{maturity_summary.get('status')} / {maturity_summary.get('top10_avg_maturity')} / {maturity_summary.get('action')}",
         f"- 風險等級：{audit.get('risk_level')}",
         "",
-        "## 本期明確作戰答案",
+        "## 核心決策",
         f"- 作戰結論：{decision.get('action_label', '-')} / 等級 {decision.get('grade', '-')}",
         f"- 明確獨支：{fmt_numbers(decision.get('primary_single', [])) or '-'}",
         f"- 明確2中1：{fmt_numbers(decision.get('two_hit_one', [])) or '-'}",
@@ -2349,6 +2349,10 @@ def make_markdown(analysis, settled):
         f"- 明確9中3：{fmt_numbers(decision.get('nine_hit_three', [])) or '-'}",
         f"- 高機率信心牌：{fmt_numbers(high_numbers) or '-'}",
         f"- 防守避開：{fmt_numbers((decision.get('defensive_avoid') or [])[:10]) or '-'}",
+        "",
+        "## 最強獨隻1中1",
+        f"- 獨隻號碼：{fmt_numbers(decision.get('primary_single', [])) or '-'}",
+        f"- 高信心加註：{fmt_numbers(high_numbers[:3]) or '-'}",
         "",
         "## 高機率信心牌特別強調",
     ]
@@ -2389,16 +2393,20 @@ def make_markdown(analysis, settled):
             f"- {label}：{fmt_numbers(pack.get('numbers', [])) or '-'} / {pack.get('confidence_label', '-')} / "
             f"信心指標 {pack.get('confidence_index', '-')} / 平均暫避分 {pack.get('avg_avoid_score', '-')}"
         )
+    lines.extend(["", "## 低機率精準暫避", "- 已獨立輸出：天天樂低機率精準暫避.html"])
     lines.extend(["", "## 每日更新鐵律時間表"])
     for row in decision.get("time_table", []) or []:
         lines.append(f"- {row.get('item', '-')}：{row.get('content', '-')}")
-    lines.extend(["", "## 候選前15名"])
-    for idx, item in enumerate((analysis.get("candidates") or [])[:15], 1):
+    lines.extend(["", "## 下期精算前9名"])
+    for idx, item in enumerate((analysis.get("candidates") or [])[:9], 1):
         maturity = item.get("practical_maturity") or {}
         lines.append(
             f"{idx}. {int(item.get('number')):02d} / 信心 {item.get('confidence_index', item.get('score'))} / "
             f"成熟度 {maturity.get('score', '-')} {maturity.get('tier', '-')} / 遺漏 {item.get('omission')}"
         )
+    lines.extend(["", "## 強牌組精算"])
+    for row in compact_pack_rows_tiantianle(analysis):
+        lines.append(f"- {row[0]}：{row[1]} / {row[2]} / 回測 {row[3]} / 達標 {row[4]} / 平均 {row[5]} / {row[6]}")
     if settled:
         lines.extend([
             "",
@@ -2406,7 +2414,32 @@ def make_markdown(analysis, settled):
             f"- 預測依據：{settled.get('based_on_date')} -> 實際開獎：{settled.get('actual_date')}",
             f"- 前五 / 前十 / 前十五：{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}",
             f"- 命中號：{fmt_numbers(settled.get('hit_numbers', [])) or '-'}",
+            "",
+            "## 強牌檢討",
         ])
+        for row in compact_recent_dual_track_rows_tiantianle(analysis, settled, [settled])[:3]:
+            lines.append(f"- {row[0]}：原始中 {row[3]} / 滾動中 {row[5]} / 差值 {row[6]}")
+    lines.extend(["", "## 雙軌模型對照（原始未調整 vs 滾動調整）"])
+    lines.append("- 原始未調整與滾動排序已在 HTML 主戰報完整分頁對照。")
+    lines.extend(["", "## 原始模型未調整排名"])
+    for row in compact_original_rank_rows_tiantianle(analysis)[:9]:
+        lines.append(f"- {row[0]}. {row[1]} / 分數 {row[2]} / 信心 {row[3]} / {row[6]}")
+    lines.extend(["", "## 近期逐期對照"])
+    for row in compact_recent_dual_track_rows_tiantianle(analysis, settled, [settled] if settled else [])[:5]:
+        lines.append(f"- {row[0]}：原始中 {row[3]} / 滾動中 {row[5]} / 差值 {row[6]}")
+    lines.extend(["", "## 模型回測摘要"])
+    for row in compact_model_rows_tiantianle(analysis):
+        lines.append(f"- {row[0]}：回測 {row[1]} / 前五 {row[2]} / 前十 {row[3]} / 前十五 {row[4]} / 優勢 {row[5]}")
+    lines.extend(["", "## 強牌實戰統計"])
+    for row in compact_pack_rows_tiantianle(analysis):
+        lines.append(f"- {row[0]}：{row[3]} / 達標 {row[4]} / 平均 {row[5]} / {row[6]}")
+    lines.extend(["", "## 模型滾動調整"])
+    for row in compact_lifecycle_rows_tiantianle(analysis):
+        lines.append(f"- {row[0]}：{row[1]} / 近期 {row[2]} / 長期 {row[3]} / {row[4]}")
+    lines.extend(["", "## 低機率達標檢討"])
+    if settled:
+        for row in compact_recent_dual_track_rows_tiantianle(analysis, settled, [settled])[:1]:
+            lines.append(f"- 上期已結算：{row[0]} / 實際號 {row[1]}")
     return "\n".join(lines) + "\n"
 
 def page(title, subtitle, content):
