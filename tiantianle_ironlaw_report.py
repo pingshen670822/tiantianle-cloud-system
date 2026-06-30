@@ -2830,7 +2830,13 @@ def save_reports():
     MAIN_MD.write_text(report_md, encoding="utf-8")
     HISTORY_HTML.write_text(history_html, encoding="utf-8")
     for source, aliases in {
-        MAIN_HTML: ["天天樂完整戰報.html", "最新完整戰報.html"],
+        MAIN_HTML: [
+            "天天樂完整戰報.html",
+            "最新完整戰報.html",
+            "完整戰報.html",
+            "complete_report.html",
+            "tiantianle_complete_report.html",
+        ],
         LATEST_HTML: ["天天樂最新戰報.html"],
         DASHBOARD_HTML: ["天天樂儀表板.html"],
         PREDICTION_HTML: ["下期預測.html", "天天樂下期預測.html"],

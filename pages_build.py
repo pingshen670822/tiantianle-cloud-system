@@ -210,7 +210,7 @@ def prefer_chinese_links(html_text):
         'href="review.html"': 'href="上期未命中檢討.html"',
         'href="prediction-history.html"': 'href="預測歷史對比.html"',
         'href="tiantianle_prediction_history.html"': 'href="預測歷史對比.html"',
-        'href="reports/latest_battle_report.html"': 'href="reports/天天樂完整戰報.html"',
+        'href="reports/latest_battle_report.html"': 'href="reports/complete_report.html"',
         'href="reset.html': 'href="清除快取.html',
         'href="install.html': 'href="安裝手機版.html',
     }
@@ -686,7 +686,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 </nav>
 <section class="band"><a class="primary" href="下期預測.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
-<section class="band"><a class="primary secondary" href="reports/天天樂完整戰報.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
+<section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {build_mobile_recalculation_block(data)}
 {build_mobile_ironlaw_block(data)}
@@ -912,7 +912,14 @@ def main():
     write_version_file()
     copy_public_tree(REPORT_DIR, SITE_DIR / "reports")
     for source, aliases in {
-        SITE_DIR / "reports" / "latest_battle_report.html": ["天天樂完整戰報.html", "天天樂最新戰報.html"],
+        SITE_DIR / "reports" / "latest_battle_report.html": [
+            "天天樂完整戰報.html",
+            "天天樂最新戰報.html",
+            "最新完整戰報.html",
+            "完整戰報.html",
+            "complete_report.html",
+            "tiantianle_complete_report.html",
+        ],
         SITE_DIR / "reports" / "prediction.html": ["下期預測.html", "天天樂下期預測.html"],
         SITE_DIR / "reports" / "review.html": ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
         SITE_DIR / "reports" / "latest_battle_report.md": ["最新戰報.md", "天天樂最新戰報.md"],
