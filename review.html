@@ -37,7 +37,7 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260630105402">
+    <link rel="manifest" href="manifest.webmanifest?v=20260630105602">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
@@ -51,9 +51,9 @@
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260630105402">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260630105602">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>https://pingshen670822.github.io/tiantianle-cloud-system/</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260630105402</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260630105602</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -64,7 +64,7 @@
     </div>
   </main>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260630105402';
+    window.TIANTIANLE_BUILD_VERSION = '20260630105602';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -92,7 +92,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260630105402&force=' + Date.now());
+      location.replace('首頁.html?v=20260630105602&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -109,7 +109,7 @@
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260630105402', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260630105602', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
