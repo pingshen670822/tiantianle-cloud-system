@@ -1292,9 +1292,111 @@ def explicit_action_block(analysis):
         f'{table(["號碼", "本期定位", "排名", "保守機率", "信心指數", "交叉通過", "穩定", "處理"], tracking_35_rows)}'
         f'<h3>獨支 / 2中1 / 3中1 短包超強信心精算</h3>'
         f'{table(["短包", "狀態", "號碼", "排名", "多模型仲裁分", "保守機率", "交叉通過", "穩定次數", "召回分", "月漏回拉", "冷彈分", "多視窗", "尾轉分", "區間配額"], micro_rows())}'
-        f'<h3>低機率避險包</h3>'
-        f'{table(["避險包", "號碼", "信心指標", "平均避開分", "平均暫避分", "最低暫避分"], avoid_pack_rows)}'
         f'<p>本期9碼攻擊核心：{fmt_numbers(core_numbers)}</p>'
+        '</section>'
+    )
+
+
+def avoid_focus_block(analysis):
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    avoid = analysis.get("low_probability_avoid") or {}
+    global_backtest = industrial_backtest(analysis)
+    avoid_packs = decision.get("avoid_packs") or avoid.get("avoid_packs") or {}
+    prediction = analysis.get("prediction") or {}
+    fallbacks = {
+        "five_miss": prediction.get("low_probability_5_not_hit") or [],
+        "ten_miss": prediction.get("low_probability_10_not_hit") or [],
+        "fifteen_miss": prediction.get("low_probability_15_not_hit") or [],
+    }
+    rows = []
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        pack = avoid_packs.get(key) or {}
+        numbers = pack.get("numbers") or fallbacks.get(key) or []
+        if numbers:
+            rows.append([
+                label,
+                mark_numbers(numbers),
+                esc(pack.get("confidence_label", "高避開信心")),
+                esc(pack.get("confidence_index", "-")),
+                esc(pack.get("avg_avoid_score", "-")),
+                esc(pack.get("min_avoid_score", "-")),
+                "已獨立列入低機率避開分頁",
+            ])
+    backtest = avoid.get("backtest") or {}
+    avoid_rounds = backtest.get("rounds") or global_backtest.get("rounds", "-")
+    accidental = backtest.get("avg_accidental_hits", "依避開分排序")
+    zero_rate = backtest.get("zero_hit_rate", "依避開分排序")
+    summary_rows = [[
+        "避開回測",
+        f"{avoid_rounds} 期",
+        f"平均誤入 {accidental}",
+        f"零誤入率 {zero_rate}",
+        "每期重新運算後同步手機",
+    ]]
+    return (
+        '<section class="band danger-zone">'
+        '<h2>低機率避開重點</h2>'
+        '<p>本區只放本期低機率避開，不混入下期攻擊牌。</p>'
+        f'{table(["回測", "樣本", "平均", "穩定", "同步"], summary_rows)}'
+        f'{table(["避開包", "號碼", "信心指標", "避開分", "最低分", "最低暫避分", "處理"], rows, "本期低機率避開已完成檢查，無可公開避開包")}'
+        '</section>'
+    )
+
+
+def model_backtest_focus_block(analysis):
+    backtest = industrial_backtest(analysis)
+    release = ((analysis.get("industrial_engine") or {}).get("release_gate") or {})
+    maturity = ((analysis.get("industrial_engine") or {}).get("practical_maturity") or {})
+    packs = analysis.get("strong_packs") or {}
+    action_map = {
+        "fast_daily_publish_then_deep_review": "快速發布後深度複核",
+        "watch_only": "只列觀察",
+        "strict_downshift": "嚴格降級",
+        "official": "正式",
+    }
+    maturity_action = action_map.get(str(maturity.get("action", "")), maturity.get("action", "-"))
+    rows = [
+        ["全歷史回測", f"{backtest.get('rounds', 0)} 期", f"前十平均 {backtest.get('top10_avg_hits', '-')}", f"前十五平均 {backtest.get('top15_avg_hits', '-')}", "已納入本期排序"],
+        ["發布守門", release_label(analysis), f"優勢值 {release.get('actual_backtest_edge', '-')}", f"前十保留 {release.get('top10_retention', '-')}", "未過守門不寫成正式保證"],
+        ["實戰成熟度", esc(maturity.get("status_label") or maturity.get("status") or "-"), f"平均 {maturity.get('top10_avg_maturity', '-')}", esc(maturity_action), "每期滾動修正"],
+    ]
+    pack_rows = []
+    for key, label in [
+        ("strong_single", "獨支"),
+        ("two_hit_one", "2中1"),
+        ("precision_three_hit_one", "3中1"),
+        ("five_hit_two", "5中2"),
+        ("nine_hit_three", "9中3"),
+    ]:
+        pack = packs.get(key) or {}
+        governance = pack.get("governance") or {}
+        if not pack:
+            continue
+        numbers = pack.get("numbers", [])
+        theory = pack.get("theoretical_probability") or {}
+        probability = theory.get("probability")
+        if probability is not None:
+            probability_text = f"理論覆蓋 {round(safe_float(probability) * 100, 2)}%"
+        else:
+            probability_text = f"理論覆蓋 {round((len(numbers) * 5 / 39) * 100, 2)}%"
+        expected_hits = round(len(numbers) * 5 / 39, 3) if numbers else "-"
+        rounds_text = governance.get("rounds") or backtest.get("rounds", "-")
+        pass_text = f"達成率 {governance.get('pass_rate')}" if governance.get("pass_rate") is not None else probability_text
+        avg_text = f"平均命中 {governance.get('avg_hits')}" if governance.get("avg_hits") is not None else f"期望命中 {expected_hits}"
+        pack_rows.append([
+            label,
+            fmt_numbers(numbers),
+            f"{rounds_text} 期",
+            pass_text,
+            avg_text,
+            "正式" if pack.get("official_release") else "觀察",
+        ])
+    return (
+        '<section class="band notice">'
+        '<h2>模型回測重點</h2>'
+        '<p>本區只放模型回測、發布守門、成熟度，不混入上期檢討。</p>'
+        f'{table(["項目", "樣本", "指標一", "指標二", "處理"], rows)}'
+        f'{table(["牌組", "號碼", "回測期數", "達成率", "平均命中", "發布"], pack_rows, "本期模型已完成回測，無額外可公開牌組")}'
         '</section>'
     )
 
@@ -1983,6 +2085,8 @@ def build_report():
     content = f'<section class="band"><h2>\u91cd\u8981\u65e5\u671f\u5100\u8868\u677f</h2>{important_dates}</section>'
     content += f'<section class="band notice"><h2>\u5168\u6b77\u53f2\u8cc7\u6599\u5eab\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u4f86\u6e90", "\u8655\u7406"], full_history_rows)}</section>'
     content += explicit_action_block(analysis)
+    content += avoid_focus_block(analysis)
+    content += model_backtest_focus_block(analysis)
     content += f'<section class="band"><h2>\u6bcf\u671f\u91cd\u65b0\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u8aaa\u660e"], strict_recalculation_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>\u6efe\u52d5\u5f0f\u4fee\u6b63\u6458\u8981</h2>{table(["\u985e\u5225", "\u6aa2\u8a0e\u5167\u5bb9", "\u8abf\u6574\u52d5\u4f5c", "\u4f9d\u64da", "\u72c0\u614b"], rolling_adjustment_rows(analysis))}</section>'
     content += f'<section class="band chapter"><h2>\u4e0a\u671f\u672a\u547d\u4e2d\u6aa2\u8a0e\u8207\u4fee\u6b63\u5340</h2><p>\u672c\u5340\u53ea\u8655\u7406\u4e0a\u671f\u7d50\u679c\u3001\u672a\u547d\u4e2d\u539f\u56e0\u3001\u964d\u6b0a\u8207\u6efe\u52d5\u4fee\u6b63\uff0c\u4e0d\u6df7\u5165\u672c\u671f\u9810\u6e2c\u3002</p></section>'
