@@ -208,7 +208,17 @@ def main():
     else:
         token = device_token()
         token_path.write_text(token, encoding="utf-8")
-    sha, count = publish(token)
+    try:
+        sha, count = publish(token)
+    except RuntimeError as exc:
+        message = str(exc)
+        if "401" not in message and "Bad credentials" not in message:
+            raise
+        if token_path.exists():
+            token_path.unlink()
+        token = device_token()
+        token_path.write_text(token, encoding="utf-8")
+        sha, count = publish(token)
     url = "https://pingshen670822.github.io/tiantianle-cloud-system/"
     write_text_even_if_hidden(BASE / "tiantianle-mobile-cloud-url.txt", url + "\n", encoding="ascii")
     print("")

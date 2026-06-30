@@ -1433,6 +1433,9 @@ def compact_status(value):
         "complete": "完整",
         "passed": "通過",
         "blocked": "暫停發布",
+        "strict_no_previous_reuse": "禁止沿用上期",
+        "strict_reentry_gate_enforced": "連莊達標守門",
+        "strict_no_previous_reuse_enforced": "防沿用守門已啟用",
     }
     text = str(value or "-")
     return mapping.get(text, text)
@@ -1594,6 +1597,49 @@ def compact_lifecycle_rows_tiantianle(analysis):
     ]
     for action in (review.get("actions") or [])[:5]:
         rows.append(["檢討修正", "已納入", "-", "-", esc(action)])
+    return rows
+
+
+def compact_no_reuse_guard_rows_tiantianle(analysis):
+    prev = ((analysis.get("industrial_engine") or {}).get("previous_prediction_guard") or {})
+    rows = [
+        [
+            "守門狀態",
+            compact_status(prev.get("governor_status") or prev.get("policy") or "-"),
+            "硬性啟用",
+            esc(prev.get("reentry_policy") or "上期號碼不得直接沿用；連莊必須達標。"),
+        ],
+        [
+            "上期預測基準",
+            fmt_numbers(prev.get("previous_top9", [])) or "-",
+            prev.get("actual_date") or prev.get("target_date") or "-",
+            "用已結算上期預測比對，不用舊檔冒充下期",
+        ],
+        [
+            "本期前九重疊",
+            fmt_numbers(prev.get("current_top9_overlap", [])) or "-",
+            f"{len(prev.get('current_top9_overlap', []) or [])}/9",
+            "只允許達標連莊進前九",
+        ],
+        [
+            "達標連莊",
+            fmt_numbers(prev.get("top9_reentry_passed") or prev.get("reentry_passed", [])) or "-",
+            "通過",
+            "分數、信心、穩定、交叉驗算均達標",
+        ],
+        [
+            "未達標剔除",
+            fmt_numbers((prev.get("reentry_rejected") or [])[:15]) or "-",
+            "已擋下",
+            "未達標不得進入下期前九",
+        ],
+        [
+            "前九替換",
+            f"剔除 {fmt_numbers(prev.get('demoted_from_raw_top9', [])) or '-'}",
+            f"補入 {fmt_numbers(prev.get('promoted_to_top9', [])) or '-'}",
+            "每期開獎後重新運算",
+        ],
+    ]
     return rows
 
 
@@ -1916,6 +1962,10 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
       </div>
       <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
       <p><strong>高機率信心牌：</strong>{fmt_numbers(high_numbers) or "本期未過正式高信心守門"}</p>
+    </div>
+    <div class="band warn">
+      <h2>上期沿用守門</h2>
+      {table(["項目", "號碼 / 狀態", "結果", "說明"], compact_no_reuse_guard_rows_tiantianle(analysis))}
     </div>
     {compact_super_single_html_tiantianle(analysis)}
     <div class="band">
@@ -2318,6 +2368,7 @@ def make_markdown(analysis, settled):
     stability = industrial.get("stability_consensus") or {}
     audit = industrial.get("model_audit") or {}
     maturity_summary = industrial.get("practical_maturity") or {}
+    previous_guard = industrial.get("previous_prediction_guard") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
     rec = ultra_precision_recommendations(analysis)
     avoid_packs = decision.get("avoid_packs") or ((analysis.get("low_probability_avoid") or {}).get("avoid_packs") or {})
@@ -2349,6 +2400,7 @@ def make_markdown(analysis, settled):
         f"- 明確9中3：{fmt_numbers(decision.get('nine_hit_three', [])) or '-'}",
         f"- 高機率信心牌：{fmt_numbers(high_numbers) or '-'}",
         f"- 防守避開：{fmt_numbers((decision.get('defensive_avoid') or [])[:10]) or '-'}",
+        f"- 上期沿用守門：重疊 {fmt_numbers(previous_guard.get('current_top9_overlap', [])) or '-'} / 達標連莊 {fmt_numbers(previous_guard.get('top9_reentry_passed') or previous_guard.get('reentry_passed', [])) or '-'} / 未達標剔除 {fmt_numbers((previous_guard.get('reentry_rejected') or [])[:15]) or '-'}",
         "",
         "## 最強獨隻1中1",
         f"- 獨隻號碼：{fmt_numbers(decision.get('primary_single', [])) or '-'}",

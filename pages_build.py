@@ -538,6 +538,28 @@ def build_mobile_recalculation_block(data):
     )
 
 
+def build_mobile_no_reuse_guard_block(data):
+    industrial = data.get("industrial_engine") or {}
+    guard = industrial.get("previous_prediction_guard") or {}
+    if not guard:
+        return ""
+    top9 = (data.get("prediction") or {}).get("top9") or [item.get("number") for item in (data.get("candidates") or [])[:9]]
+    rows = [
+        (u("\\u672c\\u671f\\u524d\\u4e5d"), fmt_numbers(top9), u("\\u6bcf\\u671f\\u91cd\\u65b0\\u904b\\u7b97")),
+        (u("\\u4e0a\\u671f\\u9810\\u6e2c"), fmt_numbers(guard.get("previous_top9") or []), esc(guard.get("actual_date") or guard.get("target_date") or "-")),
+        (u("\\u524d\\u4e5d\\u91cd\\u758a"), fmt_numbers(guard.get("current_top9_overlap") or []), f"{len(guard.get('current_top9_overlap') or [])}/9"),
+        (u("\\u9054\\u6a19\\u9023\\u838a"), fmt_numbers(guard.get("top9_reentry_passed") or guard.get("reentry_passed") or []), u("\\u901a\\u904e\\u624d\\u80fd\\u7559\\u5728\\u524d\\u4e5d")),
+        (u("\\u672a\\u9054\\u6a19\\u5254\\u9664"), fmt_numbers((guard.get("reentry_rejected") or [])[:15]), u("\\u5df2\\u64cb\\u4e0b")),
+        (u("\\u524d\\u4e5d\\u66ff\\u63db"), f"{u('\\u5254\\u9664')} {fmt_numbers(guard.get('demoted_from_raw_top9') or [])}", f"{u('\\u88dc\\u5165')} {fmt_numbers(guard.get('promoted_to_top9') or [])}"),
+    ]
+    body = "".join(f"<tr><th>{esc(label)}</th><td>{esc(numbers or '-')}</td><td>{esc(note or '-')}</td></tr>" for label, numbers, note in rows)
+    return (
+        f"<section class='band diagnosis'><h2>{u('\\u4e0a\\u671f\\u6cbf\\u7528\\u5b88\\u9580')}</h2>"
+        f"<p>{u('\\u4e0a\\u671f\\u865f\\u78bc\\u4e0d\\u5f97\\u76f4\\u63a5\\u6cbf\\u7528\\uff1b\\u9023\\u838a\\u5fc5\\u9808\\u9054\\u6a19\\u3002')}</p>"
+        f"<table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u5224\\u5b9a')}</th></tr>{body}</table></section>"
+    )
+
+
 
 def build_mobile_ironlaw_block(data):
     decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
@@ -695,6 +717,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
 {build_mobile_recalculation_block(data)}
+{build_mobile_no_reuse_guard_block(data)}
 {build_mobile_ironlaw_block(data)}
 {signal_focus}
 {ultra_precision_block}
