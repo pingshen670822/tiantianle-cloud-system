@@ -1,7 +1,7 @@
 # 系統健康檢查
 
 - 引擎版本：天天樂最新版鐵律第3版_20260629
-- 產生時間：2026-06-30T09:53:59+08:00
+- 產生時間：2026-06-30T10:10:56+08:00
 - 狀態：ok
 - 最新開獎日：2026-06-29
 - 預測目標日：2026-06-30
@@ -12,22 +12,22 @@
 - 過期待結算預測：0
 - 正式預測紀錄：16
 - 已結算預測紀錄：15
-- 預測快照紀錄：116
-- 自動網路更新：skipped_fast_update
+- 預測快照紀錄：117
+- 自動網路更新：offline_full_history_fast_recalc
 - 更新通道可用：True
 - 資料完整性：ok
 - 最新資料來源：consensus_latest:network:lotterynet+lotteryusa
 - 最新來源確認：True
-- 單一來源隔離：259
-- 未來日期隔離：2
+- 單一來源隔離：0
+- 未來日期隔離：0
 - 衝突資料隔離：0
-- 發布關卡：watch_only
+- 發布關卡：研究觀察通過
 - 主系統完整度：100%
-- 本次線上新增：1
+- 本次線上新增：0
 - 本次快取新增：0
 
 ## 警告
-- official_release_gate_watch_only
+- 正式_release_gate_not_promoted_but_research_完整
 
 ## 主系統完整度項目
 - full_history_database：通過 / 18
@@ -41,5 +41,5 @@
 - report_generation：通過 / 4
 
 ## 精準度狀態
-- 發布關卡會分為 official、verified_research_complete、watch_only；official 才是正式高信心發布。
-- verified_research_complete 代表資料、成熟度、主目標研究正邊際都已完成，但仍不保證開出。
+- 發布關卡會分為 正式、研究觀察通過、觀察中；正式 才是正式高信心發布。
+- 研究觀察通過 代表資料、成熟度、主目標研究正邊際都已完成，但仍不保證開出。

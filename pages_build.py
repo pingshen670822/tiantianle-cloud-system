@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent
 REPORT_DIR = ROOT / "reports"
 SITE_DIR = ROOT / "site"
 DEFAULT_CLOUD_REPO = "pingshen670822/tiantianle-cloud-system"
+SITE_BUILD_VERSION = datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def u(text):
@@ -68,6 +69,7 @@ def cloud_links():
 
 
 def build_version():
+    return SITE_BUILD_VERSION
     analysis_path = REPORT_DIR / "latest_analysis.json"
     if analysis_path.exists():
         try:
@@ -205,6 +207,10 @@ def copy_text(src, dst):
 
 def prefer_chinese_links(html_text):
     replacements = {
+        'href="reports/完整_report.html"': 'href="reports/complete_report.html"',
+        "href='reports/完整_report.html'": "href='reports/complete_report.html'",
+        'href="完整_report.html"': 'href="complete_report.html"',
+        "href='完整_report.html'": "href='complete_report.html'",
         'href="index.html"': 'href="首頁.html"',
         'href="prediction.html"': 'href="下期預測.html"',
         'href="review.html"': 'href="上期未命中檢討.html"',
@@ -744,6 +750,14 @@ def write_icon(path, size):
 
 def write_pwa_files():
     version = build_version()
+    not_found = f"""<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="0; url=reports/complete_report.html?v={version}">
+<title>{u('\\u5929\\u5929\\u6a02\\u5b8c\\u6574\\u6230\\u5831')}</title>
+<style>body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;margin:0;padding:28px;background:#f6f7fb;color:#111827}}a{{display:block;margin-top:16px;padding:14px;background:#166534;color:white;text-align:center;border-radius:8px;text-decoration:none;font-weight:900}}</style></head>
+<body><h1>{u('\\u6b63\\u5728\\u958b\\u555f\\u5b8c\\u6574\\u6230\\u5831')}</h1><p>{u('\\u82e5\\u9801\\u9762\\u672a\\u81ea\\u52d5\\u8df3\\u8f49\\uff0c\\u8acb\\u9ede\\u4e0b\\u65b9\\u6309\\u9215\\u3002')}</p><a href="reports/complete_report.html?v={version}">{u('\\u958b\\u555f\\u5b8c\\u6574\\u6230\\u5831')}</a>
+<script>location.replace('reports/complete_report.html?v={version}');</script></body></html>"""
+    (SITE_DIR / "404.html").write_text(not_found, encoding="utf-8")
     offline = f"""<!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{u('\\u5929\\u5929\\u6a02\\u96e2\\u7dda\\u63d0\\u793a')}</title>
@@ -779,7 +793,7 @@ def write_pwa_files():
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
     (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','prediction-history.html','預測歷史對比.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -804,12 +818,19 @@ self.addEventListener('message', event => {{
 self.addEventListener('fetch', event => {{
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  const path = decodeURIComponent(url.pathname);
+  const isReportShortcut = path.includes('complete_report') || path.includes('完整_report') || path.includes('完整戰報') || path.includes('latest_battle_report') || path.endsWith('/reports/');
+  const stableReportUrl = new URL('reports/complete_report.html?v={version}', self.registration.scope).toString();
   const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isFreshFile) {{
     url.searchParams.set('v', '{version}');
     event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
+      if (!response.ok && isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }});
       return response;
-    }}).catch(() => caches.match(event.request).then(hit => hit || caches.match('offline.html'))));
+    }}).catch(() => {{
+      if (isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).catch(() => caches.match('reports/complete_report.html').then(hit => hit || caches.match('complete_report.html') || caches.match('offline.html')));
+      return caches.match(event.request).then(hit => hit || caches.match('offline.html'));
+    }}));
     return;
   }}
   event.respondWith(fetch(event.request, {{ cache: 'no-store' }}).then(response => {{
@@ -917,6 +938,7 @@ def main():
             "天天樂最新戰報.html",
             "最新完整戰報.html",
             "完整戰報.html",
+            "完整_report.html",
             "complete_report.html",
             "tiantianle_complete_report.html",
         ],
@@ -927,6 +949,17 @@ def main():
     }.items():
         for alias in aliases:
             write_alias(source, alias)
+    root_report_source = SITE_DIR / "reports" / "latest_battle_report.html"
+    for alias in [
+        "complete_report.html",
+        "tiantianle_complete_report.html",
+        "latest_battle_report.html",
+        "完整_report.html",
+        "完整戰報.html",
+        "天天樂完整戰報.html",
+        "最新完整戰報.html",
+    ]:
+        copy_text(root_report_source, SITE_DIR / alias)
     version = build_version()
     manifest = {
         "name": u("\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u7368\\u7acb\\u7248"),
