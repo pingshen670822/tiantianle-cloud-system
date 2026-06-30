@@ -23,6 +23,7 @@ MAIN_MD = REPORT_DIR / "latest_battle_report.md"
 HISTORY_HTML = REPORT_DIR / "tiantianle_prediction_history.html"
 PREDICTION_HTML = REPORT_DIR / "prediction.html"
 REVIEW_HTML = REPORT_DIR / "review.html"
+LOW_PROBABILITY_HTML = REPORT_DIR / "tiantianle_low_probability_avoid.html"
 
 
 def u(text):
@@ -1400,6 +1401,577 @@ def model_backtest_focus_block(analysis):
         '</section>'
     )
 
+
+def compact_percent(value, digits=1):
+    if value is None or value == "":
+        return "-"
+    number = safe_float(value)
+    if 0 <= number <= 1:
+        number *= 100
+    return f"{round(number, digits)}%"
+
+
+def compact_decimal(value, digits=3):
+    if value is None or value == "":
+        return "-"
+    return str(round(safe_float(value), digits))
+
+
+def compact_status(value):
+    mapping = {
+        "official": "正式發布",
+        "formal": "正式高信心",
+        "released": "已發布",
+        "research_prediction": "研究預測",
+        "watch_only": "觀察候選",
+        "high_confidence_watch": "高信心觀察",
+        "strict_downshift": "嚴格降級",
+        "recomputed_updated_watch_only_pending": "已重算待觀察",
+        "fast_daily_recomputed": "快速重算完成",
+        "ok": "資料已更新",
+        "fresh": "資料已更新",
+        "complete": "完整",
+        "passed": "通過",
+        "blocked": "暫停發布",
+    }
+    text = str(value or "-")
+    return mapping.get(text, text)
+
+
+def compact_pack_status(pack):
+    if pack.get("official_release"):
+        return "正式發布"
+    return compact_status(pack.get("status") or "觀察候選")
+
+
+def compact_candidate_rows_tiantianle(analysis, limit=9):
+    rows = []
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    for rank, item in enumerate(candidates[:limit], 1):
+        cross = item.get("cross_validation") or {}
+        sources = item.get("model_sources") or []
+        source_text = "、".join(str(source.get("label") or source.get("model") or "") for source in sources[:4] if source)
+        if not source_text:
+            source_text = "、".join(str(reason) for reason in (item.get("reasons") or [])[:4]) or "-"
+        score = item.get("score")
+        score_text = compact_percent(score, 1) if score is not None and safe_float(score) <= 1 else compact_decimal(item.get("confidence_index", score), 1)
+        rows.append([
+            f"{int(item.get('number')):02d}",
+            item.get("rank", rank),
+            score_text,
+            compact_decimal(item.get("confidence_index"), 1),
+            f"{compact_decimal(item.get('model_probability_percent'), 2)}%",
+            item.get("omission", "-"),
+            cross.get("passed_count", "-"),
+            esc(source_text),
+        ])
+    return rows
+
+
+def compact_pack_rows_tiantianle(analysis):
+    packs = analysis.get("strong_packs") or {}
+    backtest = industrial_backtest(analysis)
+    order = [
+        ("strong_single", "獨隻1中1"),
+        ("two_hit_one", "2中1"),
+        ("three_hit_two", "3中1"),
+        ("five_hit_two", "5中2"),
+        ("nine_hit_three", "9中3"),
+    ]
+    rows = []
+    for key, label in order:
+        pack = packs.get(key) or {}
+        if not pack:
+            continue
+        gov = pack.get("governance") or {}
+        numbers = pack.get("numbers") or []
+        theory = pack.get("theoretical_probability") or {}
+        pass_rate = gov.get("pass_rate")
+        avg_hits = gov.get("avg_hits")
+        if pass_rate is None:
+            pass_rate = theory.get("probability")
+        if avg_hits is None:
+            avg_hits = round(len(numbers) * 5 / 39, 3) if numbers else None
+        rows.append([
+            label,
+            fmt_numbers(numbers),
+            compact_pack_status(pack),
+            f"{gov.get('rounds') or backtest.get('rounds', '-')} 期",
+            compact_percent(pass_rate, 2),
+            compact_decimal(avg_hits, 3),
+            "通過" if gov.get("passed") else "觀察",
+        ])
+    return rows
+
+
+def compact_super_single_html_tiantianle(analysis):
+    packs = analysis.get("strong_packs") or {}
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    pack = packs.get("strong_single") or {}
+    numbers = pack.get("numbers") or ((analysis.get("latest_ironlaw") or {}).get("primary_single") or [])
+    number = safe_int(numbers[0], 0) if numbers else 0
+    item = next((row for row in candidates if safe_int(row.get("number")) == number), {}) if number else {}
+    cross = item.get("cross_validation") or {}
+    sources = item.get("model_sources") or []
+    source_text = "、".join(str(source.get("label") or source.get("model") or "") for source in sources[:6] if source)
+    if not source_text:
+        source_text = "、".join(str(reason) for reason in (item.get("reasons") or [])[:6]) or "全歷史快速重算"
+    decision_label = "本期最高分獨隻"
+    score = item.get("score", pack.get("avg_score", pack.get("score_sum")))
+    return f"""
+    <div class="band singlebox">
+      <h2>最強獨隻1中1</h2>
+      <div class="grid">
+        <div class="card hot-card"><div class="label">獨隻號碼</div><div class="value num">{number:02d}</div></div>
+        <div class="card"><div class="label">判定</div><div class="value">{esc(decision_label)}</div></div>
+        <div class="card"><div class="label">獨隻總分</div><div class="value">{compact_percent(score, 1)}</div></div>
+        <div class="card"><div class="label">模型機率</div><div class="value">{compact_decimal(item.get('model_probability_percent'), 2)}%</div></div>
+        <div class="card"><div class="label">交叉層數</div><div class="value">{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}</div></div>
+      </div>
+      <p><strong>運算邏輯：</strong>全歷史資料庫、多模型交叉驗算、前九名核心壓縮。</p>
+      <p><strong>來源模型：</strong>{esc(source_text)}</p>
+      <p><strong>風控：</strong>未過正式門檻時只列觀察，不包裝成保證。</p>
+    </div>
+    """
+
+
+def compact_review_html_tiantianle(settled):
+    if not settled:
+        return "<p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>"
+    actual = settled.get("actual_numbers") or []
+    misses = [number for number in settled.get("top15", []) if number not in actual]
+    hit_summary = f"{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}"
+    summary_rows = [
+        ["實際開獎", fmt_numbers(actual)],
+        ["前五 / 前十 / 前十五", hit_summary],
+        ["前十命中號", mark_numbers(settled.get("top10", []), actual)],
+        ["前十五未中號", fmt_numbers(misses)],
+    ]
+    rows = []
+    for key, value in (settled.get("strong_pack_hits") or {}).items():
+        rows.append([
+            value.get("name") or key,
+            fmt_numbers(value.get("numbers", [])),
+            value.get("hits", "-"),
+            "達標" if value.get("passed") else "未達標",
+        ])
+    return (
+        f"<p><strong>已結算：上期預測檢討：{esc(settled.get('based_on_date'))} 預測到 {esc(settled.get('actual_date'))} 開獎</strong></p>"
+        f'{table(["項目", "結果"], summary_rows)}'
+        f'<h3>強牌檢討</h3>{table(["類型", "號碼", "命中", "結果"], rows, "沒有強牌檢討")}'
+    )
+
+
+def compact_model_rows_tiantianle(analysis):
+    backtest = industrial_backtest(analysis)
+    advanced = ((analysis.get("industrial_engine") or {}).get("advanced_model_backtest") or {})
+    rows = [
+        ["整體排序模型", f"{backtest.get('rounds', 0)} 期", backtest.get("top5_avg_hits", "-"), backtest.get("top10_avg_hits", "-"), backtest.get("top15_avg_hits", "-"), backtest.get("top10_edge_vs_random", "0")],
+        ["前九核心壓縮", f"{backtest.get('rounds', 0)} 期", "-", backtest.get("top10_avg_hits", "-"), backtest.get("top15_avg_hits", "-"), "每期重算"],
+    ]
+    for name, data in list((advanced.get("strategies") or advanced).items())[:6] if isinstance(advanced, dict) else []:
+        if not isinstance(data, dict):
+            continue
+        rows.append([
+            name,
+            f"{data.get('rounds', backtest.get('rounds', '-'))} 期",
+            data.get("top5_avg_hits", "-"),
+            data.get("top10_avg_hits", "-"),
+            data.get("top15_avg_hits", "-"),
+            data.get("top10_edge_vs_random", "-"),
+        ])
+    return rows
+
+
+def compact_lifecycle_rows_tiantianle(analysis):
+    review = analysis.get("failure_review") or {}
+    backtest = industrial_backtest(analysis)
+    monthly = review.get("monthly_review") or {}
+    rows = [
+        ["滾動式修正", "已啟用", backtest.get("top10_avg_hits", "-"), f"{analysis.get('draw_count', '-')} 筆", "每期開獎後重新調整權重"],
+        ["低命中降權", "已啟用", review.get("severity", "-"), monthly.get("month", "-"), "落空號與弱來源自動降權"],
+        ["高信心守門", "已啟用", release_label(analysis), "-", "未過守門不列正式保證"],
+    ]
+    for action in (review.get("actions") or [])[:5]:
+        rows.append(["檢討修正", "已納入", "-", "-", esc(action)])
+    return rows
+
+
+def compact_original_rank_rows_tiantianle(analysis):
+    rows = []
+    for idx, item in enumerate((analysis.get("official_candidates") or analysis.get("candidates") or [])[:15], 1):
+        rows.append([
+            idx,
+            f"{int(item.get('number')):02d}",
+            compact_decimal(item.get("score"), 6),
+            compact_percent(item.get("confidence_index"), 1),
+            f"{item.get('omission', '-')}",
+            item.get("stability_count", "-"),
+            "分數排序基準",
+        ])
+    if not rows:
+        latest = analysis.get("latest_draw") or {}
+        rows.append(["基準", fmt_numbers(latest.get("numbers", [])), "-", "-", "-", "-", "最新開獎基準已載入"])
+    return rows
+
+
+def compact_recent_dual_track_rows_tiantianle(analysis, settled=None, snapshots=None):
+    source_items = []
+    seen = set()
+    for item in [settled] + list(snapshots or []):
+        if not item or not item.get("actual_numbers"):
+            continue
+        key = (item.get("based_on_date"), item.get("target_date"), item.get("actual_date"))
+        if key in seen:
+            continue
+        seen.add(key)
+        source_items.append(item)
+    source_items.sort(key=lambda row: str(row.get("actual_date") or ""), reverse=True)
+    rows = []
+    for item in source_items[:10]:
+        candidates = item.get("candidates") or []
+        actual_numbers = item.get("actual_numbers") or []
+        actual = set(actual_numbers)
+        raw_top10 = [
+            row.get("number")
+            for row in sorted(candidates, key=lambda row: (-safe_float(row.get("score")), int(row.get("number", 0))))[:10]
+            if isinstance(row, dict) and row.get("number") is not None
+        ]
+        rolling_top10 = [row.get("number") for row in candidates[:10] if isinstance(row, dict) and row.get("number") is not None]
+        raw_hits = sorted(actual & set(raw_top10))
+        rolling_hits = sorted(actual & set(rolling_top10))
+        rows.append([
+            item.get("actual_date") or item.get("target_date") or "-",
+            mark_numbers(actual_numbers, actual_numbers),
+            mark_numbers(raw_top10, actual_numbers),
+            len(raw_hits),
+            mark_numbers(rolling_top10, actual_numbers),
+            len(rolling_hits),
+            len(rolling_hits) - len(raw_hits),
+            fmt_numbers(sorted(set(rolling_hits) - set(raw_hits))) or "-",
+            fmt_numbers(sorted(set(raw_hits) - set(rolling_hits))) or "-",
+        ])
+    if not rows:
+        latest = analysis.get("latest_draw") or {}
+        candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+        top10 = [row.get("number") for row in candidates[:10] if isinstance(row, dict)]
+        rows.append([
+            latest.get("draw_date", "-"),
+            fmt_numbers(latest.get("numbers", [])),
+            fmt_numbers(top10),
+            "待結算",
+            fmt_numbers(top10),
+            "待結算",
+            "每日重算",
+            "已納入下期",
+            "-",
+        ])
+    return rows
+
+
+def compact_dual_track_html_tiantianle(analysis, settled=None, snapshots=None):
+    comparison = analysis.get("dual_track_model_comparison") or (
+        (analysis.get("industrial_engine") or {}).get("dual_track_model_comparison") or {}
+    )
+    backtest = industrial_backtest(analysis)
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    raw_top10 = [
+        row.get("number")
+        for row in sorted(candidates, key=lambda row: (-safe_float(row.get("score")), int(row.get("number", 0))))[:10]
+        if isinstance(row, dict) and row.get("number") is not None
+    ]
+    rolling_top10 = [row.get("number") for row in candidates[:10] if isinstance(row, dict) and row.get("number") is not None]
+    actual = set((settled or {}).get("actual_numbers") or [])
+    raw_hits = len(actual & set(raw_top10)) if actual else "-"
+    rolling_hits = len(actual & set(rolling_top10)) if actual else "-"
+    if comparison.get("status") == "evaluated":
+        summary = comparison.get("summary") or {}
+        raw = summary.get("raw_unadjusted") or {}
+        rolling = summary.get("rolling_adjusted") or {}
+        delta = summary.get("delta") or {}
+        sample_count = comparison.get("sample_count", backtest.get("rounds", "-"))
+        raw_avg = compact_decimal(raw.get("top10_avg_hits"), 3)
+        rolling_avg = compact_decimal(rolling.get("top10_avg_hits"), 3)
+        delta_text = compact_decimal(delta.get("top10_avg_hit_delta"), 3)
+        decision = summary.get("decision_label") or "已完成雙軌對照"
+    else:
+        sample_count = backtest.get("rounds", "-")
+        raw_avg = backtest.get("top10_avg_hits", "-")
+        rolling_avg = backtest.get("top10_avg_hits", "-")
+        delta_text = "本期同步"
+        decision = "全歷史基準與滾動排序同步檢查"
+    return f"""
+      <div class="band">
+        <h2>雙軌模型對照（原始未調整 vs 滾動調整）</h2>
+        <div class="grid">
+          <div class="card"><div class="label">對照期數</div><div class="value">{esc(sample_count)}</div></div>
+          <div class="card"><div class="label">原始前十平均</div><div class="value">{esc(raw_avg)}</div></div>
+          <div class="card"><div class="label">滾動前十平均</div><div class="value">{esc(rolling_avg)}</div></div>
+          <div class="card"><div class="label">前十差值</div><div class="value">{esc(delta_text)}</div></div>
+          <div class="card"><div class="label">判定</div><div class="value">{esc(decision)}</div></div>
+        </div>
+        {table(["項目", "結果"], [
+            ["原始未調整前十", mark_numbers(raw_top10, actual)],
+            ["滾動調整前十", mark_numbers(rolling_top10, actual)],
+            ["上期對照命中", f"{raw_hits} / {rolling_hits}"],
+            ["原則", "每期開獎後重新結算，不沿用舊期預測"],
+        ])}
+      </div>
+      <div class="band">
+        <h2>原始模型未調整排名</h2>
+        {table(["排名", "號碼", "分數", "信心", "遺漏", "穩定", "判定"], compact_original_rank_rows_tiantianle(analysis))}
+      </div>
+      <div class="band">
+        <h2>近期逐期對照</h2>
+        {table(["開獎日", "實際號", "原始前十", "原始中", "滾動前十", "滾動中", "差值", "救回", "錯殺"], compact_recent_dual_track_rows_tiantianle(analysis, settled, snapshots))}
+      </div>
+    """
+
+
+def compact_low_review_html_tiantianle(settled):
+    if not settled:
+        return "<p>目前沒有已結算的低機率檢討資料。</p>"
+    actual = set(settled.get("actual_numbers") or [])
+    rows = []
+    for key, value in (settled.get("unlikely_pack_hits") or {}).items():
+        rows.append([
+            value.get("name") or key,
+            fmt_numbers(value.get("numbers", [])),
+            "0",
+            value.get("accidental_hits", 0),
+            "達標" if value.get("passed") else "未達標",
+            mark_numbers(value.get("hit_numbers", []), actual),
+            fmt_numbers(value.get("avoided_numbers", [])),
+        ])
+    if not rows:
+        candidates = settled.get("candidates") or []
+        ranked = [item.get("number") for item in candidates if isinstance(item, dict) and item.get("number") is not None]
+        fallback_packs = [
+            ("5不中", ranked[-5:]),
+            ("10不中", ranked[-10:]),
+            ("15不中", ranked[-15:]),
+        ]
+        for label, numbers in fallback_packs:
+            numbers = [int(number) for number in numbers if number is not None]
+            hit_numbers = sorted(actual & set(numbers))
+            avoided_numbers = [number for number in numbers if number not in hit_numbers]
+            rows.append([
+                label,
+                fmt_numbers(numbers),
+                "0",
+                len(hit_numbers),
+                "達標" if not hit_numbers else "未達標",
+                mark_numbers(hit_numbers, actual),
+                fmt_numbers(avoided_numbers),
+            ])
+    return (
+        f"<p><strong>低機率檢討：{esc(settled.get('based_on_date'))} 預測到 {esc(settled.get('actual_date'))} 開獎</strong></p>"
+        f'{table(["暫避包", "原暫避號", "目標誤中", "實際誤中", "結果", "誤中號", "成功避開號"], rows, "已完成低機率檢查，等待下一期結算")}'
+    )
+
+
+def compact_low_summary_rows_tiantianle(analysis):
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    avoid = analysis.get("low_probability_avoid") or {}
+    avoid_packs = decision.get("avoid_packs") or avoid.get("avoid_packs") or {}
+    prediction = analysis.get("prediction") or {}
+    fallbacks = {
+        "five_miss": prediction.get("low_probability_5_not_hit") or [],
+        "ten_miss": prediction.get("low_probability_10_not_hit") or [],
+        "fifteen_miss": prediction.get("low_probability_15_not_hit") or [],
+    }
+    rows = []
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        pack = avoid_packs.get(key) or {}
+        numbers = pack.get("numbers") or fallbacks.get(key) or []
+        rows.append([
+            label,
+            fmt_numbers(numbers),
+            pack.get("confidence_index", "-"),
+            compact_percent(pack.get("avg_avoid_score"), 1),
+            '<a href="天天樂低機率精準暫避.html">開啟低機率頁</a>',
+        ])
+    return rows
+
+
+def build_low_probability_compact_report(analysis, settled):
+    latest = analysis.get("latest_draw") or {}
+    freshness = analysis.get("freshness") or {}
+    avoid = analysis.get("low_probability_avoid") or {}
+    backtest = avoid.get("backtest") or industrial_backtest(analysis)
+    rows = compact_low_summary_rows_tiantianle(analysis)
+    number_rows = []
+    for group_name in ["五不中", "十不中", "十五不中"]:
+        for row in avoid_group_rows(analysis, group_name):
+            number_rows.append(row)
+    report_time = analysis.get("generated_at_taiwan", "-")
+    target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
+    review = compact_low_review_html_tiantianle(settled)
+    return f"""<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天天樂 低機率精準暫避</title>
+  <style>
+    body{{margin:0;background:#f8fafc;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}}
+    header{{background:#7f1d1d;color:white;padding:22px 24px;}}
+    main{{max-width:1180px;margin:0 auto;padding:18px;}}
+    .band{{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}}
+    table{{width:100%;border-collapse:collapse;min-width:840px;}}
+    th,td{{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}}
+    th{{background:#fee2e2;}}
+    a{{color:#0f766e;font-weight:800;}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>天天樂 低機率精準暫避</h1>
+  <p>產生時間 {esc(report_time)} / 最新開獎 {esc(latest.get('draw_date'))} / 下期台灣時間 {esc(target_time)}</p>
+</header>
+<main>
+  <section class="band"><h2>低機率說明</h2><p>本頁只放經過運算的暫避號碼，用於風險控管；低機率不等於絕對不開。</p><p><a href="latest_battle_report.html">回到主戰報</a></p></section>
+  <section class="band"><h2>上期低機率達標檢討</h2>{review}</section>
+  <section class="band"><h2>5不中 / 10不中 / 15不中 暫避包</h2><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
+  <section class="band"><h2>逐號暫避細項</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
+</main>
+</body>
+</html>"""
+
+
+def build_compact_tiantianle_report(analysis, settled, snapshots=None):
+    latest = analysis.get("latest_draw") or {}
+    freshness = analysis.get("freshness") or {}
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    prediction = analysis.get("prediction") or {}
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or [])[:9]]
+    if not high_numbers:
+        high_numbers = prediction.get("high_confidence_watch") or []
+    top9 = decision.get("nine_hit_three") or prediction.get("top9") or []
+    latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
+    latest_numbers = fmt_numbers(latest.get("numbers", []))
+    target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
+    report_time = analysis.get("generated_at_taiwan", "-")
+    history_info = analysis.get("history_completeness") or {}
+    count = analysis.get("draw_count", "-")
+    status_text = compact_status(freshness.get("status", "ok"))
+    review_html = compact_review_html_tiantianle(settled)
+    low_review_html = compact_low_review_html_tiantianle(settled)
+    low_rows = compact_low_summary_rows_tiantianle(analysis)
+    dual_track_html = compact_dual_track_html_tiantianle(analysis, settled, snapshots)
+    return f"""<!doctype html>
+<html lang="zh-Hant" data-compact-report="true">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天天樂 精算預測戰報</title>
+  <style>
+    body{{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}}
+    header{{background:#111827;color:white;padding:22px 24px;}}
+    main{{max-width:1180px;margin:0 auto;padding:18px;}}
+    .tabs{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}}
+    .tabs button{{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}}
+    .tabs button.active{{background:#0f766e;color:white;border-color:#0f766e;}}
+    .panel{{display:none;}}
+    .panel.active{{display:block;}}
+    .band{{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}}
+    .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}}
+    .card{{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}}
+    .hot-card{{border-color:#fecaca;background:#fff1f2;}}
+    .singlebox{{border-color:#fecaca;background:#fffafa;}}
+    .warn{{background:#fff7ed;border-color:#fed7aa;}}
+    .label{{font-size:13px;color:#64748b;font-weight:700;}}
+    .value{{font-size:22px;font-weight:900;margin-top:6px;}}
+    table{{width:100%;border-collapse:collapse;min-width:760px;}}
+    th,td{{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}}
+    th{{background:#f1f5f9;}}
+    .num{{font-size:20px;font-weight:900;color:#b91c1c;}}
+    a{{color:#0f766e;font-weight:800;}}
+    @media(max-width:680px){{main{{padding:10px}}header{{padding:16px}}table{{min-width:680px}}}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>天天樂 精算預測戰報</h1>
+  <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(history_info.get('status', '完整'))} / 共 {esc(count)} 筆</p>
+  <p>最新開獎 {esc(latest_date)} / {esc(latest_numbers)}　下期台灣時間 {esc(target_time)}</p>
+</header>
+<main>
+  <nav class="tabs">
+    <button class="active" data-tab="prediction">下期預測</button>
+    <button data-tab="review">上期檢討</button>
+    <button data-tab="models">模型成效</button>
+    <button data-tab="avoid">低機率</button>
+  </nav>
+  <section id="prediction" class="panel active">
+    <div class="band">
+      <h2>核心決策</h2>
+      <div class="grid">
+        <div class="card"><div class="label">資料狀態</div><div class="value">{esc(status_text)}</div></div>
+        <div class="card"><div class="label">檢查</div><div class="value">已重算</div></div>
+        <div class="card"><div class="label">下期台灣時間</div><div class="value">{esc(target_time)}</div></div>
+        <div class="card hot-card"><div class="label">獨隻</div><div class="value">{fmt_numbers(decision.get('primary_single') or (analysis.get('strong_packs') or {}).get('strong_single', {}).get('numbers', [])) or '-'}</div></div>
+        <div class="card"><div class="label">9碼核心</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
+      </div>
+      <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
+      <p><strong>高機率信心牌：</strong>{fmt_numbers(high_numbers) or "本期未過正式高信心守門"}</p>
+    </div>
+    {compact_super_single_html_tiantianle(analysis)}
+    <div class="band">
+      <h2>下期精算前9名</h2>
+      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "來源模型"], compact_candidate_rows_tiantianle(analysis, 9))}
+    </div>
+    <div class="band">
+      <h2>強牌組精算</h2>
+      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+    </div>
+  </section>
+  <section id="review" class="panel">
+    <div class="band">
+      <h2>上期命中檢討</h2>
+      {review_html}
+    </div>
+  </section>
+  <section id="models" class="panel">
+    {dual_track_html}
+    <div class="band">
+      <h2>模型回測摘要</h2>
+      {table(["模型", "回測期", "前五平均", "前十平均", "前十五平均", "前十優勢"], compact_model_rows_tiantianle(analysis))}
+    </div>
+    <div class="band">
+      <h2>強牌實戰統計</h2>
+      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+    </div>
+    <div class="band">
+      <h2>模型滾動調整</h2>
+      {table(["模型", "動作", "近期優勢", "長期優勢", "原因"], compact_lifecycle_rows_tiantianle(analysis))}
+    </div>
+  </section>
+  <section id="avoid" class="panel">
+    <div class="band">
+      <h2>低機率達標檢討</h2>
+      {low_review_html}
+    </div>
+    <div class="band warn">
+      <h2>低機率精準暫避</h2>
+      <p>低機率分析已獨立開頁，主頁只保留 5不中、10不中、15不中 摘要。</p>
+      <p><a href="天天樂低機率精準暫避.html">開啟 天天樂低機率精準暫避.html</a></p>
+      {table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows)}
+    </div>
+  </section>
+</main>
+<script>
+  document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{{
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  }}));
+</script>
+</body>
+</html>"""
+
 def top10_promotion_rows(analysis):
     audit = ((analysis.get("industrial_engine") or {}).get("top9_frontload_audit") or {})
     candidates = analysis.get("candidates") or []
@@ -2027,6 +2599,8 @@ def build_report():
     release_text = release_label(analysis)
     fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
     md = make_markdown(analysis, settled)
+    compact_html = build_compact_tiantianle_report(analysis, settled, snapshots)
+    return compact_html, md, build_history_html(snapshots)
 
     conclusion = f"""
     <section class="band notice">
@@ -2101,6 +2675,34 @@ def build_report():
 
 
 def split_prediction_review(report_html):
+    if 'data-compact-report="true"' in report_html:
+        def panel_inner(panel_id):
+            marker = f'<section id="{panel_id}"'
+            start = report_html.find(marker)
+            if start < 0:
+                return ""
+            open_end = report_html.find(">", start)
+            next_start = report_html.find('<section id="', open_end + 1)
+            main_end = report_html.find("</main>", open_end + 1)
+            end = next_start if next_start > 0 else main_end
+            return report_html[open_end + 1:end].rsplit("</section>", 1)[0]
+
+        head_start = report_html.find("<head>")
+        head_end = report_html.find("</head>") + len("</head>")
+        head = report_html[head_start:head_end] if head_start >= 0 and head_end > len("</head>") else ""
+        header_start = report_html.find("<header>")
+        header_end = report_html.find("</header>") + len("</header>")
+        header = report_html[header_start:header_end] if header_start >= 0 and header_end > len("</header>") else ""
+        nav_prediction = '<nav class="tabs"><a class="active" href="prediction.html">下期預測</a><a href="review.html">上期檢討</a><a href="latest_battle_report.html">完整戰報</a></nav>'
+        nav_review = '<nav class="tabs"><a href="prediction.html">下期預測</a><a class="active" href="review.html">上期檢討</a><a href="latest_battle_report.html">完整戰報</a></nav>'
+        prediction = panel_inner("prediction")
+        review = panel_inner("review")
+        prediction_html = f'<!doctype html><html lang="zh-Hant" data-compact-report="true">{head}<body>{header}<main>{nav_prediction}{prediction}</main></body></html>'
+        review_html = f'<!doctype html><html lang="zh-Hant" data-compact-report="true">{head}<body>{header}<main>{nav_review}{review}</main></body></html>'
+        prediction_html = prediction_html.replace("<title>天天樂 精算預測戰報</title>", "<title>天天樂 下期預測</title>", 1).replace("<h1>天天樂 精算預測戰報</h1>", "<h1>天天樂 下期預測</h1>", 1)
+        review_html = review_html.replace("<title>天天樂 精算預測戰報</title>", "<title>天天樂 上期檢討</title>", 1).replace("<h1>天天樂 精算預測戰報</h1>", "<h1>天天樂 上期檢討</h1>", 1)
+        return prediction_html, review_html
+
     start = report_html.find("<main>")
     end = report_html.rfind("</main>")
     if start < 0 or end < 0:
@@ -2175,7 +2777,12 @@ def split_prediction_review(report_html):
 def save_reports():
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_html, report_md, history_html = build_report()
-    tabbed_report_html = localize_visible_html(apply_latest_battle_tabs(report_html))
+    analysis = load_json(ANALYSIS_JSON)
+    latest = (analysis.get("latest_draw") or {}).get("draw_date")
+    with sqlite3.connect(DB_PATH) as conn:
+        settled = latest_settled_prediction_for_actual_date(conn, latest) or latest_settled_snapshot(snapshot_rows(conn), latest)
+    low_probability_html = localize_visible_html(build_low_probability_compact_report(analysis, settled))
+    tabbed_report_html = localize_visible_html(report_html if 'data-compact-report="true"' in report_html else apply_latest_battle_tabs(report_html))
     prediction_html, review_html = split_prediction_review(report_html)
     prediction_html = localize_visible_html(prediction_html)
     review_html = localize_visible_html(review_html)
@@ -2186,6 +2793,7 @@ def save_reports():
     DASHBOARD_HTML.write_text(tabbed_report_html, encoding="utf-8")
     PREDICTION_HTML.write_text(prediction_html, encoding="utf-8")
     REVIEW_HTML.write_text(review_html, encoding="utf-8")
+    LOW_PROBABILITY_HTML.write_text(low_probability_html, encoding="utf-8")
     MAIN_MD.write_text(report_md, encoding="utf-8")
     HISTORY_HTML.write_text(history_html, encoding="utf-8")
     for source, aliases in {
@@ -2194,6 +2802,7 @@ def save_reports():
         DASHBOARD_HTML: ["天天樂儀表板.html"],
         PREDICTION_HTML: ["下期預測.html", "天天樂下期預測.html"],
         REVIEW_HTML: ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
+        LOW_PROBABILITY_HTML: ["天天樂低機率精準暫避.html", "低機率精準暫避.html"],
         MAIN_MD: ["最新戰報.md", "天天樂最新戰報.md"],
         HISTORY_HTML: ["預測歷史對比.html", "天天樂預測歷史對比.html"],
     }.items():

@@ -1,67 +1,30 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
+<!doctype html><html lang="zh-Hant" data-compact-report="true"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>天天樂 下期預測</title>
   <style>
-    body { margin:0; font-family:"Microsoft JhengHei", Arial, sans-serif; background:#f6f7fb; color:#20242a; }
-    header { background:#0f172a; color:white; padding:22px 28px; }
-    header h1 { margin:0 0 8px; font-size:28px; }
-    header p { margin:0; color:#cbd5e1; }
-    main { max-width:1180px; margin:0 auto; padding:22px; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
-    .card { background:white; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
-    .card h2 { margin:0 0 10px; font-size:16px; color:#475569; }
-    .value { font-size:24px; font-weight:800; letter-spacing:0; }
-    .sub { color:#64748b; margin:8px 0 0; font-size:13px; }
-    .confidence-line { color:#991b1b; font-weight:900; margin:10px 0 0; line-height:1.5; }
-    .confidence-high { display:inline-block; padding:4px 8px; border-radius:6px; background:#dc2626; color:white; font-weight:900; }
-    .confidence-mid { display:inline-block; padding:4px 8px; border-radius:6px; background:#f97316; color:white; font-weight:900; }
-    .confidence-watch { display:inline-block; padding:4px 8px; border-radius:6px; background:#e2e8f0; color:#334155; font-weight:900; }
-    .band { background:white; border:1px solid #e5e7eb; border-radius:8px; margin-top:16px; padding:18px; overflow-x:auto; }
-    .band h2 { margin:0 0 12px; font-size:20px; }
-    table { width:100%; min-width:760px; border-collapse:collapse; background:white; }
-    th, td { border-bottom:1px solid #e5e7eb; padding:9px; text-align:left; vertical-align:top; }
-    th { background:#f1f5f9; color:#334155; }
-    .risk { display:inline-block; padding:4px 10px; border-radius:999px; background:#fee2e2; color:#991b1b; font-weight:700; }
-    .status { display:inline-block; padding:5px 10px; border-radius:6px; background:#e2e8f0; color:#0f172a; font-weight:800; margin-right:6px; }
-    .blocked { background:#fee2e2; color:#991b1b; }
-    .fresh { background:#dcfce7; color:#166534; }
-    .notice { border-left:5px solid #dc2626; background:#fff7f7; }
-    .chapter { background:#0f172a; color:white; border:0; }
-    .chapter h2 { color:white; font-size:22px; }
-    .chapter p { color:#cbd5e1; margin:0; }
-    .high-alert { border:3px solid #dc2626; background:#fff1f2; box-shadow:0 0 0 4px #fee2e2 inset; }
-    .high-alert .value { color:#b91c1c; font-size:32px; }
-    .high-alert .badge { display:inline-block; padding:6px 12px; border-radius:6px; background:#dc2626; color:white; font-weight:900; margin:4px 6px 4px 0; }
-    .danger-zone { border:3px solid #991b1b; background:#fff1f2; } .danger-zone h2 { color:#7f1d1d; }
-    .hotbox { border:2px solid #dc2626; background:#fff7ed; box-shadow:0 0 0 3px rgba(220,38,38,.08); }
-    .hotbox h2 { color:#991b1b; }
-    .hot-main { background:#fff1f2; font-weight:800; }
-    .signal-focus { margin:12px 0; padding:14px; border:4px solid #b91c1c; border-radius:8px; background:#fff; }
-    .signal-title { color:#991b1b; font-weight:900; }
-    .signal-numbers { color:#991b1b; font-size:38px; line-height:1.25; font-weight:900; letter-spacing:0; }
-    .signal-detail { color:#7f1d1d; font-weight:900; }
-    .mobile-action { display:block; text-align:center; padding:14px; background:#166534; color:#fff!important; text-decoration:none; border-radius:6px; font-weight:800; }
-    .mobile-action.secondary { background:#1d4ed8; }
-    .tabbar { position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; background:#f6f7fb; padding:10px 0 14px; }
-    .tabbar button { border:1px solid #cbd5e1; background:white; color:#0f172a; border-radius:8px; padding:10px 14px; font-weight:800; cursor:pointer; }
-    .tabbar button.active { background:#0f172a; color:white; border-color:#0f172a; }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; }
-    .tab-panel > .band:first-child { margin-top:0; }
-    details.advanced { margin-top:16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; padding:12px; }
-    details.advanced > summary { cursor:pointer; font-weight:900; color:#0f172a; }
-    details.advanced .band { margin-top:12px; }
-    .tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
-    .tabs a { display:block; text-align:center; padding:12px; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:900; text-decoration:none; }
-    .tabs a.active { background:#166534; color:white; }
-    pre { white-space:pre-wrap; background:#0b1020; color:#dbeafe; border-radius:8px; padding:16px; overflow:auto; }
-    @media (max-width:640px) { header{padding:16px} header h1{font-size:22px} main{padding:10px} .grid{grid-template-columns:1fr} .band{padding:12px} th,td{font-size:13px} .value{font-size:20px} .tabs{grid-template-columns:1fr} }
+    body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
+    header{background:#111827;color:white;padding:22px 24px;}
+    main{max-width:1180px;margin:0 auto;padding:18px;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}
+    .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
+    .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .band{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+    .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
+    .hot-card{border-color:#fecaca;background:#fff1f2;}
+    .singlebox{border-color:#fecaca;background:#fffafa;}
+    .warn{background:#fff7ed;border-color:#fed7aa;}
+    .label{font-size:13px;color:#64748b;font-weight:700;}
+    .value{font-size:22px;font-weight:900;margin-top:6px;}
+    table{width:100%;border-collapse:collapse;min-width:760px;}
+    th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
+    th{background:#f1f5f9;}
+    .num{font-size:20px;font-weight:900;color:#b91c1c;}
+    a{color:#0f766e;font-weight:800;}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}}
   </style>
 
     <style>
@@ -74,29 +37,65 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260630090239">
+    <link rel="manifest" href="manifest.webmanifest?v=20260630092617">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
-    </head>
-<body>
-<header><h1>天天樂 下期預測專頁</h1><p>報表產生 2026-06-30T09:02:39+08:00 / 美國加州最新開獎日 2026-06-28 / 台灣可更新時間 2026-06-29 09:50 / 下期預測時間（台灣） 2026-06-30 09:50</p></header>
-<main>
+    </head><body><header>
+  <h1>天天樂 下期預測</h1>
+  <p>產生時間 2026-06-30T09:26:17+08:00 / 全歷史資料 完整 / 共 11842 筆</p>
+  <p>最新開獎 2026-06-28 / 03 15 25 27 34　下期台灣時間 2026-06-30 09:50</p>
+</header><main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260630090239">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260630092617">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>https://pingshen670822.github.io/tiantianle-cloud-system/</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260630090239</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260630092617</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
-    <nav class="tabs"><a href="首頁.html">首頁</a><a class="active" href="下期預測.html">下期預測</a><a href="上期未命中檢討.html">上期未命中檢討</a></nav><section class="band"><h2>重要日期儀表板</h2><table><thead><tr><th>項目</th><th>日期</th><th>狀態</th><th>說明</th></tr></thead><tbody><tr><td>報表產生</td><td>2026-06-30T09:02:39+08:00</td><td>已產生</td><td>本次運算時間</td></tr><tr><td>最新開獎日</td><td>2026-06-28</td><td>資料已更新</td><td>台灣可更新 2026-06-29 09:50</td></tr><tr><td>下期預測時間</td><td>2026-06-30 09:50</td><td>實戰研究完整版（非正式保證）</td><td>加州開獎日 2026-06-29</td></tr></tbody></table></section><section class="band notice"><h2>全歷史資料庫運算證明</h2><table><thead><tr><th>項目</th><th>結果</th><th>來源</th><th>處理</th></tr></thead><tbody><tr><td>運算母體</td><td>11842 筆</td><td>全歷史資料庫</td><td>本期預測與回測都使用完整資料表</td></tr><tr><td>資料範圍</td><td>完整</td><td>最低門檻 3000</td><td>禁止只用近幾期代替全歷史</td></tr><tr><td>最新開獎</td><td>2026-06-28</td><td><span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #dc2626;border-radius:50%;color:#dc2626;font-weight:800;margin:0 2px;">03</span> <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #dc2626;border-radius:50%;color:#dc2626;font-weight:800;margin:0 2px;">15</span> <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #dc2626;border-radius:50%;color:#dc2626;font-weight:800;margin:0 2px;">25</span> <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #dc2626;border-radius:50%;color:#dc2626;font-weight:800;margin:0 2px;">27</span> <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #dc2626;border-radius:50%;color:#dc2626;font-weight:800;margin:0 2px;">34</span></td><td>多來源一致：快取資料（樂透網、樂透美國、樂透八）+樂透分析網</td></tr><tr><td>上期檢討鎖定</td><td>2026-06-27 -&gt; 2026-06-28</td><td>已對最新開獎日</td><td>全歷史回測結算表：最新開獎日精準對應</td></tr><tr><td>下期預測</td><td>2026-06-29</td><td>2026-06-30 09:50</td><td>台灣時間顯示</td></tr><tr><td>回測摘要</td><td>30 期</td><td>前十平均 1.6</td><td>前十五平均 2.033</td></tr></tbody></table></section><section class="band notice"><h2>每日更新鐵律時間表</h2><table><thead><tr><th>項目</th><th>內容</th></tr></thead><tbody><tr><td>每日開獎時間</td><td>夏令台灣時間上午09:50；冬令台灣時間上午10:50。</td></tr><tr><td>開獎後更新截止</td><td>夏令上午10:00前必須完成最新開獎匯入、命中結算、重新運算、電腦戰報與手機版同步。</td></tr><tr><td>午間完整重算</td><td>每日下午13:00強制完整重新運算、重新回測、校正模型、重建戰報與手機版。</td></tr><tr><td>預測有效期間</td><td>上午10:00至下午13:00完成問題修正；下午13:00後以完整回測校正版為準。</td></tr><tr><td>禁止事項</td><td>禁止未重新運算就沿用前一期預測；若資料未更新，必須持續追最新開獎資料並留下狀態紀錄。</td></tr></tbody></table></section><section class="band hotbox"><h2>本期明確作戰答案（全歷史資料庫運算至 2026-06-28 / 目標台灣時間 2026-06-30 09:50）</h2><p><strong>正式高信心推薦 / 等級 甲級 / 每期重算完成 / 高信心限九碼內顯示</strong></p><p>只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。</p><p>每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。</p><div class="grid"><section class="card hot-main"><h2>明確獨支</h2><div class="value">06</div><p class="sub">本期一號核心</p></section><section class="card hot-main"><h2>明確2中1</h2><div class="value">06 05</div><p class="sub">本期雙核心</p></section><section class="card hot-main"><h2>明確3中1</h2><div class="value">06 05 35</div><p class="sub">本期三號核心</p></section><section class="card hot-main"><h2>明確5中2</h2><div class="value">06 05 35 33 37</div><p class="sub">本期五號攻擊組</p></section><section class="card hot-main"><h2>明確9中3</h2><div class="value">06 05 35 33 37 02 36 23 29</div><p class="sub">本期九號覆蓋組</p></section><section class="card hot-main"><h2>防守避開</h2><div class="value">07 08 38 10 21 15 18 39 34 28</div><p class="sub">低分與弱訊號風控</p></section></div><h3>高機率信心牌特別強調</h3><table><thead><tr><th>號碼</th><th>排名</th><th>保守機率</th><th>信心指數</th><th>信心</th><th>穩定</th><th>交叉通過</th><th>明確原因</th><th>備註</th></tr></thead><tbody><tr><td>35</td><td>3</td><td>21.07%</td><td>91.3</td><td>正式高信心</td><td>4</td><td>6</td><td>多模型交叉通過</td><td>高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。</td></tr></tbody></table><div class="signal-focus"><div class="signal-title">35特別追蹤加註</div><div class="signal-numbers">35</div><div class="signal-detail">若未進前九名高信心核心，只能列備查追蹤，不能混成本期主推。</div></div><table><thead><tr><th>號碼</th><th>本期定位</th><th>排名</th><th>保守機率</th><th>信心指數</th><th>交叉通過</th><th>穩定</th><th>處理</th></tr></thead><tbody><tr><td>35</td><td>本期高機率信心牌</td><td>3</td><td>21.07%</td><td>91.3</td><td>6/6</td><td>4</td><td>35 已進本期高信心核心。</td></tr></tbody></table><h3>獨支 / 2中1 / 3中1 短包超強信心精算</h3><table><thead><tr><th>短包</th><th>狀態</th><th>號碼</th><th>排名</th><th>多模型仲裁分</th><th>保守機率</th><th>交叉通過</th><th>穩定次數</th><th>召回分</th><th>月漏回拉</th><th>冷彈分</th><th>多視窗</th><th>尾轉分</th><th>區間配額</th></tr></thead><tbody><tr><td>獨支1中1</td><td>高信心觀察</td><td>06</td><td>1</td><td>99.0</td><td>-</td><td>6</td><td>3</td><td>快速全歷史精算</td><td>0.0%</td><td>6</td><td>30期- / 60期0 / 120期-</td><td>6</td><td>-</td></tr><tr><td>2中1</td><td>高信心觀察</td><td>06 05</td><td>1、2</td><td>99.0</td><td>-</td><td>12</td><td>6</td><td>快速全歷史精算</td><td>0.0%</td><td>5、6</td><td>30期- / 60期0 / 120期-</td><td>5、6</td><td>-</td></tr><tr><td>3中1</td><td>高信心觀察</td><td>06 05 35</td><td>1、2、3</td><td>99.0</td><td>-</td><td>18</td><td>10</td><td>快速全歷史精算</td><td>0.0%</td><td>5、6</td><td>30期- / 60期0 / 120期-</td><td>5、6</td><td>-</td></tr></tbody></table><p>本期9碼攻擊核心：06 05 35 33 37 02 36 23 29</p></section><section class="band danger-zone"><h2>低機率避開重點</h2><p>本區只放本期低機率避開，不混入下期攻擊牌。</p><table><thead><tr><th>回測</th><th>樣本</th><th>平均</th><th>穩定</th><th>同步</th></tr></thead><tbody><tr><td>避開回測</td><td>30 期</td><td>平均誤入 依避開分排序</td><td>零誤入率 依避開分排序</td><td>每期重新運算後同步手機</td></tr></tbody></table><table><thead><tr><th>避開包</th><th>號碼</th><th>信心指標</th><th>避開分</th><th>最低分</th><th>最低暫避分</th><th>處理</th></tr></thead><tbody><tr><td>5不中</td><td>07 08 38 10 21</td><td>高避開信心</td><td>100.0</td><td>73.31</td><td>68.36</td><td>已獨立列入低機率避開分頁</td></tr><tr><td>10不中</td><td>07 08 38 10 21 15 18 39 34 28</td><td>高避開信心</td><td>100.0</td><td>69.93</td><td>65.75</td><td>已獨立列入低機率避開分頁</td></tr><tr><td>15不中</td><td>07 08 38 10 21 15 18 39 34 28 25 30 04 26 20</td><td>高避開信心</td><td>100.0</td><td>67.73</td><td>61.55</td><td>已獨立列入低機率避開分頁</td></tr></tbody></table></section><section class="band notice"><h2>模型回測重點</h2><p>本區只放模型回測、發布守門、成熟度，不混入上期檢討。</p><table><thead><tr><th>項目</th><th>樣本</th><th>指標一</th><th>指標二</th><th>處理</th></tr></thead><tbody><tr><td>全歷史回測</td><td>30 期</td><td>前十平均 1.6</td><td>前十五平均 2.033</td><td>已納入本期排序</td></tr><tr><td>發布守門</td><td>實戰研究完整版（非正式保證）</td><td>優勢值 0</td><td>前十保留 -</td><td>未過守門不寫成正式保證</td></tr><tr><td>實戰成熟度</td><td>通過</td><td>平均 72</td><td>快速發布後深度複核</td><td>每期滾動修正</td></tr></tbody></table><table><thead><tr><th>牌組</th><th>號碼</th><th>回測期數</th><th>達成率</th><th>平均命中</th><th>發布</th></tr></thead><tbody><tr><td>獨支</td><td>06</td><td>30 期</td><td>理論覆蓋 12.82%</td><td>期望命中 0.128</td><td>觀察</td></tr><tr><td>2中1</td><td>06 05</td><td>30 期</td><td>理論覆蓋 24.29%</td><td>期望命中 0.256</td><td>觀察</td></tr><tr><td>3中1</td><td>06 05 35</td><td>30 期</td><td>理論覆蓋 34.52%</td><td>期望命中 0.385</td><td>觀察</td></tr><tr><td>5中2</td><td>06 05 35 33 37</td><td>30 期</td><td>理論覆蓋 11.4%</td><td>期望命中 0.641</td><td>觀察</td></tr><tr><td>9中3</td><td>06 05 35 33 37 02 36 23 29</td><td>30 期</td><td>理論覆蓋 7.02%</td><td>期望命中 1.154</td><td>觀察</td></tr></tbody></table></section><section class="band"><h2>每期重新運算證明</h2><table><thead><tr><th>項目</th><th>結果</th><th>說明</th></tr></thead><tbody><tr><td>重新運算</td><td>已重新運算</td><td>本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。</td></tr><tr><td>依據開獎</td><td>2026-06-28</td><td>03 15 25 27 34</td></tr><tr><td>下期目標</td><td>2026-06-29</td><td>2026-06-30 09:50</td></tr><tr><td>重算指紋</td><td>cb7c117ca02e96f7</td><td>每期會因最新開獎與預測結果改變</td></tr></tbody></table></section><section class="band notice"><h2>滾動式修正摘要</h2><table><thead><tr><th>類別</th><th>檢討內容</th><th>調整動作</th><th>依據</th><th>狀態</th></tr></thead><tbody><tr><td>近5期滾動</td><td>前五名/前十名/前十五名 0.8/1.2/2.2</td><td>低命中區間自動改權</td><td>5 期</td><td>警示</td></tr><tr><td>反覆落空號</td><td>11 09 37 21 10 28 14 02 35 20 26 05</td><td>下期排序與強牌自動降權</td><td>近5期預測結算</td><td>已執行</td></tr><tr><td>失敗檢討</td><td>最近5期已納入滾動檢討，前十名平均命中為 1.2</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>失敗檢討</td><td>重複預測但未命中號碼已自動降權：11 09 37 21 10 28 14 02</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>失敗檢討</td><td>本月總檢討已納入：前十名平均 1.5，強獨與5中2未過實戰門檻，改以觀察池與月度降權運行</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>失敗檢討</td><td>失準強牌組合已降低權重：強獨:5, 三中二:5, 五中二:5, 九中三:5</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>失敗檢討</td><td>未命中來源已分流修正：尾數區間 / 前九名核心保留 / 神經網路綜合 / 多模型共識</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>失敗檢討</td><td>模型已降低短期熱號與連莊權重，改提高遺漏、共現、中期穩定權重</td><td>已納入下期權重</td><td>-</td><td>-</td></tr><tr><td>上期結算</td><td>前五名/前十名/前十五名 1/1/1</td><td>03 15 25 27 34</td><td>2026-06-28</td><td>持續滾動</td></tr></tbody></table></section></main>
-
+    <nav class="tabs"><a class="active" href="下期預測.html">下期預測</a><a href="上期未命中檢討.html">上期檢討</a><a href="latest_battle_report.html">完整戰報</a></nav>
+    <div class="band">
+      <h2>核心決策</h2>
+      <div class="grid">
+        <div class="card"><div class="label">資料狀態</div><div class="value">資料已更新</div></div>
+        <div class="card"><div class="label">檢查</div><div class="value">已重算</div></div>
+        <div class="card"><div class="label">下期台灣時間</div><div class="value">2026-06-30 09:50</div></div>
+        <div class="card hot-card"><div class="label">獨隻</div><div class="value">06</div></div>
+        <div class="card"><div class="label">9碼核心</div><div class="value">06 05 35 33 37 02 36 23 29</div></div>
+      </div>
+      <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
+      <p><strong>高機率信心牌：</strong>35</p>
+    </div>
+    
+    <div class="band singlebox">
+      <h2>最強獨隻1中1</h2>
+      <div class="grid">
+        <div class="card hot-card"><div class="label">獨隻號碼</div><div class="value num">06</div></div>
+        <div class="card"><div class="label">判定</div><div class="value">本期最高分獨隻</div></div>
+        <div class="card"><div class="label">獨隻總分</div><div class="value">87.1%</div></div>
+        <div class="card"><div class="label">模型機率</div><div class="value">25.0%</div></div>
+        <div class="card"><div class="label">交叉層數</div><div class="value">6/6</div></div>
+      </div>
+      <p><strong>運算邏輯：</strong>全歷史資料庫、多模型交叉驗算、前九名核心壓縮。</p>
+      <p><strong>來源模型：</strong>二十期頻率、五十期頻率、一百期頻率、拖牌共現、尾數牌</p>
+      <p><strong>風控：</strong>未過正式門檻時只列觀察，不包裝成保證。</p>
+    </div>
+    
+    <div class="band">
+      <h2>下期精算前9名</h2>
+      <table><thead><tr><th>號碼</th><th>排名</th><th>分數</th><th>信心</th><th>機率</th><th>遺漏</th><th>驗算數</th><th>來源模型</th></tr></thead><tbody><tr><td>06</td><td>1</td><td>87.1%</td><td>99.0</td><td>25.0%</td><td>3</td><td>6</td><td>二十期頻率、五十期頻率、一百期頻率、拖牌共現</td></tr><tr><td>05</td><td>2</td><td>77.6%</td><td>92.2</td><td>21.53%</td><td>5</td><td>6</td><td>二十期頻率、一百期頻率、尾數牌、日期牌</td></tr><tr><td>35</td><td>3</td><td>76.3%</td><td>91.3</td><td>21.07%</td><td>3</td><td>6</td><td>二十期頻率、尾數牌、日期牌、全歷史快速重算</td></tr><tr><td>33</td><td>4</td><td>72.3%</td><td>88.4</td><td>19.59%</td><td>2</td><td>6</td><td>二十期頻率、五十期頻率、一百期頻率、尾數牌</td></tr><tr><td>37</td><td>5</td><td>68.5%</td><td>85.7</td><td>18.21%</td><td>1</td><td>6</td><td>二十期頻率、一百期頻率、日期牌、全歷史快速重算</td></tr><tr><td>02</td><td>6</td><td>67.6%</td><td>85.1</td><td>17.91%</td><td>4</td><td>6</td><td>五十期頻率、一百期頻率、尾數牌、全歷史快速重算</td></tr><tr><td>36</td><td>7</td><td>64.9%</td><td>83.1</td><td>16.89%</td><td>1</td><td>6</td><td>五期頻率、十期頻率、二十期頻率、尾數牌</td></tr><tr><td>23</td><td>8</td><td>61.5%</td><td>80.7</td><td>15.66%</td><td>5</td><td>6</td><td>一百期頻率、尾數牌、全歷史快速重算、九碼內信心前移</td></tr><tr><td>29</td><td>9</td><td>56.8%</td><td>77.3</td><td>13.93%</td><td>1</td><td>4</td><td>日期牌、全歷史快速重算、九碼內信心前移</td></tr></tbody></table>
+    </div>
+    <div class="band">
+      <h2>強牌組精算</h2>
+      <table><thead><tr><th>類型</th><th>號碼</th><th>狀態</th><th>回測期</th><th>達標率</th><th>平均命中</th><th>判定</th></tr></thead><tbody><tr><td>獨隻1中1</td><td>06</td><td>快速重算完成</td><td>30 期</td><td>12.82%</td><td>0.128</td><td>觀察</td></tr><tr><td>2中1</td><td>06 05</td><td>快速重算完成</td><td>30 期</td><td>24.29%</td><td>0.256</td><td>觀察</td></tr><tr><td>3中1</td><td>06 05 35</td><td>快速重算完成</td><td>30 期</td><td>34.52%</td><td>0.385</td><td>觀察</td></tr><tr><td>5中2</td><td>06 05 35 33 37</td><td>快速重算完成</td><td>30 期</td><td>11.4%</td><td>0.641</td><td>觀察</td></tr><tr><td>9中3</td><td>06 05 35 33 37 02 36 23 29</td><td>快速重算完成</td><td>30 期</td><td>7.02%</td><td>1.154</td><td>觀察</td></tr></tbody></table>
+    </div>
+  </main>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260630090239';
+    window.TIANTIANLE_BUILD_VERSION = '20260630092617';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -124,7 +123,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260630090239&force=' + Date.now());
+      location.replace('首頁.html?v=20260630092617&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -141,7 +140,7 @@
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260630090239', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260630092617', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
