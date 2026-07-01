@@ -11,7 +11,7 @@
 body{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f6f7fb;color:#111827}
 header{background:#0f172a;color:white;padding:22px 28px}header h1{margin:0 0 8px;font-size:28px}header p{margin:0;color:#cbd5e1}
 main{max-width:980px;margin:auto;padding:18px}.band{background:white;border:1px solid #e5e7eb;border-radius:8px;margin-top:14px;padding:16px;overflow-x:auto}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.tabs a{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}.tabs a.active{background:#166534;color:white}
+ .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}.tabs a{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}.tabs a.active{background:#166534;color:white}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.card{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px}.card h2{margin:0 0 8px;font-size:15px;color:#475569}.value{font-size:22px;font-weight:900}
 table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left}th{background:#f1f5f9}
   .high-note{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}.high-note h2{color:#991b1b}.small{font-size:13px;color:#475569}
@@ -33,7 +33,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260701105203">
+    <link rel="manifest" href="manifest.webmanifest?v=20260701105412">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
@@ -46,9 +46,9 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260701105203">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260701105412">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260701105203</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260701105412</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -57,9 +57,11 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 <a class="active" href="首頁.html">首頁</a>
 <a href="下期預測.html">下期預測</a>
 <a href="上期未命中檢討.html">上期未命中檢討</a>
+<a href="每月總整理.html">每月總整理</a>
 </nav>
 <section class="band"><a class="primary" href="下期預測.html">查看下期預測</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">查看上期未命中檢討</a></section>
+<section class="band"><a class="primary secondary" href="每月總整理.html">查看每月總整理</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">查看完整戰報</a></section>
 <section class="band"><a class="primary secondary" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">立即雲端更新</a><p class="url">手機雲端網址已設定</p></section>
 <section class='band diagnosis'><h2>每期重算證明</h2><p><strong>已重新運算</strong>：本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。</p><p>重算指紋：a07442c9e60c7bb1</p><p>依據開獎：2026-06-30 11 17 28 35 36</p><p>推薦模式：高信心觀察 / 本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。</p><p><strong>高信心號碼：</strong>33</p></section>
@@ -83,7 +85,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260701105203';
+    window.TIANTIANLE_BUILD_VERSION = '20260701105412';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -111,7 +113,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260701105203&force=' + Date.now());
+      location.replace('首頁.html?v=20260701105412&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -128,7 +130,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260701105203', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260701105412', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});

@@ -39,6 +39,12 @@
     .high-alert .value { color:#b91c1c; font-size:32px; }
     .high-alert .badge { display:inline-block; padding:6px 12px; border-radius:6px; background:#dc2626; color:white; font-weight:900; margin:4px 6px 4px 0; }
     .danger-zone { border:3px solid #991b1b; background:#fff1f2; } .danger-zone h2 { color:#7f1d1d; }
+    .month-chart { display:grid; gap:8px; min-width:760px; }
+    .chart-row { display:grid; grid-template-columns:100px 1fr 120px 1.5fr; gap:10px; align-items:center; border-bottom:1px solid #e5e7eb; padding:8px 0; }
+    .chart-track { height:14px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+    .chart-track span { display:block; height:100%; background:#0f766e; border-radius:999px; }
+    .chart-date, .chart-score, .chart-hit { font-weight:800; }
+    @media(max-width:680px) { .chart-row { grid-template-columns:1fr; gap:4px; } }
     .hotbox { border:2px solid #dc2626; background:#fff7ed; box-shadow:0 0 0 3px rgba(220,38,38,.08); }
     .hotbox h2 { color:#991b1b; }
     .hot-main { background:#fff1f2; font-weight:800; }
