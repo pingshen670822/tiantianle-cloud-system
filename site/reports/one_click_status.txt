@@ -5,3 +5,10 @@ history csv synced
 Step 2/6 run main system
 main system skipped: existing prediction is still current before safe update time
 Step 3/6 build mobile pages
+Step 4/6 verify outputs
+outputs verified
+runtime cache cleaned
+Step 5/6 publish mobile cloud
+cloud mobile site published
+Step 6/6 open latest page
+one-click complete: 2026-07-01 11:01:51

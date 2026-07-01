@@ -722,9 +722,13 @@ def build_mobile_ironlaw_block(data):
 def build_mobile_avoid_block(data):
     avoid = data.get("low_probability_avoid") or {}
     backtest = avoid.get("backtest") or {}
+    freshness = data.get("freshness") or {}
+    target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
+    target_time = freshness.get("target_taiwan_safe_update_time") or data.get("prediction_draw_taiwan_time") or "-"
     header = f"<tr><th>#</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u907f\\u958b\\u4fe1\\u5fc3')}</th><th>{u('\\u7b49\\u7d1a')}</th><th>{u('\\u7406\\u7531')}</th></tr>"
     return (
-        f"<section class='band danger-zone'><h2>{u('\\u4f4e\\u6a5f\\u7387\\u4e0d\\u4e2d\\u5206\\u6790')}</h2>"
+        f"<section class='band danger-zone'><h2>{u('\\u4e0b\\u671f\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u9810\\u6e2c')}</h2>"
+        f"<p><strong>{u('\\u76ee\\u6a19\\u958b\\u734e\\u65e5')}：</strong>{esc(target_date)} / <strong>{u('\\u53f0\\u7063\\u958b\\u734e\\u6642\\u9593')}：</strong>{esc(target_time)}</p>"
         f"<p>{esc(avoid.get('warning', u('\\u4f4e\\u6a5f\\u7387\\u662f\\u98a8\\u63a7\\u907f\\u958b\\uff0c\\u4e0d\\u662f\\u7d55\\u5c0d\\u4fdd\\u8b49\\u3002')))}</p>"
         f"<p>{u('\\u56de\\u6e2c')}：{u('\\u6a23\\u672c')} {esc(backtest.get('rounds', '-'))} / {u('\\u96f6\\u8aa4\\u5165\\u7387')} {esc(backtest.get('zero_hit_rate', '-'))}</p>"
         f"<h3>{u('\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '五不中')}</table>"
@@ -827,10 +831,12 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <nav class="tabs">
 <a class="active" href="首頁.html">{u('\\u9996\\u9801')}</a>
 <a href="下期預測.html">{u('\\u4e0b\\u671f\\u9810\\u6e2c')}</a>
+<a href="天天樂低機率精準暫避.html">{u('\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f')}</a>
 <a href="上期未命中檢討.html">{u('\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a>
 <a href="每月總整理.html">{u('\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a>
 </nav>
 <section class="band"><a class="primary" href="下期預測.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
+<section class="band"><a class="primary danger" href="天天樂低機率精準暫避.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f')}</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
 <section class="band"><a class="primary secondary" href="每月總整理.html">{u('\\u67e5\\u770b\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
@@ -936,7 +942,7 @@ def write_pwa_files():
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
     (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/tiantianle_low_probability_avoid.html','reports/天天樂低機率精準暫避.html','reports/低機率精準暫避.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -1087,6 +1093,7 @@ def main():
         ],
         SITE_DIR / "reports" / "prediction.html": ["下期預測.html", "天天樂下期預測.html"],
         SITE_DIR / "reports" / "review.html": ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
+        SITE_DIR / "reports" / "tiantianle_low_probability_avoid.html": ["天天樂低機率精準暫避.html", "低機率精準暫避.html"],
         SITE_DIR / "reports" / "monthly_summary.html": ["monthly_summary.html", "每月總整理.html", "六月總整理.html", "天天樂每月總整理.html"],
         SITE_DIR / "reports" / "latest_battle_report.md": ["最新戰報.md", "天天樂最新戰報.md"],
         SITE_DIR / "reports" / "tiantianle_prediction_history.html": ["預測歷史對比.html", "天天樂預測歷史對比.html"],
@@ -1112,6 +1119,13 @@ def main():
         "天天樂每月總整理.html",
     ]:
         copy_text(root_monthly_source, SITE_DIR / alias)
+    root_low_source = SITE_DIR / "reports" / "tiantianle_low_probability_avoid.html"
+    for alias in [
+        "tiantianle_low_probability_avoid.html",
+        "天天樂低機率精準暫避.html",
+        "低機率精準暫避.html",
+    ]:
+        copy_text(root_low_source, SITE_DIR / alias)
     version = build_version()
     manifest = {
         "name": u("\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u7368\\u7acb\\u7248"),

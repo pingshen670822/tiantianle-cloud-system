@@ -2144,10 +2144,17 @@ def build_low_probability_compact_report(analysis, settled):
     backtest = avoid.get("backtest") or industrial_backtest(analysis)
     rows = compact_low_summary_rows_tiantianle(analysis)
     number_rows = []
+    seen_avoid_numbers = set()
     for group_name in ["五不中", "十不中", "十五不中"]:
         for row in avoid_group_rows(analysis, group_name):
+            number = row[1] if len(row) > 1 else None
+            if number in seen_avoid_numbers:
+                continue
+            seen_avoid_numbers.add(number)
             number_rows.append(row)
+    number_rows = [[idx] + row[1:] for idx, row in enumerate(number_rows, 1)]
     report_time = display_time(analysis.get("generated_at_taiwan", "-"))
+    target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
     review = compact_low_review_html_tiantianle(settled)
     return f"""<!doctype html>
@@ -2174,9 +2181,9 @@ def build_low_probability_compact_report(analysis, settled):
 </header>
 <main>
   <section class="band"><h2>低機率說明</h2><p>本頁只放經過運算的暫避號碼，用於風險控管；低機率不等於絕對不開。</p><p><a href="latest_battle_report.html">回到主戰報</a></p></section>
+  <section class="band"><h2>下期低機率暫避預測</h2><p><strong>目標開獎日：</strong>{esc(target_date)} / <strong>台灣開獎時間：</strong>{esc(target_time)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
+  <section class="band"><h2>下期逐號暫避驗算</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
   <section class="band"><h2>上期低機率達標檢討</h2>{review}</section>
-  <section class="band"><h2>5不中 / 10不中 / 15不中 暫避包</h2><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
-  <section class="band"><h2>逐號暫避細項</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
 </main>
 </body>
 </html>"""
@@ -2194,6 +2201,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     top9 = decision.get("nine_hit_three") or prediction.get("top9") or []
     latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
     latest_numbers = fmt_numbers(latest.get("numbers", []))
+    target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
     report_time = display_time(analysis.get("generated_at_taiwan", "-"))
     history_info = analysis.get("history_completeness") or {}
@@ -2288,15 +2296,16 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     {hits_html}
   </section>
   <section id="avoid" class="panel">
-    <div class="band">
-      <h2>低機率達標檢討</h2>
-      {low_review_html}
-    </div>
     <div class="band warn">
-      <h2>低機率精準暫避</h2>
-      <p>低機率分析已獨立開頁，主頁只保留 5不中、10不中、15不中 摘要。</p>
+      <h2>下期低機率暫避預測</h2>
+      <p><strong>目標開獎日：</strong>{esc(target_date)} / <strong>台灣開獎時間：</strong>{esc(target_time)}</p>
+      <p>這裡是新一期 5不中、10不中、15不中 暫避預測；上期檢討放在下方，不混在一起。</p>
       <p><a href="天天樂低機率精準暫避.html">開啟 天天樂低機率精準暫避.html</a></p>
       {table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows)}
+    </div>
+    <div class="band">
+      <h2>上期低機率達標檢討</h2>
+      {low_review_html}
     </div>
   </section>
   <section id="review" class="panel">
