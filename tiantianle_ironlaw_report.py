@@ -58,6 +58,99 @@ def safe_int(value, default=0):
         return default
 
 
+def zh_text(value):
+    if value is None or value == "":
+        return "-"
+    return localize_plain_text(str(value))
+
+
+def display_time(value):
+    text = "" if value is None else str(value)
+    if not text:
+        return "-"
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return parsed.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        text = text.replace("T", " ")
+        text = re.sub(r"([+-]\d{2}:\d{2})$", "", text)
+        return text[:16] if len(text) >= 16 else text
+
+
+def zh_join(values, limit=None):
+    cleaned = []
+    for value in values or []:
+        if isinstance(value, dict):
+            text = value.get("label") or value.get("name") or value.get("model") or value.get("source") or ""
+        else:
+            text = value
+        text = zh_text(text).strip()
+        if text and text != "-":
+            cleaned.append(text)
+    if limit:
+        cleaned = cleaned[:limit]
+    return "、".join(cleaned) or "-"
+
+
+def candidate_reason_text(item, limit=6):
+    sources = item.get("model_sources") or []
+    source_text = zh_join(sources, limit)
+    if source_text != "-":
+        return source_text
+    return zh_join(item.get("reasons") or [], limit)
+
+
+def candidate_route_text(item):
+    reasons = candidate_reason_text(item, 8)
+    parts = []
+    text = reasons
+    if any(key in text for key in ["頻率", "十期", "五期", "二十期", "一百期", "三百期"]):
+        parts.append("頻率版路")
+    if any(key in text for key in ["拖牌", "共現", "對子"]):
+        parts.append("拖牌共現")
+    if any(key in text for key in ["尾數", "尾數牌"]):
+        parts.append("尾數版路")
+    if "日期" in text:
+        parts.append("日期版路")
+    if any(key in text for key in ["遺漏", "補償"]):
+        parts.append("遺漏補償")
+    if any(key in text for key in ["全歷史", "綜合", "重算"]):
+        parts.append("全歷史綜合")
+    if not parts:
+        parts.append("全歷史排序")
+    return "、".join(dict.fromkeys(parts))
+
+
+def candidate_guard_text(item):
+    guard = item.get("previous_prediction_guard") or {}
+    repeat = item.get("repeat_guard") or {}
+    pieces = []
+    if guard:
+        if guard.get("reentry_required"):
+            pieces.append("連莊達標通過" if guard.get("reentry_passed") else "連莊未達標剔除")
+        else:
+            pieces.append("非上期沿用")
+        if guard.get("penalty"):
+            pieces.append(f"降權 {guard.get('penalty')}")
+    if repeat and repeat.get("passed") is False:
+        pieces.append("最新開出號需降權")
+    return "、".join(pieces) or "守門通過"
+
+
+def candidate_verification_summary(item):
+    cross = item.get("cross_validation") or {}
+    maturity = item.get("practical_maturity") or {}
+    score = item.get("score")
+    score_text = compact_percent(score, 1) if score is not None and safe_float(score) <= 1 else compact_decimal(item.get("confidence_index", score), 1)
+    return (
+        f"分數 {score_text}；信心 {compact_decimal(item.get('confidence_index'), 1)}；"
+        f"交叉驗算 {cross.get('passed_count', '-')}/{cross.get('total_count', '-')}；"
+        f"穩定層數 {item.get('stability_count', '-') }；"
+        f"成熟度 {compact_decimal(maturity.get('score'), 1)}；"
+        f"{candidate_guard_text(item)}"
+    )
+
+
 def candidate_confidence_parts(item):
     confidence = safe_float(item.get("confidence_index", item.get("score", 0)))
     if 0 < confidence <= 1:
@@ -67,10 +160,10 @@ def candidate_confidence_parts(item):
     cross = item.get("cross_validation") or {}
     passed = safe_int(cross.get("passed_count", 0))
     total = safe_int(cross.get("total_count", 0))
-    status = str(cross.get("status", "-") or "-")
+    status = zh_text(cross.get("status", "-") or "-")
     rank = safe_int(item.get("rank", item.get("_display_rank", 99)), 99)
     top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
-    top9_note = u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3") if top9_core else u("\\u0054\\u006f\\u0070\\u0039\\u5916\\u5099\\u67e5")
+    top9_note = "前九核心" if top9_core else "前九外備查"
     if not top9_core:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
@@ -1438,7 +1531,7 @@ def compact_status(value):
         "strict_no_previous_reuse_enforced": "防沿用守門已啟用",
     }
     text = str(value or "-")
-    return mapping.get(text, text)
+    return mapping.get(text, zh_text(text))
 
 
 def compact_pack_status(pack):
@@ -1452,10 +1545,7 @@ def compact_candidate_rows_tiantianle(analysis, limit=9):
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     for rank, item in enumerate(candidates[:limit], 1):
         cross = item.get("cross_validation") or {}
-        sources = item.get("model_sources") or []
-        source_text = "、".join(str(source.get("label") or source.get("model") or "") for source in sources[:4] if source)
-        if not source_text:
-            source_text = "、".join(str(reason) for reason in (item.get("reasons") or [])[:4]) or "-"
+        source_text = candidate_reason_text(item, 6)
         score = item.get("score")
         score_text = compact_percent(score, 1) if score is not None and safe_float(score) <= 1 else compact_decimal(item.get("confidence_index", score), 1)
         rows.append([
@@ -1467,6 +1557,40 @@ def compact_candidate_rows_tiantianle(analysis, limit=9):
             item.get("omission", "-"),
             cross.get("passed_count", "-"),
             esc(source_text),
+        ])
+    return rows
+
+
+def compact_number_verification_rows_tiantianle(analysis, limit=9):
+    rows = []
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    for rank, item in enumerate(candidates[:limit], 1):
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        guard = item.get("previous_prediction_guard") or {}
+        thresholds = guard.get("reentry_thresholds") or {}
+        evidence = guard.get("reentry_evidence") or {}
+        if guard.get("reentry_required"):
+            threshold_text = (
+                f"門檻：分數 {thresholds.get('score', '-')}、信心 {thresholds.get('confidence', '-')}、"
+                f"交叉 {thresholds.get('cross_validation_passed', '-')}、穩定 {thresholds.get('stability_count', '-')}"
+            )
+            evidence_text = (
+                f"實測：分數 {evidence.get('score', '-')}、信心 {evidence.get('confidence', '-')}、"
+                f"交叉 {evidence.get('cross_validation_passed', '-')}、穩定 {evidence.get('stability_count', '-')}"
+            )
+        else:
+            threshold_text = "非上期沿用，不需連莊門檻"
+            evidence_text = "已通過一般候選守門"
+        rows.append([
+            f"{int(item.get('number')):02d}",
+            item.get("rank", rank),
+            candidate_route_text(item),
+            candidate_reason_text(item, 8),
+            f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+            f"穩定 {item.get('stability_count', '-')}；遺漏 {item.get('omission', '-')}",
+            f"{candidate_guard_text(item)}；{threshold_text}；{evidence_text}",
+            f"成熟度 {compact_decimal(maturity.get('score'), 1)}；{compact_status(maturity.get('tier', '-'))}；{candidate_verification_summary(item)}",
         ])
     return rows
 
@@ -1515,10 +1639,7 @@ def compact_super_single_html_tiantianle(analysis):
     number = safe_int(numbers[0], 0) if numbers else 0
     item = next((row for row in candidates if safe_int(row.get("number")) == number), {}) if number else {}
     cross = item.get("cross_validation") or {}
-    sources = item.get("model_sources") or []
-    source_text = "、".join(str(source.get("label") or source.get("model") or "") for source in sources[:6] if source)
-    if not source_text:
-        source_text = "、".join(str(reason) for reason in (item.get("reasons") or [])[:6]) or "全歷史快速重算"
+    source_text = candidate_reason_text(item, 6) if item else "全歷史快速重算"
     decision_label = "本期最高分獨隻"
     score = item.get("score", pack.get("avg_score", pack.get("score_sum")))
     return f"""
@@ -1553,7 +1674,7 @@ def compact_review_html_tiantianle(settled):
     rows = []
     for key, value in (settled.get("strong_pack_hits") or {}).items():
         rows.append([
-            value.get("name") or key,
+            zh_text(value.get("name") or key),
             fmt_numbers(value.get("numbers", [])),
             value.get("hits", "-"),
             "達標" if value.get("passed") else "未達標",
@@ -1576,7 +1697,7 @@ def compact_model_rows_tiantianle(analysis):
         if not isinstance(data, dict):
             continue
         rows.append([
-            name,
+            zh_text(name),
             f"{data.get('rounds', backtest.get('rounds', '-'))} 期",
             data.get("top5_avg_hits", "-"),
             data.get("top10_avg_hits", "-"),
@@ -1592,11 +1713,11 @@ def compact_lifecycle_rows_tiantianle(analysis):
     monthly = review.get("monthly_review") or {}
     rows = [
         ["滾動式修正", "已啟用", backtest.get("top10_avg_hits", "-"), f"{analysis.get('draw_count', '-')} 筆", "每期開獎後重新調整權重"],
-        ["低命中降權", "已啟用", review.get("severity", "-"), monthly.get("month", "-"), "落空號與弱來源自動降權"],
+        ["低命中降權", "已啟用", zh_text(review.get("severity", "-")), monthly.get("month", "-"), "落空號與弱來源自動降權"],
         ["高信心守門", "已啟用", release_label(analysis), "-", "未過守門不列正式保證"],
     ]
     for action in (review.get("actions") or [])[:5]:
-        rows.append(["檢討修正", "已納入", "-", "-", esc(action)])
+        rows.append(["檢討修正", "已納入", "-", "-", esc(zh_text(action))])
     return rows
 
 
@@ -1748,7 +1869,7 @@ def compact_dual_track_html_tiantianle(analysis, settled=None, snapshots=None):
         decision = "全歷史基準與滾動排序同步檢查"
     return f"""
       <div class="band">
-        <h2>雙軌模型對照（原始未調整 vs 滾動調整）</h2>
+        <h2>雙軌模型對照（原始未調整對照滾動調整）</h2>
         <div class="grid">
           <div class="card"><div class="label">對照期數</div><div class="value">{esc(sample_count)}</div></div>
           <div class="card"><div class="label">原始前十平均</div><div class="value">{esc(raw_avg)}</div></div>
@@ -1781,7 +1902,7 @@ def compact_low_review_html_tiantianle(settled):
     rows = []
     for key, value in (settled.get("unlikely_pack_hits") or {}).items():
         rows.append([
-            value.get("name") or key,
+            zh_text(value.get("name") or key),
             fmt_numbers(value.get("numbers", [])),
             "0",
             value.get("accidental_hits", 0),
@@ -1850,7 +1971,7 @@ def build_low_probability_compact_report(analysis, settled):
     for group_name in ["五不中", "十不中", "十五不中"]:
         for row in avoid_group_rows(analysis, group_name):
             number_rows.append(row)
-    report_time = analysis.get("generated_at_taiwan", "-")
+    report_time = display_time(analysis.get("generated_at_taiwan", "-"))
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
     review = compact_low_review_html_tiantianle(settled)
     return f"""<!doctype html>
@@ -1898,7 +2019,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
     latest_numbers = fmt_numbers(latest.get("numbers", []))
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
-    report_time = analysis.get("generated_at_taiwan", "-")
+    report_time = display_time(analysis.get("generated_at_taiwan", "-"))
     history_info = analysis.get("history_completeness") or {}
     count = analysis.get("draw_count", "-")
     status_text = compact_status(freshness.get("status", "ok"))
@@ -1940,7 +2061,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
 <body>
 <header>
   <h1>天天樂 精算預測戰報</h1>
-  <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(history_info.get('status', '完整'))} / 共 {esc(count)} 筆</p>
+  <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(zh_text(history_info.get('status', '完整')))} / 共 {esc(count)} 筆</p>
   <p>最新開獎 {esc(latest_date)} / {esc(latest_numbers)}　下期台灣時間 {esc(target_time)}</p>
 </header>
 <main>
@@ -1970,7 +2091,12 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     {compact_super_single_html_tiantianle(analysis)}
     <div class="band">
       <h2>下期精算前9名</h2>
-      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "來源模型"], compact_candidate_rows_tiantianle(analysis, 9))}
+      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], compact_candidate_rows_tiantianle(analysis, 9))}
+    </div>
+    <div class="band">
+      <h2>逐號多重驗算明細</h2>
+      <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
+      {table(["號碼", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], compact_number_verification_rows_tiantianle(analysis, 9))}
     </div>
     <div class="band">
       <h2>強牌組精算</h2>
@@ -2378,7 +2504,7 @@ def make_markdown(analysis, settled):
     lines = [
         "# " + u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831"),
         "",
-        f"- 產生時間：{analysis.get('generated_at_taiwan')}",
+        f"- 產生時間：{display_time(analysis.get('generated_at_taiwan'))}",
         f"- 資料新鮮度：{freshness.get('status')} / 最新日期 {freshness.get('latest_draw_date')}",
         f"- 最新期別：{latest.get('period')} ({latest.get('draw_date')})",
         f"- 最新號碼：{fmt_numbers(latest.get('numbers'))}",
@@ -2386,10 +2512,10 @@ def make_markdown(analysis, settled):
         f"- 最新來源確認：{freshness.get('latest_source_confirmed')}",
         f"- 預測目標日：{analysis.get('target_draw_date')}",
         f"- 預測台灣時間：{analysis.get('prediction_draw_taiwan_time') or freshness.get('target_taiwan_safe_update_time')}",
-        f"- 發布等級：{release.get('status')} / {release_label(analysis)}",
+        f"- 發布等級：{zh_text(release.get('status'))} / {release_label(analysis)}",
         f"- 穩定共識率：{stability.get('top10_retention')}",
-        f"- 實戰成熟度：{maturity_summary.get('status')} / {maturity_summary.get('top10_avg_maturity')} / {maturity_summary.get('action')}",
-        f"- 風險等級：{audit.get('risk_level')}",
+        f"- 實戰成熟度：{zh_text(maturity_summary.get('status'))} / {maturity_summary.get('top10_avg_maturity')} / {zh_text(maturity_summary.get('action'))}",
+        f"- 風險等級：{zh_text(audit.get('risk_level'))}",
         "",
         "## 核心決策",
         f"- 作戰結論：{decision.get('action_label', '-')} / 等級 {decision.get('grade', '-')}",
@@ -2417,6 +2543,12 @@ def make_markdown(analysis, settled):
         for item in high_confidence_candidates(analysis, limit=9):
             _, detail, *_ = candidate_confidence_parts(item)
             lines.append(f"- {int(item.get('number')):02d}：{detail}")
+    lines.extend(["", "## 逐號多重驗算明細"])
+    for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])[:9]:
+        lines.append(
+            f"- {int(item.get('number')):02d}：版路 {candidate_route_text(item)}；來源 {candidate_reason_text(item, 8)}；"
+            f"{candidate_verification_summary(item)}"
+        )
     def markdown_status(value):
         mapping = {
             "official": "正式發布",
@@ -2427,7 +2559,7 @@ def make_markdown(analysis, settled):
             "blocked": "暫停發布",
             "strict_downshift": "嚴格降級",
         }
-        return mapping.get(str(value or ""), str(value or "-"))
+        return mapping.get(str(value or ""), zh_text(value))
 
     lines.extend(["", "## 獨支 / 2中1 / 3中1 短包超強信心精算"])
     for key, label in [("single", "獨支1中1"), ("two", "2中1"), ("three", "3中1")]:
@@ -2436,7 +2568,7 @@ def make_markdown(analysis, settled):
         lines.append(
             f"- {label}：{fmt_numbers(item.get('numbers', [])) or '-'} / 狀態 {markdown_status(item.get('status'))} / "
             f"多模型仲裁分 {item.get('score', item.get('precision_score', '-'))} / 60期通過率 {recent_60.get('pass_rate', '-')} / "
-            f"採用模型 {item.get('selected_model_label') or item.get('selected_model') or '綜合精算'}"
+            f"採用模型 {zh_text(item.get('selected_model_label') or item.get('selected_model') or '綜合精算')}"
         )
     lines.extend(["", "## 低機率避險包"])
     for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
@@ -2445,7 +2577,7 @@ def make_markdown(analysis, settled):
             f"- {label}：{fmt_numbers(pack.get('numbers', [])) or '-'} / {pack.get('confidence_label', '-')} / "
             f"信心指標 {pack.get('confidence_index', '-')} / 平均暫避分 {pack.get('avg_avoid_score', '-')}"
         )
-    lines.extend(["", "## 低機率精準暫避", "- 已獨立輸出：天天樂低機率精準暫避.html"])
+    lines.extend(["", "## 低機率精準暫避", "- 已獨立輸出：天天樂低機率精準暫避頁"])
     lines.extend(["", "## 每日更新鐵律時間表"])
     for row in decision.get("time_table", []) or []:
         lines.append(f"- {row.get('item', '-')}：{row.get('content', '-')}")
@@ -2454,7 +2586,7 @@ def make_markdown(analysis, settled):
         maturity = item.get("practical_maturity") or {}
         lines.append(
             f"{idx}. {int(item.get('number')):02d} / 信心 {item.get('confidence_index', item.get('score'))} / "
-            f"成熟度 {maturity.get('score', '-')} {maturity.get('tier', '-')} / 遺漏 {item.get('omission')}"
+            f"成熟度 {maturity.get('score', '-')} {zh_text(maturity.get('tier', '-'))} / 遺漏 {item.get('omission')}"
         )
     lines.extend(["", "## 強牌組精算"])
     for row in compact_pack_rows_tiantianle(analysis):
@@ -2471,8 +2603,8 @@ def make_markdown(analysis, settled):
         ])
         for row in compact_recent_dual_track_rows_tiantianle(analysis, settled, [settled])[:3]:
             lines.append(f"- {row[0]}：原始中 {row[3]} / 滾動中 {row[5]} / 差值 {row[6]}")
-    lines.extend(["", "## 雙軌模型對照（原始未調整 vs 滾動調整）"])
-    lines.append("- 原始未調整與滾動排序已在 HTML 主戰報完整分頁對照。")
+    lines.extend(["", "## 雙軌模型對照（原始未調整對照滾動調整）"])
+    lines.append("- 原始未調整與滾動排序已在網頁主戰報完整分頁對照。")
     lines.extend(["", "## 原始模型未調整排名"])
     for row in compact_original_rank_rows_tiantianle(analysis)[:9]:
         lines.append(f"- {row[0]}. {row[1]} / 分數 {row[2]} / 信心 {row[3]} / {row[6]}")
@@ -2491,7 +2623,7 @@ def make_markdown(analysis, settled):
     lines.extend(["", "## 低機率達標檢討"])
     if settled:
         for row in compact_recent_dual_track_rows_tiantianle(analysis, settled, [settled])[:1]:
-            lines.append(f"- 上期已結算：{row[0]} / 實際號 {row[1]}")
+            lines.append(f"- 上期已結算：{row[0]} / 實際號 {fmt_numbers(settled.get('actual_numbers', [])) or '-'}")
     return "\n".join(lines) + "\n"
 
 def page(title, subtitle, content):

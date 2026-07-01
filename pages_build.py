@@ -11,7 +11,7 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
-from 中文顯示工具 import localize_visible_html, write_alias
+from 中文顯示工具 import localize_plain_text, localize_visible_html, write_alias
 
 
 ROOT = Path(__file__).resolve().parent
@@ -95,7 +95,7 @@ def inject_mobile_panel(html):
       <a class="mobile-action" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0\\u6700\\u65b0\\u958b\\u734e')}</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">{u('\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\u6700\\u65b0\\u9801')}</button>
       <a class="cloud-update-link" href="reset.html?v={version}">{u('\\u624b\\u6a5f\\u6c92\\u66f4\\u65b0\\u9ede\\u9019\\u88e1\\u6e05\\u9664\\u820a\\u5feb\\u53d6')}</a>
-      <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{page_url}</span></p>
+      <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{u('\\u5df2\\u8a2d\\u5b9a\\uff0c\\u624b\\u6a5f\\u53ef\\u76f4\\u63a5\\u6536\\u85cf\\u672c\\u9801')}</span></p>
       <p class="cloud-note" id="mobileUpdateStatus">{u('\\u7248\\u672c')} {version}</p>
       {local_note}
     </section>
@@ -300,6 +300,122 @@ def safe_int(value, default=0):
         return default
 
 
+def zh_text(value):
+    if value is None or value == "":
+        return "-"
+    return localize_plain_text(str(value))
+
+
+def display_time(value):
+    text = "" if value is None else str(value)
+    if not text:
+        return "-"
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return parsed.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        text = text.replace("T", " ")
+        if "+" in text:
+            text = text.split("+", 1)[0]
+        return text[:16] if len(text) >= 16 else text
+
+
+def zh_join(values, limit=None):
+    cleaned = []
+    for value in values or []:
+        if isinstance(value, dict):
+            text = value.get("label") or value.get("name") or value.get("model") or value.get("source") or ""
+        else:
+            text = value
+        text = zh_text(text).strip()
+        if text and text != "-":
+            cleaned.append(text)
+    if limit:
+        cleaned = cleaned[:limit]
+    return "、".join(cleaned) or "-"
+
+
+def mobile_status(value):
+    mapping = {
+        "passed": "通過",
+        "watch_only": "觀察中",
+        "watch": "觀察",
+        "mature": "成熟通過",
+        "high_confidence_watch": "高信心觀察",
+        "usable_watch": "可觀察",
+        "usable_觀察": "可觀察",
+        "precision_watch": "精算觀察",
+        "precision_觀察": "精算觀察",
+        "verified_research_complete": "研究驗證完成",
+        "fast_daily_recomputed": "每日快速重算完成",
+        "strict_reentry_gate_enforced": "連莊達標守門",
+    }
+    return mapping.get(str(value or ""), zh_text(value))
+
+
+def candidate_reason_text(item, limit=6):
+    source_text = zh_join(item.get("model_sources") or [], limit)
+    if source_text != "-":
+        return source_text
+    return zh_join(item.get("reasons") or [], limit)
+
+
+def candidate_route_text(item):
+    text = candidate_reason_text(item, 8)
+    parts = []
+    if any(key in text for key in ["頻率", "十期", "五期", "二十期", "一百期", "三百期"]):
+        parts.append("頻率版路")
+    if any(key in text for key in ["拖牌", "共現", "對子"]):
+        parts.append("拖牌共現")
+    if "尾數" in text:
+        parts.append("尾數版路")
+    if "日期" in text:
+        parts.append("日期版路")
+    if any(key in text for key in ["遺漏", "補償"]):
+        parts.append("遺漏補償")
+    if any(key in text for key in ["全歷史", "綜合", "重算"]):
+        parts.append("全歷史綜合")
+    if not parts:
+        parts.append("全歷史排序")
+    return "、".join(dict.fromkeys(parts))
+
+
+def candidate_guard_text(item):
+    guard = item.get("previous_prediction_guard") or {}
+    pieces = []
+    if guard:
+        if guard.get("reentry_required"):
+            pieces.append("連莊達標通過" if guard.get("reentry_passed") else "連莊未達標剔除")
+        else:
+            pieces.append("非上期沿用")
+        if guard.get("penalty"):
+            pieces.append(f"降權 {guard.get('penalty')}")
+    return "、".join(pieces) or "守門通過"
+
+
+def build_mobile_number_verification_block(data):
+    rows = []
+    for item in (data.get("official_candidates") or data.get("candidates") or [])[:9]:
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        rows.append(
+            "<tr>"
+            f"<th>{int(item.get('number')):02d}</th>"
+            f"<td>{esc(candidate_route_text(item))}</td>"
+            f"<td>{esc(candidate_reason_text(item, 8))}</td>"
+            f"<td>{esc(cross.get('passed_count', '-'))}/{esc(cross.get('total_count', '-'))}</td>"
+            f"<td>{u('\\u7a69\\u5b9a')} {esc(item.get('stability_count', '-'))} / {u('\\u907a\\u6f0f')} {esc(item.get('omission', '-'))}</td>"
+            f"<td>{esc(candidate_guard_text(item))}</td>"
+            f"<td>{u('\\u6210\\u719f\\u5ea6')} {esc(maturity.get('score', '-'))} / {esc(mobile_status(maturity.get('tier', '-')))}</td>"
+            "</tr>"
+        )
+    return (
+        f"<section class='band diagnosis'><h2>{u('\\u9010\\u865f\\u591a\\u91cd\\u9a57\\u7b97\\u660e\\u7d30')}</h2>"
+        f"<p>{u('\\u6bcf\\u4e00\\u9846\\u865f\\u78bc\\u90fd\\u5217\\u51fa\\u7248\\u8def\\u3001\\u62d6\\u724c\\u6216\\u5171\\u73fe\\u6aa2\\u67e5\\u3001\\u4ea4\\u53c9\\u9a57\\u7b97\\u8207\\u5b88\\u9580\\u7d50\\u679c\\uff1b\\u6c92\\u6709\\u9a57\\u8b49\\u7684\\u865f\\u78bc\\u4e0d\\u5f97\\u9032\\u5165\\u524d\\u4e5d\\u3002')}</p>"
+        f"<table><tr><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u7248\\u8def')}</th><th>{u('\\u4f86\\u6e90\\u8b49\\u64da')}</th><th>{u('\\u4ea4\\u53c9')}</th><th>{u('\\u7a69\\u5b9a')}</th><th>{u('\\u5b88\\u9580')}</th><th>{u('\\u7d50\\u8ad6')}</th></tr>{''.join(rows)}</table></section>"
+    )
+
+
 def confidence_level(item):
     confidence = safe_float(item.get("confidence_index", item.get("score", 0)))
     if 0 < confidence <= 1:
@@ -309,13 +425,13 @@ def confidence_level(item):
     cross = item.get("cross_validation") or {}
     passed = safe_int(cross.get("passed_count", 0))
     total = safe_int(cross.get("total_count", 0))
-    status = str(cross.get("status", "-") or "-")
+    status = zh_text(cross.get("status", "-") or "-")
     maturity = item.get("practical_maturity") or {}
     maturity_score = safe_float(maturity.get("score", 0))
-    maturity_tier = str(maturity.get("tier", "-") or "-")
+    maturity_tier = mobile_status(maturity.get("tier", "-") or "-")
     rank = safe_int(item.get("rank", 99), 99)
     top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
-    top9_note = u("\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3") if top9_core else u("\\u0054\\u006f\\u0070\\u0039\\u5916\\u5099\\u67e5")
+    top9_note = "前九核心" if top9_core else "前九外備查"
     if not top9_core or maturity_score < 58:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
@@ -445,7 +561,7 @@ def build_ultra_precision_block(candidates, analysis=None):
         item = rec.get(key) or {}
         recent_60 = item.get("recent_60") or {}
         random_rate = item.get("random_success_probability")
-        model_text = item.get("selected_model_label") or item.get("selected_model") or u("\\u7d9c\\u5408\\u7cbe\\u7b97")
+        model_text = zh_text(item.get("selected_model_label") or item.get("selected_model") or u("\\u7d9c\\u5408\\u7cbe\\u7b97"))
         recent_text = (
             f"{u('\\u8fd160\\u671f')} {recent_60.get('pass_rate', '-')}"
             + (f" / {u('\\u96a8\\u6a5f')} {random_rate}" if random_rate is not None else "")
@@ -461,7 +577,7 @@ def build_ultra_precision_block(candidates, analysis=None):
         )
     return (
         f"<section class=\"band high-note\"><h2>{u('\\u8d85\\u5f37\\u4fe1\\u5fc3\\u9ad8\\u6a5f\\u7387\\u5f37\\u63a8\\u7cbe\\u7b97')}</h2>"
-        f"<p>{u('\\u53ea\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u7cbe\\u7b97\\uff0c\\u4e26\\u7528\\u8fd1\\u0033\\u0030\\u002f\\u0036\\u0030\\u002f\\u0031\\u0032\\u0030\\u671f\\u5be6\\u6230\\u7af6\\u8cfd\\u9078\\u6a21\\u578b\\uff1b\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3\\u3002')}</p>"
+        f"<p>{u('\\u53ea\\u5728\\u524d\\u4e5d\\u6838\\u5fc3\\u5167\\u7cbe\\u7b97\\uff0c\\u4e26\\u7528\\u8fd1\\u0033\\u0030\\u002f\\u0036\\u0030\\u002f\\u0031\\u0032\\u0030\\u671f\\u5be6\\u6230\\u7af6\\u8cfd\\u9078\\u6a21\\u578b\\uff1b\\u7b2c\\u5341\\u81f3\\u5341\\u4e94\\u540d\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3\\u3002')}</p>"
         f"<table><tr><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u5f37\\u63a8\\u865f\\u78bc')}</th><th>{u('\\u7cbe\\u7b97\\u5206')}</th><th>{u('\\u63a1\\u7528\\u6a21\\u578b')}</th><th>{u('\\u5be6\\u6230\\u57fa\\u6e96')}</th></tr>{''.join(rows)}</table></section>"
     )
 
@@ -472,7 +588,7 @@ def build_confidence_rows(candidates):
         level, detail, css = confidence_level(item)
         if level == u("\\u89c0\\u5bdf"):
             continue
-        reasons = u("\\u3001").join(item.get("reasons", []))
+        reasons = candidate_reason_text(item, 6)
         rows.append(
             "<tr>"
             f"<td>{idx}</td>"
@@ -659,7 +775,7 @@ def build_home_page():
         ("three", u("\\u8d85\\u5f37\\u7cbe\\u7b973\\u4e2d1~3"), "1~3"),
     ]:
         item = ultra.get(ultra_key) or {}
-        add_pack_row(label, item.get("numbers") or [], goal, f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97')} {item.get('score', 0)} / watch_only")
+        add_pack_row(label, item.get("numbers") or [], goal, f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97')} {item.get('score', 0)} / {mobile_status(item.get('status', 'watch_only'))}")
 
     for key, label in [
         ("five_hit_two", "5" + u("\\u4e2d") + "2~3"),
@@ -671,11 +787,11 @@ def build_home_page():
         maturity_status = pack_maturity.get("status")
         if maturity_status is None and "passed" in pack_maturity:
             maturity_status = "passed" if pack_maturity.get("passed") else "watch_only"
-        maturity_text = f"{maturity_value} / {maturity_status or '-'}"
+        maturity_text = f"{maturity_value} / {mobile_status(maturity_status or '-')}"
         add_pack_row(label, pack.get("numbers") or [], pack.get("hit_goal"), maturity_text)
     page_title = u("\\u5929\\u5929\\u6a02 \\u624b\\u6a5f\\u96f2\\u7aef\\u9996\\u9801")
     subtitle = (
-        f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(data.get('generated_at_taiwan'))} / "
+        f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(display_time(data.get('generated_at_taiwan')))} / "
         f"{u('\\u6700\\u65b0\\u958b\\u734e')} {esc(latest.get('draw_date'))} / "
         f"{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09')} {esc(freshness.get('target_taiwan_safe_update_time'))}"
     )
@@ -715,24 +831,25 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary" href="下期預測.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
-<section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{esc(page_url)}</p></section>
+<section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{u('\\u624b\\u6a5f\\u96f2\\u7aef\\u7db2\\u5740\\u5df2\\u8a2d\\u5b9a')}</p></section>
 {build_mobile_recalculation_block(data)}
 {build_mobile_no_reuse_guard_block(data)}
 {build_mobile_ironlaw_block(data)}
+{build_mobile_number_verification_block(data)}
 {signal_focus}
 {ultra_precision_block}
 {build_mobile_avoid_block(data)}
 <section class="band diagnosis"><h2>{u('\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7')}</h2><p><strong>{u('\\u65b0\\u589e\\u6a21\\u578b')}:</strong> {esc(gap_diagnosis.get('new_model_added', '-'))} / <strong>{u('\\u72c0\\u614b')}:</strong> {esc(gap_diagnosis.get('status_label', gap_diagnosis.get('status', '-')))}</p><p class="small">{esc(gap_diagnosis.get('message', '-'))}</p><p class="small"><strong>{u('\\u5df2\\u555f\\u7528\\u52d5\\u4f5c')}:</strong> {esc(gap_action_text)}</p><table><tr><th>{u('\\u7f3a\\u53e3')}</th><th>{u('\\u8b49\\u64da')}</th><th>{u('\\u5df2\\u88dc\\u5f37')}</th></tr>{''.join(gap_rows)}</table></section>
-<section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u0054\\u006f\\u0070\\u0039\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u0054\\u006f\\u0070\\u0031\\u0030\\u002d\\u0031\\u0035\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
+<section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u524d\\u4e5d\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u7b2c\\u5341\\u81f3\\u5341\\u4e94\\u540d\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u65e5')}</h2><div class="value">{esc(latest.get('draw_date'))}</div></section>
 <section class="card"><h2>{u('\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593')}</h2><div class="value">{esc(freshness.get('latest_taiwan_safe_update_time'))}</div></section>
 <section class="card"><h2>{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593')}</h2><div class="value">{esc(freshness.get('target_taiwan_safe_update_time'))}</div></section>
 <section class="card"><h2>{u('\\u5168\\u6b77\\u53f2\\u7b46\\u6578')}</h2><div class="value">{esc(data.get('draw_count'))}</div></section>
-<section class="card"><h2>{u('\\u767c\\u5e03\\u72c0\\u614b')}</h2><div class="value">{esc(release.get('status', '-'))}</div><p class="small">{u('\\u6b63\\u5f0f\\u767c\\u5e03') if data.get('official_release_allowed') else u('\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49')}</p></section>
-<section class="card"><h2>{u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}</h2><div class="value">{esc(maturity.get('top10_avg_maturity', '-'))}</div><p class="small">{esc(maturity.get('status', '-'))}</p></section>
+<section class="card"><h2>{u('\\u767c\\u5e03\\u72c0\\u614b')}</h2><div class="value">{esc(mobile_status(release.get('status', '-')))}</div><p class="small">{u('\\u6b63\\u5f0f\\u767c\\u5e03') if data.get('official_release_allowed') else u('\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49')}</p></section>
+<section class="card"><h2>{u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}</h2><div class="value">{esc(maturity.get('top10_avg_maturity', '-'))}</div><p class="small">{esc(mobile_status(maturity.get('status', '-')))}</p></section>
 </div>
-<section class="band"><h2>{u('\\u672c\\u671f\\u6838\\u5fc3\\u9810\\u6e2c\\u6458\\u8981')}</h2><p><strong>Top9{u('\\u6838\\u5fc3')}:</strong> {esc(top9)}</p><table><tr><th>{u('\\u6a21\\u578b')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u6210\\u719f\\u5ea6')}</th></tr>{''.join(pack_rows)}</table></section>
+<section class="band"><h2>{u('\\u672c\\u671f\\u6838\\u5fc3\\u9810\\u6e2c\\u6458\\u8981')}</h2><p><strong>{u('\\u524d\\u4e5d\\u6838\\u5fc3')}:</strong> {esc(top9)}</p><table><tr><th>{u('\\u6a21\\u578b')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u76ee\\u6a19')}</th><th>{u('\\u6210\\u719f\\u5ea6')}</th></tr>{''.join(pack_rows)}</table></section>
 </main>
 </body></html>"""
 
@@ -895,21 +1012,21 @@ body{padding-bottom:82px}
 </style>
 </head>
 <body>
-<header><h1>天天樂手機雲端獨立版</h1><p>使用 GitHub Pages 與 GitHub Actions，電腦關機也能從手機開啟。</p></header>
+<header><h1>天天樂手機雲端獨立版</h1><p>使用雲端頁面與雲端自動更新，電腦關機也能從手機開啟。</p></header>
 <main>
     """ + local_note + """
 <section class="band">
 <button id="installBtn" class="btn">一鍵啟動天天樂雲端版</button>
-<a class="btn blue" href="__WORKFLOW_URL__">登入 GitHub 後立即雲端更新</a>
+<a class="btn blue" href="__WORKFLOW_URL__">登入雲端帳號後立即雲端更新</a>
 </section>
-<section class="band"><h2>真正手機網址</h2><p class="url">__PAGE_URL__</p><p>手機安裝必須使用這個 GitHub Pages 網址，不是電腦的 file:/// 路徑。</p></section>
+<section class="band"><h2>真正手機網址</h2><p class="url">雲端網址已設定</p><p>手機安裝必須使用雲端網址，不是電腦本機路徑。</p></section>
 <section class="band">
-<h2>Android / Chrome</h2>
-<ol><li>手機開 GitHub Pages 網址。</li><li>點上方一鍵啟動天天樂雲端版。</li><li>瀏覽器若跳出安裝提示，選擇安裝 App。</li><li>安裝後從手機主畫面開啟天天樂。</li></ol>
-<h2>iPhone / Safari</h2>
-<ol><li>點 Safari 分享按鈕。</li><li>選擇「加入主畫面」。</li><li>完成後從主畫面開啟天天樂。</li></ol>
+<h2>安卓手機瀏覽器</h2>
+<ol><li>手機開雲端網址。</li><li>點上方一鍵啟動天天樂雲端版。</li><li>瀏覽器若跳出安裝提示，選擇安裝手機版。</li><li>安裝後從手機主畫面開啟天天樂。</li></ol>
+<h2>蘋果手機瀏覽器</h2>
+<ol><li>點瀏覽器分享按鈕。</li><li>選擇「加入主畫面」。</li><li>完成後從主畫面開啟天天樂。</li></ol>
 </section>
-<section class="band"><p>這是雲端版入口：更新由 GitHub Actions 執行，畫面由 GitHub Pages 提供。手機不需要連回電腦。</p></section>
+<section class="band"><p>這是雲端版入口：更新由雲端自動執行，畫面由雲端頁面提供。手機不需要連回電腦。</p></section>
 </main>
 <button id="stickyBtn" class="btn sticky-launch">一鍵啟動天天樂雲端版</button>
 <script>
