@@ -1,18 +1,7 @@
-﻿one-click start: 2026-07-01 09:56:02
+﻿one-click start: 2026-07-01 11:00:02
+Fast refresh: before Taiwan safe update time; skip network fetch and full model recompute
 Step 1/6 prepare data and latest cache
 history csv synced
-cache skipped: calottery_official.html
-cache updated: lotto8_latest.html
-cache updated: lottolyzer_latest.html
-cache updated: lotteryusa_latest.html
-cache updated: lotterynet_latest.html
-cache updated: lotterynet_year.html
 Step 2/6 run main system
+main system skipped: existing prediction is still current before safe update time
 Step 3/6 build mobile pages
-Step 4/6 verify outputs
-outputs verified
-runtime cache cleaned
-Step 5/6 publish mobile cloud
-cloud mobile site published
-Step 6/6 open latest page
-one-click complete: 2026-07-01 10:01:50

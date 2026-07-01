@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>天天樂 每月總整理</title>
+  <style>
+    body { margin:0; font-family:"Microsoft JhengHei", Arial, sans-serif; background:#f6f7fb; color:#20242a; }
+    header { background:#0f172a; color:white; padding:22px 28px; }
+    header h1 { margin:0 0 8px; font-size:28px; }
+    header p { margin:0; color:#cbd5e1; }
+    main { max-width:1180px; margin:0 auto; padding:22px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+    .card { background:white; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
+    .card h2 { margin:0 0 10px; font-size:16px; color:#475569; }
+    .value { font-size:24px; font-weight:800; letter-spacing:0; }
+    .sub { color:#64748b; margin:8px 0 0; font-size:13px; }
+    .confidence-line { color:#991b1b; font-weight:900; margin:10px 0 0; line-height:1.5; }
+    .confidence-high { display:inline-block; padding:4px 8px; border-radius:6px; background:#dc2626; color:white; font-weight:900; }
+    .confidence-mid { display:inline-block; padding:4px 8px; border-radius:6px; background:#f97316; color:white; font-weight:900; }
+    .confidence-watch { display:inline-block; padding:4px 8px; border-radius:6px; background:#e2e8f0; color:#334155; font-weight:900; }
+    .band { background:white; border:1px solid #e5e7eb; border-radius:8px; margin-top:16px; padding:18px; overflow-x:auto; }
+    .band h2 { margin:0 0 12px; font-size:20px; }
+    table { width:100%; min-width:760px; border-collapse:collapse; background:white; }
+    th, td { border-bottom:1px solid #e5e7eb; padding:9px; text-align:left; vertical-align:top; }
+    th { background:#f1f5f9; color:#334155; }
+    .risk { display:inline-block; padding:4px 10px; border-radius:999px; background:#fee2e2; color:#991b1b; font-weight:700; }
+    .status { display:inline-block; padding:5px 10px; border-radius:6px; background:#e2e8f0; color:#0f172a; font-weight:800; margin-right:6px; }
+    .blocked { background:#fee2e2; color:#991b1b; }
+    .fresh { background:#dcfce7; color:#166534; }
+    .notice { border-left:5px solid #dc2626; background:#fff7f7; }
+    .chapter { background:#0f172a; color:white; border:0; }
+    .chapter h2 { color:white; font-size:22px; }
+    .chapter p { color:#cbd5e1; margin:0; }
+    .high-alert { border:3px solid #dc2626; background:#fff1f2; box-shadow:0 0 0 4px #fee2e2 inset; }
+    .high-alert .value { color:#b91c1c; font-size:32px; }
+    .high-alert .badge { display:inline-block; padding:6px 12px; border-radius:6px; background:#dc2626; color:white; font-weight:900; margin:4px 6px 4px 0; }
+    .danger-zone { border:3px solid #991b1b; background:#fff1f2; } .danger-zone h2 { color:#7f1d1d; }
+    .month-chart { display:grid; gap:8px; min-width:760px; }
+    .chart-row { display:grid; grid-template-columns:100px 1fr 120px 1.5fr; gap:10px; align-items:center; border-bottom:1px solid #e5e7eb; padding:8px 0; }
+    .chart-track { height:14px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+    .chart-track span { display:block; height:100%; background:#0f766e; border-radius:999px; }
+    .chart-date, .chart-score, .chart-hit { font-weight:800; }
+    @media(max-width:680px) { .chart-row { grid-template-columns:1fr; gap:4px; } }
+    .hotbox { border:2px solid #dc2626; background:#fff7ed; box-shadow:0 0 0 3px rgba(220,38,38,.08); }
+    .hotbox h2 { color:#991b1b; }
+    .hot-main { background:#fff1f2; font-weight:800; }
+    .signal-focus { margin:12px 0; padding:14px; border:4px solid #b91c1c; border-radius:8px; background:#fff; }
+    .signal-title { color:#991b1b; font-weight:900; }
+    .signal-numbers { color:#991b1b; font-size:38px; line-height:1.25; font-weight:900; letter-spacing:0; }
+    .signal-detail { color:#7f1d1d; font-weight:900; }
+    .mobile-action { display:block; text-align:center; padding:14px; background:#166534; color:#fff!important; text-decoration:none; border-radius:6px; font-weight:800; }
+    .mobile-action.secondary { background:#1d4ed8; }
+    .tabbar { position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; background:#f6f7fb; padding:10px 0 14px; }
+    .tabbar button { border:1px solid #cbd5e1; background:white; color:#0f172a; border-radius:8px; padding:10px 14px; font-weight:800; cursor:pointer; }
+    .tabbar button.active { background:#0f172a; color:white; border-color:#0f172a; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .tab-panel > .band:first-child { margin-top:0; }
+    details.advanced { margin-top:16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; padding:12px; }
+    details.advanced > summary { cursor:pointer; font-weight:900; color:#0f172a; }
+    details.advanced .band { margin-top:12px; }
+    .tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .tabs a { display:block; text-align:center; padding:12px; border-radius:8px; background:#e5e7eb; color:#111827; font-weight:900; text-decoration:none; }
+    .tabs a.active { background:#166534; color:white; }
+    pre { white-space:pre-wrap; background:#0b1020; color:#dbeafe; border-radius:8px; padding:16px; overflow:auto; }
+    @media (max-width:640px) { header{padding:16px} header h1{font-size:22px} main{padding:10px} .grid{grid-template-columns:1fr} .band{padding:12px} th,td{font-size:13px} .value{font-size:20px} .tabs{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+<header><h1>天天樂 每月總整理</h1><p>2026年06月 / 預測號碼、實際開獎、命中結果、圖表分析</p></header>
+<main><div class="band month-summary"><h2>2026年06月總整理</h2><p>本頁只整理當月預測與實際命中，不混入下期預測、不混入低機率避開。</p><table><thead><tr><th>項目</th><th>數值一</th><th>數值二</th><th>說明</th></tr></thead><tbody><tr><td>整理月份</td><td>2026年06月</td><td>16 期</td><td>每月自動整理</td></tr><tr><td>平均命中</td><td>前五 0.75</td><td>前九 1.31 / 前十 1.38</td><td>前十五 2.0</td></tr><tr><td>總命中量</td><td>前九合計 21</td><td>前十合計 22</td><td>前十五合計 32</td></tr><tr><td>最佳單日</td><td>2026-06-15</td><td>前十 4 / 前十五 4</td><td>命中 05 09 19 33</td></tr><tr><td>最需檢討</td><td>2026-06-24</td><td>前十 0 / 前十五 2</td><td>已納入滾動降權</td></tr></tbody></table></div><div class="band month-summary"><h2>每日命中圖表</h2><div class="month-chart"><div class="chart-row"><div class="chart-date">2026-06-11</div><div class="chart-track"><span style="width:40%"></span></div><div class="chart-score">前九 2 / 前十 2</div><div class="chart-hit">前十五命中 02 33</div></div><div class="chart-row"><div class="chart-date">2026-06-14</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 14</div></div><div class="chart-row"><div class="chart-date">2026-06-15</div><div class="chart-track"><span style="width:80%"></span></div><div class="chart-score">前九 3 / 前十 4</div><div class="chart-hit">前十五命中 05 09 19 33</div></div><div class="chart-row"><div class="chart-date">2026-06-16</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 06</div></div><div class="chart-row"><div class="chart-date">2026-06-17</div><div class="chart-track"><span style="width:40%"></span></div><div class="chart-score">前九 2 / 前十 2</div><div class="chart-hit">前十五命中 21 25</div></div><div class="chart-row"><div class="chart-date">2026-06-18</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 20</div></div><div class="chart-row"><div class="chart-date">2026-06-19</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 33 39</div></div><div class="chart-row"><div class="chart-date">2026-06-21</div><div class="chart-track"><span style="width:40%"></span></div><div class="chart-score">前九 2 / 前十 2</div><div class="chart-hit">前十五命中 20 32 36</div></div><div class="chart-row"><div class="chart-date">2026-06-22</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 01</div></div><div class="chart-row"><div class="chart-date">2026-06-23</div><div class="chart-track"><span style="width:40%"></span></div><div class="chart-score">前九 2 / 前十 2</div><div class="chart-hit">前十五命中 23 32 38</div></div><div class="chart-row"><div class="chart-date">2026-06-24</div><div class="chart-track"><span style="width:4%"></span></div><div class="chart-score">前九 0 / 前十 0</div><div class="chart-hit">前十五命中 03 36</div></div><div class="chart-row"><div class="chart-date">2026-06-25</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 06 18</div></div><div class="chart-row"><div class="chart-date">2026-06-26</div><div class="chart-track"><span style="width:40%"></span></div><div class="chart-score">前九 2 / 前十 2</div><div class="chart-hit">前十五命中 12 33 36</div></div><div class="chart-row"><div class="chart-date">2026-06-28</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 25</div></div><div class="chart-row"><div class="chart-date">2026-06-29</div><div class="chart-track"><span style="width:20%"></span></div><div class="chart-score">前九 1 / 前十 1</div><div class="chart-hit">前十五命中 12 37</div></div><div class="chart-row"><div class="chart-date">2026-06-30</div><div class="chart-track"><span style="width:4%"></span></div><div class="chart-score">前九 0 / 前十 0</div><div class="chart-hit">前十五命中 17 28</div></div></div></div><div class="band month-summary"><h2>命中分布</h2><table><thead><tr><th>命中級距</th><th>期數</th><th>單位</th></tr></thead><tbody><tr><td>前十命中 0</td><td>2</td><td>期</td></tr><tr><td>前十命中 1</td><td>8</td><td>期</td></tr><tr><td>前十命中 2</td><td>5</td><td>期</td></tr><tr><td>前十命中 3</td><td>0</td><td>期</td></tr><tr><td>前十命中 4</td><td>1</td><td>期</td></tr><tr><td>前十命中 5</td><td>0</td><td>期</td></tr></tbody></table></div><div class="band month-summary"><h2>逐期預測對照</h2><table><thead><tr><th>開獎日</th><th>預測依據</th><th>預測前九</th><th>實際開獎</th><th>前九命中號</th><th>前五/前九/前十/前十五</th><th>結論</th><th>前十五命中號</th></tr></thead><tbody><tr><td>2026-06-11</td><td>2026-06-10</td><td>14 33 02 11 23 19 16 09 10</td><td>02 06 31 33 37</td><td>02 33</td><td>2 / 2 / 2 / 2</td><td>命中</td><td>02 33</td></tr><tr><td>2026-06-14</td><td>2026-06-13</td><td>23 14 33 05 28 11 19 20 09</td><td>01 14 24 32 35</td><td>14</td><td>1 / 1 / 1 / 1</td><td>命中</td><td>14</td></tr><tr><td>2026-06-15</td><td>2026-06-14</td><td>02 11 23 06 28 33 09 19 10</td><td>05 09 19 33 37</td><td>09 19 33</td><td>0 / 3 / 4 / 4</td><td>命中</td><td>05 09 19 33</td></tr><tr><td>2026-06-16</td><td>2026-06-15</td><td>23 14 02 06 11 31 10 04 16</td><td>01 06 27 30 37</td><td>06</td><td>1 / 1 / 1 / 1</td><td>命中</td><td>06</td></tr><tr><td>2026-06-17</td><td>2026-06-16</td><td>33 21 05 39 19 09 17 29 25</td><td>13 21 22 25 30</td><td>21 25</td><td>1 / 2 / 2 / 2</td><td>命中</td><td>21 25</td></tr><tr><td>2026-06-18</td><td>2026-06-17</td><td>23 06 02 11 28 10 31 14 20</td><td>05 08 20 32 38</td><td>20</td><td>0 / 1 / 1 / 1</td><td>命中</td><td>20</td></tr><tr><td>2026-06-19</td><td>2026-06-18</td><td>39 07 18 24 34 37 03 27 30</td><td>17 23 33 35 39</td><td>39</td><td>1 / 1 / 1 / 2</td><td>命中</td><td>33 39</td></tr><tr><td>2026-06-21</td><td>2026-06-20</td><td>33 36 17 15 28 10 09 16 32</td><td>05 11 20 32 36</td><td>32 36</td><td>1 / 2 / 2 / 3</td><td>命中</td><td>20 32 36</td></tr><tr><td>2026-06-22</td><td>2026-06-21</td><td>18 35 37 25 30 21 01 13 27</td><td>01 05 11 16 24</td><td>01</td><td>0 / 1 / 1 / 1</td><td>命中</td><td>01</td></tr><tr><td>2026-06-23</td><td>2026-06-22</td><td>14 32 20 10 08 02 09 33 23</td><td>03 05 23 32 38</td><td>23 32</td><td>1 / 2 / 2 / 3</td><td>命中</td><td>23 32 38</td></tr><tr><td>2026-06-24</td><td>2026-06-23</td><td>11 21 26 33 35 01 25 32 17</td><td>02 03 12 19 36</td><td>-</td><td>0 / 0 / 0 / 2</td><td>未命中，列入檢討</td><td>03 36</td></tr><tr><td>2026-06-25</td><td>2026-06-24</td><td>38 09 28 19 20 02 05 10 06</td><td>03 06 18 27 35</td><td>06</td><td>0 / 1 / 1 / 2</td><td>命中</td><td>06 18</td></tr><tr><td>2026-06-26</td><td>2026-06-25</td><td>37 25 32 33 36 39 05 35 11</td><td>12 22 29 33 36</td><td>33 36</td><td>2 / 2 / 2 / 3</td><td>命中</td><td>12 33 36</td></tr><tr><td>2026-06-28</td><td>2026-06-27</td><td>10 28 30 32 25 11 33 21 14</td><td>03 15 25 27 34</td><td>25</td><td>1 / 1 / 1 / 1</td><td>命中</td><td>25</td></tr><tr><td>2026-06-29</td><td>2026-06-28</td><td>06 05 35 33 37 02 36 23 29</td><td>09 12 22 37 38</td><td>37</td><td>1 / 1 / 1 / 2</td><td>命中</td><td>12 37</td></tr><tr><td>2026-06-30</td><td>2026-06-29</td><td>08 10 39 24 30 27 20 18 38</td><td>11 17 28 35 36</td><td>-</td><td>0 / 0 / 0 / 2</td><td>未命中，列入檢討</td><td>17 28</td></tr></tbody></table></div></main>
+</body></html>

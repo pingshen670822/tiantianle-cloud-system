@@ -23,8 +23,13 @@
     th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
     th{background:#f1f5f9;}
     .num{font-size:20px;font-weight:900;color:#b91c1c;}
+    .month-chart{display:grid;gap:8px;min-width:760px;}
+    .chart-row{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}
+    .chart-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
+    .chart-track span{display:block;height:100%;background:#0f766e;border-radius:999px;}
+    .chart-date,.chart-score,.chart-hit{font-weight:800;}
     a{color:#0f766e;font-weight:800;}
-    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}.chart-row{grid-template-columns:1fr;gap:4px}}
   </style>
 </head><body><header>
   <h1>天天樂 下期預測</h1>
@@ -42,10 +47,6 @@
       </div>
       <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
       <p><strong>高機率信心牌：</strong>33</p>
-    </div>
-    <div class="band warn">
-      <h2>上期沿用守門</h2>
-      <table><thead><tr><th>項目</th><th>號碼 / 狀態</th><th>結果</th><th>說明</th></tr></thead><tbody><tr><td>守門狀態</td><td>上期前十五軟降權並重新驗證</td><td>硬性啟用</td><td>上期號碼不得直接沿用；連莊必須達標。</td></tr><tr><td>上期預測基準</td><td>-</td><td>-</td><td>用已結算上期預測比對，不用舊檔冒充下期</td></tr><tr><td>本期前九重疊</td><td>-</td><td>0/9</td><td>只允許達標連莊進前九</td></tr><tr><td>達標連莊</td><td>-</td><td>通過</td><td>分數、信心、穩定、交叉驗算均達標</td></tr><tr><td>未達標剔除</td><td>-</td><td>已擋下</td><td>未達標不得進入下期前九</td></tr><tr><td>前九替換</td><td>剔除 -</td><td>補入 -</td><td>每期開獎後重新運算</td></tr></tbody></table>
     </div>
     
     <div class="band singlebox">

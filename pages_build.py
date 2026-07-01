@@ -216,6 +216,7 @@ def prefer_chinese_links(html_text):
         'href="review.html"': 'href="上期未命中檢討.html"',
         'href="prediction-history.html"': 'href="預測歷史對比.html"',
         'href="tiantianle_prediction_history.html"': 'href="預測歷史對比.html"',
+        'href="monthly_summary.html"': 'href="每月總整理.html"',
         'href="reports/latest_battle_report.html"': 'href="reports/complete_report.html"',
         'href="reset.html': 'href="清除快取.html',
         'href="install.html': 'href="安裝手機版.html',
@@ -808,7 +809,7 @@ def build_home_page():
 body{{margin:0;font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f6f7fb;color:#111827}}
 header{{background:#0f172a;color:white;padding:22px 28px}}header h1{{margin:0 0 8px;font-size:28px}}header p{{margin:0;color:#cbd5e1}}
 main{{max-width:980px;margin:auto;padding:18px}}.band{{background:white;border:1px solid #e5e7eb;border-radius:8px;margin-top:14px;padding:16px;overflow-x:auto}}
-.tabs{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}}.tabs a{{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}}.tabs a.active{{background:#166534;color:white}}
+ .tabs{{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}}.tabs a{{display:block;text-align:center;padding:14px;border-radius:8px;background:#e5e7eb;color:#111827;font-weight:900;text-decoration:none}}.tabs a.active{{background:#166534;color:white}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}}.card{{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px}}.card h2{{margin:0 0 8px;font-size:15px;color:#475569}}.value{{font-size:22px;font-weight:900}}
 table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left}}th{{background:#f1f5f9}}
   .high-note{{border:3px solid #dc2626;background:#fff1f2;box-shadow:0 0 0 4px #fee2e2 inset}}.high-note h2{{color:#991b1b}}.small{{font-size:13px;color:#475569}}
@@ -827,9 +828,11 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <a class="active" href="首頁.html">{u('\\u9996\\u9801')}</a>
 <a href="下期預測.html">{u('\\u4e0b\\u671f\\u9810\\u6e2c')}</a>
 <a href="上期未命中檢討.html">{u('\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a>
+<a href="每月總整理.html">{u('\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a>
 </nav>
 <section class="band"><a class="primary" href="下期預測.html">{u('\\u67e5\\u770b\\u4e0b\\u671f\\u9810\\u6e2c')}</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">{u('\\u67e5\\u770b\\u4e0a\\u671f\\u672a\\u547d\\u4e2d\\u6aa2\\u8a0e')}</a></section>
+<section class="band"><a class="primary secondary" href="每月總整理.html">{u('\\u67e5\\u770b\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{u('\\u624b\\u6a5f\\u96f2\\u7aef\\u7db2\\u5740\\u5df2\\u8a2d\\u5b9a')}</p></section>
 {build_mobile_recalculation_block(data)}
@@ -933,7 +936,7 @@ def write_pwa_files():
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
     (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -1084,6 +1087,7 @@ def main():
         ],
         SITE_DIR / "reports" / "prediction.html": ["下期預測.html", "天天樂下期預測.html"],
         SITE_DIR / "reports" / "review.html": ["上期未命中檢討.html", "天天樂上期未命中檢討.html"],
+        SITE_DIR / "reports" / "monthly_summary.html": ["monthly_summary.html", "每月總整理.html", "六月總整理.html", "天天樂每月總整理.html"],
         SITE_DIR / "reports" / "latest_battle_report.md": ["最新戰報.md", "天天樂最新戰報.md"],
         SITE_DIR / "reports" / "tiantianle_prediction_history.html": ["預測歷史對比.html", "天天樂預測歷史對比.html"],
     }.items():
@@ -1100,6 +1104,14 @@ def main():
         "最新完整戰報.html",
     ]:
         copy_text(root_report_source, SITE_DIR / alias)
+    root_monthly_source = SITE_DIR / "reports" / "monthly_summary.html"
+    for alias in [
+        "monthly_summary.html",
+        "每月總整理.html",
+        "六月總整理.html",
+        "天天樂每月總整理.html",
+    ]:
+        copy_text(root_monthly_source, SITE_DIR / alias)
     version = build_version()
     manifest = {
         "name": u("\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u7368\\u7acb\\u7248"),
