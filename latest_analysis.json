@@ -1,8 +1,8 @@
 {
   "engine_version": "\u5929\u5929\u6a02\u6700\u65b0\u7248\u9435\u5f8b\u7b2c3\u7248_20260629",
   "industrial_engine_version": "industrial_v9_knn_phase_rebound_diagnosis",
-  "generated_at_taiwan": "2026-07-01T10:00:11+08:00",
-  "generated_at_california": "2026-06-30T19:00:11-07:00",
+  "generated_at_taiwan": "2026-07-02T07:10:30+08:00",
+  "generated_at_california": "2026-07-01T16:10:30-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11844,
@@ -1614,8 +1614,8 @@
     "recommendation_message": "\u672c\u671f\u6709\u9ad8\u4fe1\u5fc3\u5019\u9078\uff0c\u4f46\u6b63\u5f0f\u767c\u5e03\u9580\u6abb\u5c1a\u672a\u5168\u904e\uff1b\u6230\u5831\u53ea\u6a19\u793a\u9ad8\u4fe1\u5fc3\u89c0\u5bdf\uff0c\u4e0d\u5305\u88dd\u6210\u4fdd\u8b49\u3002"
   },
   "freshness": {
-    "california_today": "2026-06-30",
-    "california_time": "19:00:11",
+    "california_today": "2026-07-01",
+    "california_time": "16:10:30",
     "allowed_latest_draw_date": "2026-06-30",
     "age_days": 0,
     "status": "ok",
