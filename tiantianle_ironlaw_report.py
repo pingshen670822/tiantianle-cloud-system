@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import html
 import json
@@ -1880,6 +1880,28 @@ def compact_model_rows_tiantianle(analysis):
             data.get("top15_avg_hits", "-"),
             data.get("top10_edge_vs_random", "-"),
         ])
+    formula = ((analysis.get("industrial_engine") or {}).get("formula_engine") or {})
+    formula_bt = formula.get("backtest") or {}
+    formula_ensemble = formula_bt.get("ensemble") or {}
+    if formula:
+        rows.append([
+            "新增公式引擎",
+            f"{formula_bt.get('rounds', 0)} 期",
+            formula_ensemble.get("top5_avg_hits", "-"),
+            "-",
+            formula_ensemble.get("top9_avg_hits", "-"),
+            formula_ensemble.get("top9_edge_vs_random", "-"),
+        ])
+        for _, data in list((formula_bt.get("models") or {}).items())[:5]:
+            if isinstance(data, dict):
+                rows.append([
+                    zh_text(data.get("label", "公式模型")),
+                    f"{data.get('rounds', formula_bt.get('rounds', '-'))} 期",
+                    data.get("top5_avg_hits", "-"),
+                    "-",
+                    data.get("top9_avg_hits", "-"),
+                    data.get("top9_edge_vs_random", "-"),
+                ])
     return rows
 
 

@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 import os
 from datetime import datetime, timedelta
 from itertools import combinations
+from tiantianle_formula_engine import compute_formula_engine_analysis, blend_formula_into_candidates
 
 
 NUMBER_MIN = 1
@@ -19,6 +20,23 @@ POSITIVE_EDGE_CORE_FEATURES = (
     "similar_draw_knn",
     "omission_phase_rebound",
 )
+
+
+def realtime_timing_enabled():
+    return os.environ.get("TIANTIANLE_RUN_MODE") == "realtime"
+
+
+def timing_log(message):
+    if not realtime_timing_enabled():
+        return
+    try:
+        path = os.path.join(os.path.dirname(__file__), "reports", "model_timing.log")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(f"{stamp} 工業引擎 {message}\n")
+    except OSError:
+        pass
 
 
 def zone_label(number):
@@ -1248,6 +1266,17 @@ def practical_maturity_score(
 
 def adaptive_feature_weights(draws, review=None, rounds=360):
     base_weights = industrial_weights(review)
+    if realtime_timing_enabled():
+        return base_weights, {
+            "status": "realtime_fast_path",
+            "rounds": 0,
+            "method": "base_weights_with_failure_feedback_no_walk_forward",
+            "reason": "即時更新禁止跑重型權重回測，午後完整模式才執行深度權重校正。",
+            "top_boosted_features": [],
+            "top_penalized_features": [],
+            "base_weights": {name: round(value, 5) for name, value in base_weights.items()},
+            "calibrated_weights": {name: round(value, 5) for name, value in base_weights.items()},
+        }
     if len(draws) < 160:
         return base_weights, {
             "status": "insufficient_data",
@@ -3406,21 +3435,113 @@ def unlikely_backtest(draws, rounds=None, avoid_size=10):
     }
 
 
+def apply_recent_draw_hard_firewall(candidates, draws, formula_engine=None):
+    if not candidates or not draws:
+        return candidates, {"status": "skipped", "reason": "no_candidates_or_draws"}
+    latest_draw = draws[-1]
+    latest_numbers = {int(number) for number in latest_draw.get("numbers", [])}
+    repeat_firewall = (formula_engine or {}).get("repeat_firewall") or {}
+    formula_status = (formula_engine or {}).get("status")
+    formula_edge = float((((formula_engine or {}).get("backtest") or {}).get("ensemble") or {}).get("top9_edge_vs_random", -1.0) or -1.0)
+    repeat_allowed = {int(number) for number in repeat_firewall.get("repeat_allowed", [])}
+    if realtime_timing_enabled():
+        strict_allowed = set()
+    else:
+        strict_allowed = repeat_allowed if formula_status == "可升權" and formula_edge >= 0.08 else set()
+    adjusted = []
+    blocked = []
+    allowed = []
+    for item in candidates:
+        row = dict(item)
+        number = int(row["number"])
+        if number in latest_numbers and number not in strict_allowed:
+            row["_recent_firewall_blocked"] = True
+            row["score"] = round(float(row.get("score", 0.0) or 0.0) * 0.05, 6)
+            row["confidence_index"] = round(min(float(row.get("confidence_index", 0.0) or 0.0), 58.0), 3)
+            row["top9_core"] = False
+            reason = "剛開出號未通過連莊硬驗證，禁止進入九碼主推"
+            reasons = list(row.get("reasons") or [])
+            if reason not in reasons:
+                reasons.insert(0, reason)
+            row["reasons"] = reasons[:8]
+            row["recent_draw_firewall"] = {
+                "blocked": True,
+                "reason": reason,
+                "latest_draw_date": latest_draw.get("date"),
+            }
+            blocked.append(number)
+        elif number in latest_numbers:
+            row["_recent_firewall_blocked"] = False
+            row["recent_draw_firewall"] = {
+                "blocked": False,
+                "reason": "連莊通過公式正值與回測硬驗證",
+                "latest_draw_date": latest_draw.get("date"),
+            }
+            allowed.append(number)
+        else:
+            row["_recent_firewall_blocked"] = False
+        adjusted.append(row)
+    adjusted.sort(
+        key=lambda row: (
+            0 if row.get("_recent_firewall_blocked") else 1,
+            float(row.get("score", 0.0) or 0.0),
+            float(row.get("confidence_index", 0.0) or 0.0),
+            -int(row["number"]),
+        ),
+        reverse=True,
+    )
+    for rank, row in enumerate(adjusted, 1):
+        blocked_row = bool(row.pop("_recent_firewall_blocked", False))
+        row["rank"] = rank
+        row["top9_core"] = rank <= 9 and not blocked_row
+    return adjusted, {
+        "status": "enforced",
+        "policy": "即時版上一期剛開出號一律不得進入九碼主推；完整深算版也必須通過更高正值回測才准連莊。",
+        "latest_draw_date": latest_draw.get("date"),
+        "latest_numbers": sorted(latest_numbers),
+        "blocked_numbers": sorted(blocked),
+        "allowed_numbers": sorted(allowed),
+        "formula_status": formula_status,
+        "formula_edge": round(formula_edge, 4),
+    }
+
+
 def compute_industrial_analysis(draws, review=None):
+    timing_log("開始")
+    timing_log("自適應權重開始")
     weights, weight_calibration = adaptive_feature_weights(draws, review)
+    timing_log("主評分開始")
     base_candidates, weights = score_numbers(draws, review, weights_override=weights)
+    timing_log("公式引擎開始")
+    formula_engine = compute_formula_engine_analysis(draws, review, base_candidates)
+    timing_log("公式融合開始")
+    base_candidates = blend_formula_into_candidates(base_candidates, formula_engine)
+    timing_log("穩定共識開始")
     candidates, stability = stability_consensus(draws, base_candidates, review)
+    timing_log("九碼前置校正開始")
     candidates, top9_frontload_audit = top9_frontload_candidates(candidates, review)
+    timing_log("剛開出號硬防火牆開始")
+    candidates, recent_draw_firewall = apply_recent_draw_hard_firewall(candidates, draws, formula_engine)
+    timing_log("強牌治理開始")
     pack_governance = pack_recent_governance(draws, weights_override=weights)
+    timing_log("精算小牌競賽開始")
     precision_tournament = precision_model_tournament(draws, review, weights_override=weights)
+    timing_log("精算小牌組合開始")
     precision_micro = precision_micro_models(candidates, review, pack_governance, precision_tournament)
+    timing_log("強牌組合開始")
     packs = strong_packs(candidates, review, pack_governance)
     packs = attach_precision_micro_packs(packs, precision_micro, candidates)
+    timing_log("成熟度開始")
     maturity = practical_maturity_summary(candidates)
+    timing_log("主回測開始")
     audit = industrial_backtest(draws, weights_override=weights)
+    timing_log("進階模型摘要開始")
     advanced_models = advanced_model_summary(draws)
+    timing_log("進階模型回測開始")
     advanced_backtest = advanced_model_backtest(draws)
+    timing_log("相依性驗證開始")
     _, validated_links = validated_dependency_scores(draws)
+    timing_log("延遲相依性開始")
     lag_profile = lag_dependency_profile(draws)
     edge = audit.get("top10_avg_hits", 0) - audit.get("random_top10_expectation", DRAW_SIZE * 10 / NUMBER_MAX)
     rolling = audit.get("rolling_windows", {})
@@ -3452,9 +3573,13 @@ def compute_industrial_analysis(draws, review=None):
         item["number"] for item in candidates
         if item.get("previous_prediction_guard") and item["previous_prediction_guard"].get("passed")
     )
-    unlikely = unlikely_number_analysis(draws, candidates, stability, review)
+    formula_avoid = (formula_engine.get("avoid_analysis") or {}) if formula_engine else {}
+    timing_log("低機率分析開始")
+    unlikely = formula_avoid if formula_avoid.get("numbers") else unlikely_number_analysis(draws, candidates, stability, review)
+    timing_log("晉級稽核開始")
     promotion_audit = top10_promotion_audit(candidates, review)
     audit_summary = model_audit(audit, review)
+    timing_log("落差診斷開始")
     gap_diagnosis = prediction_gap_diagnosis(
         draws,
         candidates,
@@ -3465,8 +3590,9 @@ def compute_industrial_analysis(draws, review=None):
         validated_links,
         review,
     )
+    timing_log("完成")
     return {
-        "engine_version": "industrial_v9_knn_phase_rebound_diagnosis",
+        "engine_version": "industrial_v13_realtime_no_repeat_top9_firewall_20260703",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -3483,6 +3609,7 @@ def compute_industrial_analysis(draws, review=None):
         "stability_consensus": stability,
         "adaptive_weight_calibration": weight_calibration,
         "top9_frontload_audit": top9_frontload_audit,
+        "recent_draw_firewall": recent_draw_firewall,
         "top10_promotion_audit": promotion_audit,
         "dependency_analysis": {
             "method": "three_fold_conditional_lift_with_fdr",
@@ -3515,6 +3642,7 @@ def compute_industrial_analysis(draws, review=None):
         "backtest": audit,
         "advanced_models": advanced_models,
         "advanced_model_backtest": advanced_backtest,
+        "formula_engine": formula_engine,
         "unlikely_number_analysis": unlikely,
         "unlikely_backtest": unlikely_backtest(draws),
         "precision_governor": pack_governance,

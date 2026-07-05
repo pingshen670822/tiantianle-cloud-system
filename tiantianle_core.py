@@ -23,6 +23,22 @@ WINDOWS = [5, 10, 20, 50, 100]
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
 
 
+def realtime_timing_enabled():
+    return os.environ.get("TIANTIANLE_RUN_MODE") == "realtime"
+
+
+def timing_log(message):
+    if not realtime_timing_enabled():
+        return
+    try:
+        REPORT_DIR.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with (REPORT_DIR / "model_timing.log").open("a", encoding="utf-8") as handle:
+            handle.write(f"{stamp} 核心引擎 {message}\n")
+    except OSError:
+        pass
+
+
 def taipei_now():
     return datetime.now(TAIPEI_TZ).replace(tzinfo=None)
 
@@ -1202,10 +1218,15 @@ def _tiantianle_normalize_pack_keys(packs):
 def compute_tiantianle_core_analysis(draws, review=None, industrial=None):
     if len(draws) < 100:
         raise RuntimeError("history_not_enough_for_full_model")
+    timing_log("開始")
+    timing_log("核心回測開始")
     bt = backtest(draws)
     review = review or {}
+    timing_log("權重校正開始")
     weights = apply_failure_adjustment(calibrated_weights(bt), review)
+    timing_log("工業引擎接入開始")
     industrial = industrial or compute_industrial_analysis(draws, review)
+    timing_log("航太驗證開始")
     aerospace = compute_aerospace_assurance(draws, industrial)
     if aerospace["release_assurance"]["status"] == "blocked":
         industrial.setdefault("release_gate", {})["status"] = "aerospace_blocked"
@@ -1213,7 +1234,9 @@ def compute_tiantianle_core_analysis(draws, review=None, industrial=None):
         industrial.setdefault("release_gate", {})["aerospace_status"] = "watch_only"
     official_candidates = industrial.get("qualified_candidates", industrial["candidates"])
     strong_packs = _tiantianle_normalize_pack_keys(industrial.get("strong_prediction_packs", {}))
+    timing_log("雙階段組牌開始")
     two_stage_model = build_two_stage_group_model(official_candidates)
+    timing_log("雙階段回測開始")
     two_stage_backtest = backtest_two_stage_group_model(draws)
     two_stage_model["validation_backtest"] = two_stage_backtest
     if not two_stage_backtest.get("release_allowed"):
@@ -1221,6 +1244,7 @@ def compute_tiantianle_core_analysis(draws, review=None, industrial=None):
         two_stage_model["final_numbers"] = []
         two_stage_model["final_count"] = 0
         two_stage_model["status"] = "withheld_backtest_not_passed"
+    timing_log("完成")
     return {
         "engine_version": "tiantianle_daily_core_from_20260617_current_precision_stability_v35",
         "model_family": "daily_5_39_current_precision_stability",

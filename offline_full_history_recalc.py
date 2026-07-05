@@ -1,9 +1,10 @@
-﻿import importlib.util
+import importlib.util
 import json
 import os
 import sqlite3
 import sys
 from collections import Counter
+from tiantianle_formula_engine import compute_formula_engine_analysis, blend_formula_into_candidates
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -335,6 +336,8 @@ def fast_compute_industrial_analysis(draws, review=None):
     raw_candidates = mod.score_numbers(draws)
     weights = {}
     candidates = _candidate_enrich(draws, raw_candidates)
+    formula_engine = compute_formula_engine_analysis(draws, None, candidates, rounds=30)
+    candidates = blend_formula_into_candidates(candidates, formula_engine)
     candidates, previous_guard = _apply_no_reuse_governor(draws, candidates)
     top_numbers = [int(item['number']) for item in candidates]
     packs = _fast_strong_packs(candidates)
@@ -362,8 +365,10 @@ def fast_compute_industrial_analysis(draws, review=None):
         key: {'rounds': 30, 'passed': False, 'research_passed': True, 'pass_rate': 0, 'avg_hits': 0, 'zero_hit_rate': 0, 'windows': {'30': {'rounds': 30}}}
         for key in ['strong_single', 'two_hit_one', 'three_hit_two', 'five_hit_two', 'nine_hit_three']
     }
+    formula_avoid = (formula_engine.get('avoid_analysis') or {}) if formula_engine else {}
     return {
-        'engine_version': 'industrial_fast_daily_full_history_v20260630_strict_no_reuse',
+        'engine_version': 'industrial_fast_daily_formula_v20260702_strict_no_reuse',
+        'formula_engine': formula_engine,
         'fast_daily_mode': True,
         'leakage_guard': True,
         'candidates': candidates,
@@ -377,7 +382,7 @@ def fast_compute_industrial_analysis(draws, review=None):
         'backtest': bt,
         'advanced_models': {'warning': '每日快速版保留全歷史排序；深度模型背景執行', 'consensus_top12': top_numbers[:12], 'models': {}},
         'advanced_model_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
-        'unlikely_number_analysis': {'numbers': avoid_rows},
+        'unlikely_number_analysis': formula_avoid if formula_avoid.get('numbers') else {'numbers': avoid_rows},
         'unlikely_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': 30, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
         'precision_model_tournament': {'status': 'deferred_fast_daily', 'rounds': 0, 'selected_models': {}},
