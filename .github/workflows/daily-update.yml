@@ -155,7 +155,7 @@ jobs:
           problems = []
           for item in required:
               if not (root / item).exists():
-                  problems.append(f"缺少必要檔案：{item}")
+                  problems.append(f"\u7f3a\u5c11\u5fc5\u8981\u6a94\u6848\uff1a{item}")
 
           analysis_path = root / "reports/latest_analysis.json"
           site_analysis_path = root / "site/latest_analysis.json"
@@ -176,18 +176,18 @@ jobs:
           workflow_mode = os.environ.get("TIANTIANLE_RUN_MODE") or analysis.get("run_mode") or ""
 
           if not latest or not target:
-              problems.append("最新開獎日期或下期預測日期空白")
+              problems.append("\u6700\u65b0\u958b\u734e\u65e5\u671f\u6216\u4e0b\u671f\u9810\u6e2c\u65e5\u671f\u7a7a\u767d")
           if site_latest and latest and site_latest != latest:
-              problems.append(f"手機資料與主資料不同步：主資料 {latest}，手機 {site_latest}")
+              problems.append(f"\u624b\u6a5f\u8cc7\u6599\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {latest}\uff0c\u624b\u6a5f {site_latest}")
           if site_target and target and site_target != target:
-              problems.append(f"手機預測期別與主資料不同步：主資料 {target}，手機 {site_target}")
+              problems.append(f"\u624b\u6a5f\u9810\u6e2c\u671f\u5225\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {target}\uff0c\u624b\u6a5f {site_target}")
           if "industrial_v13" not in engine:
-              problems.append(f"雲端主程式不是最新版即時防重覆引擎：{engine}")
+              problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u5373\u6642\u9632\u91cd\u8986\u5f15\u64ce\uff1a{engine}")
           if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
-              problems.append(f"前九預測格式錯誤：{top9}")
+              problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
           repeated = sorted(set(top9) & set(latest_nums))
           if repeated and workflow_mode.lower() == "realtime":
-              problems.append(f"即時模式禁止上期號碼直接混入前九：{repeated}")
+              problems.append(f"\u5373\u6642\u6a21\u5f0f\u7981\u6b62\u4e0a\u671f\u865f\u78bc\u76f4\u63a5\u6df7\u5165\u524d\u4e5d\uff1a{repeated}")
 
           for csv_name in ["data/california_fantasy5.csv", "fantasy5_full_history.csv", "data/fantasy5_full_history.csv"]:
               csv_path = root / csv_name
@@ -197,30 +197,36 @@ jobs:
                   rows = list(csv.DictReader(handle))
               last_date = rows[-1].get("draw_date") if rows else ""
               if len(rows) < 10000:
-                  problems.append(f"全歷史資料筆數不足：{csv_name} 只有 {len(rows)} 筆")
+                  problems.append(f"\u5168\u6b77\u53f2\u8cc7\u6599\u7b46\u6578\u4e0d\u8db3\uff1a{csv_name} \u53ea\u6709 {len(rows)} \u7b46")
               if latest and last_date != latest:
-                  problems.append(f"全歷史資料未更新到最新開獎：{csv_name} 最後日期 {last_date}，最新 {latest}")
+                  problems.append(f"\u5168\u6b77\u53f2\u8cc7\u6599\u672a\u66f4\u65b0\u5230\u6700\u65b0\u958b\u734e\uff1a{csv_name} \u6700\u5f8c\u65e5\u671f {last_date}\uff0c\u6700\u65b0 {latest}")
 
+          label_unmarked = "\u672a\u6a19\u793a"
+          label_missing = "\u672a\u53d6\u5f97"
+          label_not_generated = "\u672a\u7522\u751f"
+          label_pass = "\u901a\u904e"
+          label_fail = "\u5931\u6557"
+          phone_word = "\u624b\u6a5f"
           audit_lines = [
-              "# 天天樂每日自動更新稽核",
+              "# \u5929\u5929\u6a02\u6bcf\u65e5\u81ea\u52d5\u66f4\u65b0\u7a3d\u6838",
               "",
-              f"- 稽核時間：{datetime.now(ZoneInfo('Asia/Taipei')):%Y-%m-%d %H:%M:%S} 台灣時間",
-              f"- 執行模式：{workflow_mode or '未標示'}",
-              f"- 最新開獎日期：{latest or '未取得'}",
-              f"- 下期預測日期：{target or '未取得'}",
-              f"- 最新引擎：{engine or '未取得'}",
-              f"- 前九預測：{' '.join(f'{n:02d}' for n in top9) if top9 else '未產生'}",
-              f"- 手機同步：{'通過' if not any('手機' in p for p in problems) else '失敗'}",
-              f"- 全系統檢查：{'通過' if not problems else '失敗'}",
+              f"- \u7a3d\u6838\u6642\u9593\uff1a{datetime.now(ZoneInfo('Asia/Taipei')):%Y-%m-%d %H:%M:%S} \u53f0\u7063\u6642\u9593",
+              f"- \u57f7\u884c\u6a21\u5f0f\uff1a{workflow_mode or label_unmarked}",
+              f"- \u6700\u65b0\u958b\u734e\u65e5\u671f\uff1a{latest or label_missing}",
+              f"- \u4e0b\u671f\u9810\u6e2c\u65e5\u671f\uff1a{target or label_missing}",
+              f"- \u6700\u65b0\u5f15\u64ce\uff1a{engine or label_missing}",
+              f"- \u524d\u4e5d\u9810\u6e2c\uff1a{' '.join(f'{n:02d}' for n in top9) if top9 else label_not_generated}",
+              f"- \u624b\u6a5f\u540c\u6b65\uff1a{label_pass if not any(phone_word in p for p in problems) else label_fail}",
+              f"- \u5168\u7cfb\u7d71\u6aa2\u67e5\uff1a{label_pass if not problems else label_fail}",
           ]
           if problems:
               audit_lines.append("")
-              audit_lines.append("## 必須修正")
+              audit_lines.append("## \u5fc5\u9808\u4fee\u6b63")
               audit_lines.extend(f"- {problem}" for problem in problems)
           else:
               audit_lines.append("")
-              audit_lines.append("## 結論")
-              audit_lines.append("- 發布前稽核通過，允許同步到手機雲端版。")
+              audit_lines.append("## \u7d50\u8ad6")
+              audit_lines.append("- \u767c\u5e03\u524d\u7a3d\u6838\u901a\u904e\uff0c\u5141\u8a31\u540c\u6b65\u5230\u624b\u6a5f\u96f2\u7aef\u7248\u3002")
 
           (root / "reports" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
           (root / "site" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
