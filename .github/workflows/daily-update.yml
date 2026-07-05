@@ -42,20 +42,41 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Select automatic update mode
+        shell: bash
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 5 * * *" ]; then
+            echo "TIANTIANLE_RUN_MODE=deep" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_CORE_BACKTEST_ROUNDS=120" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_PACK_GOVERNANCE_ROUNDS=80" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS=120" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS=120" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_ADVANCED_BACKTEST_ROUNDS=100" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS=100" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_FORMULA_BACKTEST_ROUNDS=120" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_SHORT=60" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_MID=120" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_LONG=240" >> "$GITHUB_ENV"
+            echo "13:00 Taiwan deep recalculation mode selected"
+          else
+            echo "TIANTIANLE_RUN_MODE=realtime" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_CORE_BACKTEST_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_PACK_GOVERNANCE_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_ADVANCED_BACKTEST_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_FORMULA_BACKTEST_ROUNDS=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_SHORT=30" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_MID=60" >> "$GITHUB_ENV"
+            echo "TIANTIANLE_GROUP_BACKTEST_LONG=120" >> "$GITHUB_ENV"
+            echo "post-draw realtime update mode selected"
+          fi
       - name: Update Tiantianle data and reports with post-draw retry
-        env:
-          TIANTIANLE_CORE_BACKTEST_ROUNDS: "30"
-          TIANTIANLE_PACK_GOVERNANCE_ROUNDS: "30"
-          TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS: "30"
-          TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS: "30"
-          TIANTIANLE_ADVANCED_BACKTEST_ROUNDS: "30"
-          TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS: "30"
-          TIANTIANLE_GROUP_BACKTEST_SHORT: "30"
-          TIANTIANLE_GROUP_BACKTEST_MID: "60"
-          TIANTIANLE_GROUP_BACKTEST_LONG: "120"
         shell: bash
         run: |
           set -e
+          echo "mode=${TIANTIANLE_RUN_MODE}"
           for attempt in $(seq 1 10); do
             echo "post-draw update attempt ${attempt}/10"
             timeout 180 python "美國加州天天樂_20260618_第1版.py" || python offline_full_history_recalc.py
@@ -98,6 +119,115 @@ jobs:
             fi
             sleep 60
           done
+      - name: Full system audit before publish
+        shell: bash
+        run: |
+          set -e
+          python -m py_compile \
+            industrial_engine.py \
+            tiantianle_formula_engine.py \
+            tiantianle_core.py \
+            pages_build.py \
+            tiantianle_ironlaw_report.py \
+            "美國加州天天樂_20260618_第1版.py"
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          import pathlib
+          import sys
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          root = pathlib.Path(".")
+          required = [
+              "fantasy5_full_history.csv",
+              "data/california_fantasy5.csv",
+              "data/fantasy5_full_history.csv",
+              "reports/latest_analysis.json",
+              "reports/latest_battle_report.html",
+              "reports/prediction.html",
+              "reports/review.html",
+              "site/index.html",
+              "site/latest_analysis.json",
+              "site/reports/latest_battle_report.html",
+          ]
+          problems = []
+          for item in required:
+              if not (root / item).exists():
+                  problems.append(f"缺少必要檔案：{item}")
+
+          analysis_path = root / "reports/latest_analysis.json"
+          site_analysis_path = root / "site/latest_analysis.json"
+          analysis = {}
+          site_analysis = {}
+          if analysis_path.exists():
+              analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
+          if site_analysis_path.exists():
+              site_analysis = json.loads(site_analysis_path.read_text(encoding="utf-8"))
+
+          latest = (analysis.get("latest_draw") or {}).get("draw_date") or (analysis.get("freshness") or {}).get("latest_draw_date")
+          target = analysis.get("target_draw_date")
+          site_latest = (site_analysis.get("latest_draw") or {}).get("draw_date") or (site_analysis.get("freshness") or {}).get("latest_draw_date")
+          site_target = site_analysis.get("target_draw_date")
+          engine = (analysis.get("industrial_engine") or {}).get("engine_version", "")
+          top9 = [int(x) for x in (analysis.get("prediction") or {}).get("top9", [])]
+          latest_nums = [int(x) for x in (analysis.get("latest_draw") or {}).get("numbers", [])]
+          workflow_mode = os.environ.get("TIANTIANLE_RUN_MODE") or analysis.get("run_mode") or ""
+
+          if not latest or not target:
+              problems.append("最新開獎日期或下期預測日期空白")
+          if site_latest and latest and site_latest != latest:
+              problems.append(f"手機資料與主資料不同步：主資料 {latest}，手機 {site_latest}")
+          if site_target and target and site_target != target:
+              problems.append(f"手機預測期別與主資料不同步：主資料 {target}，手機 {site_target}")
+          if "industrial_v13" not in engine:
+              problems.append(f"雲端主程式不是最新版即時防重覆引擎：{engine}")
+          if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
+              problems.append(f"前九預測格式錯誤：{top9}")
+          repeated = sorted(set(top9) & set(latest_nums))
+          if repeated and workflow_mode.lower() == "realtime":
+              problems.append(f"即時模式禁止上期號碼直接混入前九：{repeated}")
+
+          for csv_name in ["data/california_fantasy5.csv", "fantasy5_full_history.csv", "data/fantasy5_full_history.csv"]:
+              csv_path = root / csv_name
+              if not csv_path.exists():
+                  continue
+              with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+                  rows = list(csv.DictReader(handle))
+              last_date = rows[-1].get("draw_date") if rows else ""
+              if len(rows) < 10000:
+                  problems.append(f"全歷史資料筆數不足：{csv_name} 只有 {len(rows)} 筆")
+              if latest and last_date != latest:
+                  problems.append(f"全歷史資料未更新到最新開獎：{csv_name} 最後日期 {last_date}，最新 {latest}")
+
+          audit_lines = [
+              "# 天天樂每日自動更新稽核",
+              "",
+              f"- 稽核時間：{datetime.now(ZoneInfo('Asia/Taipei')):%Y-%m-%d %H:%M:%S} 台灣時間",
+              f"- 執行模式：{workflow_mode or '未標示'}",
+              f"- 最新開獎日期：{latest or '未取得'}",
+              f"- 下期預測日期：{target or '未取得'}",
+              f"- 最新引擎：{engine or '未取得'}",
+              f"- 前九預測：{' '.join(f'{n:02d}' for n in top9) if top9 else '未產生'}",
+              f"- 手機同步：{'通過' if not any('手機' in p for p in problems) else '失敗'}",
+              f"- 全系統檢查：{'通過' if not problems else '失敗'}",
+          ]
+          if problems:
+              audit_lines.append("")
+              audit_lines.append("## 必須修正")
+              audit_lines.extend(f"- {problem}" for problem in problems)
+          else:
+              audit_lines.append("")
+              audit_lines.append("## 結論")
+              audit_lines.append("- 發布前稽核通過，允許同步到手機雲端版。")
+
+          (root / "reports" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
+          (root / "site" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
+          if problems:
+              print("\n".join(problems))
+              sys.exit(1)
+          PY
       - name: Commit updated data
         run: |
           git config user.name "tiantianle automation"

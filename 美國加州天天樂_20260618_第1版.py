@@ -31,6 +31,10 @@ VALIDATION_DIR = BASE_DIR / "validation_sources"
 CACHE_DIR = DATA_DIR / "latest_cache"
 DB_PATH = DATA_DIR / "california_fantasy5.sqlite"
 CSV_PATH = DATA_DIR / "california_fantasy5.csv"
+LEGACY_FULL_HISTORY_PATHS = [
+    BASE_DIR / "fantasy5_full_history.csv",
+    DATA_DIR / "fantasy5_full_history.csv",
+]
 ANALYSIS_JSON = REPORT_DIR / "latest_analysis.json"
 BATTLE_MD = REPORT_DIR / "latest_battle_report.md"
 BATTLE_HTML = REPORT_DIR / "latest_battle_report.html"
@@ -1065,6 +1069,24 @@ def export_csv(conn):
         writer = csv.writer(handle)
         writer.writerow(["draw_date", "n1", "n2", "n3", "n4", "n5", "source"])
         writer.writerows(rows)
+    for path in LEGACY_FULL_HISTORY_PATHS:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = path.with_name(f"{path.name}.tmp")
+        try:
+            with temp_path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["local_index", "draw_no", "draw_date", "n1", "n2", "n3", "n4", "n5", "source"])
+                for index, row in enumerate(rows, start=1):
+                    writer.writerow([index, index, row[0], row[1], row[2], row[3], row[4], row[5], row[6] or ""])
+            if path.exists():
+                path.unlink()
+            temp_path.replace(path)
+        except OSError as exc:
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+            log(f"legacy full history export skipped: {path.name}: {exc}")
 
 
 def frequency(draws):
