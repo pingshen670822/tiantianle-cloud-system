@@ -244,4 +244,35 @@ jobs:
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
+        continue-on-error: true
+      - name: Fallback publish to gh-pages branch
+        if: steps.deployment.outcome != 'success'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          echo "Official Pages deployment failed; using gh-pages branch fallback"
+          publish_dir="$(mktemp -d)"
+          cp -a site/. "$publish_dir/"
+          mkdir -p "$publish_dir/data" "$publish_dir/reports"
+          cp -a data/. "$publish_dir/data/"
+          cp -a reports/. "$publish_dir/reports/"
+          touch "$publish_dir/.nojekyll"
+          cd "$publish_dir"
+          git init
+          git checkout -B gh-pages
+          git config user.name "tiantianle automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add .
+          git commit -m "Fallback publish Tiantianle mobile site"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin gh-pages
+      - name: Confirm mobile deployment path
+        shell: bash
+        run: |
+          if [ "${{ steps.deployment.outcome }}" = "success" ]; then
+            echo "Official GitHub Pages deployment succeeded"
+          else
+            echo "Fallback gh-pages branch deployment succeeded"
+          fi
