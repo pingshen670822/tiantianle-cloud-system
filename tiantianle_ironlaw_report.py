@@ -1839,12 +1839,17 @@ def compact_review_html_tiantianle(settled):
     if not settled:
         return "<p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>"
     actual = settled.get("actual_numbers") or []
-    misses = [number for number in settled.get("top15", []) if number not in actual]
+    candidates = settled.get("candidate_numbers") or settled.get("top15") or []
+    top5 = settled.get("top5") or candidates[:5]
+    top10 = settled.get("top10") or candidates[:10]
+    top15 = settled.get("top15") or candidates[:15]
+    misses = [number for number in top15 if number not in actual]
     hit_summary = f"{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}"
     summary_rows = [
         ["實際開獎", fmt_numbers(actual)],
         ["前五 / 前十 / 前十五", hit_summary],
-        ["前十命中號", mark_numbers(settled.get("top10", []), actual)],
+        ["前五預測", mark_numbers(top5, actual)],
+        ["前十命中號", mark_numbers(top10, actual)],
         ["前十五未中號", fmt_numbers(misses)],
     ]
     rows = []
@@ -1853,12 +1858,107 @@ def compact_review_html_tiantianle(settled):
             zh_text(value.get("name") or key),
             fmt_numbers(value.get("numbers", [])),
             value.get("hits", "-"),
+            fmt_numbers(value.get("missed_numbers", [])) or "-",
             "達標" if value.get("passed") else "未達標",
         ])
     return (
         f"<p><strong>已結算：上期預測檢討：{esc(settled.get('based_on_date'))} 預測到 {esc(settled.get('actual_date'))} 開獎</strong></p>"
         f'{table(["項目", "結果"], summary_rows)}'
-        f'<h3>強牌檢討</h3>{table(["類型", "號碼", "命中", "結果"], rows, "沒有強牌檢討")}'
+        f'<h3>強牌檢討</h3>{table(["類型", "號碼", "命中", "未中號", "結果"], rows, "沒有強牌檢討")}'
+    )
+
+
+def compact_failure_data_html_tiantianle(analysis):
+    review = analysis.get("failure_review") or {}
+    settled = review.get("last_settled") or {}
+    if not review.get("has_review") and not settled:
+        return '<div class="band"><h2>未命中檢討數據</h2><p>目前沒有已結算資料；開獎後才建立檢討表。</p></div>'
+    actual = settled.get("actual_numbers") or []
+    candidates = settled.get("candidate_numbers") or []
+    top9 = candidates[:9]
+    top10 = candidates[:10]
+    top15 = candidates[:15]
+    top9_hits = [number for number in top9 if number in actual]
+    top9_misses = [number for number in top9 if number not in actual]
+    top15_misses = [number for number in top15 if number not in actual]
+    monthly = review.get("monthly_review") or {}
+    rolling = review.get("rolling_summary") or {}
+    recent_rows = []
+    for item in (review.get("recent_settled") or [])[:5]:
+        recent_actual = item.get("actual_numbers") or []
+        recent_candidates = item.get("candidate_numbers") or []
+        recent_top9 = recent_candidates[:9]
+        recent_hits = [number for number in recent_top9 if number in recent_actual]
+        recent_misses = [number for number in recent_top9 if number not in recent_actual]
+        recent_rows.append([
+            item.get("actual_date", "-"),
+            fmt_numbers(recent_top9) or "-",
+            fmt_numbers(recent_actual) or "-",
+            fmt_numbers(recent_hits) or "-",
+            fmt_numbers(recent_misses) or "-",
+            f"{item.get('top5_hits', '-')}/{item.get('top10_hits', '-')}/{item.get('top15_hits', '-')}",
+        ])
+    pack_rows = []
+    for key, value in (settled.get("strong_pack_hits") or {}).items():
+        pack_rows.append([
+            zh_text(value.get("name") or key),
+            fmt_numbers(value.get("numbers", [])) or "-",
+            value.get("hits", "-"),
+            value.get("hit_goal", "-"),
+            fmt_numbers(value.get("missed_numbers", [])) or "-",
+            "達標" if value.get("passed") else "未達標",
+        ])
+    monthly_pack_rows = []
+    for key, value in (monthly.get("pack_summary") or {}).items():
+        monthly_pack_rows.append([
+            zh_text(key),
+            value.get("rounds", "-"),
+            compact_decimal(value.get("pass_rate", "-"), 3),
+            compact_decimal(value.get("avg_hits", "-"), 3),
+            compact_decimal(value.get("zero_hit_rate", "-"), 3),
+            compact_status(value.get("status", "-")),
+        ])
+    summary_rows = [
+        ["已結算期別", f"{settled.get('based_on_date', '-')} 預測到 {settled.get('actual_date', '-')}"],
+        ["實際開獎", fmt_numbers(actual) or "-"],
+        ["前九命中", f"{len(top9_hits)}：{fmt_numbers(top9_hits) or '-'}"],
+        ["前九未中", fmt_numbers(top9_misses) or "-"],
+        ["前十五未中", fmt_numbers(top15_misses) or "-"],
+        ["檢討嚴重度", zh_text(review.get("severity", "-"))],
+    ]
+    rolling_rows = [
+        ["近五期樣本", rolling.get("sample_size", "-")],
+        ["前五/前十/前十五平均命中", f"{rolling.get('avg_top5_hits', '-')} / {rolling.get('avg_top10_hits', '-')} / {rolling.get('avg_top15_hits', '-')}"],
+        ["前十零命中/弱命中期數", f"{rolling.get('zero_top10_count', '-')} / {rolling.get('weak_top10_count', '-')}"],
+        ["滾動失誤號", fmt_numbers(review.get("rolling_failed_numbers", [])) or "-"],
+        ["滾動上期號", fmt_numbers(review.get("rolling_previous_numbers", [])[:20]) or "-"],
+        ["弱來源", " / ".join(zh_text(item) for item in (review.get("rolling_weak_reasons") or [])[:8]) or "-"],
+    ]
+    monthly_rows = [
+        ["月份", monthly.get("month", "-")],
+        ["結算期數", monthly.get("sample_size", "-")],
+        ["前五/前十/前十五平均命中", f"{monthly.get('avg_top5_hits', '-')} / {monthly.get('avg_top10_hits', '-')} / {monthly.get('avg_top15_hits', '-')}"],
+        ["月內漏開真號", fmt_numbers([item.get("number") for item in (monthly.get("monthly_missed_actual_numbers") or [])[:12]]) or "-"],
+        ["月內後段命中號", fmt_numbers([item.get("number") for item in (monthly.get("monthly_late_hit_numbers") or [])[:12]]) or "-"],
+    ]
+    action_rows = [["已套用修正", zh_text(action)] for action in (review.get("actions") or [])[:8]]
+    return (
+        '<div class="band warn"><h2>未命中檢討數據</h2>'
+        '<p>本區只放已結算期的命中與未命中數據，不混入下期預測。</p>'
+        f'{table(["項目", "數據"], summary_rows)}'
+        '<h3>強牌未達標明細</h3>'
+        f'{table(["牌組", "預測號", "命中", "目標", "未中號", "結果"], pack_rows, "沒有強牌結算資料")}'
+        '<h3>近五期未命中對照</h3>'
+        f'{table(["開獎日", "前九預測", "實際開獎", "命中號", "未中號", "前五/前十/前十五"], recent_rows, "目前沒有近五期結算資料")}'
+        '<h3>滾動式修正數據</h3>'
+        f'{table(["項目", "數據"], rolling_rows)}'
+        '<h3>本月檢討數據</h3>'
+        f'{table(["項目", "數據"], monthly_rows)}'
+        '<h3>已套用修正</h3>'
+        f'{table(["類型", "內容"], action_rows, "目前沒有修正動作")}'
+        '<h3>本月強牌達標率</h3>'
+        f'{table(["牌組", "期數", "達標率", "平均命中", "零命中率", "狀態"], monthly_pack_rows, "目前沒有月強牌統計")}'
+        '</div>'
     )
 
 
@@ -2230,6 +2330,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     count = analysis.get("draw_count", "-")
     status_text = compact_status(freshness.get("status", "ok"))
     review_html = compact_review_html_tiantianle(settled)
+    failure_data_html = compact_failure_data_html_tiantianle(analysis)
     low_review_html = compact_low_review_html_tiantianle(settled)
     low_rows = compact_low_summary_rows_tiantianle(analysis)
     dual_track_html = compact_dual_track_html_tiantianle(analysis, settled, snapshots)
@@ -2331,6 +2432,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
   </section>
   <section id="review" class="panel">
+    {failure_data_html}
     <div class="band warn">
       <h2>上期沿用守門</h2>
       {table(["項目", "號碼 / 狀態", "結果", "說明"], compact_no_reuse_guard_rows_tiantianle(analysis))}
