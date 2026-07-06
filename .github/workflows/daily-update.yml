@@ -244,9 +244,19 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Prepare public mobile package
+        shell: bash
+        run: |
+          set -e
+          rm -rf public_site
+          mkdir -p public_site/data public_site/reports
+          cp -a site/. public_site/
+          cp -a data/. public_site/data/
+          cp -a reports/. public_site/reports/
+          touch public_site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: public_site
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
@@ -260,10 +270,7 @@ jobs:
           set -e
           echo "Official Pages deployment failed; using gh-pages branch fallback"
           publish_dir="$(mktemp -d)"
-          cp -a site/. "$publish_dir/"
-          mkdir -p "$publish_dir/data" "$publish_dir/reports"
-          cp -a data/. "$publish_dir/data/"
-          cp -a reports/. "$publish_dir/reports/"
+          cp -a public_site/. "$publish_dir/"
           touch "$publish_dir/.nojekyll"
           cd "$publish_dir"
           git init
