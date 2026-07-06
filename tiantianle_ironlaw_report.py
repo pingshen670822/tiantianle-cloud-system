@@ -1883,6 +1883,7 @@ def compact_failure_data_html_tiantianle(analysis):
     top15_misses = [number for number in top15 if number not in actual]
     monthly = review.get("monthly_review") or {}
     rolling = review.get("rolling_summary") or {}
+    period_audit = analysis.get("period_integrity_audit") or {}
     recent_rows = []
     for item in (review.get("recent_settled") or [])[:5]:
         recent_actual = item.get("actual_numbers") or []
@@ -1941,6 +1942,14 @@ def compact_failure_data_html_tiantianle(analysis):
         ["月內漏開真號", fmt_numbers([item.get("number") for item in (monthly.get("monthly_missed_actual_numbers") or [])[:12]]) or "-"],
         ["月內後段命中號", fmt_numbers([item.get("number") for item in (monthly.get("monthly_late_hit_numbers") or [])[:12]]) or "-"],
     ]
+    period_rows = [
+        ["逐期檢查狀態", compact_status(period_audit.get("status", "-"))],
+        ["檢查起點", period_audit.get("active_start", "-")],
+        ["已檢查期數", period_audit.get("checked", "-")],
+        ["原本缺漏期", "、".join(period_audit.get("missing_before", [])[:20]) or "-"],
+        ["本次已補期", "、".join(item.get("target_date", "-") for item in (period_audit.get("repaired") or [])[:20]) or "-"],
+        ["補完仍缺", "、".join(period_audit.get("missing_after", [])[:20]) or "-"],
+    ]
     action_rows = [["已套用修正", zh_text(action)] for action in (review.get("actions") or [])[:8]]
     return (
         '<div class="band warn"><h2>未命中檢討數據</h2>'
@@ -1954,6 +1963,8 @@ def compact_failure_data_html_tiantianle(analysis):
         f'{table(["項目", "數據"], rolling_rows)}'
         '<h3>本月檢討數據</h3>'
         f'{table(["項目", "數據"], monthly_rows)}'
+        '<h3>每一期完整性稽核</h3>'
+        f'{table(["項目", "數據"], period_rows)}'
         '<h3>已套用修正</h3>'
         f'{table(["類型", "內容"], action_rows, "目前沒有修正動作")}'
         '<h3>本月強牌達標率</h3>'

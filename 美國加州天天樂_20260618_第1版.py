@@ -1382,6 +1382,162 @@ def backfill_predictions_from_snapshots(conn):
     return {"inserted": inserted, "settled": settled, "skipped": skipped}
 
 
+def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json, strong_packs_json, created_at, source):
+    actual = conn.execute(
+        "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date=?",
+        (target_date,),
+    ).fetchone()
+    if not actual:
+        return False
+    actual_numbers = set(actual[1:6])
+    candidates = json.loads(candidates_json or "[]")
+    ranked = [item.get("number") for item in candidates if isinstance(item, dict)]
+    packs = json.loads(strong_packs_json or "{}")
+    pack_hits = {}
+    for key, pack in packs.items():
+        numbers = pack.get("numbers", []) if isinstance(pack, dict) else []
+        hits = len(set(numbers) & actual_numbers)
+        goal = PACK_GOALS.get(key, int(pack.get("hit_goal", 1) or 1) if isinstance(pack, dict) else 1)
+        pack_hits[key] = {
+            "hits": hits,
+            "hit_goal": goal,
+            "passed": hits >= goal,
+            "numbers": numbers,
+            "missed_numbers": sorted(set(numbers) - actual_numbers),
+        }
+    existing = conn.execute(
+        "SELECT id FROM predictions WHERE based_on_date=? AND target_date=?",
+        (based_on_date, target_date),
+    ).fetchone()
+    payload = (
+        target_date,
+        candidates_json,
+        strong_packs_json,
+        created_at,
+        iso_local(taiwan_now()),
+        actual[0],
+        json.dumps(sorted(actual_numbers), ensure_ascii=False),
+        len(set(ranked[:5]) & actual_numbers),
+        len(set(ranked[:10]) & actual_numbers),
+        len(set(ranked[:15]) & actual_numbers),
+        json.dumps(pack_hits, ensure_ascii=False),
+    )
+    if existing:
+        conn.execute(
+            """
+            UPDATE predictions
+            SET target_date=?, candidates_json=?, strong_packs_json=?, created_at=?,
+                settled_at=?, actual_date=?, actual_numbers_json=?, top5_hits=?, top10_hits=?,
+                top15_hits=?, strong_pack_hits_json=?, status='settled'
+            WHERE id=?
+            """,
+            payload + (existing[0],),
+        )
+    else:
+        conn.execute(
+            """
+            INSERT INTO predictions(
+                based_on_date,target_date,candidates_json,strong_packs_json,created_at,
+                settled_at,actual_date,actual_numbers_json,top5_hits,top10_hits,top15_hits,
+                strong_pack_hits_json,status
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'settled')
+            """,
+            (based_on_date,) + payload,
+        )
+    conn.execute(
+        "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
+        (based_on_date, target_date, candidates_json, strong_packs_json, created_at, source),
+    )
+    return True
+
+
+def full_period_prediction_audit_and_backfill(conn, draws):
+    if len(draws) < 2:
+        return {"status": "no_draws", "checked": 0, "missing_before": [], "repaired": [], "missing_after": []}
+    first_prediction = conn.execute(
+        """
+        SELECT MIN(date_value) FROM (
+          SELECT MIN(based_on_date) AS date_value FROM predictions
+          UNION ALL
+          SELECT MIN(based_on_date) AS date_value FROM prediction_snapshots
+        )
+        """
+    ).fetchone()[0]
+    if not first_prediction:
+        return {"status": "no_prediction_window", "checked": 0, "missing_before": [], "repaired": [], "missing_after": []}
+    repaired = []
+    missing_before = []
+    active_pairs = []
+    for index in range(len(draws) - 1):
+        based_on_date = draws[index]["draw_date"]
+        target_date = draws[index + 1]["draw_date"]
+        if based_on_date < first_prediction:
+            continue
+        active_pairs.append((index, based_on_date, target_date))
+        existing = conn.execute(
+            "SELECT id,status FROM predictions WHERE target_date=? OR actual_date=?",
+            (target_date, target_date),
+        ).fetchone()
+        if existing:
+            continue
+        missing_before.append(target_date)
+        snapshot = conn.execute(
+            """
+            SELECT based_on_date,target_date,candidates_json,strong_packs_json,created_at
+            FROM prediction_snapshots
+            WHERE target_date=?
+            ORDER BY id DESC LIMIT 1
+            """,
+            (target_date,),
+        ).fetchone()
+        if snapshot:
+            ok = _settle_prediction_payload(
+                conn,
+                snapshot[0],
+                snapshot[1],
+                snapshot[2],
+                snapshot[3],
+                snapshot[4],
+                "period_gap_backfill_from_snapshot",
+            )
+            if ok:
+                repaired.append({"target_date": target_date, "method": "snapshot"})
+            continue
+        prefix = draws[: index + 1]
+        if len(prefix) < 20:
+            continue
+        candidates = score_numbers(prefix)
+        packs = build_packs(candidates)
+        ok = _settle_prediction_payload(
+            conn,
+            based_on_date,
+            target_date,
+            json.dumps(candidates, ensure_ascii=False),
+            json.dumps(packs, ensure_ascii=False),
+            iso_local(taiwan_now()),
+            "period_gap_backfill_rebuilt_from_history",
+        )
+        if ok:
+            repaired.append({"target_date": target_date, "method": "rebuilt_from_history", "based_on_date": based_on_date})
+    conn.commit()
+    missing_after = []
+    for _, _, target_date in active_pairs:
+        existing = conn.execute(
+            "SELECT id FROM predictions WHERE target_date=? OR actual_date=?",
+            (target_date, target_date),
+        ).fetchone()
+        if not existing:
+            missing_after.append(target_date)
+    return {
+        "status": "ok" if not missing_after else "gap_remaining",
+        "active_start": first_prediction,
+        "checked": len(active_pairs),
+        "missing_before": missing_before,
+        "repaired": repaired,
+        "missing_after": missing_after,
+    }
+
+
 def settle_predictions(conn):
     rows = conn.execute(
         """
@@ -2693,7 +2849,9 @@ def run(full=False):
         draws = fetch_draws(conn)
         if not draws:
             raise RuntimeError("no draw data")
+        period_audit = full_period_prediction_audit_and_backfill(conn, draws)
         analysis = analyze(draws, failure_review(conn))
+        analysis["period_integrity_audit"] = period_audit
         ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding="utf-8")
         status = store_prediction(conn, analysis)
         health = prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest, data_audit)
@@ -2708,7 +2866,7 @@ def run(full=False):
         ok = file_check()
         history_status = analysis["history_completeness"]["status"]
         run_status = "success" if ok and not errors and history_status == "complete" and health["status"] == "ok" else "warning"
-        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
+        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "period_audit": period_audit, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
         conn.execute("UPDATE update_runs SET finished_at=?,status=?,message=? WHERE id=?", (iso_local(taiwan_now()), run_status, message[:1000], run_id))
         conn.commit()
     log(f"done latest={draws[-1]['draw_date']} top10={fmt_numbers([x['number'] for x in analysis['candidates'][:10]])}")
