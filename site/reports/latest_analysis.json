@@ -1,8 +1,8 @@
 {
   "engine_version": "天天樂最新版鐵律第3版_20260629",
   "industrial_engine_version": "industrial_v13_realtime_no_repeat_top9_firewall_20260703",
-  "generated_at_taiwan": "2026-07-06T12:27:28+08:00",
-  "generated_at_california": "2026-07-05T21:27:28-07:00",
+  "generated_at_taiwan": "2026-07-06T22:39:31+08:00",
+  "generated_at_california": "2026-07-06T07:39:31-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11849,
@@ -1700,8 +1700,8 @@
     "recommendation_message": "本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。"
   },
   "freshness": {
-    "california_today": "2026-07-05",
-    "california_time": "21:27:28",
+    "california_today": "2026-07-06",
+    "california_time": "07:39:31",
     "allowed_latest_draw_date": "2026-07-05",
     "age_days": 0,
     "status": "ok",
@@ -75864,7 +75864,7 @@
     {
       "based_on_date": "2026-07-05",
       "target_date": "2026-07-06",
-      "created_at": "2026-07-06T12:27:28+08:00",
+      "created_at": "2026-07-06T22:39:31+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
