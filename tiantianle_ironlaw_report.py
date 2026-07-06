@@ -822,6 +822,84 @@ def monthly_distribution_rows(items):
     return [[f"前十命中 {hit_count}", counts.get(hit_count, 0), "期"] for hit_count in range(0, 6)]
 
 
+def monthly_available_rows(snapshots, current_month):
+    month_counts = Counter()
+    for item in snapshots or []:
+        actual_date = str(item.get("actual_date") or "")
+        if not actual_date or not item.get("actual_numbers"):
+            continue
+        month_counts[actual_date[:7]] += 1
+    if not month_counts:
+        return [[month_label(current_month), 0, "目前顯示"]]
+    rows = []
+    for month, count in sorted(month_counts.items(), reverse=True)[:12]:
+        rows.append([month_label(month), count, "目前顯示" if month == current_month else "已保存"])
+    return rows
+
+
+def monthly_number_efficiency_rows(items):
+    stats = {}
+    for item in items or []:
+        actual = set(item.get("actual_numbers") or [])
+        for rank, number in enumerate(item_top_numbers(item, 15), 1):
+            if number is None:
+                continue
+            row = stats.setdefault(int(number), {"appear": 0, "hits": 0, "top9": 0, "rank_sum": 0})
+            row["appear"] += 1
+            row["rank_sum"] += rank
+            if rank <= 9:
+                row["top9"] += 1
+            if int(number) in actual:
+                row["hits"] += 1
+    rows = []
+    for number, row in sorted(stats.items(), key=lambda pair: (-pair[1]["hits"], -pair[1]["top9"], pair[0]))[:20]:
+        appear = max(1, row["appear"])
+        rows.append([
+            f"{number:02d}",
+            row["appear"],
+            row["top9"],
+            row["hits"],
+            compact_percent(row["hits"] / appear, 1),
+            compact_decimal(row["rank_sum"] / appear, 2),
+        ])
+    return rows or [["-", 0, 0, 0, "-", "-"]]
+
+
+def monthly_conclusion_rows(items, analysis):
+    monthly = ((analysis.get("failure_review") or {}).get("monthly_review") or {})
+    if items:
+        top9_avg = average_text([len(item_hits(item, 9)) for item in items])
+        top10_avg = average_text([item.get("top10_hits") for item in items])
+        top15_avg = average_text([item.get("top15_hits") for item in items])
+        weakest = min(items, key=lambda item: (safe_int(item.get("top10_hits")), len(item_hits(item, 9))))
+        best = max(items, key=lambda item: (safe_int(item.get("top10_hits")), len(item_hits(item, 9))))
+    else:
+        top9_avg = monthly.get("avg_top9_hits", "-")
+        top10_avg = monthly.get("avg_top10_hits", "-")
+        top15_avg = monthly.get("avg_top15_hits", "-")
+        weakest = {}
+        best = {}
+    return [
+        ["本月平均", f"前九 {top9_avg}", f"前十 {top10_avg}", f"前十五 {top15_avg}"],
+        ["最佳期", best.get("actual_date", "-"), f"命中 {fmt_numbers(item_hits(best, 15)) if best else '-'}", "保留有效來源"],
+        ["最弱期", weakest.get("actual_date", "-"), f"前十 {weakest.get('top10_hits', '-')}", "納入下期降權"],
+        ["下期校正", fmt_numbers(monthly.get("monthly_failed_numbers", [])) or "-", "落空號降權", "後段命中號回補觀察"],
+    ]
+
+
+def monthly_pack_low_review_html_tiantianle(analysis, items):
+    pack_rows = monthly_pack_rows(analysis)
+    low_rows = compact_low_summary_rows_tiantianle(analysis)
+    return (
+        "<h3>強牌組</h3>"
+        f'{table(["牌組", "期數", "達標率", "平均命中", "零命中率", "狀態"], pack_rows, "目前沒有強牌月結統計")}'
+        "<h3>低機率</h3>"
+        f'{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows, "目前沒有低機率月結統計")}'
+        "<h3>低機率每月總紀錄分析</h3>"
+        f'{table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], monthly_low_probability_summary_rows_tiantianle(analysis), "目前沒有低機率每月結算資料")}'
+    )
+
+
 def monthly_chart_html(items):
     if not items:
         return "<p>本月等待結算資料寫入後，圖表會自動產生。</p>"
@@ -846,17 +924,29 @@ def monthly_summary_html_tiantianle(analysis, snapshots):
     month_text = analysis_month_text(analysis)
     items = monthly_settled_items(snapshots, month_text)
     return (
-        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}總整理</h2>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}預測總整理</h2>"
         "<p>本頁只整理當月預測與實際命中，不混入下期預測、不混入低機率避開。</p>"
         f"{table(['項目', '數值一', '數值二', '說明'], monthly_overview_rows(items, month_text))}"
         "</div>"
-        "<div class=\"band month-summary\"><h2>每日命中圖表</h2>"
+        "<div class=\"band month-summary\"><h2>可查月份</h2>"
+        f"{table(['月份', '已結算期數', '狀態'], monthly_available_rows(snapshots, month_text))}"
+        "</div>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}每日命中走勢圖</h2>"
         f"{monthly_chart_html(items)}"
         "</div>"
-        "<div class=\"band month-summary\"><h2>命中分布</h2>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}前十命中分布圖</h2>"
         f"{table(['命中級距', '期數', '單位'], monthly_distribution_rows(items))}"
         "</div>"
-        "<div class=\"band month-summary\"><h2>逐期預測對照</h2>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}號碼效率分析</h2>"
+        f"{table(['號碼', '被選次數', '前九次數', '命中次數', '命中率', '平均排名'], monthly_number_efficiency_rows(items))}"
+        "</div>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}強牌與低機率檢討</h2>"
+        f"{monthly_pack_low_review_html_tiantianle(analysis, items)}"
+        "</div>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}總檢討結論</h2>"
+        f"{table(['項目', '內容一', '內容二', '修正'], monthly_conclusion_rows(items, analysis))}"
+        "</div>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}每期明細表</h2>"
         f"{table(['開獎日', '預測依據', '預測前九', '實際開獎', '前九命中號', '前五/前九/前十/前十五', '結論', '前十五命中號'], monthly_detail_rows(items), '本月尚未完成可結算期數')}"
         "</div>"
     )
@@ -2270,6 +2360,56 @@ def compact_low_summary_rows_tiantianle(analysis):
     return rows
 
 
+def low_pack_label(key):
+    return {
+        "five_miss": "5不中",
+        "ten_miss": "10不中",
+        "fifteen_miss": "15不中",
+    }.get(str(key), zh_text(key))
+
+
+def monthly_low_probability_summary_rows_tiantianle(analysis):
+    monthly = analysis.get("monthly_low_probability_review") or {}
+    summary = monthly.get("pack_summary") or {}
+    rows = []
+    for key in ["five_miss", "ten_miss", "fifteen_miss"]:
+        item = summary.get(key) or {}
+        frequent = item.get("frequent_accidental_numbers") or []
+        rows.append([
+            item.get("name") or low_pack_label(key),
+            item.get("rounds", 0),
+            item.get("passed", 0),
+            compact_percent(item.get("pass_rate", 0), 1),
+            item.get("avg_accidental_hits", 0),
+            f"{item.get('worst_date', '-')} / 誤中 {item.get('worst_accidental_hits', 0)}",
+            "、".join(f"{int(row.get('number')):02d}({row.get('count')})" for row in frequent[:5] if row.get("number") is not None) or "-",
+        ])
+    return rows
+
+
+def low_probability_daily_rows_tiantianle(analysis, limit=31):
+    rows = []
+    for record in (analysis.get("low_probability_daily_records") or [])[:limit]:
+        actual = record.get("actual_numbers") or []
+        packs = record.get("packs") or {}
+        for key in ["five_miss", "ten_miss", "fifteen_miss"]:
+            pack = packs.get(key) or {}
+            status = "待結算"
+            if record.get("status") == "settled":
+                status = "達標" if pack.get("passed") else "未達標"
+            rows.append([
+                record.get("target_date", "-"),
+                pack.get("name") or low_pack_label(key),
+                fmt_numbers(pack.get("numbers", [])) or "-",
+                record.get("actual_date", "-"),
+                fmt_numbers(actual) or "-",
+                pack.get("accidental_hits", "-"),
+                fmt_numbers(pack.get("hit_numbers", [])) or "-",
+                status,
+            ])
+    return rows
+
+
 def build_low_probability_compact_report(analysis, settled):
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
@@ -2286,6 +2426,8 @@ def build_low_probability_compact_report(analysis, settled):
             seen_avoid_numbers.add(number)
             number_rows.append(row)
     number_rows = [[idx] + row[1:] for idx, row in enumerate(number_rows, 1)]
+    daily_rows = low_probability_daily_rows_tiantianle(analysis)
+    monthly_rows = monthly_low_probability_summary_rows_tiantianle(analysis)
     report_time = display_time(analysis.get("generated_at_taiwan", "-"))
     target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
@@ -2317,9 +2459,225 @@ def build_low_probability_compact_report(analysis, settled):
   <section class="band"><h2>下期低機率暫避預測</h2><p><strong>目標開獎日：</strong>{esc(target_date)} / <strong>台灣開獎時間：</strong>{esc(target_time)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
   <section class="band"><h2>下期逐號暫避驗算</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
   <section class="band"><h2>上期低機率達標檢討</h2>{review}</section>
+  <section class="band"><h2>低機率每日紀錄</h2>{table(["目標日", "暫避包", "預測號", "開獎日", "實際開獎", "誤中", "誤中號", "結果"], daily_rows, "目前沒有低機率每日紀錄")}</section>
+  <section class="band"><h2>低機率每月總紀錄分析</h2>{table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], monthly_rows, "目前沒有低機率每月結算資料")}</section>
 </main>
 </body>
 </html>"""
+
+
+def compact_formula_lab_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    formula = industrial.get("formula_engine") or {}
+    formula_bt = formula.get("backtest") or {}
+    models = formula_bt.get("models") or {}
+    model_rows = []
+    if isinstance(models, dict):
+        for _, data in list(models.items())[:10]:
+            if not isinstance(data, dict):
+                continue
+            model_rows.append([
+                zh_text(data.get("label") or "公式模型"),
+                f"{data.get('rounds', formula_bt.get('rounds', '-'))} 期",
+                data.get("top5_avg_hits", "-"),
+                data.get("top9_avg_hits", data.get("top10_avg_hits", "-")),
+                data.get("top15_avg_hits", "-"),
+                data.get("top9_edge_vs_random", data.get("top10_edge_vs_random", "-")),
+                compact_decimal(data.get("weight", 0), 3) if data.get("weight") is not None else "-",
+                "已納入" if data.get("enabled", True) else "保留觀察",
+            ])
+    if not model_rows:
+        for row in compact_model_rows_tiantianle(analysis)[:6]:
+            model_rows.append([row[0], row[1], row[2], row[3], row[4], row[5], "-", "已納入"])
+
+    packs = analysis.get("strong_packs") or {}
+    pack_specs = [
+        ("strong_single", "獨隻1中1"),
+        ("two_hit_one", "2中1"),
+        ("three_hit_two", "3中1~3"),
+        ("five_hit_two", "5中2~3"),
+        ("nine_hit_three", "9中3~5"),
+    ]
+    pack_rows = []
+    for key, label in pack_specs:
+        numbers = (packs.get(key) or {}).get("numbers") or []
+        pack_rows.append([label, fmt_numbers(numbers) or "-", len(numbers)])
+
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    change_rows = []
+    for rank, item in enumerate(candidates[:12], 1):
+        formula_score = (
+            item.get("formula_score")
+            or item.get("formula_engine_score")
+            or (item.get("formula_validation") or {}).get("score")
+            or item.get("score")
+        )
+        support = item.get("formula_support") or item.get("model_sources") or item.get("reasons") or []
+        change_rows.append([
+            rank,
+            f"{int(item.get('number')):02d}",
+            compact_decimal(formula_score, 3),
+            candidate_reason_text({"model_sources": support}, 5) if isinstance(support, list) else zh_text(support),
+            candidate_guard_text(item),
+        ])
+
+    return (
+        '<div class="band">'
+        '<h2>公式模型實驗室</h2>'
+        '<p>本區只列已參與本期排序的公式與回測；每一期開獎後重新計算，不沿用舊答案。</p>'
+        f'{table(["公式", "回測期", "前五平均", "前九平均", "前十五平均", "前九優勢", "本期權重", "動作"], model_rows, "本期公式模型已完成檢查，無額外公開資料")}'
+        '</div>'
+        '<div class="band">'
+        '<h2>公式模型建議包</h2>'
+        '<p>建議包仍需經過上期沿用守門、強牌守門與低命中降權後，才會進入正式顯示。</p>'
+        f'{table(["類型", "號碼", "顆數"], pack_rows)}'
+        '</div>'
+        '<div class="band">'
+        '<h2>公式重排變動</h2>'
+        f'{table(["排名", "號碼", "公式分", "支撐來源", "守門"], change_rows, "沒有公式重排資料")}'
+        '</div>'
+    )
+
+
+def compact_prediction_rebuild_html_tiantianle(analysis):
+    review = analysis.get("failure_review") or {}
+    settled = review.get("last_settled") or {}
+    actual = settled.get("actual_numbers") or []
+    candidates = settled.get("candidate_numbers") or []
+    top9 = candidates[:9]
+    top9_hits = sorted(set(top9) & set(actual))
+    rows = [
+        ["上期結算", f"{settled.get('based_on_date', '-')} 預測 / {settled.get('actual_date', '-')} 開獎", f"前九命中 {len(top9_hits)}", fmt_numbers(top9_hits) or "-"],
+        ["未命中回灌", fmt_numbers([number for number in top9 if number not in actual]) or "-", "未中號降權", "已套用到本期"],
+        ["漏抓回補", fmt_numbers([number for number in actual if number not in top9]) or "-", "實際開獎未進前九", "進入下期補強觀察"],
+        ["檢討嚴重度", zh_text(review.get("severity", "-")), "每期重算", "已啟用"],
+    ]
+    for action in (review.get("actions") or [])[:10]:
+        rows.append(["修正動作", zh_text(action), "已回灌", "下期重新排序"])
+    return (
+        '<div class="band warn">'
+        '<h2>實戰失準回灌重排</h2>'
+        '<p>本區只處理上一期失準、落空、漏抓與降權，不混入本期主推號碼。</p>'
+        f'{table(["類別", "內容", "處理", "狀態"], rows)}'
+        '</div>'
+    )
+
+
+def compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, target_date):
+    prev = ((analysis.get("industrial_engine") or {}).get("previous_prediction_guard") or {})
+    current = (analysis.get("latest_ironlaw") or {}).get("nine_hit_three") or (analysis.get("prediction") or {}).get("top9") or []
+    rows = [
+        ["上期前九", fmt_numbers(prev.get("previous_top9", [])) or "-", "比對基準", "禁止直接沿用"],
+        ["本期前九", fmt_numbers(current) or "-", "本期輸出", "每期重算"],
+        ["重疊號", fmt_numbers(prev.get("current_top9_overlap", [])) or "-", f"{len(prev.get('current_top9_overlap', []) or [])}/9", "未達連莊守門不得沿用"],
+        ["達標連莊", fmt_numbers(prev.get("top9_reentry_passed") or prev.get("reentry_passed", [])) or "-", "通過才保留", "已檢查"],
+        ["未達標剔除", fmt_numbers((prev.get("reentry_rejected") or [])[:15]) or "-", "剔除", "已檢查"],
+    ]
+    return (
+        '<div class="band">'
+        f'<h2>近期預測相似度稽核（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）</h2>'
+        f'{table(["項目", "號碼", "數據", "判定"], rows)}'
+        '</div>'
+    )
+
+
+def compact_hard_iron_html_tiantianle(analysis):
+    return (
+        '<div class="band">'
+        '<h2>鐵律守門</h2>'
+        f'{table(["項目", "結果", "說明"], strict_recalculation_rows(analysis))}'
+        f'{table(["項目", "號碼 / 狀態", "結果", "說明"], compact_no_reuse_guard_rows_tiantianle(analysis))}'
+        f'{table(["項目", "數值一", "數值二", "規則", "狀態"], strict_validation_rows(analysis))}'
+        '</div>'
+    )
+
+
+def compact_stability_governor_html_tiantianle(analysis):
+    review = analysis.get("failure_review") or {}
+    strict = ((analysis.get("industrial_engine") or {}).get("strict_validation_gate") or {})
+    hard_rows = []
+    for item in (strict.get("blocked_numbers") or [])[:12]:
+        number = item.get("number")
+        hard_rows.append([
+            f"{int(number):02d}" if number is not None else "-",
+            f"原排名 {item.get('rank_before_validation', '-')}",
+            f"通過 {item.get('passed_gates', 0)} 關",
+            "、".join(zh_text(part) for part in (item.get("blockers") or ["關卡不足"])),
+        ])
+    observe_rows = []
+    for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])[:8]:
+        observe_rows.append([
+            f"{int(item.get('number')):02d}",
+            item.get("rank", item.get("_display_rank", "-")),
+            item.get("stability_count", "-"),
+            candidate_guard_text(item),
+        ])
+    settled = review.get("last_settled") or {}
+    recent_single_rows = [[
+        settled.get("actual_date", "-"),
+        fmt_numbers((settled.get("strong_packs") or {}).get("strong_single", {}).get("numbers", [])) or "-",
+        fmt_numbers(settled.get("actual_numbers", [])) or "-",
+        settled.get("top5_hits", "-"),
+    ]]
+    return (
+        '<div class="band warn">'
+        '<h2>穩定治理與錯誤修正紀錄</h2>'
+        f'<p>檢查時間：{esc(analysis.get("generated_at_taiwan", "-"))} / 狀態：每期開獎後重算、回測、同步手機。</p>'
+        '<h3>本次修正動作</h3>'
+        f'{table(["類別", "內容"], [["已套用修正", zh_text(action)] for action in (review.get("actions") or [])[:10]], "本期沒有額外修正動作")}'
+        '<h3>獨隻硬降權名單</h3>'
+        f'{table(["號碼", "原狀態", "通過關數", "原因"], hard_rows, "目前沒有硬降權號碼")}'
+        '<h3>獨隻近期觀察降權</h3>'
+        f'{table(["號碼", "排名", "穩定", "守門"], observe_rows, "目前沒有觀察降權資料")}'
+        '<h3>最近獨隻結算</h3>'
+        f'{table(["開獎日", "獨隻", "實際開獎", "前五命中"], recent_single_rows)}'
+        '</div>'
+    )
+
+
+def compact_reality_gate_html_tiantianle(analysis):
+    release = ((analysis.get("industrial_engine") or {}).get("release_gate") or {})
+    maturity = ((analysis.get("industrial_engine") or {}).get("practical_maturity") or {})
+    backtest = industrial_backtest(analysis)
+    rows = [
+        ["獨隻1中1", "目標95%", release_label(analysis), "未過門檻只列觀察"],
+        ["2中1~2", "目標95%", maturity.get("top10_avg_maturity", "-"), "每期回測後放行"],
+        ["3中1~3", "目標95%", backtest.get("top5_avg_hits", "-"), "需多模型交叉通過"],
+        ["5中2~3", "目標95%", backtest.get("top10_avg_hits", "-"), "未達標降級"],
+        ["9中3~5", "目標95%", backtest.get("top15_avg_hits", "-"), "只用前九核心顯示"],
+        ["正式發布守門", release.get("status", "-"), release.get("actual_backtest_edge", "-"), "未達標不得包裝高信心"],
+    ]
+    return (
+        '<div class="band">'
+        '<h2>實戰門檻</h2>'
+        f'{table(["項目", "門檻", "目前數據", "處理"], rows)}'
+        '</div>'
+    )
+
+
+def previous_month_text(month_text):
+    match = re.match(r"^(\d{4})-(\d{2})", str(month_text or ""))
+    if not match:
+        return str(month_text or "-")
+    year = int(match.group(1))
+    month = int(match.group(2))
+    month -= 1
+    if month <= 0:
+        year -= 1
+        month = 12
+    return f"{year:04d}-{month:02d}"
+
+
+def compact_monthly_breakthrough_html_tiantianle(analysis):
+    month_text = analysis_month_text(analysis)
+    prev_month = previous_month_text(month_text)
+    return (
+        '<div class="band">'
+        f'<h2>{prev_month} 上月總檢討與本期突破校正</h2>'
+        f'{table(["項目", "數值", "判讀", "狀態"], monthly_review_rows(analysis))}'
+        f'{table(["類別", "內容", "管制", "狀態"], monthly_best_plan_rows(analysis))}'
+        '</div>'
+    )
 
 
 def build_compact_tiantianle_report(analysis, settled, snapshots=None):
@@ -2327,7 +2685,6 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     freshness = analysis.get("freshness") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
     prediction = analysis.get("prediction") or {}
-    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or [])[:9]]
     if not high_numbers:
         high_numbers = prediction.get("high_confidence_watch") or []
@@ -2344,9 +2701,32 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     failure_data_html = compact_failure_data_html_tiantianle(analysis)
     low_review_html = compact_low_review_html_tiantianle(settled)
     low_rows = compact_low_summary_rows_tiantianle(analysis)
+    low_daily_rows = low_probability_daily_rows_tiantianle(analysis)
+    low_monthly_rows = monthly_low_probability_summary_rows_tiantianle(analysis)
     dual_track_html = compact_dual_track_html_tiantianle(analysis, settled, snapshots)
     hits_html = compact_hits_html_tiantianle(settled, snapshots or [])
     monthly_html = monthly_summary_html_tiantianle(analysis, snapshots or [])
+    formula_lab_html = compact_formula_lab_html_tiantianle(analysis)
+    prediction_rebuild_html = compact_prediction_rebuild_html_tiantianle(analysis)
+    similarity_audit_html = compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, target_date)
+    hard_iron_html = compact_hard_iron_html_tiantianle(analysis)
+    stability_governor_html = compact_stability_governor_html_tiantianle(analysis)
+    reality_gate_html = compact_reality_gate_html_tiantianle(analysis)
+    monthly_breakthrough_html = compact_monthly_breakthrough_html_tiantianle(analysis)
+    date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
+    candidate_heading = f"下期研究候選前9名（資料依據日 {latest_date} / 預測目標日 {target_date}）"
+    review_heading = (
+        f"上期命中檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
+        f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
+    )
+    avoid_heading = f"低機率（資料依據日 {latest_date} / 預測目標日 {target_date}）"
+    low_review_heading = (
+        f"低機率達標檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
+        f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
+    )
+    model_heading = f"模型成效（資料截至 {latest_date} / 回測產生 {report_time}）"
+    candidate_rows = [[row[0], latest_date, target_date] + row[1:] for row in compact_candidate_rows_tiantianle(analysis, 9)]
+    verification_rows = [[row[0], latest_date, target_date] + row[1:] for row in compact_number_verification_rows_tiantianle(analysis, 9)]
     return f"""<!doctype html>
 <html lang="zh-Hant" data-compact-report="true">
 <head>
@@ -2368,12 +2748,15 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     .hot-card{{border-color:#fecaca;background:#fff1f2;}}
     .singlebox{{border-color:#fecaca;background:#fffafa;}}
     .warn{{background:#fff7ed;border-color:#fed7aa;}}
+    .date-ribbon{{background:#ecfeff;border-color:#67e8f9;}}
     .label{{font-size:13px;color:#64748b;font-weight:700;}}
     .value{{font-size:22px;font-weight:900;margin-top:6px;}}
     table{{width:100%;border-collapse:collapse;min-width:760px;}}
     th,td{{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}}
     th{{background:#f1f5f9;}}
     .num{{font-size:20px;font-weight:900;color:#b91c1c;}}
+    .small{{font-size:13px;line-height:1.5;}}
+    .verify-table{{min-width:1420px;}}
     .month-chart{{display:grid;gap:8px;min-width:760px;}}
     .chart-row{{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}}
     .chart-track{{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}}
@@ -2391,85 +2774,106 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
 </header>
 <main>
   <nav class="tabs">
-    <button class="active" data-tab="prediction">預測</button>
-    <button data-tab="hits">命中</button>
+    <button class="active" data-tab="prediction">下期預測</button>
+    <button data-tab="review">命中檢討</button>
+    <button data-tab="monthly">每月總整理</button>
     <button data-tab="avoid">低機率</button>
-    <button data-tab="review">檢討</button>
-    <button data-tab="monthly">月報</button>
-    <button data-tab="other">其他</button>
+    <button data-tab="models">模型回測</button>
+    <button data-tab="system">其他稽核</button>
   </nav>
+  <section class="band date-ribbon">
+    <h2>本報表日期對照</h2>
+    <div class="grid">
+      <div class="card"><div class="label">全歷史資料範圍</div><div class="value">{esc(zh_text(date_text))}</div></div>
+      <div class="card"><div class="label">資料依據最新開獎日</div><div class="value">{esc(latest_date)}</div></div>
+      <div class="card"><div class="label">最新開獎號碼</div><div class="value">{esc(latest_numbers)}</div></div>
+      <div class="card"><div class="label">下期預測目標日</div><div class="value">{esc(target_date)}</div></div>
+      <div class="card"><div class="label">下期台灣時間</div><div class="value">{esc(target_time)}</div></div>
+      <div class="card"><div class="label">戰報產生時間</div><div class="value">{esc(report_time)}</div></div>
+    </div>
+  </section>
   <section id="prediction" class="panel active">
     <div class="band">
-      <h2>核心決策</h2>
+      <h2>核心決策（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）</h2>
       <div class="grid">
         <div class="card"><div class="label">資料狀態</div><div class="value">{esc(status_text)}</div></div>
         <div class="card"><div class="label">檢查</div><div class="value">已重算</div></div>
         <div class="card"><div class="label">下期台灣時間</div><div class="value">{esc(target_time)}</div></div>
         <div class="card hot-card"><div class="label">獨隻</div><div class="value">{fmt_numbers(decision.get('primary_single') or (analysis.get('strong_packs') or {}).get('strong_single', {}).get('numbers', [])) or '-'}</div></div>
-        <div class="card"><div class="label">9碼核心</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
+        <div class="card"><div class="label">九碼核心</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
       </div>
       <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
       <p><strong>高機率信心牌：</strong>{fmt_numbers(high_numbers) or "本期未過正式高信心守門"}</p>
     </div>
     {compact_super_single_html_tiantianle(analysis)}
     <div class="band">
-      <h2>下期精算前9名</h2>
-      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], compact_candidate_rows_tiantianle(analysis, 9))}
+      <h2>{candidate_heading}</h2>
+      {table(["號碼", "資料依據日", "預測目標日", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
     </div>
     <div class="band">
-      <h2>逐號多重驗算明細</h2>
+      <h2>生成號碼逐號驗算（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）</h2>
       <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
-      {table(["號碼", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], compact_number_verification_rows_tiantianle(analysis, 9))}
+      {table(["號碼", "資料依據日", "預測目標日", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], verification_rows)}
     </div>
     <div class="band">
-      <h2>強牌組精算</h2>
+      <h2>強牌組精算（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）</h2>
       {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
     </div>
   </section>
-  <section id="hits" class="panel">
-    {hits_html}
-  </section>
-  <section id="avoid" class="panel">
-    <div class="band warn">
-      <h2>下期低機率暫避預測</h2>
-      <p><strong>目標開獎日：</strong>{esc(target_date)} / <strong>台灣開獎時間：</strong>{esc(target_time)}</p>
-      <p>這裡是新一期 5不中、10不中、15不中 暫避預測；上期檢討放在下方，不混在一起。</p>
-      <p><a href="天天樂低機率精準暫避.html">開啟 天天樂低機率精準暫避.html</a></p>
-      {table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows)}
-    </div>
-    <div class="band">
-      <h2>上期低機率達標檢討</h2>
-      {low_review_html}
-    </div>
-  </section>
   <section id="review" class="panel">
-    {failure_data_html}
-    <div class="band warn">
-      <h2>上期沿用守門</h2>
-      {table(["項目", "號碼 / 狀態", "結果", "說明"], compact_no_reuse_guard_rows_tiantianle(analysis))}
-    </div>
+    {hits_html}
     <div class="band">
-      <h2>上期檢討</h2>
+      <h2>{review_heading}</h2>
       {review_html}
     </div>
-    <div class="band">
-      <h2>滾動修正</h2>
-      {table(["模型", "動作", "近期優勢", "長期優勢", "原因"], compact_lifecycle_rows_tiantianle(analysis))}
-    </div>
+    {failure_data_html}
   </section>
   <section id="monthly" class="panel">
     {monthly_html}
   </section>
-  <section id="other" class="panel">
+  <section id="avoid" class="panel">
+    <div class="band">
+      <h2>{low_review_heading}</h2>
+      {low_review_html}
+    </div>
+    <div class="band warn">
+      <h2>{avoid_heading}</h2>
+      <p>低機率分析已獨立開頁，主戰報只保留 5不中、10不中、15不中 摘要；新一期預測與上期檢討分開顯示。</p>
+      <p><a href="天天樂低機率精準暫避.html">開啟天天樂低機率精準暫避頁</a></p>
+      {table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows)}
+    </div>
+    <div class="band">
+      <h2>低機率每日紀錄</h2>
+      {table(["目標日", "暫避包", "預測號", "開獎日", "實際開獎", "誤中", "誤中號", "結果"], low_daily_rows, "目前沒有低機率每日紀錄")}
+    </div>
+    <div class="band">
+      <h2>低機率每月總紀錄分析</h2>
+      {table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], low_monthly_rows, "目前沒有低機率每月結算資料")}
+    </div>
+  </section>
+  <section id="models" class="panel">
+    {formula_lab_html}
+    {prediction_rebuild_html}
     {dual_track_html}
     <div class="band">
-      <h2>模型回測摘要</h2>
+      <h2>{model_heading}</h2>
       {table(["模型", "回測期", "前五平均", "前十平均", "前十五平均", "前十優勢"], compact_model_rows_tiantianle(analysis))}
     </div>
     <div class="band">
       <h2>強牌實戰統計</h2>
       {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
     </div>
+    <div class="band">
+      <h2>模型滾動調整</h2>
+      {table(["模型", "動作", "近期優勢", "長期優勢", "原因"], compact_lifecycle_rows_tiantianle(analysis))}
+    </div>
+  </section>
+  <section id="system" class="panel">
+    {similarity_audit_html}
+    {hard_iron_html}
+    {stability_governor_html}
+    {reality_gate_html}
+    {monthly_breakthrough_html}
   </section>
 </main>
 <script>

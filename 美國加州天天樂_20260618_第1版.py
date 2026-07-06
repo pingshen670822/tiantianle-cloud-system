@@ -246,6 +246,23 @@ def init_db(conn):
     )
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS low_probability_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            based_on_date TEXT NOT NULL,
+            target_date TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            low_packs_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            settled_at TEXT,
+            actual_date TEXT,
+            actual_numbers_json TEXT,
+            results_json TEXT,
+            UNIQUE(based_on_date,target_date)
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS update_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             started_at TEXT NOT NULL,
@@ -1263,6 +1280,321 @@ def next_date(draw_date):
     return (datetime.strptime(draw_date, "%Y-%m-%d").date() + timedelta(days=1)).isoformat()
 
 
+LOW_PROBABILITY_PACK_SPECS = [
+    ("five_miss", "5不中", 5),
+    ("ten_miss", "10不中", 10),
+    ("fifteen_miss", "15不中", 15),
+]
+
+
+def _normalize_low_pack(label, numbers, source=None):
+    source = source if isinstance(source, dict) else {}
+    clean_numbers = []
+    for number in numbers or []:
+        try:
+            value = int(number)
+        except Exception:
+            continue
+        if 1 <= value <= NUMBER_MAX and value not in clean_numbers:
+            clean_numbers.append(value)
+    return {
+        "name": label,
+        "numbers": clean_numbers,
+        "confidence_label": source.get("confidence_label", "每日重算"),
+        "confidence_index": source.get("confidence_index", "-"),
+        "avg_avoid_score": source.get("avg_avoid_score", "-"),
+        "min_avoid_score": source.get("min_avoid_score", "-"),
+        "size": len(clean_numbers),
+    }
+
+
+def low_probability_packs_from_analysis(analysis):
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    avoid = analysis.get("low_probability_avoid") or {}
+    avoid_packs = decision.get("avoid_packs") or avoid.get("avoid_packs") or {}
+    groups = avoid.get("groups") or {}
+    prediction = analysis.get("prediction") or {}
+    fallbacks = {
+        "five_miss": prediction.get("low_probability_5_not_hit") or [],
+        "ten_miss": prediction.get("low_probability_10_not_hit") or [],
+        "fifteen_miss": prediction.get("low_probability_15_not_hit") or [],
+    }
+    packs = {}
+    for key, label, _size in LOW_PROBABILITY_PACK_SPECS:
+        pack = avoid_packs.get(key) or {}
+        group_numbers = [item.get("number") for item in groups.get(label, []) if isinstance(item, dict)]
+        numbers = pack.get("numbers") or group_numbers or fallbacks.get(key) or []
+        packs[key] = _normalize_low_pack(label, numbers, pack)
+    return packs
+
+
+def low_probability_packs_from_candidates(candidates):
+    ranked = [item.get("number") for item in candidates or [] if isinstance(item, dict) and item.get("number") is not None]
+    packs = {}
+    for key, label, size in LOW_PROBABILITY_PACK_SPECS:
+        packs[key] = _normalize_low_pack(label, ranked[-size:], {"confidence_label": "歷史回補"})
+    return packs
+
+
+def low_probability_result_payload(low_packs, actual_numbers):
+    actual_set = set(int(number) for number in actual_numbers or [])
+    results = {}
+    for key, label, _size in LOW_PROBABILITY_PACK_SPECS:
+        pack = (low_packs or {}).get(key) or {}
+        numbers = [int(number) for number in pack.get("numbers", []) if str(number).isdigit()]
+        hit_numbers = sorted(set(numbers) & actual_set)
+        avoided_numbers = [number for number in numbers if number not in hit_numbers]
+        results[key] = {
+            "name": pack.get("name") or label,
+            "numbers": numbers,
+            "target_accidental_hits": 0,
+            "accidental_hits": len(hit_numbers),
+            "passed": len(hit_numbers) == 0,
+            "hit_numbers": hit_numbers,
+            "avoided_numbers": avoided_numbers,
+        }
+    return results
+
+
+def store_low_probability_record(conn, based_on_date, target_date, low_packs, created_at=None):
+    created_at = created_at or iso_local(taiwan_now())
+    payload = json.dumps(low_packs or {}, ensure_ascii=False)
+    row = conn.execute(
+        "SELECT id,status FROM low_probability_records WHERE based_on_date=? AND target_date=?",
+        (based_on_date, target_date),
+    ).fetchone()
+    if row and row[1] == "settled":
+        return "low_probability_already_settled"
+    if row:
+        conn.execute(
+            """
+            UPDATE low_probability_records
+            SET low_packs_json=?, created_at=?, status='pending', settled_at=NULL,
+                actual_date=NULL, actual_numbers_json=NULL, results_json=NULL
+            WHERE id=?
+            """,
+            (payload, created_at, row[0]),
+        )
+        return "low_probability_updated"
+    conn.execute(
+        """
+        INSERT INTO low_probability_records(
+            based_on_date,target_date,created_at,low_packs_json,status
+        ) VALUES(?,?,?,?, 'pending')
+        """,
+        (based_on_date, target_date, created_at, payload),
+    )
+    return "low_probability_inserted"
+
+
+def settle_low_probability_records(conn):
+    rows = conn.execute(
+        """
+        SELECT id,based_on_date,target_date,low_packs_json,status,actual_date,actual_numbers_json
+        FROM low_probability_records
+        WHERE status IN ('pending','settled')
+        """
+    ).fetchall()
+    settled = 0
+    for row in rows:
+        actual = conn.execute(
+            "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date=?",
+            (row[2],),
+        ).fetchone()
+        if not actual:
+            actual = conn.execute(
+                "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date > ? ORDER BY draw_date LIMIT 1",
+                (row[1],),
+            ).fetchone()
+        if not actual:
+            continue
+        actual_numbers = sorted(int(number) for number in actual[1:6])
+        actual_numbers_json = json.dumps(actual_numbers, ensure_ascii=False)
+        if row[4] == "settled" and row[5] == actual[0] and (row[6] or "") == actual_numbers_json:
+            continue
+        low_packs = json.loads(row[3] or "{}")
+        results = low_probability_result_payload(low_packs, actual_numbers)
+        conn.execute(
+            """
+            UPDATE low_probability_records
+            SET settled_at=?, actual_date=?, actual_numbers_json=?, results_json=?, status='settled'
+            WHERE id=?
+            """,
+            (
+                iso_local(taiwan_now()),
+                actual[0],
+                actual_numbers_json,
+                json.dumps(results, ensure_ascii=False),
+                row[0],
+            ),
+        )
+        settled += 1
+    conn.commit()
+    return settled
+
+
+def backfill_low_probability_records_from_predictions(conn):
+    rows = conn.execute(
+        """
+        SELECT based_on_date,target_date,candidates_json,created_at,status,actual_date,actual_numbers_json
+        FROM predictions
+        WHERE target_date IS NOT NULL
+        ORDER BY target_date
+        """
+    ).fetchall()
+    inserted = 0
+    skipped = 0
+    for row in rows:
+        exists = conn.execute(
+            "SELECT id FROM low_probability_records WHERE based_on_date=? AND target_date=?",
+            (row[0], row[1]),
+        ).fetchone()
+        if exists:
+            skipped += 1
+            continue
+        candidates = json.loads(row[2] or "[]")
+        low_packs = low_probability_packs_from_candidates(candidates)
+        results_json = None
+        actual_numbers_json = row[6]
+        if row[4] == "settled" and actual_numbers_json:
+            actual_numbers = json.loads(actual_numbers_json or "[]")
+            results_json = json.dumps(low_probability_result_payload(low_packs, actual_numbers), ensure_ascii=False)
+            conn.execute(
+                """
+                INSERT INTO low_probability_records(
+                    based_on_date,target_date,created_at,low_packs_json,status,settled_at,
+                    actual_date,actual_numbers_json,results_json
+                ) VALUES(?,?,?,?, 'settled',?,?,?,?)
+                """,
+                (
+                    row[0],
+                    row[1],
+                    row[3],
+                    json.dumps(low_packs, ensure_ascii=False),
+                    iso_local(taiwan_now()),
+                    row[5],
+                    actual_numbers_json,
+                    results_json,
+                ),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO low_probability_records(
+                    based_on_date,target_date,created_at,low_packs_json,status
+                ) VALUES(?,?,?,?, 'pending')
+                """,
+                (row[0], row[1], row[3], json.dumps(low_packs, ensure_ascii=False)),
+            )
+        inserted += 1
+    conn.commit()
+    return {"inserted": inserted, "skipped": skipped}
+
+
+def low_probability_record_from_row(row):
+    low_packs = json.loads(row[3] or "{}")
+    results = json.loads(row[7] or "{}") if row[7] else {}
+    actual_numbers = json.loads(row[6] or "[]") if row[6] else []
+    pack_items = {}
+    for key, label, _size in LOW_PROBABILITY_PACK_SPECS:
+        pack = low_packs.get(key) or {}
+        result = results.get(key) or {}
+        pack_items[key] = {
+            "name": pack.get("name") or result.get("name") or label,
+            "numbers": pack.get("numbers") or result.get("numbers") or [],
+            "confidence_label": pack.get("confidence_label", "-"),
+            "confidence_index": pack.get("confidence_index", "-"),
+            "avg_avoid_score": pack.get("avg_avoid_score", "-"),
+            "accidental_hits": result.get("accidental_hits"),
+            "passed": result.get("passed"),
+            "hit_numbers": result.get("hit_numbers", []),
+            "avoided_numbers": result.get("avoided_numbers", []),
+        }
+    return {
+        "based_on_date": row[0],
+        "target_date": row[1],
+        "created_at": row[2],
+        "status": row[4],
+        "actual_date": row[5],
+        "actual_numbers": actual_numbers,
+        "packs": pack_items,
+    }
+
+
+def low_probability_daily_record(conn, limit=45):
+    rows = conn.execute(
+        """
+        SELECT based_on_date,target_date,created_at,low_packs_json,status,actual_date,actual_numbers_json,results_json
+        FROM low_probability_records
+        ORDER BY target_date DESC,id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [low_probability_record_from_row(row) for row in rows]
+
+
+def monthly_low_probability_review(conn):
+    latest = conn.execute("SELECT MAX(draw_date) FROM draws").fetchone()[0]
+    if not latest:
+        return {"has_review": False, "month": "", "sample_size": 0, "pack_summary": {}}
+    month = latest[:7]
+    rows = conn.execute(
+        """
+        SELECT based_on_date,target_date,created_at,low_packs_json,status,actual_date,actual_numbers_json,results_json
+        FROM low_probability_records
+        WHERE status='settled' AND actual_date LIKE ?
+        ORDER BY actual_date
+        """,
+        (month + "%",),
+    ).fetchall()
+    if not rows:
+        return {"has_review": False, "month": month, "sample_size": 0, "pack_summary": {}, "daily_records": []}
+    records = [low_probability_record_from_row(row) for row in rows]
+    summary = {}
+    for key, label, _size in LOW_PROBABILITY_PACK_SPECS:
+        rounds = 0
+        pass_count = 0
+        accidental_total = 0
+        hit_counter = Counter()
+        worst = {"actual_date": "-", "accidental_hits": -1, "hit_numbers": []}
+        for record in records:
+            pack = record["packs"].get(key) or {}
+            if pack.get("accidental_hits") is None:
+                continue
+            hits = int(pack.get("accidental_hits") or 0)
+            rounds += 1
+            accidental_total += hits
+            if hits == 0:
+                pass_count += 1
+            hit_counter.update(pack.get("hit_numbers") or [])
+            if hits > worst["accidental_hits"]:
+                worst = {
+                    "actual_date": record.get("actual_date") or "-",
+                    "accidental_hits": hits,
+                    "hit_numbers": pack.get("hit_numbers") or [],
+                }
+        divisor = rounds or 1
+        summary[key] = {
+            "name": label,
+            "rounds": rounds,
+            "passed": pass_count,
+            "pass_rate": round(pass_count / divisor, 3),
+            "avg_accidental_hits": round(accidental_total / divisor, 3),
+            "worst_date": worst["actual_date"],
+            "worst_accidental_hits": max(0, worst["accidental_hits"]),
+            "worst_hit_numbers": worst["hit_numbers"],
+            "frequent_accidental_numbers": [{"number": n, "count": c} for n, c in hit_counter.most_common(10)],
+        }
+    return {
+        "has_review": True,
+        "month": month,
+        "sample_size": len(records),
+        "pack_summary": summary,
+        "daily_records": records,
+    }
+
+
 def store_prediction(conn, analysis):
     latest = analysis["latest_draw"]
     target_date = analysis["target_draw_date"]
@@ -1270,14 +1602,17 @@ def store_prediction(conn, analysis):
     candidates_json = json.dumps(analysis["candidates"], ensure_ascii=False)
     strong_packs_json = json.dumps(analysis["strong_packs"], ensure_ascii=False)
     snapshot_reason = "official_pending_prediction" if official_allowed else "watch_only_pending_prediction"
+    created_at = iso_local(taiwan_now())
+    low_packs = low_probability_packs_from_analysis(analysis)
+    low_status = store_low_probability_record(conn, latest["draw_date"], target_date, low_packs, created_at)
     row = conn.execute("SELECT id,status,target_date FROM predictions WHERE based_on_date=?", (latest["draw_date"],)).fetchone()
     if row and row[1] == "settled":
         conn.execute(
             "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
-            (latest["draw_date"], target_date, candidates_json, strong_packs_json, iso_local(taiwan_now()), "rerun_recomputed_after_settlement"),
+            (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at, "rerun_recomputed_after_settlement"),
         )
         conn.commit()
-        return "recomputed_snapshot_settled_period"
+        return "recomputed_snapshot_settled_period+" + low_status
     if row:
         conn.execute(
             """
@@ -1285,21 +1620,21 @@ def store_prediction(conn, analysis):
             SET target_date=?, candidates_json=?, strong_packs_json=?, created_at=?, status='pending'
             WHERE id=?
             """,
-            (target_date, candidates_json, strong_packs_json, iso_local(taiwan_now()), row[0]),
+            (target_date, candidates_json, strong_packs_json, created_at, row[0]),
         )
         status = "recomputed_updated_pending" if official_allowed else "recomputed_updated_watch_only_pending"
     else:
         conn.execute(
             "INSERT INTO predictions(based_on_date,target_date,candidates_json,strong_packs_json,created_at,status) VALUES(?,?,?,?,?,'pending')",
-            (latest["draw_date"], target_date, candidates_json, strong_packs_json, iso_local(taiwan_now())),
+            (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at),
         )
         status = "recomputed_inserted" if official_allowed else "recomputed_inserted_watch_only_pending"
     conn.execute(
         "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
-        (latest["draw_date"], target_date, candidates_json, strong_packs_json, iso_local(taiwan_now()), snapshot_reason),
+        (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at, snapshot_reason),
     )
     conn.commit()
-    return status
+    return status + "+" + low_status
 
 
 def backfill_predictions_from_snapshots(conn):
@@ -1376,10 +1711,32 @@ def backfill_predictions_from_snapshots(conn):
                 json.dumps(pack_hits, ensure_ascii=False),
             ),
         )
+        sync_settled_low_probability_for_prediction(conn, based_on_date, target_date, candidates_json, actual[0], actual_numbers, created_at)
         inserted += 1
         settled += 1
     conn.commit()
     return {"inserted": inserted, "settled": settled, "skipped": skipped}
+
+
+def sync_settled_low_probability_for_prediction(conn, based_on_date, target_date, candidates_json, actual_date, actual_numbers, created_at=None):
+    low_packs = low_probability_packs_from_candidates(json.loads(candidates_json or "[]"))
+    store_low_probability_record(conn, based_on_date, target_date, low_packs, created_at or iso_local(taiwan_now()))
+    results = low_probability_result_payload(low_packs, actual_numbers)
+    conn.execute(
+        """
+        UPDATE low_probability_records
+        SET settled_at=?, actual_date=?, actual_numbers_json=?, results_json=?, status='settled'
+        WHERE based_on_date=? AND target_date=?
+        """,
+        (
+            iso_local(taiwan_now()),
+            actual_date,
+            json.dumps(sorted(int(number) for number in actual_numbers), ensure_ascii=False),
+            json.dumps(results, ensure_ascii=False),
+            based_on_date,
+            target_date,
+        ),
+    )
 
 
 def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json, strong_packs_json, created_at, source):
@@ -1448,6 +1805,7 @@ def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json
         "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
         (based_on_date, target_date, candidates_json, strong_packs_json, created_at, source),
     )
+    sync_settled_low_probability_for_prediction(conn, based_on_date, target_date, candidates_json, actual[0], actual_numbers, created_at)
     return True
 
 
@@ -1541,23 +1899,30 @@ def full_period_prediction_audit_and_backfill(conn, draws):
 def settle_predictions(conn):
     rows = conn.execute(
         """
-        SELECT id,based_on_date,candidates_json,strong_packs_json,status,actual_date,actual_numbers_json
+        SELECT id,based_on_date,target_date,candidates_json,strong_packs_json,status,actual_date,actual_numbers_json
         FROM predictions
         WHERE status IN ('pending','settled')
         """
     ).fetchall()
     settled = 0
     for row in rows:
-        actual = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date > ? ORDER BY draw_date LIMIT 1", (row[1],)).fetchone()
+        actual = None
+        if row[2]:
+            actual = conn.execute(
+                "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date=?",
+                (row[2],),
+            ).fetchone()
+        if not actual:
+            actual = conn.execute("SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date > ? ORDER BY draw_date LIMIT 1", (row[1],)).fetchone()
         if not actual:
             continue
         actual_numbers = set(actual[1:6])
         actual_numbers_json = json.dumps(sorted(actual_numbers), ensure_ascii=False)
-        if row[4] == "settled" and row[5] == actual[0] and (row[6] or "") == actual_numbers_json:
+        if row[5] == "settled" and row[6] == actual[0] and (row[7] or "") == actual_numbers_json:
             continue
-        candidates = json.loads(row[2])
+        candidates = json.loads(row[3])
         ranked = [x["number"] for x in candidates]
-        packs = json.loads(row[3])
+        packs = json.loads(row[4])
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", [])
@@ -1588,6 +1953,7 @@ def settle_predictions(conn):
                 row[0],
             ),
         )
+        sync_settled_low_probability_for_prediction(conn, row[1], row[2] or actual[0], row[3], actual[0], actual_numbers, None)
         settled += 1
     conn.commit()
     return settled
@@ -2843,6 +3209,8 @@ def run(full=False):
             fetched, errors = 0, []
         snapshot_backfill = backfill_predictions_from_snapshots(conn)
         settled_count = settle_predictions(conn)
+        low_probability_backfill = backfill_low_probability_records_from_predictions(conn)
+        low_probability_settled_count = settle_low_probability_records(conn)
         export_csv(conn)
         validation = validate_sources(conn)
         data_audit = data_integrity_audit(conn, cached_latest, latest_fetch, validation)
@@ -2852,8 +3220,10 @@ def run(full=False):
         period_audit = full_period_prediction_audit_and_backfill(conn, draws)
         analysis = analyze(draws, failure_review(conn))
         analysis["period_integrity_audit"] = period_audit
-        ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding="utf-8")
         status = store_prediction(conn, analysis)
+        analysis["low_probability_daily_records"] = low_probability_daily_record(conn)
+        analysis["monthly_low_probability_review"] = monthly_low_probability_review(conn)
+        ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding="utf-8")
         health = prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest, data_audit)
         render_reports(conn, analysis)
         try:
@@ -2866,7 +3236,7 @@ def run(full=False):
         ok = file_check()
         history_status = analysis["history_completeness"]["status"]
         run_status = "success" if ok and not errors and history_status == "complete" and health["status"] == "ok" else "warning"
-        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "period_audit": period_audit, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
+        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "low_probability_backfill": low_probability_backfill, "low_probability_settled_count": low_probability_settled_count, "period_audit": period_audit, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
         conn.execute("UPDATE update_runs SET finished_at=?,status=?,message=? WHERE id=?", (iso_local(taiwan_now()), run_status, message[:1000], run_id))
         conn.commit()
     log(f"done latest={draws[-1]['draw_date']} top10={fmt_numbers([x['number'] for x in analysis['candidates'][:10]])}")
