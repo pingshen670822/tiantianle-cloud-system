@@ -2402,8 +2402,12 @@ def _avoid_confidence_profile(item):
     rank = _safe_int(item.get("candidate_rank", 99), 99)
     stability = _safe_int(item.get("stability_count", 0))
     weak = _safe_int(item.get("weak_signal_count", 0))
+    blocked = bool(item.get("avoid_blocked_by_recent_hit_risk"))
     score = min(100.0, avoid * 65 + max(0, rank - 24) * 2.0 + weak * 3.0 + (5 - min(stability, 5)) * 2.0)
-    if score >= 88:
+    if blocked:
+        score = min(score, 35.0)
+        label = "已排除避開"
+    elif score >= 88:
         label = "高避開信心"
     elif score >= 76:
         label = "中高避開信心"
@@ -2418,10 +2422,12 @@ def _avoid_confidence_profile(item):
         "candidate_rank": rank,
         "stability_count": stability,
         "weak_signal_count": weak,
+        "recent_hit_risk": round(float(item.get("recent_hit_risk", 0) or 0), 4),
+        "recovery_risk": round(float(item.get("recovery_risk", 0) or 0), 4),
+        "avoid_blocked_by_recent_hit_risk": blocked,
         "reasons": item.get("reasons", []),
         "warning": "低機率代表模型建議避開，不代表絕對不會開出。",
     }
-
 
 def _avoid_pack_summary(label, items):
     rows = list(items or [])
@@ -2459,23 +2465,51 @@ def _avoid_pack_summary(label, items):
 def _build_low_probability_avoid(industrial, candidates):
     source_items = [dict(item) for item in (((industrial or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])]
     used = {int(item.get("number")) for item in source_items if item.get("number") is not None}
+    latest_numbers = {int(number) for number in (((industrial or {}).get("recent_draw_firewall") or {}).get("latest_numbers") or [])}
     for item in reversed(candidates or []):
         number = int(item.get("number"))
         if number in used:
             continue
+        rank = int(item.get("rank", 99))
+        latest_blocked = number in latest_numbers
         source_items.append({
             "number": number,
             "avoid_score": max(0.0, 1.0 - float(item.get("score", 0) or 0)),
             "appearance_score": float(item.get("score", 0) or 0),
-            "candidate_rank": int(item.get("rank", 99)),
+            "candidate_rank": rank,
             "stability_count": int(item.get("stability_count", 0) or 0),
             "weak_signal_count": 1,
-            "reasons": ["候選排序後段", "高信心守門未通過"],
+            "recent_hit_risk": 1.0 if latest_blocked else 0.0,
+            "recovery_risk": 0.0,
+            "avoid_blocked_by_recent_hit_risk": bool(latest_blocked or rank <= 15),
+            "reasons": (["最新實開號封鎖，不得進低機率核心"] if latest_blocked else []) + ["候選排序後段", "高信心守門未通過"],
         })
         used.add(number)
-        if len(source_items) >= 15:
+        if len(source_items) >= NUMBER_MAX:
             break
-    profiles = [_avoid_confidence_profile(item) for item in source_items[:15]]
+    profiles = [_avoid_confidence_profile(item) for item in source_items]
+
+    def avoid_rank(item):
+        return _safe_int(item.get("candidate_rank", 99), 99)
+
+    ordered_profiles = []
+    buckets = [
+        [item for item in profiles if avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if avoid_rank(item) <= 9],
+    ]
+    used_numbers = set()
+    for bucket in buckets:
+        bucket.sort(key=lambda item: (float(item.get("avoid_confidence", 0) or 0), float(item.get("avoid_index", 0) or 0), -int(item.get("number", 0))), reverse=True)
+        for item in bucket:
+            number = int(item.get("number"))
+            if number in used_numbers:
+                continue
+            ordered_profiles.append(item)
+            used_numbers.add(number)
+    profiles = ordered_profiles[:15]
     groups = {
         "五不中": profiles[:5],
         "十不中": profiles[:10],
@@ -2492,7 +2526,6 @@ def _build_low_probability_avoid(industrial, candidates):
         "avoid_packs": avoid_packs,
         "backtest": (industrial or {}).get("unlikely_backtest") or {},
     }
-
 
 def _pack_numbers(strong_packs, key, fallback, limit):
     pack = (strong_packs or {}).get(key) or {}
@@ -2644,10 +2677,15 @@ def analyze(draws, review=None):
         "latest_ironlaw": latest_ironlaw,
         "decisive_battle_plan": latest_ironlaw,
         "prediction": {
+            "strongest": top_numbers[:1],
+            "top1": top_numbers[:1],
+            "top2": top_numbers[:2],
+            "top3": top_numbers[:3],
             "top5": top_numbers[:5],
             "top9": top_numbers[:9],
             "top10": top_numbers[:10],
             "top15": top_numbers[:15],
+            "high_confidence_note": "高機率信心牌已依最近失誤、漏抓復活、近期實開風險重新排序；未過守門者只列研究，不包裝成必中。",
             "formal_high_confidence": [item["number"] for item in strict_policy["formal_recommendations"]],
             "high_confidence_watch": [item["number"] for item in strict_policy["high_confidence_watch"]],
             "low_probability_5_not_hit": [item["number"] for item in avoid_policy["groups"]["五不中"]],

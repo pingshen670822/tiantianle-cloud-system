@@ -2393,9 +2393,9 @@ def top9_frontload_candidates(candidates, review=None):
         elif 10 <= idx <= 15:
             front_score += 0.025
             if number in late_hit_counts:
-                front_score += 0.105 + min(0.075, late_hit_counts[number] * 0.025)
+                front_score += 0.15 + min(0.10, late_hit_counts[number] * 0.032)
             if number in missed_actual_counts:
-                front_score += 0.075 + min(0.06, missed_actual_counts[number] * 0.02)
+                front_score += 0.125 + min(0.09, missed_actual_counts[number] * 0.028)
             if reasons & boosted_reasons:
                 front_score += 0.065
             if item.get("stability_count", 0) >= 3:
@@ -2404,9 +2404,9 @@ def top9_frontload_candidates(candidates, review=None):
                 front_score += 0.025
         else:
             if number in late_hit_counts:
-                front_score += 0.045
+                front_score += 0.075
             if number in missed_actual_counts:
-                front_score += 0.035
+                front_score += 0.065
 
         risk = item_soft_risk_penalty(item, failed)
         if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
@@ -3338,12 +3338,50 @@ def stability_consensus(draws, base_candidates, review=None):
     }
 
 
+def _recent_avoid_risk_profile(draws, review=None, lookback=10):
+    recent = list((draws or [])[-lookback:])
+    number_counts = Counter()
+    tail_counts = Counter()
+    zone_counts = Counter()
+    for draw in recent:
+        for number in draw.get("numbers", []):
+            number = int(number)
+            number_counts[number] += 1
+            tail_counts[number % 10] += 1
+            zone_counts[zone_label(number)] += 1
+    latest_numbers = {int(number) for number in (recent[-1].get("numbers", []) if recent else [])}
+    review = review or {}
+    monthly = review.get("monthly_review") or {}
+    rolling = review.get("rolling_summary") or {}
+    missed_actual = set()
+    late_hit = set()
+    for item in monthly.get("monthly_missed_actual_numbers", []):
+        if item.get("number"):
+            missed_actual.add(int(item["number"]))
+    for item in monthly.get("monthly_late_hit_numbers", []):
+        if item.get("number"):
+            late_hit.add(int(item["number"]))
+    for number, count in (rolling.get("hit_number_counts") or {}).items():
+        if int(count or 0) >= 1:
+            late_hit.add(int(number))
+    return {
+        "number_counts": number_counts,
+        "tail_counts": tail_counts,
+        "zone_counts": zone_counts,
+        "latest_numbers": latest_numbers,
+        "missed_actual": missed_actual,
+        "late_hit": late_hit,
+    }
+
+
 def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12):
     features = build_feature_matrix(draws, review, include_dependency=False)
     score_map = {item["number"]: item["score"] for item in candidates}
     rank_map = {item["number"]: index + 1 for index, item in enumerate(candidates)}
     stability_counts = {int(number): count for number, count in stability.get("consensus_counts", {}).items()}
     latest_set = set(draws[-1]["numbers"])
+    pressure = _recent_avoid_risk_profile(draws, review)
+    recovery_numbers = set(pressure["missed_actual"]) | set(pressure["late_hit"])
     previous_blocked = {
         item["number"] for item in candidates
         if item.get("previous_prediction_guard") and not item["previous_prediction_guard"].get("passed")
@@ -3359,32 +3397,66 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
         )
         penalty = 0.0
         reasons = []
-        if number in previous_blocked:
-            penalty += 0.32
-            reasons.append("\u6628\u65e5\u9810\u6e2c\u865f\u672a\u9054\u6975\u5f37\u91cd\u5165\u9580\u6abb")
-        if number in failed:
-            penalty += 0.25
-            reasons.append("\u4e0a\u671f\u5931\u6557\u865f\u78bc\u9694\u96e2")
+        recent_risk = min(1.0, pressure["number_counts"].get(number, 0) / 2.0)
+        tail_risk = min(1.0, pressure["tail_counts"].get(number % 10, 0) / 8.0)
+        zone_risk = min(1.0, pressure["zone_counts"].get(zone_label(number), 0) / 12.0)
+        recovery_risk = 1.0 if number in recovery_numbers else 0.0
+        positive_signal_risk = max(
+            values.get("positive_edge_core", 0),
+            values.get("rank_error_correction", 0),
+            values.get("missed_hit_recovery", 0),
+            values.get("omission_phase_rebound", 0),
+            values.get("similar_draw_knn", 0),
+        )
+        if number in pressure["latest_numbers"]:
+            recent_risk = max(recent_risk, 0.9)
+            reasons.append("近期實開號封鎖低機率核心")
+        if number in previous_blocked and number not in recovery_numbers and recent_risk < 0.5:
+            penalty += 0.18
+            reasons.append("昨日預測號未達重入門檻")
+        if number in failed and number not in recovery_numbers and recent_risk < 0.5:
+            penalty += 0.12
+            reasons.append("上期失敗號碼保守隔離")
         if number in latest_set:
             if repeat_policy.get(number, {}).get("historical_support"):
-                penalty += 0.08
-                reasons.append("\u9023\u838a\u5408\u683c\u4f46\u4fdd\u5b88\u98a8\u63a7")
+                reasons.append("連莊有歷史支撐，不列核心低機率")
             else:
-                penalty += 0.28
-                reasons.append("\u9023\u838a\u5b88\u9580\u672a\u901a\u904e")
-        if stability_counts.get(number, 0) == 0:
-            penalty += 0.16
-            reasons.append("\u64fe\u52d5\u6a21\u578b\u7121\u7a69\u5b9a\u5171\u8b58")
-        if weak_signal_count >= 5:
-            penalty += 0.20
-            reasons.append("\u77ed\u4e2d\u9577\u671f\u8207\u95dc\u806f\u6307\u6a19\u504f\u5f31")
-        if rank_map.get(number, 99) > 24:
-            penalty += 0.15
-            reasons.append("Top24\u5916")
+                reasons.append("剛開出號不列核心低機率")
+        if stability_counts.get(number, 0) == 0 and recent_risk < 0.5 and not recovery_risk:
+            penalty += 0.10
+            reasons.append("擾動模型無穩定共識")
+        if weak_signal_count >= 5 and recent_risk < 0.5 and not recovery_risk:
+            penalty += 0.14
+            reasons.append("短中長期與關聯指標偏弱")
+        if rank_map.get(number, 99) > 24 and recent_risk < 0.5 and not recovery_risk:
+            penalty += 0.10
+            reasons.append("Top24外")
         appearance_risk = max(0.0, min(1.0, score_map.get(number, 0.0)))
-        avoid_score = max(0.0, min(1.0, (1 - appearance_risk) * 0.48 + penalty))
+        avoid_score = (
+            (1 - appearance_risk) * 0.34
+            + min(1.0, weak_signal_count / 7.0) * 0.18
+            + penalty
+            - recent_risk * 0.38
+            - tail_risk * 0.08
+            - zone_risk * 0.06
+            - recovery_risk * 0.44
+            - positive_signal_risk * 0.24
+        )
+        if rank_map.get(number, 99) <= 9:
+            avoid_score -= 0.28
+        elif rank_map.get(number, 99) <= 15:
+            avoid_score -= 0.18
+        avoid_score = max(0.0, min(1.0, avoid_score))
+        blocked_by_hit_risk = bool(
+            recent_risk >= 0.5
+            or recovery_risk
+            or positive_signal_risk >= 0.62
+            or rank_map.get(number, 99) <= 15
+        )
+        if blocked_by_hit_risk:
+            reasons.append("開出風險過高，已移出低機率核心")
         if not reasons:
-            reasons.append("\u7d9c\u5408\u8a55\u5206\u504f\u5f31")
+            reasons.append("綜合評分偏弱")
         rows.append(
             {
                 "number": number,
@@ -3393,17 +3465,24 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
                 "candidate_rank": rank_map.get(number),
                 "stability_count": stability_counts.get(number, 0),
                 "weak_signal_count": weak_signal_count,
-                "reasons": reasons[:4],
-                "warning": "\u4f4e\u6a5f\u7387\u4e0d\u4ee3\u8868\u4e0d\u6703\u958b\u51fa",
+                "recent_hit_risk": round(recent_risk, 4),
+                "tail_hit_risk": round(tail_risk, 4),
+                "zone_hit_risk": round(zone_risk, 4),
+                "recovery_risk": round(recovery_risk, 4),
+                "positive_signal_risk": round(positive_signal_risk, 4),
+                "avoid_blocked_by_recent_hit_risk": blocked_by_hit_risk,
+                "reasons": reasons[:5],
+                "warning": "低機率不代表不會開出",
             }
         )
     rows.sort(key=lambda item: (item["avoid_score"], item["number"]), reverse=True)
+    strict_rows = [item for item in rows if not item.get("avoid_blocked_by_recent_hit_risk")]
+    strict_rows.extend(item for item in rows if item.get("avoid_blocked_by_recent_hit_risk"))
     return {
-        "method": "inverse_signal_risk_filter",
-        "warning": "\u6b64\u5340\u70ba\u98a8\u63a7\u907f\u958b\u89c0\u5bdf\uff0c\u4e0d\u662f\u7d55\u5c0d\u4e0d\u958b\u4fdd\u8b49",
-        "numbers": rows[:limit],
+        "method": "inverse_signal_risk_filter_recent_hit_blocked",
+        "warning": "此區為風控避開觀察，不是絕對不開保證",
+        "numbers": strict_rows[:limit],
     }
-
 
 def unlikely_backtest(draws, rounds=None, avoid_size=10):
     rounds = runtime_rounds("TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS", 80) if rounds is None else rounds

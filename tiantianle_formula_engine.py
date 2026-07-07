@@ -427,13 +427,49 @@ def coverage_design(numbers):
     }
 
 
-def avoid_analysis(ensemble, models, candidates=None):
+def _recent_pressure(draws, lookback=10):
+    recent = list((draws or [])[-lookback:])
+    number_counts = Counter()
+    tail_counts = Counter()
+    zone_counts = Counter()
+    for draw in recent:
+        for number in draw.get("numbers", []):
+            number = int(number)
+            number_counts[number] += 1
+            tail_counts[number % 10] += 1
+            zone_counts[number_zone(number)] += 1
+    latest_numbers = {int(number) for number in (recent[-1].get("numbers", []) if recent else [])}
+    return number_counts, tail_counts, zone_counts, latest_numbers
+
+
+def _review_recovery_numbers(review):
+    review = review or {}
+    monthly = review.get("monthly_review") or {}
+    rolling = review.get("rolling_summary") or {}
+    missed = set()
+    late = set()
+    for item in monthly.get("monthly_missed_actual_numbers", []):
+        if item.get("number"):
+            missed.add(int(item["number"]))
+    for item in monthly.get("monthly_late_hit_numbers", []):
+        if item.get("number"):
+            late.add(int(item["number"]))
+    hit_counts = rolling.get("hit_number_counts") or {}
+    for number, count in hit_counts.items():
+        if int(count or 0) >= 1:
+            late.add(int(number))
+    return missed, late
+
+
+def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
     rank_map = {}
     for index, item in enumerate(candidates or [], 1):
         try:
             rank_map[int(item.get("number"))] = int(item.get("rank") or index)
         except Exception:
             pass
+    recent_counts, recent_tails, recent_zones, latest_numbers = _recent_pressure(draws)
+    missed_actual, late_hits = _review_recovery_numbers(review)
     rows = []
     for number in range(NUMBER_MIN, NUMBER_MAX + 1):
         weak_models = sum(1 for scores in models.values() if scores.get(number, 0.0) < 0.34)
@@ -441,6 +477,14 @@ def avoid_analysis(ensemble, models, candidates=None):
         avoid_score = (1.0 - appearance) * 0.68 + min(1.0, weak_models / max(1, len(models))) * 0.32
         if rank_map.get(number, 99) <= 9:
             avoid_score *= 0.72
+        recent_risk = min(1.0, recent_counts.get(number, 0) / 2.0)
+        tail_risk = min(1.0, recent_tails.get(number % 10, 0) / 8.0)
+        zone_risk = min(1.0, recent_zones.get(number_zone(number), 0) / 12.0)
+        recovery_risk = 1.0 if number in missed_actual or number in late_hits else 0.0
+        if number in latest_numbers:
+            recent_risk = max(recent_risk, 0.85)
+        avoid_score -= recent_risk * 0.34 + tail_risk * 0.10 + zone_risk * 0.08 + recovery_risk * 0.38
+        avoid_score = max(0.0, min(1.0, avoid_score))
         reasons = []
         if weak_models >= 5:
             reasons.append("多數公式偏弱")
@@ -448,8 +492,11 @@ def avoid_analysis(ensemble, models, candidates=None):
             reasons.append("候選排序後段")
         if appearance < 0.30:
             reasons.append("綜合出現分偏低")
+        if recent_risk >= 0.5 or recovery_risk:
+            reasons.append("近期實開或漏抓復活風險，禁止列入核心低機率")
         if not reasons:
             reasons.append("未達主推門檻")
+        blocked = bool(recent_risk >= 0.5 or recovery_risk or rank_map.get(number, 99) <= 15)
         rows.append({
             "number": number,
             "avoid_score": round(avoid_score, 4),
@@ -457,11 +504,15 @@ def avoid_analysis(ensemble, models, candidates=None):
             "candidate_rank": rank_map.get(number),
             "stability_count": 0,
             "weak_signal_count": weak_models,
+            "recent_hit_risk": round(recent_risk, 4),
+            "recovery_risk": round(recovery_risk, 4),
+            "avoid_blocked_by_recent_hit_risk": blocked,
             "reasons": reasons,
         })
     rows.sort(key=lambda item: (item["avoid_score"], -item["number"]), reverse=True)
-    return {"method": "公式反向弱訊號", "warning": "低機率暫避為風控排序，不是絕對不開保證；每期開獎後重新驗證。", "numbers": rows[:15]}
-
+    strict_rows = [item for item in rows if not item.get("avoid_blocked_by_recent_hit_risk")]
+    strict_rows.extend(item for item in rows if item.get("avoid_blocked_by_recent_hit_risk"))
+    return {"method": "公式反向弱訊號加近期實開封鎖", "warning": "低機率暫避為風控排序，不是絕對不開保證；每期開獎後重新驗證。", "numbers": strict_rows[:15]}
 
 def compute_formula_engine_analysis(draws, review=None, candidates=None, rounds=None):
     models = model_suite(draws)
@@ -504,7 +555,7 @@ def compute_formula_engine_analysis(draws, review=None, candidates=None, rounds=
         "candidate_explanations": explanations,
         "positive_model_counts": positive_counts,
         "coverage_design": coverage_design(ranked[:9]),
-        "avoid_analysis": avoid_analysis(ensemble, models, candidates),
+        "avoid_analysis": avoid_analysis(ensemble, models, candidates, draws, review),
     }
 
 
