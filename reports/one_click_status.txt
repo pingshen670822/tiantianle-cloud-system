@@ -3,7 +3,7 @@ cache updated: lotterynet_year.html
 Step 2/6 run main system
 Step 1/6 prepare data and latest cache
 history csv synced
-cache skipped: calottery_official.html
+cache skipped: calottery_正式.html
 cache updated: lotto8_latest.html
 cache updated: lottolyzer_latest.html
 cache updated: lotteryusa_latest.html

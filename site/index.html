@@ -33,22 +33,22 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260708095412">
+    <link rel="manifest" href="manifest.webmanifest?v=20260708100202">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head>
 <body>
-<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-07-08 09:54 / 台灣最新可確認時間 2026-07-08 09:50 台灣時間 / 下期預測台灣時間 2026-07-09 09:50 台灣時間</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-07-08 18:02 / 台灣最新可確認時間 2026-07-08 09:50 台灣時間 / 下期預測台灣時間 2026-07-09 09:50 台灣時間</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260708095412">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260708100202">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260708095412</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260708100202</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -64,7 +64,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 <section class="band"><a class="primary danger" href="天天樂低機率精準暫避.html">查看下期低機率暫避</a></section>
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">查看上期未命中檢討</a></section>
 <section class="band"><a class="primary secondary" href="每月總整理.html">查看每月總整理</a></section>
-<section class="band"><a class="primary secondary" href="reports/complete_report.html">查看完整戰報</a></section>
+<section class="band"><a class="primary secondary" href="reports/完整_report.html">查看完整戰報</a></section>
 <section class="band"><a class="primary secondary" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">立即雲端更新</a><p class="url">手機雲端網址已設定</p></section>
 <section class='band diagnosis'><h2>每期重算證明</h2><p><strong>已重新運算</strong>：本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。</p><p>重算指紋：4eecef8a4983a9c0</p><p>依據開獎：2026-07-07 06 13 26 27 36</p><p>推薦模式：高信心觀察 / 本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。</p><p><strong>高信心號碼：</strong>29</p></section>
 <section class='band diagnosis'><h2>上期沿用守門</h2><p>上期號碼不得直接沿用；連莊必須達標。</p><table><tr><th>項目</th><th>號碼</th><th>判定</th></tr><tr><th>本期前九</th><td>32 29 21 16 30 11 38 23 01</td><td>每期重新運算</td></tr><tr><th>上期預測</th><td>-</td><td>-</td></tr><tr><th>前九重疊</th><td>11 16</td><td>2/9</td></tr><tr><th>達標連莊</th><td>16 36</td><td>通過才能留在前九</td></tr><tr><th>未達標剔除</th><td>-</td><td>已擋下</td></tr><tr><th>前九替換</th><td>剔除 </td><td>補入 </td></tr></table></section>
@@ -87,7 +87,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260708095412';
+    window.TIANTIANLE_BUILD_VERSION = '20260708100202';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -115,7 +115,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260708095412&force=' + Date.now());
+      location.replace('首頁.html?v=20260708100202&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -132,7 +132,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260708095412', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260708100202', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});

@@ -3,7 +3,7 @@ cache updated: lotterynet_year.html
 Step 2/6 run main system
 Step 1/6 prepare data and latest cache
 history csv synced
-cache skipped: calottery_official.html
+cache skipped: calottery_正式.html
 cache updated: lotto8_latest.html
 cache updated: lottolyzer_latest.html
 cache updated: lotteryusa_latest.html
@@ -12,3 +12,7 @@ cache updated: lotterynet_year.html
 Step 2/6 run main system
 main system retry 1/2 after exit -1
 Step 3/6 build mobile pages
+Step 4/6 verify outputs
+outputs verified
+runtime cache cleaned
+Step 5/6 publish mobile cloud
