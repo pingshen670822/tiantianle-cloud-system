@@ -1,8 +1,8 @@
-﻿one-click start: 2026-07-07 08:06:59
+﻿one-click start: 2026-07-08 09:05:57
 Force run: bypass freshness skip and recompute full model
 Step 1/6 prepare data and latest cache
 history csv synced
-cache skipped: calottery_正式.html
+cache skipped: calottery_official.html
 cache updated: lotto8_latest.html
 cache updated: lottolyzer_latest.html
 cache updated: lotteryusa_latest.html
@@ -16,4 +16,4 @@ runtime cache cleaned
 Step 5/6 publish mobile cloud
 cloud mobile site published
 Step 6/6 open latest page
-one-click 完整: 2026-07-07 08:10:16
+one-click complete: 2026-07-08 09:09:18

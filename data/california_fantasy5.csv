@@ -11848,4 +11848,4 @@ draw_date,n1,n2,n3,n4,n5,source
 2026-07-03,4,6,15,26,29,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
 2026-07-04,6,11,29,34,38,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
 2026-07-05,11,16,17,19,36,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
-2026-07-06,13,18,21,23,30,official:calottery
+2026-07-06,13,18,21,23,30,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
