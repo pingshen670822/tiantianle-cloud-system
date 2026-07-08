@@ -1,8 +1,5 @@
-@echo off
-setlocal
+﻿@echo off
+chcp 65001 >nul
 cd /d "%~dp0"
-echo Publishing Tiantianle mobile site/data/reports only...
-echo.
-"C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" "%~dp0publish_mobile_site_only.py"
-echo.
-pause
+wscript.exe "%~dp0天天樂背景手機同步.vbs"
+exit /b

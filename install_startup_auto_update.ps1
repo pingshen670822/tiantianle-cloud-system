@@ -1,22 +1,30 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RunScript = Join-Path $ScriptDir "run_california_fantasy5_once.ps1"
 $StartupDir = [Environment]::GetFolderPath("Startup")
-$Launcher = Join-Path $StartupDir "Tiantianle_Ironlaw_AutoUpdate.cmd"
+$Launcher = Join-Path $StartupDir "Tiantianle_Ironlaw_AutoUpdate.vbs"
+$OldLauncher = Join-Path $StartupDir "Tiantianle_Ironlaw_AutoUpdate.cmd"
+$SafeScriptDir = $ScriptDir.Replace('"', '""')
 $Lines = @(
-  "@echo off",
-  "chcp 65001 >nul",
-  "start `"`" /min powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RunScript`" -NoOpen"
+  "Option Explicit",
+  "Dim shell, root, cmd",
+  "Set shell = CreateObject(""WScript.Shell"")",
+  ("root = """ + $SafeScriptDir + """"),
+  "shell.CurrentDirectory = root",
+  "cmd = ""powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "" & Chr(34) & root & ""\run_california_fantasy5_once.ps1"" & Chr(34) & "" -NoOpen""",
+  "shell.Run cmd, 0, False"
 )
 try {
-  Set-Content -LiteralPath $Launcher -Value $Lines -Encoding UTF8
+  if (Test-Path -LiteralPath $OldLauncher) {
+    Remove-Item -LiteralPath $OldLauncher -Force
+  }
+  Set-Content -LiteralPath $Launcher -Value $Lines -Encoding Unicode
 } catch {
   $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
   if (-not $IsAdmin) {
-    Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    Start-Process powershell.exe -Verb RunAs -WindowStyle Hidden -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
     exit
   }
   throw
 }
-Write-Host "Startup auto update installed: $Launcher"
+Write-Host "Startup auto update installed hidden: $Launcher"

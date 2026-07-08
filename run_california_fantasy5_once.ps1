@@ -1,4 +1,4 @@
-param(
+﻿param(
   [switch]$HistoryOnly,
   [switch]$NetworkOnly,
   [switch]$ValidateOnly,
@@ -176,8 +176,15 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   if (-not (Test-Path -LiteralPath $PublishScript)) {
     throw "cloud publish script missing"
   }
-  & $PythonExe $PublishScript
-  if ($LASTEXITCODE -ne 0) { throw "cloud publish failed: $LASTEXITCODE" }
+  $PublishExitCode = 1
+  for ($Attempt = 1; $Attempt -le 3; $Attempt++) {
+    & $PythonExe $PublishScript
+    $PublishExitCode = $LASTEXITCODE
+    if ($PublishExitCode -eq 0) { break }
+    Step ("cloud publish retry " + $Attempt + "/3 after exit " + $PublishExitCode)
+    Start-Sleep -Seconds (5 * $Attempt)
+  }
+  if ($PublishExitCode -ne 0) { throw "cloud publish failed after retry: $PublishExitCode" }
   Step "cloud mobile site published"
 }
 

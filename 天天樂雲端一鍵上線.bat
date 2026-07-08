@@ -1,4 +1,5 @@
-@echo off
-set SCRIPT_DIR=%~dp0
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%publish_tiantianle_cloud.ps1"
-pause
+﻿@echo off
+chcp 65001 >nul
+cd /d "%~dp0"
+wscript.exe "%~dp0天天樂背景完整上線.vbs"
+exit /b
