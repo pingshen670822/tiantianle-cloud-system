@@ -1871,6 +1871,91 @@ def compact_number_verification_rows_tiantianle(analysis, limit=9):
     return rows
 
 
+def compact_backup_rank_rows_tiantianle(analysis):
+    rows = []
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    for rank, item in enumerate(candidates[9:15], 10):
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        score = item.get("score")
+        score_text = compact_percent(score, 1) if score is not None and safe_float(score) <= 1 else compact_decimal(item.get("confidence_index", score), 1)
+        rows.append([
+            rank,
+            f"{int(item.get('number')):02d}",
+            score_text,
+            compact_decimal(item.get("confidence_index"), 1),
+            f"{compact_decimal(item.get('model_probability_percent'), 2)}%",
+            f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+            f"穩定 {item.get('stability_count', '-')}；遺漏 {item.get('omission', '-')}",
+            f"成熟度 {compact_decimal(maturity.get('score'), 1)}；{compact_status(maturity.get('tier', '-'))}",
+            "第二層備查；可追蹤補中，不列前九高信心核心",
+        ])
+    return rows
+
+
+def compact_backup_hit_rows_tiantianle(snapshots, limit=12):
+    rows = []
+    seen = set()
+    for item in snapshots or []:
+        actual_date = item.get("actual_date")
+        if not actual_date or actual_date in seen or not item.get("actual_numbers"):
+            continue
+        seen.add(actual_date)
+        candidates = item.get("candidates") or []
+        backup_numbers = [
+            candidate.get("number")
+            for candidate in candidates[9:15]
+            if isinstance(candidate, dict) and candidate.get("number") is not None
+        ]
+        actual = set(item.get("actual_numbers") or [])
+        backup_hits = sorted(actual & set(backup_numbers))
+        top9_hits = item_hits(item, 9)
+        rows.append([
+            esc(actual_date),
+            fmt_numbers(backup_numbers) or "-",
+            mark_numbers(backup_hits, actual) or "-",
+            len(backup_hits),
+            len(top9_hits),
+            "有補中價值" if backup_hits else "本期未補中",
+        ])
+    rows.sort(key=lambda row: str(row[0]), reverse=True)
+    return rows[:limit]
+
+
+def compact_backup_summary_rows_tiantianle(snapshots):
+    items = []
+    seen = set()
+    for item in snapshots or []:
+        actual_date = item.get("actual_date")
+        if not actual_date or actual_date in seen or not item.get("actual_numbers"):
+            continue
+        seen.add(actual_date)
+        items.append(item)
+    if not items:
+        return []
+    hit_counts = []
+    hit_periods = 0
+    total_hits = 0
+    for item in items:
+        candidates = item.get("candidates") or []
+        backup_numbers = [
+            candidate.get("number")
+            for candidate in candidates[9:15]
+            if isinstance(candidate, dict) and candidate.get("number") is not None
+        ]
+        hits = set(item.get("actual_numbers") or []) & set(backup_numbers)
+        hit_count = len(hits)
+        hit_counts.append(hit_count)
+        total_hits += hit_count
+        if hit_count:
+            hit_periods += 1
+    return [
+        ["結算期數", len(items), "最近封存資料", "以已結算預測快照統計"],
+        ["第10到15名有補中期數", hit_periods, f"{compact_percent(hit_periods / len(items), 1)}", "至少命中一顆即列入"],
+        ["第10到15名平均補中", average_text(hit_counts), f"合計 {total_hits}", "只統計第10到15名，不混入前九"],
+    ]
+
+
 def compact_pack_rows_tiantianle(analysis):
     packs = analysis.get("strong_packs") or {}
     backtest = industrial_backtest(analysis)
@@ -2734,6 +2819,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     monthly_breakthrough_html = compact_monthly_breakthrough_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = f"下期研究候選前9名（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
+    backup_heading = f"第10到第15名第二層備查（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
     review_heading = (
         f"上期命中檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
         f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
@@ -2745,6 +2831,9 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     )
     model_heading = f"模型成效（資料截至台灣時間 {latest_tw_label} / 回測產生 {report_time}）"
     candidate_rows = [[row[0], latest_tw_label, target_tw_label] + row[1:] for row in compact_candidate_rows_tiantianle(analysis, 9)]
+    backup_rows = compact_backup_rank_rows_tiantianle(analysis)
+    backup_hit_rows = compact_backup_hit_rows_tiantianle(snapshots or [])
+    backup_summary_rows = compact_backup_summary_rows_tiantianle(snapshots or [])
     verification_rows = [[row[0], latest_tw_label, target_tw_label] + row[1:] for row in compact_number_verification_rows_tiantianle(analysis, 9)]
     return f"""<!doctype html>
 <html lang="zh-Hant" data-compact-report="true">
@@ -2830,6 +2919,14 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     <div class="band">
       <h2>{candidate_heading}</h2>
       {table(["號碼", "資料依據台灣時間", "預測台灣時間", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
+    </div>
+    <div class="band warn">
+      <h2>{backup_heading}</h2>
+      <p>你看到的狀況是對的：第10到第15名近期有補中能力，所以本區獨立列出。它是第二層備查池，不直接混入前九高信心核心；若連續達標，後續滾動模型會自動拉升權重。</p>
+      {table(["排名", "號碼", "分數", "信心", "機率", "交叉驗算", "穩定與遺漏", "成熟度", "定位"], backup_rows, "本期沒有第10到第15名備查資料")}
+      <h3>最近第10到15名補中統計</h3>
+      {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "目前沒有已結算的第10到15名統計")}
+      {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "目前沒有第10到15名補中明細")}
     </div>
     <div class="band">
       <h2>生成號碼逐號驗算（資料依據台灣時間 {esc(latest_tw_label)} / 預測台灣時間 {esc(target_tw_label)}）</h2>
