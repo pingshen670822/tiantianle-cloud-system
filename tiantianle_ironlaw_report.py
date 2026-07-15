@@ -2389,45 +2389,76 @@ def compact_dual_track_html_tiantianle(analysis, settled=None, snapshots=None):
     """
 
 
-def compact_low_review_html_tiantianle(settled):
+def compact_low_review_html_tiantianle(analysis, settled=None):
+    daily_records = analysis.get("low_probability_daily_records") or []
+    settled_records = [record for record in daily_records if record.get("status") == "settled"]
+    if settled_records:
+        latest_record = settled_records[0]
+        actual = set(latest_record.get("actual_numbers") or [])
+        rows = []
+        for key in ["five_miss", "ten_miss", "fifteen_miss"]:
+            pack = (latest_record.get("packs") or {}).get(key) or {}
+            hit_numbers = pack.get("hit_numbers") or []
+            accidental_hits = pack.get("accidental_hits")
+            if accidental_hits is None:
+                accidental_hits = len(set(hit_numbers) & actual)
+            passed = bool(pack.get("passed")) if pack.get("passed") is not None else accidental_hits == 0
+            correction = "守住，維持低機率權重"
+            if not passed:
+                correction = "誤開號回補近期熱度與交叉驗算，下一期低機率權重下修"
+            rows.append([
+                pack.get("name") or low_pack_label(key),
+                fmt_numbers(pack.get("numbers", [])) or "-",
+                fmt_numbers(latest_record.get("actual_numbers", [])) or "-",
+                accidental_hits,
+                mark_numbers(hit_numbers, actual) if hit_numbers else "-",
+                "達標" if passed else "未達標",
+                correction,
+            ])
+        recent_rows = []
+        for record in settled_records[:12]:
+            actual = set(record.get("actual_numbers") or [])
+            packs = record.get("packs") or {}
+            for key in ["five_miss", "ten_miss", "fifteen_miss"]:
+                pack = packs.get(key) or {}
+                hit_numbers = pack.get("hit_numbers") or []
+                accidental_hits = pack.get("accidental_hits")
+                if accidental_hits is None:
+                    accidental_hits = len(set(hit_numbers) & actual)
+                passed = bool(pack.get("passed")) if pack.get("passed") is not None else accidental_hits == 0
+                recent_rows.append([
+                    record.get("target_date", "-"),
+                    pack.get("name") or low_pack_label(key),
+                    fmt_numbers(pack.get("numbers", [])) or "-",
+                    fmt_numbers(record.get("actual_numbers", [])) or "-",
+                    accidental_hits,
+                    mark_numbers(hit_numbers, actual) if hit_numbers else "-",
+                    "達標" if passed else "誤開失守",
+                ])
+        return (
+            f"<p><strong>低機率誤開檢討：{esc(latest_record.get('based_on_date'))} 預測到 {esc(latest_record.get('actual_date'))} 開獎</strong></p>"
+            "<p>這一區專門檢討低機率號碼是否誤開，和下期低機率預測分開；誤開號會回補到滾動校正，不再當成沒有問題的低機率號。</p>"
+            f'{table(["暫避包", "原暫避號", "實際開獎", "誤開顆數", "誤開號", "結果", "下期修正"], rows, "已完成低機率檢查，等待下一期結算")}'
+            "<h3>最近低機率誤開明細</h3>"
+            f'{table(["目標日", "暫避包", "原暫避號", "實際開獎", "誤開顆數", "誤開號", "結果"], recent_rows, "目前沒有低機率誤開明細")}'
+        )
     if not settled:
-        return "<p>目前沒有已結算的低機率檢討資料。</p>"
+        return "<p>低機率每日紀錄正在等待下一期結算。</p>"
     actual = set(settled.get("actual_numbers") or [])
     rows = []
     for key, value in (settled.get("unlikely_pack_hits") or {}).items():
         rows.append([
             zh_text(value.get("name") or key),
             fmt_numbers(value.get("numbers", [])),
-            "0",
+            fmt_numbers(settled.get("actual_numbers", [])) or "-",
             value.get("accidental_hits", 0),
-            "達標" if value.get("passed") else "未達標",
             mark_numbers(value.get("hit_numbers", []), actual),
-            fmt_numbers(value.get("avoided_numbers", [])),
+            "達標" if value.get("passed") else "未達標",
+            "誤開號回補滾動校正" if not value.get("passed") else "守住，維持低機率權重",
         ])
-    if not rows:
-        candidates = settled.get("candidates") or []
-        ranked = [item.get("number") for item in candidates if isinstance(item, dict) and item.get("number") is not None]
-        fallback_packs = [
-            ("5不中", ranked[-5:]),
-            ("10不中", ranked[-10:]),
-            ("15不中", ranked[-15:]),
-        ]
-        for label, numbers in fallback_packs:
-            numbers = [int(number) for number in numbers if number is not None]
-            hit_numbers = sorted(actual & set(numbers))
-            avoided_numbers = [number for number in numbers if number not in hit_numbers]
-            rows.append([
-                label,
-                fmt_numbers(numbers),
-                "0",
-                len(hit_numbers),
-                "達標" if not hit_numbers else "未達標",
-                mark_numbers(hit_numbers, actual),
-                fmt_numbers(avoided_numbers),
-            ])
     return (
-        f"<p><strong>低機率檢討：{esc(settled.get('based_on_date'))} 預測到 {esc(settled.get('actual_date'))} 開獎</strong></p>"
-        f'{table(["暫避包", "原暫避號", "目標誤中", "實際誤中", "結果", "誤中號", "成功避開號"], rows, "已完成低機率檢查，等待下一期結算")}'
+        f"<p><strong>低機率誤開檢討：{esc(settled.get('based_on_date'))} 預測到 {esc(settled.get('actual_date'))} 開獎</strong></p>"
+        f'{table(["暫避包", "原暫避號", "實際開獎", "誤開顆數", "誤開號", "結果", "下期修正"], rows, "已完成低機率檢查，等待下一期結算")}'
     )
 
 
@@ -2529,7 +2560,7 @@ def build_low_probability_compact_report(analysis, settled):
     latest_time = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or "-"
     latest_tw_label = taiwan_time_label(latest_time)
     target_tw_label = taiwan_time_label(target_time)
-    review = compact_low_review_html_tiantianle(settled)
+    review = compact_low_review_html_tiantianle(analysis, settled)
     return f"""<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -2557,7 +2588,7 @@ def build_low_probability_compact_report(analysis, settled):
   <section class="band"><h2>低機率說明</h2><p>本頁只放經過運算的暫避號碼，用於風險控管；低機率不等於絕對不開。</p><p><a href="latest_battle_report.html">回到主戰報</a></p></section>
   <section class="band"><h2>下期低機率暫避預測</h2><p><strong>台灣開獎時間：</strong>{esc(target_tw_label)} / <strong>對應開獎日：</strong>{esc(target_date)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
   <section class="band"><h2>下期逐號暫避驗算</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
-  <section class="band"><h2>上期低機率達標檢討</h2>{review}</section>
+  <section class="band"><h2>上期低機率誤開檢討</h2>{review}</section>
   <section class="band"><h2>低機率每日紀錄</h2>{table(["目標日", "暫避包", "預測號", "開獎日", "實際開獎", "誤中", "誤中號", "結果"], daily_rows, "目前沒有低機率每日紀錄")}</section>
   <section class="band"><h2>低機率每月總紀錄分析</h2>{table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], monthly_rows, "目前沒有低機率每月結算資料")}</section>
 </main>
@@ -2803,7 +2834,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     status_text = compact_status(freshness.get("status", "ok"))
     review_html = compact_review_html_tiantianle(settled)
     failure_data_html = compact_failure_data_html_tiantianle(analysis)
-    low_review_html = compact_low_review_html_tiantianle(settled)
+    low_review_html = compact_low_review_html_tiantianle(analysis, settled)
     low_rows = compact_low_summary_rows_tiantianle(analysis)
     low_daily_rows = low_probability_daily_rows_tiantianle(analysis)
     low_monthly_rows = monthly_low_probability_summary_rows_tiantianle(analysis)
@@ -2826,7 +2857,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     )
     avoid_heading = f"低機率（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
     low_review_heading = (
-        f"低機率達標檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
+        f"低機率誤開檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
         f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
     )
     model_heading = f"模型成效（資料截至台灣時間 {latest_tw_label} / 回測產生 {report_time}）"
