@@ -2494,11 +2494,12 @@ def _build_low_probability_avoid(industrial, candidates):
 
     ordered_profiles = []
     buckets = [
-        [item for item in profiles if avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if avoid_rank(item) <= 9],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) <= 9],
+        [item for item in profiles if int(item.get("number", 0)) in latest_numbers],
     ]
     used_numbers = set()
     for bucket in buckets:
@@ -2509,7 +2510,9 @@ def _build_low_probability_avoid(industrial, candidates):
                 continue
             ordered_profiles.append(item)
             used_numbers.add(number)
-    profiles = ordered_profiles[:15]
+    profiles = [item for item in ordered_profiles if int(item.get("number", 0)) not in latest_numbers][:15]
+    if len(profiles) < 15:
+        profiles.extend([item for item in ordered_profiles if int(item.get("number", 0)) in latest_numbers][: 15 - len(profiles)])
     groups = {
         "五不中": profiles[:5],
         "十不中": profiles[:10],

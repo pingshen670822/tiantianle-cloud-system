@@ -744,12 +744,29 @@ def rolling_adjustment_data(review):
     top5_avg = float(summary.get("avg_top5_hits", 0) or 0)
     top10_avg = float(summary.get("avg_top10_hits", 0) or 0)
     top15_avg = float(summary.get("avg_top15_hits", 0) or 0)
+    last_two = list(recent_settled[:2])
+    last2_top10 = [int(item.get("top10_hits", 0) or 0) for item in last_two]
+    last2_top15 = [int(item.get("top15_hits", 0) or 0) for item in last_two]
+    last2_missed_actual = Counter()
+    last2_failed_top10 = Counter()
+    for settled in last_two:
+        actual = {int(n) for n in settled.get("actual_numbers", []) if NUMBER_MIN <= int(n) <= NUMBER_MAX}
+        candidates = [int(n) for n in settled.get("candidate_numbers", []) if NUMBER_MIN <= int(n) <= NUMBER_MAX]
+        top10 = set(candidates[:10])
+        for number in actual - top10:
+            last2_missed_actual[number] += 1
+        for number in top10 - actual:
+            last2_failed_top10[number] += 1
+    two_draw_low_hit = bool(len(last2_top10) >= 2 and all(value <= 1 for value in last2_top10))
     recent_performance = {
         "last5_top5_avg": top5_avg,
         "last5_top10_avg": top10_avg,
         "last5_top15_avg": top15_avg,
+        "last2_top10_avg": round(sum(last2_top10) / len(last2_top10), 3) if last2_top10 else 0,
+        "last2_top15_avg": round(sum(last2_top15) / len(last2_top15), 3) if last2_top15 else 0,
+        "two_draw_low_hit": two_draw_low_hit,
         "recent_slump": bool(top10_avg < 1.8 or top5_avg < 0.8),
-        "critical_slump": bool(top10_avg < 1.4 or top15_avg < 1.8 or summary.get("weak_top10_count", 0) >= 3),
+        "critical_slump": bool(two_draw_low_hit or top10_avg < 1.4 or top15_avg < 1.8 or summary.get("weak_top10_count", 0) >= 3),
     }
 
     monthly = review.get("monthly_review") or {}
@@ -800,6 +817,8 @@ def rolling_adjustment_data(review):
         "repeated_failed_numbers": [{"number": n, "miss_count": c} for n, c in repeated_failed.most_common(15)],
         "late_hit_numbers": [{"number": n, "late_hit_count": c} for n, c in late_hit_numbers.most_common(12)],
         "missed_actual_numbers": [{"number": n, "missed_count": c} for n, c in missed_actual_numbers.most_common(15)],
+        "last2_missed_actual_numbers": [{"number": n, "missed_count": c} for n, c in last2_missed_actual.most_common(15)],
+        "last2_failed_top10_numbers": [{"number": n, "miss_count": c} for n, c in last2_failed_top10.most_common(15)],
         "missed_actual_tails": [{"tail": n, "missed_count": c} for n, c in missed_actual_tails.most_common(10)],
         "missed_actual_zones": [{"zone": n, "missed_count": c} for n, c in missed_actual_zones.most_common()],
         "recent_performance": recent_performance,
@@ -1407,9 +1426,12 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
     repeated_failed_numbers = {int(item.get("number")) for item in rolling.get("repeated_failed_numbers", []) if item.get("number")}
     late_hit_numbers = {int(item.get("number")) for item in rolling.get("late_hit_numbers", []) if item.get("number")}
     missed_actual_numbers = {int(item.get("number")) for item in rolling.get("missed_actual_numbers", []) if item.get("number")}
+    last2_missed_actual_numbers = {int(item.get("number")) for item in rolling.get("last2_missed_actual_numbers", []) if item.get("number")}
+    last2_failed_top10_numbers = {int(item.get("number")) for item in rolling.get("last2_failed_top10_numbers", []) if item.get("number")}
     missed_actual_tails = {int(item.get("tail")) for item in rolling.get("missed_actual_tails", []) if item.get("tail") is not None}
     missed_actual_zones = {str(item.get("zone")) for item in rolling.get("missed_actual_zones", []) if item.get("zone")}
     mode = slump_mode(review)
+    emergency_low_hit = bool((rolling.get("recent_performance") or {}).get("two_draw_low_hit"))
     latest_set = set(draws[-1]["numbers"])
     repeat_policy = repeat_guard(draws)
     score = {}
@@ -1421,14 +1443,17 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
         raw = raw * (1.0 - core_blend) + values.get("positive_edge_core", 0.0) * core_blend
         previous_policy = previous_prediction_guard(number, values, review)
         if previous_policy and not previous_policy["passed"]:
-            raw *= 0.66 if mode == "critical" else 0.74
+            raw *= 0.54 if emergency_low_hit else 0.66 if mode == "critical" else 0.74
             reasons[number].append("\u6628\u65e5\u9810\u6e2c\u865f\u8edf\u964d\u6b0a\u91cd\u65b0\u9a57\u8b49")
         elif previous_policy and previous_policy["passed"]:
             raw *= 0.96
             reasons[number].append("\u6628\u65e5\u9810\u6e2c\u865f\u901a\u904e\u56de\u6536\u91cd\u9a57")
         if number in failed:
-            raw *= 0.58 if mode == "critical" else 0.68
+            raw *= 0.42 if emergency_low_hit else 0.58 if mode == "critical" else 0.68
             reasons[number].append("\u4e0a\u671f\u5931\u6557\u6838\u5fc3\u865f\u78bc\u8edf\u98a8\u63a7")
+        if emergency_low_hit and number in last2_failed_top10_numbers and number not in last2_missed_actual_numbers and number not in late_hit_numbers:
+            raw *= 0.50
+            reasons[number].append("\u9023\u7e8c\u4f4e\u547d\u4e2d\u5931\u6557\u524d\u5341\u91cd\u964d\u6b0a")
         if values["omission"] >= 0.7:
             reasons[number].append("\u907a\u6f0f\u88dc\u511f")
         if values["pair"] >= 0.7:
@@ -1485,7 +1510,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
                 reasons[number].append("\u9023\u838a\u5b88\u9580\u672a\u901a\u904e")
         reason_set = set(reasons[number])
         if number in repeated_failed_numbers:
-            raw *= 0.72 if mode == "critical" else 0.8 if mode == "warning" else 0.86
+            raw *= 0.55 if emergency_low_hit else 0.72 if mode == "critical" else 0.8 if mode == "warning" else 0.86
             reasons[number].append("\u6efe\u52d5\u6aa2\u8a0e\u9023\u7e8c\u672a\u547d\u4e2d\u964d\u6b0a")
         if number in late_hit_numbers and values["rank_error_correction"] >= 0.55:
             raw *= 1.42 if mode == "critical" else 1.26 if mode == "warning" else 1.16
@@ -1496,11 +1521,14 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             + values["omission"] * 0.12
             + values["distribution_balance"] * 0.08
         )
+        if emergency_low_hit and number in last2_missed_actual_numbers and number not in latest_set:
+            raw *= 1.36
+            reasons[number].append("\u9023\u7e8c\u4f4e\u547d\u4e2d\u6f0f\u6293\u865f\u5f37\u5236\u56de\u6536")
         if number in missed_actual_numbers and (values["rank_error_correction"] >= 0.4 or values["missed_hit_recovery"] >= 0.5):
-            raw *= 1.58 if mode == "critical" else 1.24
+            raw *= 1.88 if emergency_low_hit else 1.58 if mode == "critical" else 1.24
             reasons[number].append("\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d")
         elif (number % 10 in missed_actual_tails or zone_label(number) in missed_actual_zones) and mode in {"warning", "critical"}:
-            raw *= 1.24 if mode == "critical" else 1.13
+            raw *= 1.34 if emergency_low_hit else 1.24 if mode == "critical" else 1.13
             reasons[number].append("\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5c3e\u6578\u5340\u9593\u88dc\u4f4d")
         if mode == "critical" and recovery_signal >= 0.62 and number not in failed:
             raw *= 1.18 + min(0.22, recovery_signal * 0.18)
@@ -2359,8 +2387,19 @@ def top9_frontload_candidates(candidates, review=None):
         for item in rolling.get("missed_actual_numbers", [])
         if item.get("number")
     }
+    last2_missed_actual_counts = {
+        int(item.get("number")): int(item.get("missed_count", 0) or 0)
+        for item in rolling.get("last2_missed_actual_numbers", [])
+        if item.get("number")
+    }
+    last2_failed_top10_counts = {
+        int(item.get("number")): int(item.get("miss_count", 0) or 0)
+        for item in rolling.get("last2_failed_top10_numbers", [])
+        if item.get("number")
+    }
     failed = failed_number_set(review)
     mode = slump_mode(review)
+    emergency_low_hit = bool((rolling.get("recent_performance") or {}).get("two_draw_low_hit"))
     original = {int(item["number"]): dict(item) for item in candidates}
     original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
     raw_frontload = {}
@@ -2396,6 +2435,8 @@ def top9_frontload_candidates(candidates, review=None):
                 front_score += 0.15 + min(0.10, late_hit_counts[number] * 0.032)
             if number in missed_actual_counts:
                 front_score += 0.125 + min(0.09, missed_actual_counts[number] * 0.028)
+            if emergency_low_hit and number in last2_missed_actual_counts:
+                front_score += 0.12 + min(0.08, last2_missed_actual_counts[number] * 0.04)
             if reasons & boosted_reasons:
                 front_score += 0.065
             if item.get("stability_count", 0) >= 3:
@@ -2407,11 +2448,15 @@ def top9_frontload_candidates(candidates, review=None):
                 front_score += 0.075
             if number in missed_actual_counts:
                 front_score += 0.065
+            if emergency_low_hit and number in last2_missed_actual_counts:
+                front_score += 0.115
 
         risk = item_soft_risk_penalty(item, failed)
         if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
             risk += 0.045
-        front_score -= risk * (1.2 if mode == "critical" else 1.0)
+        if emergency_low_hit and number in last2_failed_top10_counts and number not in last2_missed_actual_counts:
+            risk += 0.095
+        front_score -= risk * (1.45 if emergency_low_hit else 1.2 if mode == "critical" else 1.0)
         raw_frontload[number] = front_score
 
     normalized_frontload = normalize(raw_frontload)
@@ -3671,7 +3716,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v13_realtime_no_repeat_top9_firewall_20260703",
+        "engine_version": "industrial_v14_two_draw_slump_rescue_20260716",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
