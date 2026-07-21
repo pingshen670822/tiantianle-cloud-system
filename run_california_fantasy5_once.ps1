@@ -81,7 +81,7 @@ if ($FastRefresh) {
   Step "Force run: bypass freshness skip and recompute full model"
 }
 
-Step "Step 1/6 prepare data and latest cache"
+Step "Step 1/8 prepare data and latest cache"
 $GrabberDirName = -join @([char]0x6293, [char]0x53D6, [char]0x5668)
 $DailyGrabberDirName = -join @([char]0x5929, [char]0x5929, [char]0x6A02, [char]0x6293, [char]0x53D6, [char]0x5668)
 $UserCsv = Join-Path ([Environment]::GetFolderPath("Desktop")) (Join-Path $GrabberDirName (Join-Path $DailyGrabberDirName "fantasy5_full_history.csv"))
@@ -127,7 +127,7 @@ if ($NetworkOnly) { $RunArgs += "--network-only" }
 if ($ValidateOnly) { $RunArgs += "--validate-only" }
 if ($All) { $RunArgs += "--all" }
 
-Step "Step 2/6 run main system"
+Step "Step 2/8 run main system"
 if ($FastRefresh) {
   Step "main system skipped: existing prediction is still current before safe update time"
 } else {
@@ -142,19 +142,35 @@ if ($FastRefresh) {
   if ($MainExitCode -ne 0) { throw "main system failed after retry: $MainExitCode" }
 }
 
-Step "Step 3/6 build mobile pages"
+Step "Step 3/8 build mobile pages"
 & $PythonExe ".\pages_build.py"
 if ($LASTEXITCODE -ne 0) { throw "mobile page build failed: $LASTEXITCODE" }
 
-Step "Step 4/6 verify outputs"
+Step "Step 4/8 sanitize and audit system gaps"
+$SanitizeScript = Join-Path $ScriptDir "sanitize_public_outputs.py"
+if (Test-Path -LiteralPath $SanitizeScript) {
+  & $PythonExe $SanitizeScript
+  if ($LASTEXITCODE -ne 0) { throw "public output sanitize failed: $LASTEXITCODE" }
+}
+$GapAuditScript = Join-Path $ScriptDir "system_gap_audit.py"
+if (-not (Test-Path -LiteralPath $GapAuditScript)) {
+  throw "system gap audit script missing"
+}
+& $PythonExe $GapAuditScript "--fail-on-critical" "--local-only"
+if ($LASTEXITCODE -ne 0) { throw "system gap audit failed: $LASTEXITCODE" }
+
+Step "Step 5/8 verify outputs"
 $RequiredOutputs = @(
   (Join-Path $ReportsDir "latest_analysis.json"),
   (Join-Path $ReportsDir "tiantianle_ironlaw_battle_report.html"),
   (Join-Path $ReportsDir "prediction.html"),
   (Join-Path $ReportsDir "review.html"),
+  (Join-Path $ReportsDir "tiantianle_low_probability_avoid.html"),
+  (Join-Path $ReportsDir "system_gap_audit.md"),
   (Join-Path $SiteDir "index.html"),
   (Join-Path $SiteDir "manifest.webmanifest"),
-  (Join-Path $SiteDir "service-worker.js")
+  (Join-Path $SiteDir "service-worker.js"),
+  (Join-Path $SiteDir "system_gap_audit.md")
 )
 $Missing = @($RequiredOutputs | Where-Object { -not (Test-Path -LiteralPath $_) })
 if ($Missing.Count -gt 0) {
@@ -168,7 +184,7 @@ if (Test-Path -LiteralPath $PyCache) {
   Step "runtime cache cleaned"
 }
 
-Step "Step 5/6 publish mobile cloud"
+Step "Step 6/8 publish mobile cloud"
 if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   Step "cloud publish skipped for diagnostic-only mode"
 } else {
@@ -188,7 +204,19 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   Step "cloud mobile site published"
 }
 
-Step "Step 6/6 open latest page"
+Step "Step 7/8 verify mobile sync"
+$SyncVerifyScript = Join-Path $ScriptDir "verify_mobile_sync.py"
+if (-not (Test-Path -LiteralPath $SyncVerifyScript)) {
+  throw "mobile sync verify script missing"
+}
+if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
+  & $PythonExe $SyncVerifyScript "--local-only"
+} else {
+  & $PythonExe $SyncVerifyScript "--remote" "--retries" "10" "--sleep" "6"
+}
+if ($LASTEXITCODE -ne 0) { throw "mobile sync verify failed: $LASTEXITCODE" }
+
+Step "Step 8/8 open latest page"
 if (-not $NoOpen) {
   if ($ValidateOnly) {
     Start-Process (Join-Path $ReportsDir "source_validation_report.md")

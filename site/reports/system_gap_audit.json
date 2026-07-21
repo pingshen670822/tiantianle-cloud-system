@@ -1,0 +1,208 @@
+{
+  "checked_at_taiwan": "2026-07-21T09:53:33+08:00",
+  "status": "通過",
+  "latest_draw_date": "2026-07-20",
+  "latest_numbers": [
+    14,
+    27,
+    29,
+    31,
+    33
+  ],
+  "latest_taiwan_update_time": "2026-07-21 09:50",
+  "target_draw_date": "2026-07-21",
+  "target_taiwan_time": "2026-07-22 09:50",
+  "top9": [
+    28,
+    21,
+    34,
+    12,
+    30,
+    2,
+    36,
+    11,
+    4
+  ],
+  "top15": [
+    28,
+    21,
+    34,
+    12,
+    30,
+    2,
+    36,
+    11,
+    4,
+    6,
+    17,
+    1,
+    24,
+    10,
+    13
+  ],
+  "draw_count": 11864,
+  "database": {
+    "exists": true,
+    "count": 11864,
+    "first_date": "1992-02-04",
+    "latest_date": "2026-07-20"
+  },
+  "release_status": "觀察中",
+  "model_maturity": {
+    "policy": "live_prediction_practical_maturity_governor",
+    "status": "觀察中",
+    "top10_avg_maturity": 62.8,
+    "top15_avg_maturity": 56.7,
+    "top10_mature_or_usable_count": 2,
+    "top10_blocked_low_maturity_count": 5,
+    "top10_tier_counts": {
+      "mature": 2,
+      "research_only": 3,
+      "blocked_low_maturity": 5
+    },
+    "required": "top10_avg_maturity>=70, 成熟通過_or_usable>=5, 成熟度不足=0",
+    "action": "force_觀察中_and_re_rank",
+    "top10_numbers": [
+      {
+        "number": 28,
+        "maturity": 90.3,
+        "tier": "成熟通過",
+        "cross_validation_passed": 7
+      },
+      {
+        "number": 21,
+        "maturity": 82.4,
+        "tier": "成熟通過",
+        "cross_validation_passed": 6
+      },
+      {
+        "number": 34,
+        "maturity": 69.2,
+        "tier": "研究觀察",
+        "cross_validation_passed": 5
+      },
+      {
+        "number": 12,
+        "maturity": 59.7,
+        "tier": "研究觀察",
+        "cross_validation_passed": 3
+      },
+      {
+        "number": 30,
+        "maturity": 65.0,
+        "tier": "研究觀察",
+        "cross_validation_passed": 7
+      },
+      {
+        "number": 2,
+        "maturity": 54.5,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 4
+      },
+      {
+        "number": 36,
+        "maturity": 48.9,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 1
+      },
+      {
+        "number": 11,
+        "maturity": 56.8,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 9
+      },
+      {
+        "number": 4,
+        "maturity": 54.8,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 2
+      },
+      {
+        "number": 6,
+        "maturity": 46.1,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 4
+      }
+    ]
+  },
+  "low_probability_backtest": {
+    "rounds": 30,
+    "avoid_size": 10,
+    "avg_accidental_hits": 1.267,
+    "random_expectation": 1.282,
+    "edge_vs_random": -0.0154,
+    "zero_hit_rate": 0.233
+  },
+  "issues": [
+    {
+      "area": "模型成熟度",
+      "problem": "正式發布守門仍未通過",
+      "impact": "高信心只能標示觀察，不能包裝成保證",
+      "fix": "持續用小組競賽、成熟度、近期回測淘汰弱訊號",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型成熟度",
+      "problem": "前十平均成熟度 62.8",
+      "impact": "前十核心仍有不穩定號碼",
+      "fix": "成熟度未達 70 前不得升為正式高信心",
+      "severity": "需補強"
+    },
+    {
+      "area": "低機率暫避",
+      "problem": "暫避平均誤中 1.267，優勢值 -0.0154",
+      "impact": "低機率清單仍可能誤開偏高",
+      "fix": "暫避核心排除前十五名、近期實開風險與回收號，並每日記錄誤開",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "強牌實戰門檻未穩",
+      "impact": "強牌會因近期落空而被降級或需要轉換策略",
+      "fix": "保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "強牌實戰門檻未穩",
+      "impact": "強牌會因近期落空而被降級或需要轉換策略",
+      "fix": "保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "強牌實戰門檻未穩",
+      "impact": "強牌會因近期落空而被降級或需要轉換策略",
+      "fix": "保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "強牌實戰門檻未穩",
+      "impact": "強牌會因近期落空而被降級或需要轉換策略",
+      "fix": "保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "小組精算近期穩定度不足",
+      "impact": "獨隻、2碼、3碼會出現高分但未穩定的情況",
+      "fix": "把未過的小組維持觀察中，並讓型態缺口模型參與下期競賽",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "樣本外連動不足",
+      "impact": "上期號碼對下期的拖牌支撐偏弱",
+      "fix": "將連動模型保守降權，改用區間缺口、型態相似與遺漏回收補位",
+      "severity": "需補強"
+    },
+    {
+      "area": "模型缺口",
+      "problem": "近期實戰失誤需強制回饋",
+      "impact": "如果上期失誤未被吸收，下期容易重複同樣結構",
+      "fix": "已將未命中理由、後段命中號、重複落空號納入滾動調整",
+      "severity": "需補強"
+    }
+  ]
+}

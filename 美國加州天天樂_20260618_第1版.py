@@ -64,7 +64,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "天天樂最新版鐵律第3版_20260629"
+ENGINE_VERSION = "天天樂最新版鐵律第4版_20260721"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -2572,7 +2572,7 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
     avoid_packs = (avoid_policy or {}).get("avoid_packs") or {}
     defensive_avoid = (avoid_packs.get("ten_miss") or {}).get("numbers") or [item.get("number") for item in ((avoid_policy or {}).get("groups") or {}).get("十不中", [])]
     return {
-        "version": "天天樂最新版鐵律第3版_20260629",
+        "version": "天天樂最新版鐵律第4版_20260721",
         "action_label": action_label,
         "grade": grade,
         "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示",

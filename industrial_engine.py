@@ -1635,6 +1635,73 @@ def item_soft_risk_penalty(item, failed=None):
     return penalty
 
 
+def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, review=None):
+    if len(ranked_numbers) <= 9:
+        return ranked_numbers, {
+            "status": "skipped",
+            "reason": "candidate_count_not_enough",
+            "promoted_by_diversity": [],
+            "demoted_by_diversity": [],
+        }
+    candidate_items = candidate_items or {}
+    pool = list(ranked_numbers[:18])
+    original_top9 = set(ranked_numbers[:9])
+    selected = []
+    failed = failed_number_set(review)
+    mode = slump_mode(review)
+    max_zone = 3
+    max_tail = 2
+
+    def selection_penalty(number):
+        zone_count = sum(1 for selected_number in selected if zone_label(selected_number) == zone_label(number))
+        tail_count = sum(1 for selected_number in selected if selected_number % 10 == number % 10)
+        adjacent_count = sum(1 for selected_number in selected if abs(selected_number - number) == 1)
+        penalty = 0.0
+        if zone_count >= max_zone:
+            penalty += 0.18 if mode == "critical" else 0.14
+        elif zone_count == max_zone - 1:
+            penalty += 0.055
+        if tail_count >= max_tail:
+            penalty += 0.14 if mode == "critical" else 0.10
+        elif tail_count == max_tail - 1:
+            penalty += 0.035
+        penalty += adjacent_count * 0.025
+        penalty += item_soft_risk_penalty(candidate_items.get(number, {"number": number}), failed) * 0.65
+        return penalty
+
+    while len(selected) < 9 and pool:
+        best = max(
+            pool,
+            key=lambda number: (
+                float(score_map.get(number, 0.0) or 0.0)
+                - selection_penalty(number)
+                + (0.012 if number in original_top9 else 0.0),
+                float(score_map.get(number, 0.0) or 0.0),
+                -number,
+            ),
+        )
+        selected.append(best)
+        pool.remove(best)
+
+    ordered_top9 = selected + [number for number in ranked_numbers if number not in selected][: max(0, 9 - len(selected))]
+    ordered_top9 = ordered_top9[:9]
+    ordered_top9_set = set(ordered_top9)
+    final_order = ordered_top9 + [number for number in ranked_numbers if number not in ordered_top9_set]
+    final_top9 = set(ordered_top9)
+    promoted = sorted(final_top9 - original_top9)
+    demoted = sorted(original_top9 - final_top9)
+    return final_order, {
+        "status": "active",
+        "policy": "前九名內加入區間、尾數、鄰號與失敗風險重平衡，避免高訊號集中後命中落到第十到第十五名。",
+        "original_top9": ranked_numbers[:9],
+        "rebalanced_top9": ordered_top9,
+        "promoted_by_diversity": promoted,
+        "demoted_by_diversity": demoted,
+        "zone_counts": dict(Counter(zone_label(number) for number in ordered_top9)),
+        "tail_counts": dict(Counter(number % 10 for number in ordered_top9)),
+    }
+
+
 def strong_single_group(candidates, review=None):
     rolling = rolling_adjustment_data(review)
     boosted_reasons = {item.get("reason") for item in rolling.get("boosted_reasons", [])}
@@ -2470,8 +2537,16 @@ def top9_frontload_candidates(candidates, review=None):
         ),
         reverse=True,
     )
+    pre_diversity_top9 = ranked_numbers[:9]
+    ranked_numbers, diversity_audit = top9_diversity_rebalanced_order(
+        ranked_numbers,
+        normalized_frontload,
+        original,
+        review,
+    )
     top9_numbers = set(ranked_numbers[:9])
     previous_top9 = {int(item["number"]) for item in candidates[:9]}
+    diversity_promoted = set(diversity_audit.get("promoted_by_diversity", []))
     promoted = []
     demoted = []
     adjusted = []
@@ -2489,6 +2564,8 @@ def top9_frontload_candidates(candidates, review=None):
 
         reasons = list(item.get("reasons", []))
         if new_rank <= 9:
+            if number in diversity_promoted:
+                reasons.insert(0, "\u524d\u4e5d\u5340\u9593\u5c3e\u6578\u91cd\u5e73\u8861")
             if old_rank > 9:
                 promoted.append(
                     {
@@ -2534,10 +2611,12 @@ def top9_frontload_candidates(candidates, review=None):
         "policy": "top9_high_confidence_frontload",
         "status": "active",
         "rule": "high confidence display and pack priority are compressed into ranks 1-9; ranks 10-15 are reserve only",
+        "pre_diversity_top9": pre_diversity_top9,
         "top9_numbers": [item["number"] for item in adjusted[:9]],
         "reserve_10_15_numbers": [item["number"] for item in adjusted[9:15]],
         "promoted_to_top9": promoted,
         "demoted_from_top9": demoted,
+        "diversity_rebalance": diversity_audit,
         "late_hit_numbers_used": [
             {"number": number, "late_hit_count": count}
             for number, count in sorted(late_hit_counts.items(), key=lambda pair: (-pair[1], pair[0]))[:12]
@@ -3133,7 +3212,7 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
             "\u5019\u9078\u6c60\u96c6\u4e2d\u5ea6\u904e\u9ad8",
             f"Top9\u5340\u9593 {dict(zone_counts)} / \u5c3e\u6578 {dict(tail_counts)}",
             "\u9ad8\u5206\u865f\u904e\u5ea6\u64e0\u5728\u540c\u5340\u6216\u540c\u5c3e\uff0c\u5bb9\u6613\u8b93\u547d\u4e2d\u5206\u6563\u5230Top10-15",
-            "\u57289\u78bc\u5167\u52a0\u5165\u5340\u9593\u8207\u5c3e\u6578\u5206\u6563\u60e9\u7f70\uff0c\u4e26\u628a\u5f8c\u6bb5\u9ad8\u8a0a\u865f\u62c9\u56deTop9\u7af6\u722d",
+            "\u57289\u78bc\u5167\u52a0\u5165\u5340\u9593\u8207\u5c3e\u6578\u5206\u6563\u61f2\u7f70\uff0c\u4e26\u628a\u5f8c\u6bb5\u9ad8\u8a0a\u865f\u62c9\u56deTop9\u7af6\u722d",
             "rebalance_top9_pool",
         )
 
@@ -3716,7 +3795,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v14_two_draw_slump_rescue_20260716",
+        "engine_version": "industrial_v15_top9_diversity_gap_audit_20260721",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
