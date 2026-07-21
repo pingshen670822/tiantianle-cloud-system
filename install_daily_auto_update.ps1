@@ -2,12 +2,14 @@
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RunScript = Join-Path $Root "run_california_fantasy5_once.ps1"
 $AfterDrawScript = Join-Path $Root "天天樂開獎後自動更新.ps1"
+$WatchdogScript = Join-Path $Root "天天樂自動更新鐵律守護.ps1"
 $AfterDrawTaskName = "Tiantianle Ironlaw After Draw Auto Update"
 $DeepTaskName = "Tiantianle Ironlaw Daily Deep Review"
 $SafetyTaskName = "Tiantianle Ironlaw Night Safety Sync"
+$WatchdogTaskName = "Tiantianle Ironlaw Auto Update Watchdog"
 $LegacyTaskName = "Tiantianle Ironlaw Daily Auto Update"
 
-foreach ($TaskName in @($LegacyTaskName, $AfterDrawTaskName, $DeepTaskName, $SafetyTaskName)) {
+foreach ($TaskName in @($LegacyTaskName, $AfterDrawTaskName, $DeepTaskName, $SafetyTaskName, $WatchdogTaskName)) {
   try {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
   } catch {
@@ -38,7 +40,13 @@ $SafetyAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-No
 $SafetyTrigger = New-ScheduledTaskTrigger -Daily -At "21:45"
 Register-ScheduledTask -TaskName $SafetyTaskName -Action $SafetyAction -Trigger $SafetyTrigger -Settings $Settings -Description "Night safety sync without opening windows." -Force | Out-Null
 
+$WatchdogAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$WatchdogScript`" -NoOpen" -WorkingDirectory $Root
+$WatchdogTrigger = New-DailyRepeatingTrigger "00:15" 180 1380
+Register-ScheduledTask -TaskName $WatchdogTaskName -Action $WatchdogAction -Trigger $WatchdogTrigger -Settings $Settings -Description "Every 3 hours, verify auto update tasks and run repair/update if the report is stale." -Force | Out-Null
+
 Write-Host "Installed hidden auto update tasks:"
 Write-Host ("1. " + $AfterDrawTaskName + ": 09:50 every 5 minutes for 65 minutes, plus 10:55 safety")
 Write-Host ("2. " + $DeepTaskName + ": 13:00 deep recompute")
 Write-Host ("3. " + $SafetyTaskName + ": 21:45 safety sync")
+Write-Host ("4. " + $WatchdogTaskName + ": every 3 hours task repair and stale report check")
+

@@ -183,8 +183,8 @@ jobs:
               problems.append(f"\u624b\u6a5f\u8cc7\u6599\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {latest}\uff0c\u624b\u6a5f {site_latest}")
           if site_target and target and site_target != target:
               problems.append(f"\u624b\u6a5f\u9810\u6e2c\u671f\u5225\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {target}\uff0c\u624b\u6a5f {site_target}")
-          if "industrial_v13" not in engine:
-              problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u5373\u6642\u9632\u91cd\u8986\u5f15\u64ce\uff1a{engine}")
+          if not any(version in engine for version in ("industrial_v14", "industrial_v13")):
+              problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u9435\u5f8b\u5f15\u64ce\uff1a{engine}")
           if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
               problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
           repeated = sorted(set(top9) & set(latest_nums))
