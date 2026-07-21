@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-21T12:55:27+08:00",
+  "checked_at_taiwan": "2026-07-21T12:59:41+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-21T12:55:24+08:00",
+    "generated_at_taiwan": "2026-07-21T12:59:38+08:00",
     "latest_draw_date": "2026-07-20",
     "latest_numbers": [
       14,
@@ -44,7 +44,7 @@
     "engine": "industrial_v15_top9_diversity_gap_audit_20260721"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-21T12:55:24+08:00",
+    "generated_at_taiwan": "2026-07-21T12:59:38+08:00",
     "latest_draw_date": "2026-07-20",
     "latest_numbers": [
       14,
