@@ -146,6 +146,23 @@ Step "Step 3/8 build mobile pages"
 & $PythonExe ".\pages_build.py"
 if ($LASTEXITCODE -ne 0) { throw "mobile page build failed: $LASTEXITCODE" }
 
+Step "Step 3.5/8 clean stale legacy artifacts before audit"
+$PreAuditCloudSnapshots = @(Get-ChildItem -LiteralPath $ScriptDir -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "cloud_*" })
+if ($PreAuditCloudSnapshots.Count -gt 0) {
+  foreach ($Snapshot in $PreAuditCloudSnapshots) {
+    Remove-Item -LiteralPath $Snapshot.FullName -Force
+  }
+  Step ("stale root cloud snapshots cleaned before audit: " + $PreAuditCloudSnapshots.Count)
+}
+$PreAuditLegacyEmptyDb = Join-Path $ScriptDir "data\california_fantasy5.db"
+if (Test-Path -LiteralPath $PreAuditLegacyEmptyDb) {
+  $PreAuditLegacyEmptyDbItem = Get-Item -LiteralPath $PreAuditLegacyEmptyDb -Force
+  if ($PreAuditLegacyEmptyDbItem.Length -eq 0) {
+    Remove-Item -LiteralPath $PreAuditLegacyEmptyDb -Force
+    Step "empty legacy database cleaned before audit"
+  }
+}
+
 Step "Step 4/8 sanitize and audit system gaps"
 $SanitizeScript = Join-Path $ScriptDir "sanitize_public_outputs.py"
 if (Test-Path -LiteralPath $SanitizeScript) {
@@ -163,20 +180,45 @@ Step "Step 5/8 verify outputs"
 $RequiredOutputs = @(
   (Join-Path $ReportsDir "latest_analysis.json"),
   (Join-Path $ReportsDir "tiantianle_ironlaw_battle_report.html"),
+  (Join-Path $ReportsDir "complete_report.html"),
   (Join-Path $ReportsDir "prediction.html"),
   (Join-Path $ReportsDir "review.html"),
   (Join-Path $ReportsDir "tiantianle_low_probability_avoid.html"),
+  (Join-Path $ReportsDir "天天樂低機率精準暫避.html"),
   (Join-Path $ReportsDir "system_gap_audit.md"),
   (Join-Path $SiteDir "index.html"),
+  (Join-Path $SiteDir "latest_analysis.json"),
+  (Join-Path $SiteDir "complete_report.html"),
   (Join-Path $SiteDir "manifest.webmanifest"),
   (Join-Path $SiteDir "service-worker.js"),
-  (Join-Path $SiteDir "system_gap_audit.md")
+  (Join-Path $SiteDir "system_gap_audit.md"),
+  (Join-Path $SiteDir "reports\latest_analysis.json"),
+  (Join-Path $SiteDir "reports\complete_report.html"),
+  (Join-Path $SiteDir "reports\tiantianle_low_probability_avoid.html"),
+  (Join-Path $SiteDir "reports\system_gap_audit.md")
 )
 $Missing = @($RequiredOutputs | Where-Object { -not (Test-Path -LiteralPath $_) })
 if ($Missing.Count -gt 0) {
   throw ("missing outputs: " + ($Missing -join ", "))
 }
 Step "outputs verified"
+
+$StaleCloudSnapshots = @(Get-ChildItem -LiteralPath $ScriptDir -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "cloud_*" })
+if ($StaleCloudSnapshots.Count -gt 0) {
+  foreach ($Snapshot in $StaleCloudSnapshots) {
+    Remove-Item -LiteralPath $Snapshot.FullName -Force
+  }
+  Step ("stale root cloud snapshots cleaned: " + $StaleCloudSnapshots.Count)
+}
+
+$LegacyEmptyDb = Join-Path $ScriptDir "data\california_fantasy5.db"
+if (Test-Path -LiteralPath $LegacyEmptyDb) {
+  $LegacyEmptyDbItem = Get-Item -LiteralPath $LegacyEmptyDb -Force
+  if ($LegacyEmptyDbItem.Length -eq 0) {
+    Remove-Item -LiteralPath $LegacyEmptyDb -Force
+    Step "empty legacy database cleaned"
+  }
+}
 
 $PyCache = Join-Path $ScriptDir "__pycache__"
 if (Test-Path -LiteralPath $PyCache) {
@@ -185,6 +227,8 @@ if (Test-Path -LiteralPath $PyCache) {
 }
 
 Step "Step 6/8 publish mobile cloud"
+$CloudPublishSucceeded = $false
+$CloudPublishStatusPath = Join-Path $ReportsDir "cloud_publish_status.json"
 if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   Step "cloud publish skipped for diagnostic-only mode"
 } else {
@@ -200,8 +244,23 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
     Step ("cloud publish retry " + $Attempt + "/3 after exit " + $PublishExitCode)
     Start-Sleep -Seconds (5 * $Attempt)
   }
-  if ($PublishExitCode -ne 0) { throw "cloud publish failed after retry: $PublishExitCode" }
-  Step "cloud mobile site published"
+  if ($PublishExitCode -ne 0) {
+    Step ("cloud publish failed after retry, local reports kept: " + $PublishExitCode)
+    Set-Content -LiteralPath $CloudPublishStatusPath -Encoding UTF8 -Value (@{
+      checked_at_taiwan = (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz")
+      status = "cloud_publish_failed_local_reports_kept"
+      exit_code = $PublishExitCode
+      action = "本機開獎、戰報、下期預測已完成；手機雲端等待下一次排程或權杖修復後同步。"
+    } | ConvertTo-Json -Depth 5)
+  } else {
+    $CloudPublishSucceeded = $true
+    Set-Content -LiteralPath $CloudPublishStatusPath -Encoding UTF8 -Value (@{
+      checked_at_taiwan = (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz")
+      status = "cloud_published"
+      exit_code = 0
+    } | ConvertTo-Json -Depth 5)
+    Step "cloud mobile site published"
+  }
 }
 
 Step "Step 7/8 verify mobile sync"
@@ -211,8 +270,11 @@ if (-not (Test-Path -LiteralPath $SyncVerifyScript)) {
 }
 if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   & $PythonExe $SyncVerifyScript "--local-only"
-} else {
+} elseif ($CloudPublishSucceeded) {
   & $PythonExe $SyncVerifyScript "--remote" "--retries" "10" "--sleep" "6"
+} else {
+  Step "remote sync verify skipped because cloud publish failed; running local sync check"
+  & $PythonExe $SyncVerifyScript "--local-only"
 }
 if ($LASTEXITCODE -ne 0) { throw "mobile sync verify failed: $LASTEXITCODE" }
 

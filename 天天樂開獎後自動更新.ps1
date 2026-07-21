@@ -104,6 +104,25 @@ function Save-Archive {
   }
 
   $json = $record | ConvertTo-Json -Compress -Depth 30
+  if (Test-Path -LiteralPath $ArchivePath) {
+    $kept = New-Object System.Collections.Generic.List[string]
+    foreach ($line in Get-Content -LiteralPath $ArchivePath -Encoding UTF8) {
+      if ([string]::IsNullOrWhiteSpace($line)) {
+        continue
+      }
+      try {
+        $old = $line | ConvertFrom-Json
+        $sameRound = ([string]$old.expected_taiwan_safe_update_time -eq [string]$record.expected_taiwan_safe_update_time) -and
+                     ([string]$old.latest_draw_date -eq [string]$record.latest_draw_date)
+        if (-not $sameRound) {
+          $kept.Add($line)
+        }
+      } catch {
+        $kept.Add($line)
+      }
+    }
+    Set-Content -LiteralPath $ArchivePath -Encoding UTF8 -Value $kept
+  }
   Add-Content -LiteralPath $ArchivePath -Encoding UTF8 -Value $json
   Set-Content -LiteralPath $StatusPath -Encoding UTF8 -Value ($record | ConvertTo-Json -Depth 30)
 }

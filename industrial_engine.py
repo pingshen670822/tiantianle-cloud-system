@@ -12,8 +12,11 @@ DRAW_SIZE = 5
 BASE_PROBABILITY = DRAW_SIZE / NUMBER_MAX
 EXPECTED_GAP = NUMBER_MAX / DRAW_SIZE
 POSITIVE_EDGE_CORE_FEATURES = (
+    "full_history_anchor",
     "bayesian_posterior",
     "distribution_balance",
+    "freq_all",
+    "freq_720",
     "freq_300",
     "omission",
     "regime_gap_bridge",
@@ -84,6 +87,40 @@ def binomial_zscore(count, draws_count):
     expected = draws_count * BASE_PROBABILITY
     variance = max(draws_count * BASE_PROBABILITY * (1 - BASE_PROBABILITY), 1e-9)
     return (count - expected) / math.sqrt(variance)
+
+
+def full_history_anchor_scores(draws):
+    """Full-history anchor: keeps ranking grounded in the entire database."""
+    if not draws:
+        return {number: 0.0 for number in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    full_freq = frequency(draws)
+    full_z = normalize({
+        number: binomial_zscore(full_freq.get(number, 0), len(draws))
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    })
+    midpoint = max(1, len(draws) // 2)
+    first = draws[:midpoint]
+    second = draws[midpoint:] or draws
+    first_freq = frequency(first)
+    second_freq = frequency(second)
+    first_rate = {
+        number: first_freq.get(number, 0) / max(1, len(first))
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    }
+    second_rate = {
+        number: second_freq.get(number, 0) / max(1, len(second))
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    }
+    stability = {}
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        gap = abs(first_rate[number] - second_rate[number])
+        baseline = max(BASE_PROBABILITY, (first_rate[number] + second_rate[number]) / 2)
+        stability[number] = max(0.0, 1.0 - gap / max(baseline, 1e-9))
+    stability_norm = normalize(stability)
+    return normalize({
+        number: full_z[number] * 0.62 + stability_norm[number] * 0.38
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    })
 
 
 def ewma_frequency(draws, half_life):
@@ -914,7 +951,7 @@ def slump_mode(review):
 
 
 def build_feature_matrix(draws, review=None, include_dependency=True):
-    windows = [5, 10, 20, 50, 100, 300]
+    windows = [5, 10, 20, 50, 100, 300, 720, 1800]
     feature_scores = {n: defaultdict(float) for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
     window_scores = {}
 
@@ -927,6 +964,12 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         for number, value in normalized.items():
             feature_scores[number][f"freq_{window}"] = value
 
+    full_freq = frequency(draws)
+    freq_all = normalize({
+        n: binomial_zscore(full_freq.get(n, 0), len(draws))
+        for n in range(NUMBER_MIN, NUMBER_MAX + 1)
+    })
+    full_history_anchor = full_history_anchor_scores(draws)
     ewma_fast = normalize(ewma_frequency(draws[-160:], 16))
     ewma_slow = normalize(ewma_frequency(draws[-360:], 60))
     omissions = omission(draws)
@@ -996,6 +1039,8 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
     for number in range(NUMBER_MIN, NUMBER_MAX + 1):
         feature_scores[number]["ewma_fast"] = ewma_fast[number]
         feature_scores[number]["ewma_slow"] = ewma_slow[number]
+        feature_scores[number]["freq_all"] = freq_all[number]
+        feature_scores[number]["full_history_anchor"] = full_history_anchor[number]
         feature_scores[number]["omission"] = omission_score[number]
         feature_scores[number]["transition"] = transition_score[number]
         feature_scores[number]["validated_dependency"] = dependency_score[number]
@@ -1030,11 +1075,15 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
 def industrial_weights(review=None):
     weights = {
         "freq_5": 0.025,
-        "freq_10": 0.045,
-        "freq_20": 0.078,
-        "freq_50": 0.112,
-        "freq_100": 0.118,
-        "freq_300": 0.055,
+        "freq_10": 0.035,
+        "freq_20": 0.064,
+        "freq_50": 0.104,
+        "freq_100": 0.112,
+        "freq_300": 0.07,
+        "freq_720": 0.084,
+        "freq_1800": 0.076,
+        "freq_all": 0.092,
+        "full_history_anchor": 0.14,
         "ewma_fast": 0.052,
         "ewma_slow": 0.072,
         "omission": 0.112,
@@ -1067,8 +1116,8 @@ def industrial_weights(review=None):
         weights.update(
             {
                 "freq_5": 0.01,
-                "freq_10": 0.02,
-                "freq_20": 0.06,
+                "freq_10": 0.016,
+                "freq_20": 0.048,
                 "transition": 0.045,
                 "markov_chain": 0.04,
                 "time_series": 0.04,
@@ -1089,8 +1138,13 @@ def industrial_weights(review=None):
                 "positive_edge_core": 0.28,
                 "repeat": 0.005,
                 "neighbor": 0.01,
-                "freq_50": 0.142,
+                "freq_50": 0.124,
                 "freq_100": 0.13,
+                "freq_300": 0.102,
+                "freq_720": 0.128,
+                "freq_1800": 0.118,
+                "freq_all": 0.15,
+                "full_history_anchor": 0.24,
                 "omission": 0.185,
                 "tail_zone": 0.138,
                 "pair": 0.132,
@@ -1105,6 +1159,10 @@ def industrial_weights(review=None):
         for key in [
             "rank_error_correction",
             "positive_edge_core",
+            "full_history_anchor",
+            "freq_all",
+            "freq_720",
+            "freq_1800",
             "missed_hit_recovery",
             "omission",
             "bayesian_posterior",
@@ -1129,6 +1187,10 @@ MODEL_SOURCE_LABELS = {
     "freq_50": "\u8fd150\u671f\u71b1\u5ea6",
     "freq_100": "\u8fd1100\u671f\u71b1\u5ea6",
     "freq_300": "\u8fd1300\u671f\u7a69\u5b9a",
+    "freq_720": "\u8fd1720\u671f\u9577\u7dda",
+    "freq_1800": "\u8fd11800\u671f\u9577\u7dda",
+    "freq_all": "\u5168\u6b77\u53f2\u983b\u7387",
+    "full_history_anchor": "\u5168\u6b77\u53f2\u9328\u9ede",
     "ewma_fast": "\u5feb\u901f\u52a0\u6b0a\u8da8\u52e2",
     "ewma_slow": "\u6162\u901f\u52a0\u6b0a\u8da8\u52e2",
     "omission": "\u907a\u6f0f\u9031\u671f",
@@ -2236,6 +2298,7 @@ def precision_micro_models(candidates, review=None, governance=None, tournament=
     pool = [
         item for item in candidates[:9]
         if item.get("number") is not None and item.get("top9_core", int(item.get("rank", 99) or 99) <= 9)
+        and (item.get("entry_validation") or {}).get("passed_for_main", True)
     ]
     scored = sorted(
         [
@@ -2829,7 +2892,15 @@ def strict_candidate_pool(candidates, min_score=0.64, min_confidence=81.0, min_s
 def strong_packs(candidates, review=None, governance=None):
     score_map = {item["number"]: item["score"] for item in candidates}
     candidate_map = {item["number"]: item for item in candidates}
-    strict_pool = strict_candidate_pool(candidates)
+    entry_allowed_numbers = {
+        int(item["number"])
+        for item in candidates
+        if (item.get("entry_validation") or {}).get("passed_for_main", item.get("top9_core", False))
+    }
+    strict_pool = [
+        item for item in strict_candidate_pool(candidates)
+        if int(item["number"]) in entry_allowed_numbers
+    ]
     qualified_numbers = {item["number"] for item in strict_pool}
     governance = governance or {"pack_stats": {}}
     pack_stats = governance.get("pack_stats", {})
@@ -2881,9 +2952,9 @@ def strong_packs(candidates, review=None, governance=None):
         if len(selected) >= size:
             return sorted(selected[:size])
         if key == "nine_hit_three":
-            pool = candidates[:9]
+            pool = [item for item in candidates[:9] if int(item["number"]) in entry_allowed_numbers]
         else:
-            pool = candidates[: max(size, 12)]
+            pool = [item for item in candidates[: max(size, 12)] if int(item["number"]) in entry_allowed_numbers]
         for item in pool:
             number = item["number"]
             if number not in selected:
@@ -2905,7 +2976,8 @@ def strong_packs(candidates, review=None, governance=None):
         variant = recent_stat.get("best_variant", "dedicated")
         allowed_pool = [
             item for item in candidates[:30]
-            if item.get("practical_maturity", {}).get("score", 0) >= min_maturity
+            if int(item["number"]) in entry_allowed_numbers
+            and item.get("practical_maturity", {}).get("score", 0) >= min_maturity
             and (
                 item["number"] in qualified_numbers
                 or (
@@ -2918,8 +2990,9 @@ def strong_packs(candidates, review=None, governance=None):
             fallback_floor = min(58.0, min_maturity)
             fallback_pool = [
                 item for item in candidates[: max(size, 18)]
-                if item.get("practical_maturity", {}).get("score", 0) >= fallback_floor
-            ] or candidates[: max(size, 12)]
+                if int(item["number"]) in entry_allowed_numbers
+                and item.get("practical_maturity", {}).get("score", 0) >= fallback_floor
+            ]
             fallback_numbers = group_by_variant(key, fallback_pool, review, variant)
             if len(fallback_numbers) < size and fallback_pool:
                 fallback_numbers = top_rank_group(fallback_pool, size, review)
@@ -3709,6 +3782,697 @@ def apply_recent_draw_hard_firewall(candidates, draws, formula_engine=None):
     }
 
 
+def apply_recent_failure_hard_front_gate(candidates, review=None, front_limit=9):
+    if not candidates:
+        return candidates, {"status": "skipped", "reason": "no_candidates"}
+    review = review or {}
+    rolling = rolling_adjustment_data(review)
+    failed = set(failed_number_set(review))
+    repeated_failed = {
+        int(item.get("number"))
+        for item in rolling.get("repeated_failed_numbers", [])
+        if item.get("number")
+    }
+    last2_failed_top10 = {
+        int(item.get("number"))
+        for item in rolling.get("last2_failed_top10_numbers", [])
+        if item.get("number")
+    }
+    previous = set(previous_prediction_set(review))
+    adjusted = []
+    blocked = []
+    revalidated = []
+    for item in candidates:
+        row = dict(item)
+        number = int(row["number"])
+        previous_guard = row.get("previous_prediction_guard") or {}
+        cross = row.get("cross_validation") or {}
+        maturity = row.get("practical_maturity") or {}
+        maturity_score = float(maturity.get("score", 0.0) or 0.0)
+        cross_passed = int(cross.get("passed_count", 0) or 0)
+        reasons = list(row.get("reasons") or [])
+        model_names = {source.get("model") for source in row.get("model_sources", [])}
+        block_reasons = []
+        if number in failed:
+            block_reasons.append("近期失準號")
+        if number in repeated_failed:
+            block_reasons.append("連續落空號")
+        if number in last2_failed_top10:
+            block_reasons.append("近兩期前十落空號")
+        if number in previous and previous_guard and not previous_guard.get("passed"):
+            block_reasons.append("上期預測回鍋未過")
+
+        strong_full_history = (
+            "full_history_anchor" in model_names
+            or "freq_all" in model_names
+            or "freq_720" in model_names
+            or "freq_1800" in model_names
+        )
+        recovery_signal = (
+            "rank_error_correction" in model_names
+            or "missed_hit_recovery" in model_names
+            or "regime_gap_bridge" in model_names
+        )
+        reentry_allowed = (
+            bool(block_reasons)
+            and maturity_score >= 82.0
+            and cross_passed >= 7
+            and strong_full_history
+            and recovery_signal
+            and not (previous_guard and not previous_guard.get("passed"))
+        )
+        if block_reasons and not reentry_allowed:
+            row["_recent_failure_front_blocked"] = True
+            row["score"] = round(float(row.get("score", 0.0) or 0.0) * 0.38, 6)
+            row["confidence_index"] = round(min(float(row.get("confidence_index", 0.0) or 0.0), 64.0), 3)
+            row["top9_core"] = False
+            reason_text = "近期失準硬守門未通過，禁止進入九碼核心"
+            if reason_text not in reasons:
+                reasons.insert(0, reason_text)
+            row["reasons"] = reasons[:8]
+            blocked.append({"number": number, "reasons": block_reasons})
+        else:
+            row["_recent_failure_front_blocked"] = False
+            if block_reasons and reentry_allowed:
+                reason_text = "近期失準號已通過全歷史與成熟度重驗"
+                if reason_text not in reasons:
+                    reasons.insert(0, reason_text)
+                row["reasons"] = reasons[:8]
+                revalidated.append({"number": number, "reasons": block_reasons})
+        row["recent_failure_front_gate"] = {
+            "blocked": bool(block_reasons and not reentry_allowed),
+            "revalidated": bool(block_reasons and reentry_allowed),
+            "reasons": block_reasons,
+            "required": "成熟度82以上、交叉驗算7項以上、全歷史支撐、回收訊號同時成立",
+        }
+        adjusted.append(row)
+    adjusted.sort(
+        key=lambda row: (
+            0 if row.get("_recent_failure_front_blocked") else 1,
+            float(row.get("score", 0.0) or 0.0),
+            float(row.get("confidence_index", 0.0) or 0.0),
+            -int(row["number"]),
+        ),
+        reverse=True,
+    )
+    for rank, row in enumerate(adjusted, 1):
+        blocked_row = bool(row.pop("_recent_failure_front_blocked", False))
+        row["rank"] = rank
+        row["top9_core"] = rank <= front_limit and not blocked_row
+    return adjusted, {
+        "status": "enforced",
+        "policy": "近期失準、連續落空、上期回鍋未過號碼不得進入九碼核心，除非完成全歷史與成熟度重驗。",
+        "front_limit": front_limit,
+        "blocked_numbers": [item["number"] for item in blocked],
+        "blocked_detail": blocked,
+        "revalidated_numbers": [item["number"] for item in revalidated],
+        "revalidated_detail": revalidated,
+    }
+
+
+def multi_model_correction_weights(review=None):
+    rolling = rolling_adjustment_data(review)
+    recent = rolling.get("recent_performance") or {}
+    critical = bool(
+        review
+        and (
+            review.get("severity") == "critical"
+            or recent.get("critical_slump")
+            or float(recent.get("last5_top10_avg", 99) or 99) < 1.4
+            or float(recent.get("last5_top15_avg", 99) or 99) < 1.8
+        )
+    )
+    if critical:
+        weights = {
+            "failure_corrector": 0.18,
+            "omission_recovery": 0.16,
+            "regime_gap_bridge": 0.13,
+            "similar_history_knn": 0.12,
+            "omission_phase": 0.12,
+            "cross_validation": 0.11,
+            "maturity": 0.09,
+            "tail_zone_balance": 0.06,
+            "raw_score": 0.02,
+            "frontload": 0.01,
+        }
+    else:
+        weights = {
+            "cross_validation": 0.16,
+            "maturity": 0.14,
+            "omission_recovery": 0.13,
+            "regime_gap_bridge": 0.12,
+            "similar_history_knn": 0.11,
+            "omission_phase": 0.10,
+            "failure_corrector": 0.09,
+            "tail_zone_balance": 0.08,
+            "raw_score": 0.05,
+            "frontload": 0.02,
+        }
+    total = sum(weights.values()) or 1.0
+    return {name: value / total for name, value in weights.items()}, critical
+
+
+def correction_count_map(rows, count_key):
+    output = {}
+    for item in rows or []:
+        number = item.get("number")
+        if number is None:
+            continue
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        output[number] = max(output.get(number, 0), int(item.get(count_key, 0) or 0))
+    return output
+
+
+def apply_multi_model_correction_tournament(candidates, review=None, front_limit=9):
+    if not candidates:
+        return candidates, {"status": "略過", "reason": "沒有候選號"}
+
+    review = review or {}
+    rolling = rolling_adjustment_data(review)
+    recent = rolling.get("recent_performance") or {}
+    variant_weights, critical = multi_model_correction_weights(review)
+    variants = list(variant_weights)
+    original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
+    failed = failed_number_set(review)
+    previous = previous_prediction_set(review)
+    latest_actual = {
+        int(number)
+        for number in (review.get("last_settled") or {}).get("actual_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    last_candidates = [
+        int(number)
+        for number in (review.get("last_settled") or {}).get("candidate_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    ]
+    last_failed_top9 = set(last_candidates[:9]) - latest_actual
+    repeated_failed = correction_count_map(rolling.get("repeated_failed_numbers"), "miss_count")
+    late_hit_counts = correction_count_map(rolling.get("late_hit_numbers"), "late_hit_count")
+    missed_actual_counts = correction_count_map(rolling.get("missed_actual_numbers"), "missed_count")
+    last2_missed_counts = correction_count_map(rolling.get("last2_missed_actual_numbers"), "missed_count")
+    last2_failed_top10 = correction_count_map(rolling.get("last2_failed_top10_numbers"), "miss_count")
+
+    variant_scores = {
+        variant: {
+            int(item["number"]): precision_variant_item_score(item, variant, review)
+            for item in candidates
+        }
+        for variant in variants
+    }
+    variant_rank_points = {}
+    total_candidates = max(1, len(candidates))
+    for variant, scores in variant_scores.items():
+        ranked = sorted(scores, key=lambda number: (scores[number], -number), reverse=True)
+        variant_rank_points[variant] = {
+            number: 1.0 - ((idx - 1) / total_candidates)
+            for idx, number in enumerate(ranked, 1)
+        }
+
+    adjusted = []
+    for item in candidates:
+        row = dict(item)
+        number = int(row["number"])
+        maturity = row.get("practical_maturity") or {}
+        cross = row.get("cross_validation") or {}
+        cross_total = max(1, int(cross.get("total_count", 0) or 0))
+        cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / cross_total, 0.0, 1.0)
+        maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100, 0.0, 1.0)
+        stability_norm = clamp(int(row.get("stability_count", 0) or 0) / 5, 0.0, 1.0)
+        base = clamp(float(row.get("score", 0) or 0), 0.0, 1.0)
+
+        consensus = 0.0
+        model_detail = []
+        for variant in variants:
+            score = clamp(variant_scores[variant].get(number, 0.0), -0.35, 1.0)
+            rank_point = variant_rank_points[variant].get(number, 0.0)
+            value = clamp(score, 0.0, 1.0) * 0.66 + rank_point * 0.34
+            consensus += variant_weights[variant] * value
+            model_detail.append(
+                {
+                    "model": variant,
+                    "label": PRECISION_VARIANT_LABELS.get(variant, variant),
+                    "score": round(score, 4),
+                    "rank_point": round(rank_point, 4),
+                    "weight": round(variant_weights[variant], 4),
+                    "weighted": round(variant_weights[variant] * value, 4),
+                }
+            )
+
+        recovery_bonus = 0.0
+        recovery_reasons = []
+        if number in late_hit_counts:
+            bonus = min(0.11, 0.045 + late_hit_counts[number] * 0.018)
+            recovery_bonus += bonus
+            recovery_reasons.append("第十到第十五名命中回收")
+        if number in missed_actual_counts:
+            bonus = min(0.12, 0.035 + missed_actual_counts[number] * 0.014)
+            recovery_bonus += bonus
+            recovery_reasons.append("漏抓實開號月度回收")
+        if number in last2_missed_counts:
+            bonus = min(0.10, 0.055 + last2_missed_counts[number] * 0.022)
+            recovery_bonus += bonus
+            recovery_reasons.append("近兩期漏抓立即補位")
+
+        failure_penalty = 0.0
+        penalty_reasons = []
+        if number in failed:
+            failure_penalty += 0.08
+            penalty_reasons.append("近期落空降權")
+        if number in repeated_failed:
+            failure_penalty += min(0.24, 0.09 + repeated_failed[number] * 0.008)
+            penalty_reasons.append("連續落空淘汰")
+        if number in last_failed_top9:
+            failure_penalty += 0.10
+            penalty_reasons.append("上期前九落空隔離")
+        if number in last2_failed_top10:
+            failure_penalty += min(0.16, 0.06 + last2_failed_top10[number] * 0.025)
+            penalty_reasons.append("近兩期前十落空")
+        if number in previous and row.get("previous_prediction_guard") and not row["previous_prediction_guard"].get("passed"):
+            failure_penalty += 0.08
+            penalty_reasons.append("上期回鍋未重驗")
+
+        firewall = row.get("recent_draw_firewall") or {}
+        firewall_blocked = bool(firewall.get("blocked"))
+        firewall_penalty = 0.50 if firewall_blocked else 0.0
+        if firewall_blocked:
+            penalty_reasons.append("剛開出號硬防火牆")
+        failure_front = row.get("recent_failure_front_gate") or {}
+        failure_front_blocked = bool(failure_front.get("blocked"))
+        if failure_front_blocked:
+            failure_penalty += 0.28
+            penalty_reasons.append("近期失準守門未過")
+
+        if recovery_reasons and not firewall_blocked:
+            failure_penalty *= 0.55
+
+        corrected = (
+            base * (0.18 if critical else 0.26)
+            + consensus * (0.56 if critical else 0.48)
+            + maturity_norm * 0.10
+            + cross_norm * 0.08
+            + stability_norm * 0.08
+            + recovery_bonus
+            - failure_penalty
+            - firewall_penalty
+        )
+        if int(cross.get("passed_count", 0) or 0) < 4 and float(maturity.get("score", 0) or 0) < 70:
+            corrected = min(corrected, 0.68)
+            penalty_reasons.append("交叉驗算與成熟度不足限高")
+        corrected = round(clamp(corrected, 0.0, 1.0), 5)
+
+        reasons = list(row.get("reasons") or [])
+        insert_reason = "失準後多模型競賽重排" if critical else "多模型競賽校正"
+        if insert_reason not in reasons:
+            reasons.insert(0, insert_reason)
+        for reason in recovery_reasons + penalty_reasons:
+            if reason not in reasons:
+                reasons.append(reason)
+        row["reasons"] = reasons[:8]
+        row["multi_model_correction"] = {
+            "status": "已執行",
+            "corrected_score": corrected,
+            "base_score": round(base, 5),
+            "consensus_score": round(consensus, 5),
+            "recovery_bonus": round(recovery_bonus, 5),
+            "failure_penalty": round(failure_penalty, 5),
+            "firewall_penalty": round(firewall_penalty, 5),
+            "recovery_reasons": recovery_reasons,
+            "penalty_reasons": penalty_reasons,
+            "model_detail": sorted(model_detail, key=lambda detail: detail["weighted"], reverse=True)[:5],
+        }
+        sources = list(row.get("model_sources") or [])
+        sources.insert(
+            0,
+            {
+                "model": "multi_model_correction",
+                "label": "多模型競賽校正",
+                "signal": corrected,
+                "weight": 1.0,
+                "contribution": corrected,
+            },
+        )
+        row["model_sources"] = sources[:9]
+        row["score"] = corrected
+        row["confidence_index"] = round(50 + corrected * 49, 1)
+        row["model_probability_percent"] = conservative_probability_percent(corrected)
+        row["_correction_blocked"] = firewall_blocked or failure_front_blocked or corrected <= 0.08
+        row["_reserve_recovery"] = bool(
+            10 <= original_rank.get(number, 99) <= 15
+            and recovery_reasons
+            and not row["_correction_blocked"]
+            and float(maturity.get("score", 0) or 0) >= 58
+        )
+        adjusted.append(row)
+
+    adjusted.sort(
+        key=lambda row: (
+            0 if row.get("_correction_blocked") else 1,
+            float(row.get("score", 0) or 0),
+            float(row.get("confidence_index", 0) or 0),
+            int((row.get("cross_validation") or {}).get("passed_count", 0) or 0),
+            -int(row["number"]),
+        ),
+        reverse=True,
+    )
+
+    forced_promoted = []
+    if critical:
+        front = adjusted[:front_limit]
+        reserve = [
+            row
+            for row in adjusted[front_limit:]
+            if row.get("_reserve_recovery") and int(row["number"]) not in {int(item["number"]) for item in front}
+        ]
+        for promoted in reserve[:2]:
+            removable = [
+                row for row in front
+                if not (row.get("multi_model_correction") or {}).get("recovery_reasons")
+                and original_rank.get(int(row["number"]), 99) <= 9
+            ]
+            if not removable:
+                break
+            weakest = min(removable, key=lambda row: (float(row.get("score", 0) or 0), -original_rank.get(int(row["number"]), 99)))
+            if float(promoted.get("score", 0) or 0) + 0.05 < float(weakest.get("score", 0) or 0):
+                continue
+            front[front.index(weakest)] = promoted
+            forced_promoted.append({"number": int(promoted["number"]), "replaced": int(weakest["number"])})
+        if forced_promoted:
+            front_numbers = {int(row["number"]) for row in front}
+            adjusted = front + [row for row in adjusted if int(row["number"]) not in front_numbers]
+
+    for rank, row in enumerate(adjusted, 1):
+        blocked = bool(row.pop("_correction_blocked", False))
+        row.pop("_reserve_recovery", None)
+        row["rank"] = rank
+        row["top9_core"] = rank <= front_limit and not blocked
+        if rank <= front_limit and not blocked:
+            reasons = list(row.get("reasons") or [])
+            if "九碼核心重排通過" not in reasons:
+                reasons.append("九碼核心重排通過")
+            row["reasons"] = reasons[:8]
+
+    old_top9 = {number for number, rank in original_rank.items() if rank <= front_limit}
+    new_top9 = {int(item["number"]) for item in adjusted[:front_limit]}
+    return adjusted, {
+        "status": "已執行",
+        "policy": "原排序達標不足時立即啟動多模型競賽，弱模型降權、漏抓與後段命中模型前移、剛開出與連續落空號硬隔離。",
+        "critical_mode": critical,
+        "recent_top10_avg": recent.get("last5_top10_avg"),
+        "recent_top15_avg": recent.get("last5_top15_avg"),
+        "variant_weights": {PRECISION_VARIANT_LABELS.get(name, name): round(value, 4) for name, value in variant_weights.items()},
+        "old_top9": sorted(old_top9),
+        "new_top9": [int(item["number"]) for item in adjusted[:front_limit]],
+        "promoted_to_top9": sorted(new_top9 - old_top9),
+        "demoted_from_top9": sorted(old_top9 - new_top9),
+        "forced_reserve_recovery": forced_promoted,
+        "blocked_numbers": [
+            int(item["number"])
+            for item in adjusted
+            if (item.get("recent_draw_firewall") or {}).get("blocked")
+            or (item.get("recent_failure_front_gate") or {}).get("blocked")
+        ][:15],
+        "message": "排序已完成自動換模型校正，後續強牌與戰報全部使用本次重排結果。",
+    }
+
+
+def apply_full_system_entry_gate(
+    candidates,
+    draws,
+    review=None,
+    backtest_result=None,
+    pack_governance=None,
+    precision_tournament=None,
+    correction=None,
+    front_limit=9,
+):
+    if not candidates:
+        return candidates, {"status": "略過", "reason": "沒有候選號"}
+
+    review = review or {}
+    backtest_result = backtest_result or {}
+    pack_governance = pack_governance or {}
+    precision_tournament = precision_tournament or {}
+    correction = correction or {}
+
+    top10_avg = float(backtest_result.get("top10_avg_hits", 0) or 0)
+    random_top10 = float(backtest_result.get("random_top10_expectation", DRAW_SIZE * 10 / NUMBER_MAX) or 0)
+    edge = top10_avg - random_top10
+    rounds = int(backtest_result.get("rounds", 0) or 0)
+    rolling = backtest_result.get("rolling_windows") or {}
+    window_edges = []
+    for window in ("60", "120"):
+        value = (rolling.get(window) or {}).get("top10_edge_vs_random")
+        if value is not None:
+            window_edges.append(float(value))
+
+    global_checks = {
+        "全歷史主回測": {
+            "passed": rounds >= 20 and edge >= 0,
+            "evidence": f"回測 {rounds} 輪，前十平均 {round(top10_avg, 3)}，隨機基準 {round(random_top10, 3)}，優勢 {round(edge, 4)}",
+        },
+        "近況分段回測": {
+            "passed": bool(window_edges) and all(value >= 0 for value in window_edges),
+            "evidence": "、".join(f"{round(value, 4)}" for value in window_edges) or "沒有分段資料",
+        },
+        "多模型校正": {
+            "passed": correction.get("status") == "已執行",
+            "evidence": correction.get("message", "多模型校正未寫入"),
+        },
+        "強牌治理": {
+            "passed": pack_governance.get("status") in {"evaluated", "已檢核"} or bool(pack_governance.get("pack_stats")),
+            "evidence": f"可用組數 {pack_governance.get('allowed_pack_count', 0)}，研究組數 {pack_governance.get('research_allowed_pack_count', 0)}",
+        },
+        "精算小牌競賽": {
+            "passed": precision_tournament.get("status") in {"evaluated", "已檢核"} or bool(precision_tournament.get("selected_models")),
+            "evidence": f"回測輪數 {precision_tournament.get('rounds', 0)}",
+        },
+    }
+    global_passed = all(item["passed"] for item in global_checks.values())
+
+    latest_actual = {
+        int(number)
+        for number in (review.get("last_settled") or {}).get("actual_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    failed = failed_number_set(review)
+    previous = previous_prediction_set(review)
+
+    adjusted = []
+    for original_index, item in enumerate(candidates, 1):
+        row = dict(item)
+        number = int(row["number"])
+        correction_detail = row.get("multi_model_correction") or {}
+        model_detail = correction_detail.get("model_detail") or []
+        cross = row.get("cross_validation") or {}
+        maturity = row.get("practical_maturity") or {}
+        firewall = row.get("recent_draw_firewall") or {}
+        failure_front = row.get("recent_failure_front_gate") or {}
+        previous_guard = row.get("previous_prediction_guard") or {}
+
+        score = float(row.get("score", 0) or 0)
+        confidence = float(row.get("confidence_index", 0) or 0)
+        stability = int(row.get("stability_count", 0) or 0)
+        cross_passed = int(cross.get("passed_count", 0) or 0)
+        maturity_score = float(maturity.get("score", 0) or 0)
+        model_count = len(model_detail)
+        recovery_count = len(correction_detail.get("recovery_reasons") or [])
+        penalty_count = len(correction_detail.get("penalty_reasons") or [])
+        hard_blocked = bool(firewall.get("blocked")) or bool(failure_front.get("blocked"))
+        reentry_ok = not previous_guard.get("reentry_required") or bool(previous_guard.get("reentry_passed"))
+        not_unverified_repeat = number not in previous or reentry_ok
+        not_latest_repeat = number not in latest_actual or bool((row.get("repeat_guard") or {}).get("passed"))
+
+        checks = [
+            ("全歷史回測達標", global_checks["全歷史主回測"]["passed"]),
+            ("近況回測達標", global_checks["近況分段回測"]["passed"]),
+            ("多模型校正完成", correction_detail.get("status") == "已執行" and model_count >= 3),
+            ("強牌治理完成", global_checks["強牌治理"]["passed"]),
+            ("精算小牌回測完成", global_checks["精算小牌競賽"]["passed"]),
+            ("剛開出防火牆通過", not bool(firewall.get("blocked")) and not_latest_repeat),
+            ("近期失準守門通過", not bool(failure_front.get("blocked"))),
+            ("上期預測重驗通過", not_unverified_repeat),
+        ]
+        core_checks = checks + [
+            ("分數核心門檻", score >= 0.60),
+            ("信心核心門檻", confidence >= 82),
+            ("交叉驗算核心門檻", cross_passed >= 3),
+            ("穩定核心門檻", stability >= 3),
+            ("成熟核心門檻", maturity_score >= 58),
+        ]
+        coverage_checks = checks + [
+            ("分數補位門檻", score >= 0.34),
+            ("信心補位門檻", confidence >= 66),
+            ("多模組補位門檻", model_count >= 3),
+            ("穩定補位門檻", stability >= 1),
+            ("交叉或回收證據", cross_passed >= 1 or recovery_count >= 1 or stability >= 2),
+        ]
+        reserve_failure_revalidated = (
+            not bool(failure_front.get("blocked"))
+            or (cross_passed >= 4 and (maturity_score >= 44 or stability >= 3))
+            or (score >= 0.08 and stability >= 3 and maturity_score >= 45)
+        )
+        reserve_signal_passed = (
+            score >= 0.08
+            and confidence >= 54
+            and (cross_passed >= 1 or stability >= 2 or maturity_score >= 45)
+        ) or (
+            cross_passed >= 4
+            and maturity_score >= 44
+        )
+        reserve_base_checks = [
+            item for item in checks
+            if item[0] != "近期失準守門通過"
+        ] + [
+            ("近期失準備查重驗", reserve_failure_revalidated),
+        ]
+        reserve_checks = reserve_base_checks + [
+            ("備查分數或強驗算門檻", reserve_signal_passed),
+            ("備查信心門檻", confidence >= 54 or cross_passed >= 4),
+            ("備查觀察證據", cross_passed >= 1 or maturity_score >= 44 or stability >= 2 or recovery_count >= 1),
+        ]
+
+        core_passed = global_passed and not hard_blocked and all(passed for _, passed in core_checks)
+        coverage_passed = global_passed and not hard_blocked and all(passed for _, passed in coverage_checks)
+        reserve_passed = global_passed and not bool(firewall.get("blocked")) and all(passed for _, passed in reserve_checks)
+
+        if core_passed:
+            tier = "核心通過"
+            tier_order = 3
+            passed_for_main = True
+            high_confidence_allowed = True
+        elif coverage_passed:
+            tier = "主列補位通過"
+            tier_order = 2
+            passed_for_main = True
+            high_confidence_allowed = False
+        elif reserve_passed:
+            tier = "備查重驗通過" if bool(failure_front.get("blocked")) else "備查通過"
+            tier_order = 1
+            passed_for_main = False
+            high_confidence_allowed = False
+        else:
+            tier = "未達標不列入"
+            tier_order = 0
+            passed_for_main = False
+            high_confidence_allowed = False
+
+        if tier == "核心通過":
+            validation_checks = core_checks
+        elif tier == "主列補位通過":
+            validation_checks = coverage_checks
+        elif tier in {"備查通過", "備查重驗通過"}:
+            validation_checks = reserve_checks
+        else:
+            validation_checks = core_checks
+        failed_checks = [name for name, passed in validation_checks if not passed]
+        evidence = {
+            "分數": round(score, 5),
+            "信心": round(confidence, 1),
+            "交叉驗算": f"{cross_passed}/{cross.get('total_count', '-')}",
+            "穩定層數": stability,
+            "成熟度": round(maturity_score, 1),
+            "多模型數": model_count,
+            "回收證據": recovery_count,
+            "降權證據": penalty_count,
+        }
+        row["entry_validation"] = {
+            "status": tier,
+            "status_label": tier,
+            "passed_for_main": passed_for_main,
+            "high_confidence_allowed": high_confidence_allowed,
+            "tier_order": tier_order,
+            "global_passed": global_passed,
+            "global_checks": global_checks,
+            "evidence": evidence,
+            "failed_checks": failed_checks[:8],
+            "policy": "每顆號碼必須通過全歷史回測、近況回測、多模型校正、強牌治理、精算小牌競賽、剛開出防火牆、近期失準守門與上期重驗，才可列入前九主列。",
+        }
+        reasons = list(row.get("reasons") or [])
+        if passed_for_main:
+            marker = "全系統主列放行通過"
+        elif reserve_passed:
+            marker = "全系統備查通過不列主推"
+        else:
+            marker = "未達全系統主列門降觀察"
+        if marker not in reasons:
+            reasons.insert(0, marker)
+        row["reasons"] = reasons[:9]
+        row["_entry_tier_order"] = tier_order
+        row["_entry_original_index"] = original_index
+        adjusted.append(row)
+
+    adjusted.sort(
+        key=lambda row: (
+            int(row.get("_entry_tier_order", 0) or 0),
+            float(row.get("score", 0) or 0),
+            float(row.get("confidence_index", 0) or 0),
+            int(row.get("stability_count", 0) or 0),
+            int((row.get("cross_validation") or {}).get("passed_count", 0) or 0),
+            -int(row["number"]),
+        ),
+        reverse=True,
+    )
+
+    for rank, row in enumerate(adjusted, 1):
+        row.pop("_entry_tier_order", None)
+        row.pop("_entry_original_index", None)
+        validation = row.get("entry_validation") or {}
+        passed_main = bool(validation.get("passed_for_main")) and rank <= front_limit
+        row["rank"] = rank
+        row["top9_core"] = passed_main
+        validation["top9_released"] = passed_main
+        if passed_main:
+            reasons = list(row.get("reasons") or [])
+            if "全系統前九列入" not in reasons:
+                reasons.append("全系統前九列入")
+            row["reasons"] = reasons[:9]
+        row["entry_validation"] = validation
+
+    main_numbers = [int(item["number"]) for item in adjusted[:front_limit] if (item.get("entry_validation") or {}).get("passed_for_main")]
+    core_numbers = [
+        int(item["number"])
+        for item in adjusted
+        if (item.get("entry_validation") or {}).get("status") == "核心通過"
+    ][:front_limit]
+    coverage_numbers = [
+        int(item["number"])
+        for item in adjusted
+        if (item.get("entry_validation") or {}).get("status") == "主列補位通過"
+    ][:front_limit]
+    reserve_numbers = [
+        int(item["number"])
+        for item in adjusted
+        if (item.get("entry_validation") or {}).get("status") in {"備查通過", "備查重驗通過"}
+    ][:15]
+    blocked_numbers = [
+        int(item["number"])
+        for item in adjusted
+        if not (item.get("entry_validation") or {}).get("passed_for_main")
+        and (item.get("entry_validation") or {}).get("status") not in {"備查通過", "備查重驗通過"}
+    ][:15]
+
+    status = "已執行" if len(main_numbers) >= front_limit and global_passed else "未達主列滿額"
+    return adjusted, {
+        "status": status,
+        "policy": "必須多模組全系統檢測與回測達標才可列入前九主列；未過者只能備查或觀察，強牌不得使用。",
+        "front_limit": front_limit,
+        "global_passed": global_passed,
+        "global_checks": global_checks,
+        "main_count": len(main_numbers),
+        "main_numbers": main_numbers,
+        "core_passed_numbers": core_numbers,
+        "coverage_passed_numbers": coverage_numbers,
+        "reserve_numbers": reserve_numbers,
+        "blocked_numbers": blocked_numbers,
+        "failed_numbers_from_previous_review": sorted(failed),
+        "previous_prediction_numbers": sorted(previous),
+        "message": "主列放行門已套用於候選排序、強牌組合、精算小牌與戰報顯示。",
+    }
+
+
 def compute_industrial_analysis(draws, review=None):
     timing_log("開始")
     timing_log("自適應權重開始")
@@ -3725,10 +4489,26 @@ def compute_industrial_analysis(draws, review=None):
     candidates, top9_frontload_audit = top9_frontload_candidates(candidates, review)
     timing_log("剛開出號硬防火牆開始")
     candidates, recent_draw_firewall = apply_recent_draw_hard_firewall(candidates, draws, formula_engine)
+    timing_log("近期失準硬守門開始")
+    candidates, recent_failure_front_gate = apply_recent_failure_hard_front_gate(candidates, review)
+    timing_log("多模型競賽校正開始")
+    candidates, multi_model_correction = apply_multi_model_correction_tournament(candidates, review)
     timing_log("強牌治理開始")
     pack_governance = pack_recent_governance(draws, weights_override=weights)
     timing_log("精算小牌競賽開始")
     precision_tournament = precision_model_tournament(draws, review, weights_override=weights)
+    timing_log("主回測開始")
+    audit = industrial_backtest(draws, weights_override=weights)
+    timing_log("全系統主列放行開始")
+    candidates, full_system_entry_gate = apply_full_system_entry_gate(
+        candidates,
+        draws,
+        review,
+        audit,
+        pack_governance,
+        precision_tournament,
+        multi_model_correction,
+    )
     timing_log("精算小牌組合開始")
     precision_micro = precision_micro_models(candidates, review, pack_governance, precision_tournament)
     timing_log("強牌組合開始")
@@ -3736,8 +4516,6 @@ def compute_industrial_analysis(draws, review=None):
     packs = attach_precision_micro_packs(packs, precision_micro, candidates)
     timing_log("成熟度開始")
     maturity = practical_maturity_summary(candidates)
-    timing_log("主回測開始")
-    audit = industrial_backtest(draws, weights_override=weights)
     timing_log("進階模型摘要開始")
     advanced_models = advanced_model_summary(draws)
     timing_log("進階模型回測開始")
@@ -3795,7 +4573,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v15_top9_diversity_gap_audit_20260721",
+        "engine_version": "industrial_v18_full_system_entry_gate_20260721",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -3813,6 +4591,9 @@ def compute_industrial_analysis(draws, review=None):
         "adaptive_weight_calibration": weight_calibration,
         "top9_frontload_audit": top9_frontload_audit,
         "recent_draw_firewall": recent_draw_firewall,
+        "recent_failure_front_gate": recent_failure_front_gate,
+        "multi_model_correction": multi_model_correction,
+        "full_system_entry_gate": full_system_entry_gate,
         "top10_promotion_audit": promotion_audit,
         "dependency_analysis": {
             "method": "three_fold_conditional_lift_with_fdr",
@@ -3856,5 +4637,10 @@ def compute_industrial_analysis(draws, review=None):
         "model_audit": audit_summary,
         "regime_analysis": regime_analysis(draws),
         "candidates": candidates,
+        "qualified_candidates": candidates,
+        "main_released_candidates": [
+            item for item in candidates[:9]
+            if (item.get("entry_validation") or {}).get("passed_for_main")
+        ],
         "strong_prediction_packs": packs,
     }

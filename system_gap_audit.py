@@ -1,5 +1,6 @@
 import argparse
 import csv
+import hashlib
 import json
 import pathlib
 import sqlite3
@@ -36,12 +37,61 @@ def csv_count(path):
     return len(rows), rows[0].get("draw_date", ""), rows[-1].get("draw_date", "")
 
 
+def file_digest(path):
+    if not path.exists():
+        return ""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def db_summary():
     if not DB_PATH.exists():
         return {"exists": False, "count": 0, "latest_date": ""}
     with sqlite3.connect(DB_PATH) as conn:
         row = conn.execute("SELECT COUNT(*), MIN(draw_date), MAX(draw_date) FROM draws").fetchone()
     return {"exists": True, "count": row[0] or 0, "first_date": row[1] or "", "latest_date": row[2] or ""}
+
+
+def review_storage_summary():
+    summary = {
+        "snapshot_duplicate_groups": 0,
+        "snapshot_duplicate_rows": 0,
+        "archive_duplicate_groups": 0,
+    }
+    if DB_PATH.exists():
+        with sqlite3.connect(DB_PATH) as conn:
+            try:
+                rows = conn.execute(
+                    """
+                    SELECT COUNT(*), SUM(extra_count)
+                    FROM (
+                        SELECT COUNT(*) - 1 AS extra_count
+                        FROM prediction_snapshots
+                        GROUP BY based_on_date,target_date,snapshot_reason
+                        HAVING COUNT(*) > 1
+                    )
+                    """
+                ).fetchone()
+                summary["snapshot_duplicate_groups"] = int(rows[0] or 0)
+                summary["snapshot_duplicate_rows"] = int(rows[1] or 0)
+            except sqlite3.Error:
+                pass
+    archive = REPORT_DIR / "daily_prediction_review_archive.jsonl"
+    if archive.exists():
+        seen = set()
+        duplicates = set()
+        for line in archive.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if not line.strip():
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            key = (payload.get("expected_taiwan_safe_update_time"), payload.get("latest_draw_date"))
+            if key in seen:
+                duplicates.add(key)
+            seen.add(key)
+        summary["archive_duplicate_groups"] = len(duplicates)
+    return summary
 
 
 def latest_expected_taiwan_time(now=None):
@@ -63,6 +113,24 @@ def add_issue(issues, area, problem, impact, fix, severity="需修正"):
             "severity": severity,
         }
     )
+
+
+def dedupe_issues(issues):
+    seen = set()
+    deduped = []
+    for item in issues:
+        key = (
+            item.get("severity", ""),
+            item.get("area", ""),
+            item.get("problem", ""),
+            item.get("impact", ""),
+            item.get("fix", ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
 
 
 def model_gap_rows(analysis):
@@ -107,6 +175,8 @@ def main():
     industrial = analysis.get("industrial_engine") or {}
     release = industrial.get("release_gate") or {}
     maturity = industrial.get("practical_maturity") or {}
+    correction = industrial.get("multi_model_correction") or {}
+    entry_gate = industrial.get("full_system_entry_gate") or {}
     low = analysis.get("low_probability_avoid") or {}
     low_backtest = low.get("backtest") or (industrial.get("unlikely_backtest") or {})
     issues = []
@@ -134,6 +204,46 @@ def main():
         if not path.exists():
             add_issue(issues, "檔案完整度", f"缺少 {path.relative_to(ROOT)}", "戰報或手機頁可能無法開啟", "重新執行一鍵更新並禁止發布半成品", "嚴重")
 
+    sync_pairs = [
+        (REPORT_DIR / "latest_analysis.json", SITE_DIR / "latest_analysis.json", "最新分析資料"),
+        (REPORT_DIR / "latest_analysis.json", SITE_DIR / "reports" / "latest_analysis.json", "手機報表分析資料"),
+        (REPORT_DIR / "complete_report.html", SITE_DIR / "complete_report.html", "完整戰報"),
+        (REPORT_DIR / "complete_report.html", SITE_DIR / "reports" / "complete_report.html", "手機完整戰報"),
+        (REPORT_DIR / "tiantianle_low_probability_avoid.html", SITE_DIR / "reports" / "tiantianle_low_probability_avoid.html", "低機率頁"),
+    ]
+    for left, right, label in sync_pairs:
+        if left.exists() and right.exists() and file_digest(left) != file_digest(right):
+            add_issue(
+                issues,
+                "手機同步",
+                f"{label} 本機與手機資料夾內容不同",
+                "手機版可能看到舊資料或不完整頁面",
+                "一鍵更新必須重新建頁並重新發布手機雲端",
+                "嚴重",
+            )
+
+    stale_cloud_files = sorted(path.name for path in ROOT.glob("cloud_*") if path.is_file())
+    if stale_cloud_files:
+        add_issue(
+            issues,
+            "舊檔殘留",
+            "外層仍有過期雲端快照：" + ", ".join(stale_cloud_files[:12]),
+            "容易誤點到舊戰報，造成手機與電腦日期看起來不同步",
+            "一鍵流程已加入自動清理外層 cloud_* 舊快照",
+            "需修正",
+        )
+
+    legacy_empty_db = DATA_DIR / "california_fantasy5.db"
+    if legacy_empty_db.exists() and legacy_empty_db.stat().st_size == 0:
+        add_issue(
+            issues,
+            "舊檔殘留",
+            "data/california_fantasy5.db 是 0 位元舊資料庫",
+            "人工檢查時容易誤認資料庫壞掉",
+            "正式資料庫使用 california_fantasy5.sqlite；一鍵流程已加入自動清理空舊庫",
+            "需修正",
+        )
+
     for csv_path in [ROOT / "fantasy5_full_history.csv", DATA_DIR / "california_fantasy5.csv", DATA_DIR / "fantasy5_full_history.csv"]:
         count, first_date, last_date = csv_count(csv_path)
         if count < 10000:
@@ -147,6 +257,26 @@ def main():
     if latest_date and db.get("latest_date") and db["latest_date"] != latest_date:
         add_issue(issues, "資料庫", f"資料庫最新 {db['latest_date']}，戰報最新 {latest_date}", "資料庫與戰報不同步", "重新執行主程式並重新輸出戰報", "嚴重")
 
+    review_storage = review_storage_summary()
+    if review_storage["snapshot_duplicate_rows"] > 0:
+        add_issue(
+            issues,
+            "檢討儲存",
+            f"預測快照重複 {review_storage['snapshot_duplicate_rows']} 筆",
+            "戰報可能重複計算同一期，造成月統計與檢討失真",
+            "主程式已改為同一期同原因只保留最新快照並每日自動去重",
+            "嚴重",
+        )
+    if review_storage["archive_duplicate_groups"] > 0:
+        add_issue(
+            issues,
+            "檢討儲存",
+            f"開獎後歸檔重複 {review_storage['archive_duplicate_groups']} 組",
+            "同一期重試會被看成多期檢討，造成命中率判讀失真",
+            "自動更新歸檔已改為同一期覆寫最後狀態",
+            "嚴重",
+        )
+
     if len(top9) != 9 or len(set(top9)) != 9:
         add_issue(issues, "預測結構", f"前九名格式錯誤：{numbers_text(top9)}", "九碼核心無法穩定檢討", "前九名必須固定九顆且不得重複", "嚴重")
     if len(top15) < 15 or len(set(top15[:15])) < 15:
@@ -157,6 +287,69 @@ def main():
     if latest_overlap and not firewall.get("blocked_numbers"):
         add_issue(issues, "連莊防火牆", f"前九名含上期開出號：{numbers_text(latest_overlap)}", "容易被誤認為沿用上期預測", "剛開出號必須通過硬驗證才可進入前九", "嚴重")
 
+    failure_gate = industrial.get("recent_failure_front_gate") or {}
+    review = analysis.get("failure_review") or {}
+    failed_numbers = set(int(n) for n in (review.get("rolling_failed_numbers") or []) if str(n).isdigit())
+    failed_top9 = sorted(failed_numbers & set(int(n) for n in top9))
+    revalidated = set(int(n) for n in (failure_gate.get("revalidated_numbers") or []) if str(n).isdigit())
+    if failed_top9 and not set(failed_top9).issubset(revalidated):
+        add_issue(
+            issues,
+            "近期失準守門",
+            f"近期失準號仍進前九：{numbers_text(failed_top9)}",
+            "會讓下一期排序被失準結構拖走",
+            "近期失準號必須完成全歷史、成熟度與交叉驗算重驗才可回前九",
+            "嚴重",
+        )
+    if review.get("severity") == "critical" and correction.get("status") != "已執行":
+        add_issue(
+            issues,
+            "多模型競賽校正",
+            "近期失準時沒有啟動重新排序",
+            "原模型方向會持續拖住下一期預測",
+            "主程式必須自動換模型競賽、降權弱模型、前移漏抓與後段命中號",
+            "嚴重",
+        )
+
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    candidate_map = {int(item.get("number")): item for item in candidates if item.get("number") is not None}
+    top9_gate_failed = []
+    for number in top9:
+        try:
+            number_int = int(number)
+        except (TypeError, ValueError):
+            continue
+        validation = (candidate_map.get(number_int) or {}).get("entry_validation") or {}
+        if not validation.get("passed_for_main"):
+            top9_gate_failed.append(number_int)
+    if entry_gate.get("status") != "已執行":
+        add_issue(
+            issues,
+            "全系統主列放行",
+            f"放行門狀態 {entry_gate.get('status', '-')}",
+            "未達標號碼可能進入前九或強牌",
+            "每期必須先跑全歷史回測、多模型校正、強牌治理、精算小牌競賽，再放行主列",
+            "嚴重",
+        )
+    if int(entry_gate.get("main_count", 0) or 0) < 9:
+        add_issue(
+            issues,
+            "全系統主列放行",
+            f"主列通過數 {entry_gate.get('main_count', 0)} 顆",
+            "前九主列未滿或含未過門號碼",
+            "未滿九顆時不得包裝成完整主推，必須重新校正模型與門檻",
+            "嚴重",
+        )
+    if top9_gate_failed:
+        add_issue(
+            issues,
+            "全系統主列放行",
+            f"前九含未通過號碼：{numbers_text(top9_gate_failed)}",
+            "戰報會把未驗證號碼混入主選",
+            "強制套用全系統放行門，未通過只能留在備查或觀察",
+            "嚴重",
+        )
+
     release_status = str(release.get("status", ""))
     if release_status not in {"official", "verified_research_complete", "watch_only", "正式", "研究觀察通過", "觀察中"}:
         add_issue(issues, "發布守門", f"發布狀態不明：{release_status or '-'}", "高信心區無法判讀", "發布守門必須固定為正式、研究觀察或觀察中", "需修正")
@@ -164,9 +357,9 @@ def main():
         add_issue(
             issues,
             "模型成熟度",
-            "正式發布守門仍未通過",
-            "高信心只能標示觀察，不能包裝成保證",
-            "持續用小組競賽、成熟度、近期回測淘汰弱訊號",
+            "正式高信心觸發多模型校正",
+            "原排序方向需要重新壓低弱模型並提高漏抓回收",
+            "已啟動多模型競賽校正，後續強牌與九碼核心改用重排結果",
             "需補強",
         )
 
@@ -192,10 +385,31 @@ def main():
             "需補強",
         )
 
+    low_guard = analysis.get("low_probability_monthly_guard") or low.get("monthly_guard") or {}
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        guard = low_guard.get(key) or {}
+        pack = (low.get("avoid_packs") or {}).get(key) or {}
+        confidence_label = str(pack.get("confidence_label", ""))
+        try:
+            confidence_index = float(pack.get("confidence_index", 0) or 0)
+        except Exception:
+            confidence_index = 0
+        high_confidence_labels = {"高避開信心", "中高避開信心"}
+        if guard.get("status") == "降級" and (confidence_label in high_confidence_labels or confidence_index > float(guard.get("confidence_cap", 100) or 100)):
+            add_issue(
+                issues,
+                "低機率暫避",
+                f"{label} 已觸發月度誤開降級但仍顯示高信心",
+                "低機率誤開偏高會被包裝成高信心避開",
+                "套用月度誤開守門，降級後不得標示高信心",
+                "嚴重",
+            )
+
     gap_rows = model_gap_rows(analysis)
     for item in gap_rows[:8]:
         add_issue(issues, "模型缺口", item["category"], item["impact"], item["fix"], "需補強")
 
+    issues = dedupe_issues(issues)
     has_critical = any(item["severity"] == "嚴重" for item in issues)
     status = "需立即修正" if has_critical else ("無嚴重缺漏，仍需模型補強" if issues else "通過")
     payload = {
@@ -210,9 +424,13 @@ def main():
         "top15": top15[:15],
         "draw_count": analysis.get("draw_count"),
         "database": db,
+        "review_storage": review_storage,
         "release_status": release_status,
+        "multi_model_correction": correction,
+        "full_system_entry_gate": entry_gate,
         "model_maturity": maturity,
         "low_probability_backtest": low_backtest,
+        "low_probability_monthly_guard": low_guard,
         "issues": issues,
     }
 
@@ -235,6 +453,10 @@ def main():
         f"- 前九名：{numbers_text(top9)}",
         f"- 第十到第十五名：{numbers_text(top15[9:15])}",
         f"- 發布守門：{release_status or '-'}",
+        f"- 多模型競賽校正：{correction.get('status', '-')} / 前九重排 {numbers_text(correction.get('new_top9') or top9)}",
+        f"- 全系統主列放行：{entry_gate.get('status', '-')} / 主列 {numbers_text(entry_gate.get('main_numbers') or [])}",
+        f"- 檢討快照重複：{review_storage['snapshot_duplicate_rows']} 筆",
+        f"- 開獎後歸檔重複：{review_storage['archive_duplicate_groups']} 組",
         "",
         "## 欠缺元素與修補動作",
         *table(["等級", "區域", "欠缺或風險", "影響", "修補方式"], issue_rows),
@@ -244,7 +466,7 @@ def main():
         "",
         "## 結論",
         "- 本檔每日更新後自動重建，作為下一期滾動修正依據。",
-        "- 未通過正式守門的號碼只能標示觀察，不得包裝成保證。",
+        "- 原排序達標不足時，系統會自動啟動多模型重排、弱模型降權、漏抓回收與後段命中前移。",
     ]
     markdown = "\n".join(lines) + "\n"
     for path in [

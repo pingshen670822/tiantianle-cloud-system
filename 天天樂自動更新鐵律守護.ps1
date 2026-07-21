@@ -73,6 +73,9 @@ function Test-TaskHealthy {
   if ($task.State -eq "Disabled") {
     return $false
   }
+  if (-not $task.Settings.Hidden) {
+    return $false
+  }
   foreach ($action in @($task.Actions)) {
     if (([string]$action.Arguments).Contains($Needle)) {
       return $true

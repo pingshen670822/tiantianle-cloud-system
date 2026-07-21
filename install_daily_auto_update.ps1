@@ -24,7 +24,7 @@ function New-DailyRepeatingTrigger {
   return $trigger
 }
 
-$Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
+$Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -Hidden
 
 $AfterDrawAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$AfterDrawScript`" -NoOpen" -WorkingDirectory $Root
 $AfterDrawTriggers = @()

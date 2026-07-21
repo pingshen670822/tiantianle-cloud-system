@@ -135,7 +135,10 @@ def candidate_route_text(item):
 def candidate_guard_text(item):
     guard = item.get("previous_prediction_guard") or {}
     repeat = item.get("repeat_guard") or {}
+    entry = item.get("entry_validation") or {}
     pieces = []
+    if entry:
+        pieces.append(entry.get("status_label") or entry.get("status") or "全系統檢核")
     if guard:
         if guard.get("reentry_required"):
             pieces.append("連莊達標通過" if guard.get("reentry_passed") else "連莊未達標剔除")
@@ -173,15 +176,18 @@ def candidate_confidence_parts(item):
     total = safe_int(cross.get("total_count", 0))
     status = zh_text(cross.get("status", "-") or "-")
     rank = safe_int(item.get("rank", item.get("_display_rank", 99)), 99)
-    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
-    top9_note = "前九核心" if top9_core else "前九外備查"
+    entry = item.get("entry_validation") or {}
+    entry_passed = bool(entry.get("passed_for_main", item.get("top9_core", rank <= 9)))
+    high_confidence_allowed = bool(entry.get("high_confidence_allowed", True))
+    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9 and entry_passed
+    top9_note = entry.get("status_label") or ("前九核心" if top9_core else "前九外備查")
     if not top9_core:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
-    elif confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3:
+    elif high_confidence_allowed and confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3:
         level = u("\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-high"
-    elif confidence >= 85 or probability >= 15 or stability >= 5:
+    elif high_confidence_allowed and (confidence >= 85 or probability >= 15 or stability >= 5):
         level = u("\\u4e2d\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-mid"
     else:
@@ -1843,6 +1849,17 @@ def compact_number_verification_rows_tiantianle(analysis, limit=9):
     for rank, item in enumerate(candidates[:limit], 1):
         cross = item.get("cross_validation") or {}
         maturity = item.get("practical_maturity") or {}
+        entry = item.get("entry_validation") or {}
+        entry_evidence = entry.get("evidence") or {}
+        entry_failed = entry.get("failed_checks") or []
+        entry_text = (
+            f"{entry.get('status_label', entry.get('status', '全系統檢核'))}；"
+            f"分數 {entry_evidence.get('分數', '-')}；信心 {entry_evidence.get('信心', '-')}；"
+            f"多模型 {entry_evidence.get('多模型數', '-')}；"
+            f"回收 {entry_evidence.get('回收證據', '-')}"
+        )
+        if entry_failed:
+            entry_text += "；未過：" + "、".join(str(value) for value in entry_failed[:4])
         guard = item.get("previous_prediction_guard") or {}
         thresholds = guard.get("reentry_thresholds") or {}
         evidence = guard.get("reentry_evidence") or {}
@@ -1865,7 +1882,7 @@ def compact_number_verification_rows_tiantianle(analysis, limit=9):
             candidate_reason_text(item, 8),
             f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
             f"穩定 {item.get('stability_count', '-')}；遺漏 {item.get('omission', '-')}",
-            f"{candidate_guard_text(item)}；{threshold_text}；{evidence_text}",
+            f"{entry_text}；{candidate_guard_text(item)}；{threshold_text}；{evidence_text}",
             f"成熟度 {compact_decimal(maturity.get('score'), 1)}；{compact_status(maturity.get('tier', '-'))}；{candidate_verification_summary(item)}",
         ])
     return rows
@@ -1877,6 +1894,7 @@ def compact_backup_rank_rows_tiantianle(analysis):
     for rank, item in enumerate(candidates[9:15], 10):
         cross = item.get("cross_validation") or {}
         maturity = item.get("practical_maturity") or {}
+        entry = item.get("entry_validation") or {}
         score = item.get("score")
         score_text = compact_percent(score, 1) if score is not None and safe_float(score) <= 1 else compact_decimal(item.get("confidence_index", score), 1)
         rows.append([
@@ -1888,7 +1906,7 @@ def compact_backup_rank_rows_tiantianle(analysis):
             f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
             f"穩定 {item.get('stability_count', '-')}；遺漏 {item.get('omission', '-')}",
             f"成熟度 {compact_decimal(maturity.get('score'), 1)}；{compact_status(maturity.get('tier', '-'))}",
-            "第二層備查；可追蹤補中，不列前九高信心核心",
+            f"{entry.get('status_label', entry.get('status', '第二層備查'))}；可追蹤補中，不列前九高信心核心",
         ])
     return rows
 

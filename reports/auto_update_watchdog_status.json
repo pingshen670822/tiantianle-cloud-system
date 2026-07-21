@@ -1,12 +1,12 @@
 ﻿{
-    "checked_at_taiwan":  "2026-07-21T09:15:04+08:00",
+    "checked_at_taiwan":  "2026-07-21T12:46:57+08:00",
     "repaired_tasks":  false,
     "missing_or_broken_before_repair":  [
 
                                         ],
-    "expected_taiwan_safe_update_time":  "2026-07-20 09:50",
-    "latest_taiwan_safe_update_time_before":  "2026-07-20 09:50",
-    "latest_taiwan_safe_update_time_after":  "2026-07-20 09:50",
+    "expected_taiwan_safe_update_time":  "2026-07-21 09:50",
+    "latest_taiwan_safe_update_time_before":  "2026-07-21 09:50",
+    "latest_taiwan_safe_update_time_after":  "2026-07-21 09:50",
     "stale_before_update":  false,
     "update_exit_code":  null
 }

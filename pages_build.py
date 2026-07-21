@@ -393,7 +393,10 @@ def candidate_route_text(item):
 
 def candidate_guard_text(item):
     guard = item.get("previous_prediction_guard") or {}
+    entry = item.get("entry_validation") or {}
     pieces = []
+    if entry:
+        pieces.append(entry.get("status_label") or entry.get("status") or "全系統檢核")
     if guard:
         if guard.get("reentry_required"):
             pieces.append("連莊達標通過" if guard.get("reentry_passed") else "連莊未達標剔除")
@@ -409,6 +412,14 @@ def build_mobile_number_verification_block(data):
     for item in (data.get("official_candidates") or data.get("candidates") or [])[:9]:
         cross = item.get("cross_validation") or {}
         maturity = item.get("practical_maturity") or {}
+        entry = item.get("entry_validation") or {}
+        evidence = entry.get("evidence") or {}
+        gate_text = (
+            f"{entry.get('status_label', entry.get('status', '全系統檢核'))}；"
+            f"{u('\\u5206\\u6578')} {evidence.get('分數', '-')}；"
+            f"{u('\\u4fe1\\u5fc3')} {evidence.get('信心', '-')}；"
+            f"{u('\\u591a\\u6a21\\u578b')} {evidence.get('多模型數', '-')}"
+        )
         rows.append(
             "<tr>"
             f"<th>{int(item.get('number')):02d}</th>"
@@ -416,7 +427,7 @@ def build_mobile_number_verification_block(data):
             f"<td>{esc(candidate_reason_text(item, 8))}</td>"
             f"<td>{esc(cross.get('passed_count', '-'))}/{esc(cross.get('total_count', '-'))}</td>"
             f"<td>{u('\\u7a69\\u5b9a')} {esc(item.get('stability_count', '-'))} / {u('\\u907a\\u6f0f')} {esc(item.get('omission', '-'))}</td>"
-            f"<td>{esc(candidate_guard_text(item))}</td>"
+            f"<td>{esc(gate_text)} / {esc(candidate_guard_text(item))}</td>"
             f"<td>{u('\\u6210\\u719f\\u5ea6')} {esc(maturity.get('score', '-'))} / {esc(mobile_status(maturity.get('tier', '-')))}</td>"
             "</tr>"
         )
@@ -441,15 +452,18 @@ def confidence_level(item):
     maturity_score = safe_float(maturity.get("score", 0))
     maturity_tier = mobile_status(maturity.get("tier", "-") or "-")
     rank = safe_int(item.get("rank", 99), 99)
-    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
-    top9_note = "前九核心" if top9_core else "前九外備查"
+    entry = item.get("entry_validation") or {}
+    entry_passed = bool(entry.get("passed_for_main", item.get("top9_core", rank <= 9)))
+    high_confidence_allowed = bool(entry.get("high_confidence_allowed", True))
+    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9 and entry_passed
+    top9_note = entry.get("status_label") or ("前九核心" if top9_core else "前九外備查")
     if not top9_core or maturity_score < 58:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
-    elif confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3 and maturity_score >= 70:
+    elif high_confidence_allowed and confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3 and maturity_score >= 70:
         level = u("\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-high"
-    elif confidence >= 85 or probability >= 15 or stability >= 5 or maturity_score >= 70:
+    elif high_confidence_allowed and (confidence >= 85 or probability >= 15 or stability >= 5 or maturity_score >= 70):
         level = u("\\u4e2d\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-mid"
     else:
@@ -512,7 +526,11 @@ def ultra_precision_recommendations(candidates, analysis=None):
     )
     if engine_precision.get("single") or engine_precision.get("two") or engine_precision.get("three"):
         return engine_precision
-    pool = [item for item in candidates[:9] if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)]
+    pool = [
+        item for item in candidates[:9]
+        if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)
+        and (item.get("entry_validation") or {}).get("passed_for_main", True)
+    ]
     scored = sorted(
         [
             {"number": int(item.get("number")), "score": ultra_precision_candidate_score(item), "item": item}

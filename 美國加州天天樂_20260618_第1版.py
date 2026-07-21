@@ -1336,6 +1336,66 @@ def low_probability_packs_from_candidates(candidates):
     return packs
 
 
+def store_prediction_snapshot(conn, based_on_date, target_date, candidates_json, strong_packs_json, created_at, snapshot_reason):
+    row = conn.execute(
+        """
+        SELECT id FROM prediction_snapshots
+        WHERE based_on_date=? AND target_date=? AND snapshot_reason=?
+        ORDER BY id DESC LIMIT 1
+        """,
+        (based_on_date, target_date, snapshot_reason),
+    ).fetchone()
+    if row:
+        conn.execute(
+            """
+            UPDATE prediction_snapshots
+            SET candidates_json=?, strong_packs_json=?, created_at=?
+            WHERE id=?
+            """,
+            (candidates_json, strong_packs_json, created_at, row[0]),
+        )
+        conn.execute(
+            """
+            DELETE FROM prediction_snapshots
+            WHERE based_on_date=? AND target_date=? AND snapshot_reason=? AND id<>?
+            """,
+            (based_on_date, target_date, snapshot_reason, row[0]),
+        )
+        return "snapshot_updated"
+    conn.execute(
+        """
+        INSERT INTO prediction_snapshots(
+            based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason
+        ) VALUES(?,?,?,?,?,?)
+        """,
+        (based_on_date, target_date, candidates_json, strong_packs_json, created_at, snapshot_reason),
+    )
+    return "snapshot_inserted"
+
+
+def dedupe_prediction_snapshots(conn):
+    duplicates = conn.execute(
+        """
+        SELECT based_on_date,target_date,snapshot_reason,COUNT(*),MAX(id)
+        FROM prediction_snapshots
+        GROUP BY based_on_date,target_date,snapshot_reason
+        HAVING COUNT(*) > 1
+        """
+    ).fetchall()
+    removed = 0
+    for based_on_date, target_date, reason, count, keep_id in duplicates:
+        conn.execute(
+            """
+            DELETE FROM prediction_snapshots
+            WHERE based_on_date=? AND target_date=? AND snapshot_reason=? AND id<>?
+            """,
+            (based_on_date, target_date, reason, keep_id),
+        )
+        removed += int(count or 0) - 1
+    conn.commit()
+    return {"duplicate_groups": len(duplicates), "removed": removed}
+
+
 def low_probability_result_payload(low_packs, actual_numbers):
     actual_set = set(int(number) for number in actual_numbers or [])
     results = {}
@@ -1595,6 +1655,82 @@ def monthly_low_probability_review(conn):
     }
 
 
+def apply_low_probability_monthly_guard(analysis):
+    monthly = analysis.get("monthly_low_probability_review") or {}
+    pack_summary = monthly.get("pack_summary") or {}
+    avoid = analysis.get("low_probability_avoid") or {}
+    avoid_packs = avoid.get("avoid_packs") or {}
+    groups = avoid.get("groups") or {}
+    prediction = analysis.get("prediction") or {}
+    rules = {
+        "five_miss": {"label": "五不中", "max_avg": 0.75, "min_pass_rate": 0.45, "cap": 72.0},
+        "ten_miss": {"label": "十不中", "max_avg": 0.95, "min_pass_rate": 0.25, "cap": 62.0},
+        "fifteen_miss": {"label": "十五不中", "max_avg": 1.25, "min_pass_rate": 0.15, "cap": 45.0},
+    }
+    guarded = {}
+    for key, rule in rules.items():
+        stat = pack_summary.get(key) or {}
+        if not stat:
+            continue
+        avg_hits = float(stat.get("avg_accidental_hits", 0) or 0)
+        pass_rate = float(stat.get("pass_rate", 0) or 0)
+        worst_hits = int(stat.get("worst_accidental_hits", 0) or 0)
+        must_downgrade = avg_hits > rule["max_avg"] or pass_rate < rule["min_pass_rate"] or worst_hits >= max(2, int(key == "fifteen_miss") + 3)
+        if not must_downgrade:
+            guarded[key] = {
+                "status": "通過",
+                "avg_accidental_hits": avg_hits,
+                "pass_rate": pass_rate,
+                "worst_accidental_hits": worst_hits,
+            }
+            continue
+        pack = avoid_packs.get(key)
+        if isinstance(pack, dict):
+            original_confidence = pack.get("confidence_index", 0)
+            try:
+                pack["confidence_index"] = round(min(float(original_confidence or 0), rule["cap"]), 2)
+            except Exception:
+                pack["confidence_index"] = rule["cap"]
+            pack["confidence_label"] = "誤開偏高降級"
+            pack["monthly_guard"] = "未通過月度誤開守門，不得標示高避開信心"
+        group_label = rule["label"]
+        for item in groups.get(group_label, []) or []:
+            if not isinstance(item, dict):
+                continue
+            item["avoid_confidence"] = round(min(float(item.get("avoid_confidence", 0) or 0), rule["cap"]), 2)
+            item["confidence_label"] = "誤開偏高降級"
+            item["monthly_guard"] = "未通過月度誤開守門"
+        guarded[key] = {
+            "status": "降級",
+            "reason": "月度低機率誤開偏高",
+            "avg_accidental_hits": avg_hits,
+            "pass_rate": pass_rate,
+            "worst_accidental_hits": worst_hits,
+            "confidence_cap": rule["cap"],
+        }
+    avoid["avoid_packs"] = avoid_packs
+    avoid["groups"] = groups
+    avoid["monthly_guard"] = guarded
+    avoid["warning"] = "低機率清單已加入月度誤開守門；未通過者只列風控觀察，不得標示高信心。"
+    analysis["low_probability_avoid"] = avoid
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    if decision:
+        decision["avoid_packs"] = avoid_packs
+        decision["low_probability_monthly_guard"] = guarded
+        analysis["latest_ironlaw"] = decision
+        analysis["decisive_battle_plan"] = decision
+    for key, field in [
+        ("five_miss", "low_probability_5_not_hit"),
+        ("ten_miss", "low_probability_10_not_hit"),
+        ("fifteen_miss", "low_probability_15_not_hit"),
+    ]:
+        pack = avoid_packs.get(key) or {}
+        if pack.get("numbers"):
+            prediction[field] = pack["numbers"]
+    analysis["prediction"] = prediction
+    return guarded
+
+
 def store_prediction(conn, analysis):
     latest = analysis["latest_draw"]
     target_date = analysis["target_draw_date"]
@@ -1607,12 +1743,17 @@ def store_prediction(conn, analysis):
     low_status = store_low_probability_record(conn, latest["draw_date"], target_date, low_packs, created_at)
     row = conn.execute("SELECT id,status,target_date FROM predictions WHERE based_on_date=?", (latest["draw_date"],)).fetchone()
     if row and row[1] == "settled":
-        conn.execute(
-            "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
-            (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at, "rerun_recomputed_after_settlement"),
+        snapshot_status = store_prediction_snapshot(
+            conn,
+            latest["draw_date"],
+            target_date,
+            candidates_json,
+            strong_packs_json,
+            created_at,
+            "rerun_recomputed_after_settlement",
         )
         conn.commit()
-        return "recomputed_snapshot_settled_period+" + low_status
+        return "recomputed_snapshot_settled_period+" + low_status + "+" + snapshot_status
     if row:
         conn.execute(
             """
@@ -1629,12 +1770,17 @@ def store_prediction(conn, analysis):
             (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at),
         )
         status = "recomputed_inserted" if official_allowed else "recomputed_inserted_watch_only_pending"
-    conn.execute(
-        "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
-        (latest["draw_date"], target_date, candidates_json, strong_packs_json, created_at, snapshot_reason),
+    snapshot_status = store_prediction_snapshot(
+        conn,
+        latest["draw_date"],
+        target_date,
+        candidates_json,
+        strong_packs_json,
+        created_at,
+        snapshot_reason,
     )
     conn.commit()
-    return status + "+" + low_status
+    return status + "+" + low_status + "+" + snapshot_status
 
 
 def backfill_predictions_from_snapshots(conn):
@@ -1801,9 +1947,14 @@ def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json
             """,
             (based_on_date,) + payload,
         )
-    conn.execute(
-        "INSERT INTO prediction_snapshots(based_on_date,target_date,candidates_json,strong_packs_json,created_at,snapshot_reason) VALUES(?,?,?,?,?,?)",
-        (based_on_date, target_date, candidates_json, strong_packs_json, created_at, source),
+    store_prediction_snapshot(
+        conn,
+        based_on_date,
+        target_date,
+        candidates_json,
+        strong_packs_json,
+        created_at,
+        source,
     )
     sync_settled_low_probability_for_prediction(conn, based_on_date, target_date, candidates_json, actual[0], actual_numbers, created_at)
     return True
@@ -2639,6 +2790,7 @@ def analyze(draws, review=None):
     elif aerospace["release_assurance"]["status"] == "watch_only":
         industrial.setdefault("release_gate", {})["aerospace_status"] = "watch_only"
     candidates = tiantianle_core["candidates"]
+    official_candidates = tiantianle_core.get("official_candidates", candidates)
     freshness = data_freshness(draws[-1]["draw_date"])
     latest_source = draws[-1].get("source", "")
     latest_source_confirmed = source_is_confirmed(latest_source)
@@ -2652,11 +2804,11 @@ def analyze(draws, review=None):
         and industrial.get("release_gate", {}).get("status") == "official"
         and aerospace.get("release_assurance", {}).get("status") == "verified"
     )
-    strict_policy = _build_strict_recommendation_policy(candidates, industrial, official_release_allowed)
+    strict_policy = _build_strict_recommendation_policy(official_candidates, industrial, official_release_allowed)
     avoid_policy = _build_low_probability_avoid(industrial, candidates)
-    recalculation = _build_recalculation_manifest(draws, candidates, industrial, review, freshness)
-    top_numbers = [int(item.get("number")) for item in candidates]
-    latest_ironlaw = _build_latest_ironlaw_decision(strict_policy, avoid_policy, tiantianle_core["strong_prediction_packs"], candidates, freshness, industrial)
+    recalculation = _build_recalculation_manifest(draws, official_candidates, industrial, review, freshness)
+    top_numbers = [int(item.get("number")) for item in official_candidates]
+    latest_ironlaw = _build_latest_ironlaw_decision(strict_policy, avoid_policy, tiantianle_core["strong_prediction_packs"], official_candidates, freshness, industrial)
     history_status = "complete" if len(draws) >= FULL_HISTORY_MIN_ROWS else ("partial" if len(draws) >= 180 else "seed_only")
     completeness = {
         "status": history_status,
@@ -2706,7 +2858,7 @@ def analyze(draws, review=None):
         "primary_tiantianle_core": tiantianle_core,
         "aerospace_assurance": aerospace,
         "candidates": candidates,
-        "official_candidates": candidates,
+        "official_candidates": official_candidates,
         "strong_packs": tiantianle_core["strong_prediction_packs"],
         "precision_micro_models": tiantianle_core.get("precision_micro_models", industrial.get("precision_micro_models", {})),
         "suggested_sets": tiantianle_core["suggested_sets"],
@@ -3248,10 +3400,12 @@ def run(full=False):
             fetched, errors = fetch_history(conn, full=full)
         else:
             fetched, errors = 0, []
+        snapshot_dedupe_before = dedupe_prediction_snapshots(conn)
         snapshot_backfill = backfill_predictions_from_snapshots(conn)
         settled_count = settle_predictions(conn)
         low_probability_backfill = backfill_low_probability_records_from_predictions(conn)
         low_probability_settled_count = settle_low_probability_records(conn)
+        snapshot_dedupe_after = dedupe_prediction_snapshots(conn)
         export_csv(conn)
         validation = validate_sources(conn)
         data_audit = data_integrity_audit(conn, cached_latest, latest_fetch, validation)
@@ -3261,9 +3415,13 @@ def run(full=False):
         period_audit = full_period_prediction_audit_and_backfill(conn, draws)
         analysis = analyze(draws, failure_review(conn))
         analysis["period_integrity_audit"] = period_audit
+        analysis["low_probability_daily_records"] = low_probability_daily_record(conn)
+        analysis["monthly_low_probability_review"] = monthly_low_probability_review(conn)
+        analysis["low_probability_monthly_guard"] = apply_low_probability_monthly_guard(analysis)
         status = store_prediction(conn, analysis)
         analysis["low_probability_daily_records"] = low_probability_daily_record(conn)
         analysis["monthly_low_probability_review"] = monthly_low_probability_review(conn)
+        analysis["low_probability_monthly_guard"] = apply_low_probability_monthly_guard(analysis)
         ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding="utf-8")
         health = prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest, data_audit)
         render_reports(conn, analysis)
@@ -3277,7 +3435,7 @@ def run(full=False):
         ok = file_check()
         history_status = analysis["history_completeness"]["status"]
         run_status = "success" if ok and not errors and history_status == "complete" and health["status"] == "ok" else "warning"
-        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_backfill": snapshot_backfill, "settled_count": settled_count, "low_probability_backfill": low_probability_backfill, "low_probability_settled_count": low_probability_settled_count, "period_audit": period_audit, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
+        message = json.dumps({"seed_added": seed_added, "csv_imported": csv_imported, "cached_latest": cached_latest, "latest_fetch": latest_fetch, "fetched": fetched, "snapshot_dedupe_before": snapshot_dedupe_before, "snapshot_backfill": snapshot_backfill, "snapshot_dedupe_after": snapshot_dedupe_after, "settled_count": settled_count, "low_probability_backfill": low_probability_backfill, "low_probability_settled_count": low_probability_settled_count, "low_probability_monthly_guard": analysis.get("low_probability_monthly_guard"), "period_audit": period_audit, "prediction": status, "errors": errors, "file_check": ok, "health": health, "history_status": history_status, "network": network_diag, "validation": validation, "data_audit": data_audit, "scraper": scraper_summary}, ensure_ascii=False)
         conn.execute("UPDATE update_runs SET finished_at=?,status=?,message=? WHERE id=?", (iso_local(taiwan_now()), run_status, message[:1000], run_id))
         conn.commit()
     log(f"done latest={draws[-1]['draw_date']} top10={fmt_numbers([x['number'] for x in analysis['candidates'][:10]])}")

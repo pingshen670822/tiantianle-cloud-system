@@ -1,18 +1,18 @@
 # 網路診斷報告
 
-- 產生時間：2026-06-16T12:31:21+08:00
+- 產生時間：2026-07-21T13:00:33+08:00
 - 狀態：blocked
-- 異常來源：6
+- 異常來源：1
 
 ## 檢查結果
 | 來源 | Host | DNS | TCP 443 | HTTPS | 錯誤 |
 | --- | --- | --- | --- | --- | --- |
-| Lotto8 | www.lotto-8.com | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
-| Lottolyzer | en.lottolyzer.com | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
-| LotteryUSA | www.lotteryusa.com | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
-| LotteryNet | www.lottery.net | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
-| LotteryCorner | lotterycorner.com | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
-| LotteryPredictor | lotterypredictor.com | ok | failed | failed | tcp443: [WinError 10013] 嘗試存取通訊端被拒絕，因為存取權限不足。 |
+| Lotto8 | www.lotto-8.com | ok | ok | ok | - |
+| Lottolyzer | en.lottolyzer.com | ok | ok | ok | - |
+| LotteryUSA | www.lotteryusa.com | ok | ok | failed | https: HTTP Error 404: Not Found |
+| LotteryNet | www.lottery.net | ok | ok | ok | - |
+| LotteryCorner | lotterycorner.com | ok | ok | ok | - |
+| LotteryPredictor | lotterypredictor.com | ok | ok | ok | - |
 
 ## 改善建議
 - 若 DNS 失敗：檢查網路 DNS 或改用手機熱點測試。
