@@ -1,4 +1,4 @@
-﻿name: daily-tiantianle-update
+name: daily-tiantianle-update
 
 on:
   workflow_dispatch:
