@@ -196,7 +196,8 @@ def main():
     for item in gap_rows[:8]:
         add_issue(issues, "模型缺口", item["category"], item["impact"], item["fix"], "需補強")
 
-    status = "通過" if not any(item["severity"] == "嚴重" for item in issues) else "需立即修正"
+    has_critical = any(item["severity"] == "嚴重" for item in issues)
+    status = "需立即修正" if has_critical else ("無嚴重缺漏，仍需模型補強" if issues else "通過")
     payload = {
         "checked_at_taiwan": datetime.now(TAIWAN).isoformat(timespec="seconds"),
         "status": status,
@@ -257,7 +258,7 @@ def main():
         path.write_text(markdown, encoding="utf-8")
 
     print(json.dumps({"status": status, "issues": len(issues), "critical": sum(1 for item in issues if item["severity"] == "嚴重")}, ensure_ascii=False))
-    if args.fail_on_critical and any(item["severity"] == "嚴重" for item in issues):
+    if args.fail_on_critical and has_critical:
         raise SystemExit(2)
 
 
