@@ -1,7 +1,7 @@
 name: daily-tiantianle-update
 
-on:
-  workflow_dispatch:
+"on":
+  workflow_dispatch: {}
   schedule:
     # 每 3 小時自動檢測：確認戰報是否為最新資料，並重建手機版同步檔案。
     - cron: "0 */3 * * *"
