@@ -1,8 +1,8 @@
 {
   "engine_version": "天天樂最新版鐵律第4版_20260721",
   "industrial_engine_version": "industrial_v18_full_system_entry_gate_20260721",
-  "generated_at_taiwan": "2026-07-22T03:21:18+08:00",
-  "generated_at_california": "2026-07-21T12:21:18-07:00",
+  "generated_at_taiwan": "2026-07-22T06:03:55+08:00",
+  "generated_at_california": "2026-07-21T15:03:55-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11864,
@@ -1739,7 +1739,7 @@
   },
   "freshness": {
     "california_today": "2026-07-21",
-    "california_time": "12:21:18",
+    "california_time": "15:03:55",
     "allowed_latest_draw_date": "2026-07-20",
     "age_days": 0,
     "status": "ok",
@@ -138324,7 +138324,7 @@
     {
       "based_on_date": "2026-07-20",
       "target_date": "2026-07-21",
-      "created_at": "2026-07-22T03:21:18+08:00",
+      "created_at": "2026-07-22T06:03:55+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
