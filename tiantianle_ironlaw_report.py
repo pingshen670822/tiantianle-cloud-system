@@ -2828,6 +2828,74 @@ def compact_monthly_breakthrough_html_tiantianle(analysis):
     )
 
 
+def compact_strong_single_validation_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    validation = industrial.get("strong_single_validation") or {}
+    if not validation:
+        return ""
+    number = validation.get("number")
+    checks = validation.get("failed_checks") or []
+    evidence = validation.get("evidence") or []
+    rows = [
+        ["獨隻號碼", fmt_numbers([number]) if number else "-", validation.get("status", "-")],
+        ["總分", validation.get("score", "-"), "每期重新計算"],
+        ["主列狀態", validation.get("entry_status", "-"), "必須通過主列放行"],
+        ["交叉驗算", validation.get("cross_validation", "-"), "多模組驗證"],
+        ["成熟度", validation.get("maturity_score", "-"), "實戰成熟檢查"],
+        ["上期開獎防呆", "有重複" if validation.get("latest_draw_reuse") else "未使用上期開獎號", "通過" if validation.get("latest_draw_reuse_allowed") else "未過"],
+        ["假資料防呆", validation.get("fake_data_guard", "-"), "禁止憑空產號"],
+    ]
+    return (
+        '<div class="band singlebox">'
+        '<h2>最強獨隻驗證</h2>'
+        '<p>獨隻必須每期由全系統放行主列重新計算；未通過驗證不得標示高信心，也不得用上期開獎號忽弄。</p>'
+        f'{table(["項目", "數值", "判定"], rows)}'
+        f'{table(["驗證證據"], [[item] for item in evidence], "目前沒有驗證證據")}'
+        f'{table(["未通過項目"], [[item] for item in checks], "全部通過或列為觀察輸出")}'
+        '</div>'
+    )
+
+
+def compact_post_draw_correction_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    protocol = industrial.get("post_draw_error_correction") or {}
+    if not protocol:
+        return ""
+    last = protocol.get("last_settled") or {}
+    action_rows = []
+    for item in protocol.get("module_actions") or []:
+        numbers = item.get("numbers") or {}
+        missed = numbers.get("漏抓", []) if isinstance(numbers, dict) else []
+        action_rows.append([
+            item.get("module", "-"),
+            item.get("problem", "-"),
+            fmt_numbers(missed) or "-",
+            item.get("action", "-"),
+        ])
+    reason_rows = []
+    for item in protocol.get("penalized_reasons") or []:
+        reason_rows.append(["降權", item.get("reason", "-"), item.get("miss", "-"), item.get("hit", "-")])
+    for item in protocol.get("boosted_reasons") or []:
+        reason_rows.append(["加權", item.get("reason", "-"), item.get("miss", "-"), item.get("hit", "-")])
+    summary_rows = [
+        ["狀態", protocol.get("status", "-"), "每期開獎後重算"],
+        ["滾動修正", "已重算" if protocol.get("rolling_recomputed") else "未重算", "未重算不得發布"],
+        ["上期實開", fmt_numbers(last.get("actual_numbers", [])) or "-", last.get("actual_date", "-")],
+        ["上期前十命中", last.get("top10_hits", "-"), "用於模型降權"],
+        ["漏抓前九", fmt_numbers(protocol.get("missed_actual_numbers", [])) or "-", "加入回收模型"],
+        ["前九落空", fmt_numbers(protocol.get("failed_top9_numbers", [])) or "-", "降權與隔離"],
+    ]
+    return (
+        '<div class="band warn">'
+        '<h2>開獎後錯誤模組滾動修正</h2>'
+        '<p>本區只顯示開獎檢討後真正寫入模型的降權、加權與回收動作；用來防止假更新與上期預測沿用。</p>'
+        f'{table(["項目", "數值", "說明"], summary_rows)}'
+        f'{table(["模組", "問題", "漏抓號", "修正動作"], action_rows, "目前沒有模組修正動作")}'
+        f'{table(["動作", "原因", "落空", "命中"], reason_rows, "目前沒有原因權重異動")}'
+        '</div>'
+    )
+
+
 def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
@@ -2866,6 +2934,8 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     stability_governor_html = compact_stability_governor_html_tiantianle(analysis)
     reality_gate_html = compact_reality_gate_html_tiantianle(analysis)
     monthly_breakthrough_html = compact_monthly_breakthrough_html_tiantianle(analysis)
+    strong_single_validation_html = compact_strong_single_validation_html_tiantianle(analysis)
+    post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = f"下期研究候選前9名（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
     backup_heading = f"第10到第15名第二層備查（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
@@ -2965,6 +3035,8 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
       <p><strong>高機率信心牌：</strong>{fmt_numbers(high_numbers) or "本期未過正式高信心守門"}</p>
     </div>
     {compact_super_single_html_tiantianle(analysis)}
+    {strong_single_validation_html}
+    {post_draw_correction_html}
     <div class="band">
       <h2>{candidate_heading}</h2>
       {table(["號碼", "資料依據台灣時間", "預測台灣時間", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}

@@ -177,6 +177,8 @@ def main():
     maturity = industrial.get("practical_maturity") or {}
     correction = industrial.get("multi_model_correction") or {}
     entry_gate = industrial.get("full_system_entry_gate") or {}
+    post_draw_correction = industrial.get("post_draw_error_correction") or {}
+    strong_single_validation = industrial.get("strong_single_validation") or {}
     low = analysis.get("low_probability_avoid") or {}
     low_backtest = low.get("backtest") or (industrial.get("unlikely_backtest") or {})
     issues = []
@@ -188,6 +190,8 @@ def main():
     latest_tw = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or ""
     top9 = prediction.get("top9") or [item.get("number") for item in (analysis.get("candidates") or [])[:9]]
     top15 = prediction.get("top15") or [item.get("number") for item in (analysis.get("candidates") or [])[:15]]
+    strong_packs = analysis.get("strong_packs") or analysis.get("strong_prediction_packs") or {}
+    strong_single = ((strong_packs.get("strong_single") or {}).get("numbers") or prediction.get("strongest") or prediction.get("top1") or [])
 
     required_files = [
         REPORT_DIR / "latest_analysis.json",
@@ -357,6 +361,76 @@ def main():
             "嚴重",
         )
 
+    recalculation = analysis.get("recalculation_manifest") or {}
+    if recalculation.get("previous_prediction_reused") is not False:
+        add_issue(
+            issues,
+            "假運算防呆",
+            "重算宣告未明確禁止沿用上期預測",
+            "可能把上期預測包裝成新一期",
+            "每期必須重新產生 fingerprint，並寫入 previous_prediction_reused=false",
+            "嚴重",
+        )
+    if post_draw_correction.get("status") not in {"已執行", "首次或無上期可檢討"}:
+        add_issue(
+            issues,
+            "錯誤模組滾動修正",
+            "缺少開獎後錯誤模組修正協議",
+            "失誤模組不會被降權或重新校正",
+            "開獎檢討後必須輸出落空、漏抓、強牌失準與模型權重修正清單",
+            "嚴重",
+        )
+    if post_draw_correction.get("status") == "已執行" and not post_draw_correction.get("rolling_recomputed"):
+        add_issue(
+            issues,
+            "錯誤模組滾動修正",
+            "已完成上期檢討但沒有滾動修正資料",
+            "下一期模型仍可能沿用失準邏輯",
+            "每期檢討後必須重算 penalized、boosted、漏抓回收與強牌治理",
+            "嚴重",
+        )
+    try:
+        strong_single_numbers = [int(number) for number in strong_single]
+    except (TypeError, ValueError):
+        strong_single_numbers = []
+    if len(strong_single_numbers) != 1:
+        add_issue(
+            issues,
+            "最強獨支",
+            f"最強獨支不是一顆：{numbers_text(strong_single_numbers)}",
+            "無法檢討 1中1 模型",
+            "每期必須由全系統放行主列產出一顆獨支，並保留驗證證據",
+            "嚴重",
+        )
+    elif strong_single_validation.get("number") != strong_single_numbers[0]:
+        add_issue(
+            issues,
+            "最強獨支",
+            "獨支號碼與獨支驗證資料不一致",
+            "可能出現假資料或戰報顯示不同步",
+            "獨支輸出必須和 strong_single_validation 完全一致",
+            "嚴重",
+        )
+    elif strong_single_validation.get("status") not in {"已驗證", "觀察輸出"}:
+        add_issue(
+            issues,
+            "最強獨支",
+            f"獨支驗證狀態不明：{strong_single_validation.get('status', '-')}",
+            "獨支可能未經多模組驗證",
+            "必須通過主列放行、多模型、交叉驗算、成熟度與上期開獎防呆",
+            "嚴重",
+        )
+    if strong_single_numbers and set(strong_single_numbers) & set(int(n) for n in latest_numbers):
+        if not strong_single_validation.get("latest_draw_reuse_allowed"):
+            add_issue(
+                issues,
+                "最強獨支",
+                f"獨支疑似使用上期開獎號：{numbers_text(strong_single_numbers)}",
+                "容易被誤認為拿上期開獎號忽弄",
+                "上期開獎號不得列獨支，除非完成嚴格連莊重驗並明確標示",
+                "嚴重",
+            )
+
     release_status = str(release.get("status", ""))
     if release_status not in {"official", "verified_research_complete", "watch_only", "正式", "研究觀察通過", "觀察中"}:
         add_issue(issues, "發布守門", f"發布狀態不明：{release_status or '-'}", "高信心區無法判讀", "發布守門必須固定為正式、研究觀察或觀察中", "需修正")
@@ -435,6 +509,8 @@ def main():
         "release_status": release_status,
         "multi_model_correction": correction,
         "full_system_entry_gate": entry_gate,
+        "post_draw_error_correction": post_draw_correction,
+        "strong_single_validation": strong_single_validation,
         "model_maturity": maturity,
         "low_probability_backtest": low_backtest,
         "low_probability_monthly_guard": low_guard,
@@ -462,6 +538,8 @@ def main():
         f"- 發布守門：{release_status or '-'}",
         f"- 多模型競賽校正：{correction.get('status', '-')} / 前九重排 {numbers_text(correction.get('new_top9') or top9)}",
         f"- 全系統主列放行：{entry_gate.get('status', '-')} / 主列 {numbers_text(entry_gate.get('main_numbers') or [])}",
+        f"- 錯誤模組滾動修正：{post_draw_correction.get('status', '-')} / 滾動重算 {post_draw_correction.get('rolling_recomputed', '-')}",
+        f"- 最強獨支驗證：{strong_single_validation.get('status', '-')} / {numbers_text([strong_single_validation.get('number')]) if strong_single_validation.get('number') else '-'}",
         f"- 檢討快照重複：{review_storage['snapshot_duplicate_rows']} 筆",
         f"- 開獎後歸檔重複：{review_storage['archive_duplicate_groups']} 組",
         "",

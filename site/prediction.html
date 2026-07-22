@@ -45,14 +45,14 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260722021020">
+    <link rel="manifest" href="manifest.webmanifest?v=20260722102058">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head><body><header>
   <h1>天天樂 下期預測</h1>
-  <p>產生時間 2026-07-22 10:10 / 全歷史資料 完整 / 共 11865 筆</p>
+  <p>產生時間 2026-07-22 10:20 / 全歷史資料 完整 / 共 11865 筆</p>
   <p>台灣最新可確認時間 2026-07-22 09:50 台灣時間 / 16 25 27 28 39　下期預測台灣時間 2026-07-23 09:50 台灣時間</p>
   <p class="small">對應開獎日 2026-07-21 / 對應開獎日 2026-07-22</p>
 </header><main>
@@ -60,9 +60,9 @@
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260722021020">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260722102058">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260722021020</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260722102058</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -94,6 +94,8 @@
       <p><strong>風控：</strong>未過正式門檻時只列觀察，不包裝成保證。</p>
     </div>
     
+    <div class="band singlebox"><h2>最強獨隻驗證</h2><p>獨隻必須每期由全系統放行主列重新計算；未通過驗證不得標示高信心，也不得用上期開獎號忽弄。</p><table><thead><tr><th>項目</th><th>數值</th><th>判定</th></tr></thead><tbody><tr><td>獨隻號碼</td><td>29</td><td>已驗證</td></tr><tr><td>總分</td><td>213.88</td><td>每期重新計算</td></tr><tr><td>主列狀態</td><td>核心通過</td><td>必須通過主列放行</td></tr><tr><td>交叉驗算</td><td>8/14</td><td>多模組驗證</td></tr><tr><td>成熟度</td><td>86.3</td><td>實戰成熟檢查</td></tr><tr><td>上期開獎防呆</td><td>未使用上期開獎號</td><td>通過</td></tr><tr><td>假資料防呆</td><td>通過</td><td>禁止憑空產號</td></tr></tbody></table><table><thead><tr><th>驗證證據</th></tr></thead><tbody><tr><td>全系統主列放行</td></tr><tr><td>多模型校正完成</td></tr><tr><td>交叉驗算與成熟度檢查</td></tr><tr><td>上期開獎號防呆</td></tr><tr><td>每期重新運算，不沿用上期預測</td></tr></tbody></table><table><thead><tr><th>未通過項目</th></tr></thead><tbody><tr><td colspan="1">全部通過或列為觀察輸出</td></tr></tbody></table></div>
+    <div class="band warn"><h2>開獎後錯誤模組滾動修正</h2><p>本區只顯示開獎檢討後真正寫入模型的降權、加權與回收動作；用來防止假更新與上期預測沿用。</p><table><thead><tr><th>項目</th><th>數值</th><th>說明</th></tr></thead><tbody><tr><td>狀態</td><td>已執行</td><td>每期開獎後重算</td></tr><tr><td>滾動修正</td><td>已重算</td><td>未重算不得發布</td></tr><tr><td>上期實開</td><td>16 25 27 28 39</td><td>2026-07-21</td></tr><tr><td>上期前十命中</td><td>1</td><td>用於模型降權</td></tr><tr><td>漏抓前九</td><td>16 25 27 39</td><td>加入回收模型</td></tr><tr><td>前九落空</td><td>01 03 04 12 13 21 30 34</td><td>降權與隔離</td></tr></tbody></table><table><thead><tr><th>模組</th><th>問題</th><th>漏抓號</th><th>修正動作</th></tr></thead><tbody><tr><td>前九主列排序</td><td>上期前九落空 8 顆，漏抓 4 顆</td><td>16 25 27 39</td><td>落空號降權，漏抓號進入回收模型與主列重驗</td></tr><tr><td>第十到十五備查回收</td><td>上期前十五落空 13 顆，前十五漏抓 3 顆</td><td>25 27 39</td><td>備查命中模型保留，漏抓模型提高回收權重</td></tr><tr><td>強牌組合</td><td>未達標強牌 3 組</td><td>-</td><td>未達標組合不升正式高信心，下一期重新選模型</td></tr><tr><td>多模型競賽</td><td>每期開獎後重新計算模型權重</td><td>-</td><td>弱模型降權，漏抓與後段命中模型加權</td></tr><tr><td>全系統主列放行</td><td>主列通過 9 顆</td><td>-</td><td>未通過放行門者只能備查或觀察，不能包裝主推</td></tr></tbody></table><table><thead><tr><th>動作</th><th>原因</th><th>落空</th><th>命中</th></tr></thead><tbody><tr><td>降權</td><td>前九名核心保留</td><td>17</td><td>0</td></tr><tr><td>降權</td><td>失準後多模型競賽重排</td><td>13</td><td>2</td></tr><tr><td>降權</td><td>一百期頻率</td><td>12</td><td>0</td></tr><tr><td>降權</td><td>神經網路綜合</td><td>11</td><td>2</td></tr><tr><td>降權</td><td>共現關聯</td><td>11</td><td>0</td></tr><tr><td>降權</td><td>區間奇偶壓力</td><td>10</td><td>0</td></tr><tr><td>降權</td><td>日期牌</td><td>9</td><td>2</td></tr><tr><td>降權</td><td>遺漏補償</td><td>9</td><td>3</td></tr><tr><td>降權</td><td>尾數區間</td><td>9</td><td>2</td></tr><tr><td>降權</td><td>滾動檢討漏抓尾數區間補位</td><td>9</td><td>2</td></tr><tr><td>降權</td><td>全系統主列放行通過</td><td>8</td><td>1</td></tr><tr><td>降權</td><td>二十期頻率</td><td>8</td><td>3</td></tr><tr><td>加權</td><td>十期頻率</td><td>0</td><td>4</td></tr><tr><td>加權</td><td>遺漏補償</td><td>9</td><td>3</td></tr><tr><td>加權</td><td>二十期頻率</td><td>8</td><td>3</td></tr><tr><td>加權</td><td>失準後多模型競賽重排</td><td>13</td><td>2</td></tr><tr><td>加權</td><td>神經網路綜合</td><td>11</td><td>2</td></tr><tr><td>加權</td><td>日期牌</td><td>9</td><td>2</td></tr><tr><td>加權</td><td>第十到第十五名命中回收</td><td>0</td><td>2</td></tr><tr><td>加權</td><td>尾數區間</td><td>9</td><td>2</td></tr><tr><td>加權</td><td>滾動檢討漏抓尾數區間補位</td><td>9</td><td>2</td></tr><tr><td>加權</td><td>五期頻率</td><td>0</td><td>2</td></tr><tr><td>加權</td><td>尾數牌</td><td>0</td><td>2</td></tr><tr><td>加權</td><td>全系統主列放行通過</td><td>8</td><td>1</td></tr></tbody></table></div>
     <div class="band">
       <h2>下期研究候選前9名（資料依據台灣時間 2026-07-22 09:50 台灣時間 / 預測台灣時間 2026-07-23 09:50 台灣時間）</h2>
       <table><thead><tr><th>號碼</th><th>資料依據台灣時間</th><th>預測台灣時間</th><th>排名</th><th>分數</th><th>信心</th><th>機率</th><th>遺漏</th><th>驗算數</th><th>驗算來源</th></tr></thead><tbody><tr><td>29</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>1</td><td>99.3%</td><td>98.6</td><td>18.65%</td><td>1</td><td>8</td><td>多模型競賽校正、正邊際核心、全歷史錨點、相似歷史近鄰、排名錯位修正、漏命中回收</td></tr><tr><td>33</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>2</td><td>91.4%</td><td>94.8</td><td>17.9%</td><td>1</td><td>7</td><td>多模型競賽校正、正邊際核心、近720期長線、近100期熱度、近1800期長線、共現配對</td></tr><tr><td>31</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>3</td><td>84.0%</td><td>91.2</td><td>17.2%</td><td>1</td><td>3</td><td>多模型競賽校正、正邊際核心、相似歷史近鄰、排名錯位修正、全歷史頻率、全歷史錨點</td></tr><tr><td>23</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>4</td><td>73.5%</td><td>86.0</td><td>16.2%</td><td>7</td><td>8</td><td>多模型競賽校正、正邊際核心、全歷史錨點、相似歷史近鄰、遺漏週期、型態缺口橋接</td></tr><tr><td>18</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>5</td><td>49.8%</td><td>74.4</td><td>13.95%</td><td>15</td><td>6</td><td>多模型競賽校正、正邊際核心、遺漏週期、共現配對、相似歷史近鄰、型態缺口橋接</td></tr><tr><td>20</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>6</td><td>44.1%</td><td>71.6</td><td>13.41%</td><td>30</td><td>3</td><td>多模型競賽校正、遺漏週期、正邊際核心、近720期長線、相似歷史近鄰、區間奇偶壓力</td></tr><tr><td>05</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>7</td><td>43.7%</td><td>71.4</td><td>13.37%</td><td>6</td><td>4</td><td>多模型競賽校正、全歷史錨點、正邊際核心、遺漏週期、相似歷史近鄰、全歷史頻率</td></tr><tr><td>35</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>8</td><td>41.9%</td><td>70.6</td><td>13.21%</td><td>19</td><td>9</td><td>多模型競賽校正、正邊際核心、遺漏週期、全歷史錨點、遺漏相位回彈、近1800期長線</td></tr><tr><td>26</td><td>2026-07-22 09:50 台灣時間</td><td>2026-07-23 09:50 台灣時間</td><td>9</td><td>39.0%</td><td>69.1</td><td>12.93%</td><td>6</td><td>5</td><td>多模型競賽校正、正邊際核心、全歷史錨點、遺漏週期、型態缺口橋接、尾數區間</td></tr></tbody></table>
@@ -117,7 +119,7 @@
     </div>
   </main>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260722021020';
+    window.TIANTIANLE_BUILD_VERSION = '20260722102058';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -145,7 +147,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260722021020&force=' + Date.now());
+      location.replace('首頁.html?v=20260722102058&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -162,7 +164,7 @@
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260722021020', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260722102058', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});

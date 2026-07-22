@@ -4495,6 +4495,238 @@ def apply_full_system_entry_gate(
     }
 
 
+def build_post_draw_error_correction_protocol(candidates, review=None, correction=None, gate=None, pack_governance=None):
+    review = review or {}
+    correction = correction or {}
+    gate = gate or {}
+    pack_governance = pack_governance or {}
+    rolling = rolling_adjustment_data(review)
+    settled = review.get("last_settled") or {}
+    actual_numbers = [
+        int(number)
+        for number in settled.get("actual_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    ]
+    candidate_numbers = [
+        int(number)
+        for number in settled.get("candidate_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    ]
+    actual_set = set(actual_numbers)
+    top9 = set(candidate_numbers[:9])
+    top15 = set(candidate_numbers[:15])
+    missed_top9 = sorted(actual_set - top9)
+    missed_top15 = sorted(actual_set - top15)
+    failed_top9 = sorted(top9 - actual_set)
+    failed_top15 = sorted(top15 - actual_set)
+
+    strong_pack_hits = settled.get("strong_pack_hits") or {}
+    pack_failures = []
+    for key, pack in strong_pack_hits.items():
+        if not pack.get("passed"):
+            pack_failures.append(
+                {
+                    "pack": key,
+                    "numbers": pack.get("numbers") or [],
+                    "hits": int(pack.get("hits", 0) or 0),
+                    "action": "降權並改由本期多模型重新競賽",
+                }
+            )
+
+    governance_rows = []
+    for key, item in (pack_governance.get("pack_stats") or {}).items():
+        governance_rows.append(
+            {
+                "pack": key,
+                "best_variant": item.get("best_variant"),
+                "passed": bool(item.get("passed")),
+                "research_passed": bool(item.get("research_passed")),
+                "avg_hits": item.get("avg_hits"),
+                "pass_rate": item.get("pass_rate"),
+                "action": "保留" if item.get("passed") or item.get("research_passed") else "降權觀察",
+            }
+        )
+
+    module_actions = [
+        {
+            "module": "前九主列排序",
+            "problem": f"上期前九落空 {len(failed_top9)} 顆，漏抓 {len(missed_top9)} 顆",
+            "numbers": {"落空": failed_top9, "漏抓": missed_top9},
+            "action": "落空號降權，漏抓號進入回收模型與主列重驗",
+        },
+        {
+            "module": "第十到十五備查回收",
+            "problem": f"上期前十五落空 {len(failed_top15)} 顆，前十五漏抓 {len(missed_top15)} 顆",
+            "numbers": {"落空": failed_top15, "漏抓": missed_top15},
+            "action": "備查命中模型保留，漏抓模型提高回收權重",
+        },
+        {
+            "module": "強牌組合",
+            "problem": f"未達標強牌 {len(pack_failures)} 組",
+            "numbers": {"失準組合": pack_failures[:5]},
+            "action": "未達標組合不升正式高信心，下一期重新選模型",
+        },
+        {
+            "module": "多模型競賽",
+            "problem": "每期開獎後重新計算模型權重",
+            "numbers": correction.get("variant_weights") or {},
+            "action": "弱模型降權，漏抓與後段命中模型加權",
+        },
+        {
+            "module": "全系統主列放行",
+            "problem": f"主列通過 {gate.get('main_count', 0)} 顆",
+            "numbers": gate.get("main_numbers") or [],
+            "action": "未通過放行門者只能備查或觀察，不能包裝主推",
+        },
+    ]
+    return {
+        "status": "已執行" if review.get("has_review") else "首次或無上期可檢討",
+        "version": "post_draw_error_correction_v20260722",
+        "per_draw_recompute_required": True,
+        "rolling_adjustment_required": True,
+        "rolling_recomputed": bool(rolling),
+        "previous_prediction_reuse_forbidden": True,
+        "fake_data_guard": {
+            "status": "啟用",
+            "requires_latest_draw": bool(actual_numbers),
+            "requires_settled_review": bool(review.get("has_review")),
+            "requires_full_system_gate": gate.get("status") == "已執行",
+            "requires_no_previous_prediction_reuse": True,
+        },
+        "last_settled": {
+            "based_on_date": settled.get("based_on_date"),
+            "actual_date": settled.get("actual_date"),
+            "actual_numbers": actual_numbers,
+            "candidate_numbers": candidate_numbers[:15],
+            "top5_hits": settled.get("top5_hits"),
+            "top10_hits": settled.get("top10_hits"),
+            "top15_hits": settled.get("top15_hits"),
+        },
+        "missed_actual_numbers": missed_top9,
+        "missed_actual_top15_numbers": missed_top15,
+        "failed_top9_numbers": failed_top9,
+        "failed_top15_numbers": failed_top15,
+        "repeated_failed_numbers": rolling.get("repeated_failed_numbers", [])[:15],
+        "late_hit_numbers": rolling.get("late_hit_numbers", [])[:15],
+        "last2_missed_actual_numbers": rolling.get("last2_missed_actual_numbers", [])[:15],
+        "penalized_reasons": rolling.get("penalized_reasons", [])[:12],
+        "boosted_reasons": rolling.get("boosted_reasons", [])[:12],
+        "pack_failures": pack_failures,
+        "pack_governance": governance_rows,
+        "module_actions": module_actions,
+        "message": "每期開獎後必須先檢討落空、漏抓、強牌失準與模型權重，再重新排序與重新放行。",
+    }
+
+
+def ensure_verified_strong_single_pack(packs, candidates, review=None):
+    packs = packs or {}
+    review = review or {}
+    latest_actual = {
+        int(number)
+        for number in (review.get("last_settled") or {}).get("actual_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    candidate_map = {int(item["number"]): item for item in candidates if item.get("number") is not None}
+    eligible = [
+        item for item in candidates[:9]
+        if (item.get("entry_validation") or {}).get("passed_for_main")
+        and (
+            int(item["number"]) not in latest_actual
+            or bool((item.get("repeat_guard") or {}).get("passed"))
+            or bool((item.get("previous_prediction_guard") or {}).get("reentry_passed"))
+        )
+    ]
+
+    def single_score(item):
+        entry = item.get("entry_validation") or {}
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        correction = item.get("multi_model_correction") or {}
+        return (
+            float(item.get("score", 0) or 0) * 100
+            + float(item.get("confidence_index", 0) or 0) * 0.35
+            + int(item.get("stability_count", 0) or 0) * 4.5
+            + int(cross.get("passed_count", 0) or 0) * 3.2
+            + float(maturity.get("score", 0) or 0) * 0.22
+            + (8 if entry.get("status") == "核心通過" else 0)
+            + (5 if correction.get("status") == "已執行" else 0)
+        )
+
+    selected = None
+    existing = packs.get("strong_single") or {}
+    existing_numbers = [
+        int(number)
+        for number in existing.get("numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    ]
+    if existing_numbers:
+        candidate = candidate_map.get(existing_numbers[0])
+        if candidate and candidate in eligible:
+            selected = candidate
+    if selected is None and eligible:
+        selected = max(eligible, key=lambda item: (single_score(item), float(item.get("score", 0) or 0), -int(item["number"])))
+
+    if selected is None:
+        validation = {
+            "status": "未通過",
+            "reason": "前九主列沒有可用獨支候選，禁止假造號碼",
+            "must_output_single": True,
+            "fake_data_guard": "已阻擋",
+        }
+        packs["strong_single"] = empty_pack("最強獨隻1中1", 1, "前九主列沒有通過獨支驗證")
+        packs["strong_single"]["strong_single_validation"] = validation
+        return packs, validation
+
+    number = int(selected["number"])
+    cross = selected.get("cross_validation") or {}
+    maturity = selected.get("practical_maturity") or {}
+    entry = selected.get("entry_validation") or {}
+    correction = selected.get("multi_model_correction") or {}
+    latest_reuse = number in latest_actual
+    latest_reuse_allowed = (not latest_reuse) or bool((selected.get("repeat_guard") or {}).get("passed")) or bool((selected.get("previous_prediction_guard") or {}).get("reentry_passed"))
+    validation_checks = [
+        ("主列放行", bool(entry.get("passed_for_main"))),
+        ("非上期開獎忽弄", latest_reuse_allowed),
+        ("多模型重算", correction.get("status") == "已執行"),
+        ("交叉驗算", int(cross.get("passed_count", 0) or 0) >= 3),
+        ("成熟度", float(maturity.get("score", 0) or 0) >= 58),
+        ("信心分數", float(selected.get("confidence_index", 0) or 0) >= 68),
+    ]
+    failed_checks = [name for name, passed in validation_checks if not passed]
+    validation = {
+        "status": "已驗證" if not failed_checks else "觀察輸出",
+        "number": number,
+        "must_output_single": True,
+        "fake_data_guard": "通過" if not failed_checks else "僅觀察，不得標示高信心",
+        "latest_draw_reuse": latest_reuse,
+        "latest_draw_reuse_allowed": latest_reuse_allowed,
+        "score": round(single_score(selected), 2),
+        "candidate_score": selected.get("score"),
+        "confidence_index": selected.get("confidence_index"),
+        "cross_validation": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+        "maturity_score": maturity.get("score"),
+        "entry_status": entry.get("status"),
+        "failed_checks": failed_checks,
+        "evidence": [
+            "全系統主列放行",
+            "多模型校正完成",
+            "交叉驗算與成熟度檢查",
+            "上期開獎號防呆",
+            "每期重新運算，不沿用上期預測",
+        ],
+    }
+    score_map = {int(item["number"]): float(item.get("score", 0) or 0) for item in candidates}
+    current = packs.get("strong_single") or {}
+    if current.get("numbers") != [number]:
+        packs["strong_single"] = watch_pack("最強獨隻1中1", 1, [number], score_map, "最強獨支由全系統放行門重新選出")
+    packs["strong_single"]["numbers"] = [number]
+    packs["strong_single"]["must_output_single"] = True
+    packs["strong_single"]["strong_single_validation"] = validation
+    packs["strong_single"]["validation_status"] = validation["status"]
+    packs["strong_single"]["official_release"] = bool(current.get("official_release")) and validation["status"] == "已驗證"
+    return packs, validation
+
+
 def compute_industrial_analysis(draws, review=None):
     timing_log("開始")
     timing_log("自適應權重開始")
@@ -4536,6 +4768,15 @@ def compute_industrial_analysis(draws, review=None):
     timing_log("強牌組合開始")
     packs = strong_packs(candidates, review, pack_governance)
     packs = attach_precision_micro_packs(packs, precision_micro, candidates)
+    packs, strong_single_validation = ensure_verified_strong_single_pack(packs, candidates, review)
+    timing_log("錯誤模組滾動修正協議開始")
+    post_draw_error_correction = build_post_draw_error_correction_protocol(
+        candidates,
+        review,
+        multi_model_correction,
+        full_system_entry_gate,
+        pack_governance,
+    )
     timing_log("成熟度開始")
     maturity = practical_maturity_summary(candidates)
     timing_log("進階模型摘要開始")
@@ -4595,7 +4836,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v18_full_system_entry_gate_20260721",
+        "engine_version": "industrial_v19_post_draw_error_correction_20260722",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -4616,6 +4857,8 @@ def compute_industrial_analysis(draws, review=None):
         "recent_failure_front_gate": recent_failure_front_gate,
         "multi_model_correction": multi_model_correction,
         "full_system_entry_gate": full_system_entry_gate,
+        "post_draw_error_correction": post_draw_error_correction,
+        "strong_single_validation": strong_single_validation,
         "top10_promotion_audit": promotion_audit,
         "dependency_analysis": {
             "method": "three_fold_conditional_lift_with_fdr",
