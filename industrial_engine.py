@@ -4302,7 +4302,29 @@ def apply_full_system_entry_gate(
             ("穩定核心門檻", stability >= 3),
             ("成熟核心門檻", maturity_score >= 58),
         ]
-        coverage_checks = checks + [
+        main_revalidation_passed = (
+            not bool(failure_front.get("blocked"))
+            or (
+                score >= 0.38
+                and confidence >= 68
+                and cross_passed >= 5
+                and maturity_score >= 60
+                and stability >= 1
+            )
+            or (
+                score >= 0.41
+                and confidence >= 70
+                and cross_passed >= 4
+                and maturity_score >= 68
+            )
+        )
+        coverage_base_checks = [
+            item for item in checks
+            if item[0] != "近期失準守門通過"
+        ] + [
+            ("近期失準主列重驗", main_revalidation_passed),
+        ]
+        coverage_checks = coverage_base_checks + [
             ("分數補位門檻", score >= 0.34),
             ("信心補位門檻", confidence >= 66),
             ("多模組補位門檻", model_count >= 3),
@@ -4335,7 +4357,7 @@ def apply_full_system_entry_gate(
         ]
 
         core_passed = global_passed and not hard_blocked and all(passed for _, passed in core_checks)
-        coverage_passed = global_passed and not hard_blocked and all(passed for _, passed in coverage_checks)
+        coverage_passed = global_passed and not bool(firewall.get("blocked")) and all(passed for _, passed in coverage_checks)
         reserve_passed = global_passed and not bool(firewall.get("blocked")) and all(passed for _, passed in reserve_checks)
 
         if core_passed:
@@ -4344,7 +4366,7 @@ def apply_full_system_entry_gate(
             passed_for_main = True
             high_confidence_allowed = True
         elif coverage_passed:
-            tier = "主列補位通過"
+            tier = "主列重驗通過" if bool(failure_front.get("blocked")) else "主列補位通過"
             tier_order = 2
             passed_for_main = True
             high_confidence_allowed = False
@@ -4361,7 +4383,7 @@ def apply_full_system_entry_gate(
 
         if tier == "核心通過":
             validation_checks = core_checks
-        elif tier == "主列補位通過":
+        elif tier in {"主列補位通過", "主列重驗通過"}:
             validation_checks = coverage_checks
         elif tier in {"備查通過", "備查重驗通過"}:
             validation_checks = reserve_checks
@@ -4440,7 +4462,7 @@ def apply_full_system_entry_gate(
     coverage_numbers = [
         int(item["number"])
         for item in adjusted
-        if (item.get("entry_validation") or {}).get("status") == "主列補位通過"
+        if (item.get("entry_validation") or {}).get("status") in {"主列補位通過", "主列重驗通過"}
     ][:front_limit]
     reserve_numbers = [
         int(item["number"])

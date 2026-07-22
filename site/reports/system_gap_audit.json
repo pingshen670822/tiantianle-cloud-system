@@ -1,51 +1,51 @@
 {
-  "checked_at_taiwan": "2026-07-22T06:03:58+08:00",
+  "checked_at_taiwan": "2026-07-22T10:02:20+08:00",
   "status": "無嚴重缺漏，仍需模型補強",
-  "latest_draw_date": "2026-07-20",
+  "latest_draw_date": "2026-07-21",
   "latest_numbers": [
-    14,
+    16,
+    25,
     27,
-    29,
-    31,
-    33
-  ],
-  "latest_taiwan_update_time": "2026-07-21 09:50",
-  "target_draw_date": "2026-07-21",
-  "target_taiwan_time": "2026-07-22 09:50",
-  "top9": [
     28,
-    21,
-    34,
-    30,
-    12,
-    4,
-    3,
-    1,
-    13
+    39
+  ],
+  "latest_taiwan_update_time": "2026-07-22 09:50",
+  "target_draw_date": "2026-07-22",
+  "target_taiwan_time": "2026-07-23 09:50",
+  "top9": [
+    29,
+    33,
+    31,
+    23,
+    18,
+    20,
+    5,
+    35,
+    26
   ],
   "top15": [
-    28,
-    21,
-    34,
-    30,
-    12,
-    4,
-    3,
-    1,
-    13,
-    17,
-    24,
-    2,
-    16,
+    29,
+    33,
+    31,
+    23,
+    18,
+    20,
+    5,
+    35,
+    26,
+    14,
+    22,
     11,
-    19
+    2,
+    7,
+    36
   ],
-  "draw_count": 11864,
+  "draw_count": 11865,
   "database": {
     "exists": true,
-    "count": 11864,
+    "count": 11865,
     "first_date": "1992-02-04",
-    "latest_date": "2026-07-20"
+    "latest_date": "2026-07-21"
   },
   "review_storage": {
     "snapshot_duplicate_groups": 0,
@@ -57,8 +57,8 @@
     "status": "已執行",
     "policy": "原排序達標不足時立即啟動多模型競賽，弱模型降權、漏抓與後段命中模型前移、剛開出與連續落空號硬隔離。",
     "critical_mode": true,
-    "recent_top10_avg": 1.0,
-    "recent_top15_avg": 1.8,
+    "recent_top10_avg": 1.2,
+    "recent_top15_avg": 2.0,
     "variant_weights": {
       "上期失誤修正": 0.18,
       "遺漏回收": 0.16,
@@ -72,46 +72,46 @@
       "前九名前移": 0.01
     },
     "old_top9": [
-      1,
-      3,
-      4,
-      12,
-      13,
-      21,
-      28,
-      30,
-      34
+      5,
+      14,
+      18,
+      20,
+      22,
+      23,
+      29,
+      31,
+      33
     ],
     "new_top9": [
-      28,
-      21,
-      34,
-      30,
-      12,
-      4,
-      3,
-      1,
-      13
+      29,
+      33,
+      31,
+      23,
+      18,
+      20,
+      5,
+      14,
+      22
     ],
     "promoted_to_top9": [],
     "demoted_from_top9": [],
     "forced_reserve_recovery": [],
     "blocked_numbers": [
       27,
-      2,
-      11,
-      33,
-      36,
-      7,
-      25,
       35,
-      10,
-      23,
-      9,
-      18,
-      6,
       26,
-      29
+      25,
+      11,
+      2,
+      36,
+      6,
+      15,
+      19,
+      21,
+      28,
+      9,
+      10,
+      17
     ],
     "message": "排序已完成自動換模型校正，後續強牌與戰報全部使用本次重排結果。"
   },
@@ -144,172 +144,154 @@
     },
     "main_count": 9,
     "main_numbers": [
-      28,
-      21,
-      34,
-      30,
-      12,
-      4,
-      3,
-      1,
-      13
+      29,
+      33,
+      31,
+      23,
+      18,
+      20,
+      5,
+      35,
+      26
     ],
     "core_passed_numbers": [
-      28,
-      21,
-      34,
-      30,
-      12
+      29,
+      33,
+      31,
+      23
     ],
     "coverage_passed_numbers": [
-      4,
-      3,
-      1,
-      13
+      18,
+      20,
+      5,
+      35,
+      26
     ],
     "reserve_numbers": [
-      17,
-      24,
-      2,
-      16,
+      14,
+      22,
       11,
-      19,
-      8,
+      2,
+      7,
       36,
-      25,
-      10,
-      23,
+      8,
       6,
-      26,
-      35,
+      21,
+      38,
       32
     ],
     "blocked_numbers": [
       27,
-      33,
-      7,
-      29,
-      31,
-      9,
-      18,
-      38,
-      5,
-      20,
-      37,
-      14,
-      15,
-      22
-    ],
-    "failed_numbers_from_previous_review": [
-      6,
-      7,
-      9,
-      11,
-      15,
-      18,
-      20,
-      22,
       25,
-      26,
-      32,
-      35,
-      38,
-      39
+      15,
+      19,
+      16,
+      10,
+      39,
+      28,
+      34,
+      9,
+      17,
+      30,
+      1,
+      24,
+      37
     ],
+    "failed_numbers_from_previous_review": [],
     "previous_prediction_numbers": [
-      6,
-      7,
-      9,
+      1,
+      2,
+      3,
+      4,
       11,
-      14,
-      15,
-      18,
-      20,
-      22,
-      25,
-      26,
-      32,
-      35,
-      38,
-      39
+      12,
+      13,
+      16,
+      17,
+      19,
+      21,
+      24,
+      28,
+      30,
+      34
     ],
     "message": "主列放行門已套用於候選排序、強牌組合、精算小牌與戰報顯示。"
   },
   "model_maturity": {
     "policy": "live_prediction_practical_maturity_governor",
     "status": "觀察中",
-    "top10_avg_maturity": 58.7,
-    "top15_avg_maturity": 55.4,
-    "top10_mature_or_usable_count": 3,
-    "top10_blocked_low_maturity_count": 5,
+    "top10_avg_maturity": 65.9,
+    "top15_avg_maturity": 60.1,
+    "top10_mature_or_usable_count": 4,
+    "top10_blocked_low_maturity_count": 4,
     "top10_tier_counts": {
-      "mature": 1,
+      "mature": 2,
       "usable_watch": 2,
       "research_only": 2,
-      "blocked_low_maturity": 5
+      "blocked_low_maturity": 4
     },
     "required": "top10_avg_maturity>=70, 成熟通過_or_usable>=5, 成熟度不足=0",
     "action": "force_觀察中_and_re_rank",
     "top10_numbers": [
       {
-        "number": 28,
-        "maturity": 90.3,
+        "number": 29,
+        "maturity": 86.3,
+        "tier": "成熟通過",
+        "cross_validation_passed": 8
+      },
+      {
+        "number": 33,
+        "maturity": 88.3,
         "tier": "成熟通過",
         "cross_validation_passed": 7
       },
       {
-        "number": 21,
-        "maturity": 81.9,
+        "number": 31,
+        "maturity": 78.0,
         "tier": "可觀察",
-        "cross_validation_passed": 6
-      },
-      {
-        "number": 34,
-        "maturity": 70.2,
-        "tier": "可觀察",
-        "cross_validation_passed": 5
-      },
-      {
-        "number": 30,
-        "maturity": 64.7,
-        "tier": "研究觀察",
-        "cross_validation_passed": 7
-      },
-      {
-        "number": 12,
-        "maturity": 61.0,
-        "tier": "研究觀察",
         "cross_validation_passed": 3
       },
       {
-        "number": 4,
+        "number": 23,
+        "maturity": 67.3,
+        "tier": "研究觀察",
+        "cross_validation_passed": 8
+      },
+      {
+        "number": 18,
         "maturity": 54.0,
         "tier": "成熟度不足",
-        "cross_validation_passed": 2
+        "cross_validation_passed": 6
       },
       {
-        "number": 3,
-        "maturity": 36.1,
+        "number": 20,
+        "maturity": 42.2,
         "tier": "成熟度不足",
-        "cross_validation_passed": 1
+        "cross_validation_passed": 3
       },
       {
-        "number": 1,
-        "maturity": 48.4,
-        "tier": "成熟度不足",
-        "cross_validation_passed": 2
-      },
-      {
-        "number": 13,
-        "maturity": 33.7,
-        "tier": "成熟度不足",
-        "cross_validation_passed": 1
-      },
-      {
-        "number": 17,
-        "maturity": 47.0,
+        "number": 5,
+        "maturity": 47.1,
         "tier": "成熟度不足",
         "cross_validation_passed": 4
+      },
+      {
+        "number": 35,
+        "maturity": 71.0,
+        "tier": "可觀察",
+        "cross_validation_passed": 9
+      },
+      {
+        "number": 26,
+        "maturity": 68.5,
+        "tier": "研究觀察",
+        "cross_validation_passed": 5
+      },
+      {
+        "number": 14,
+        "maturity": 56.4,
+        "tier": "成熟度不足",
+        "cross_validation_passed": 3
       }
     ]
   },
@@ -324,23 +306,23 @@
   "low_probability_monthly_guard": {
     "five_miss": {
       "status": "通過",
-      "avg_accidental_hits": 0.6,
-      "pass_rate": 0.45,
+      "avg_accidental_hits": 0.571,
+      "pass_rate": 0.476,
       "worst_accidental_hits": 2
     },
     "ten_miss": {
       "status": "降級",
       "reason": "月度低機率誤開偏高",
-      "avg_accidental_hits": 0.95,
-      "pass_rate": 0.15,
+      "avg_accidental_hits": 0.905,
+      "pass_rate": 0.19,
       "worst_accidental_hits": 2,
       "confidence_cap": 62.0
     },
     "fifteen_miss": {
       "status": "降級",
       "reason": "月度低機率誤開偏高",
-      "avg_accidental_hits": 1.65,
-      "pass_rate": 0.05,
+      "avg_accidental_hits": 1.667,
+      "pass_rate": 0.048,
       "worst_accidental_hits": 4,
       "confidence_cap": 45.0
     }
@@ -355,7 +337,7 @@
     },
     {
       "area": "模型成熟度",
-      "problem": "前十平均成熟度 58.7",
+      "problem": "前十平均成熟度 65.9",
       "impact": "前十核心仍有不穩定號碼",
       "fix": "成熟度未達 70 前不得升為正式高信心",
       "severity": "需補強"
@@ -386,13 +368,6 @@
       "problem": "樣本外連動不足",
       "impact": "上期號碼對下期的拖牌支撐偏弱",
       "fix": "將連動模型保守降權，改用區間缺口、型態相似與遺漏回收補位",
-      "severity": "需補強"
-    },
-    {
-      "area": "模型缺口",
-      "problem": "近期實戰失誤需強制回饋",
-      "impact": "如果上期失誤未被吸收，下期容易重複同樣結構",
-      "fix": "已將未命中理由、後段命中號、重複落空號納入滾動調整",
       "severity": "需補強"
     }
   ]

@@ -292,7 +292,14 @@ def main():
     failed_numbers = set(int(n) for n in (review.get("rolling_failed_numbers") or []) if str(n).isdigit())
     failed_top9 = sorted(failed_numbers & set(int(n) for n in top9))
     revalidated = set(int(n) for n in (failure_gate.get("revalidated_numbers") or []) if str(n).isdigit())
-    if failed_top9 and not set(failed_top9).issubset(revalidated):
+    entry_revalidated = {
+        int(item.get("number"))
+        for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])
+        if item.get("number") is not None
+        and (item.get("entry_validation") or {}).get("passed_for_main")
+        and (item.get("entry_validation") or {}).get("status") in {"主列重驗通過", "核心通過", "主列補位通過"}
+    }
+    if failed_top9 and not set(failed_top9).issubset(revalidated | entry_revalidated):
         add_issue(
             issues,
             "近期失準守門",
