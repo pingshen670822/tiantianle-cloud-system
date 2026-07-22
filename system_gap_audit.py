@@ -491,11 +491,18 @@ def main():
         add_issue(issues, "模型缺口", item["category"], item["impact"], item["fix"], "需補強")
 
     issues = dedupe_issues(issues)
-    has_critical = any(item["severity"] == "嚴重" for item in issues)
+    critical_count = sum(1 for item in issues if item["severity"] == "嚴重")
+    needs_fix_count = sum(1 for item in issues if item["severity"] == "需修正")
+    needs_strengthen_count = sum(1 for item in issues if item["severity"] == "需補強")
+    has_critical = critical_count > 0
     status = "需立即修正" if has_critical else ("無嚴重缺漏，仍需模型補強" if issues else "通過")
     payload = {
         "checked_at_taiwan": datetime.now(TAIWAN).isoformat(timespec="seconds"),
         "status": status,
+        "critical": critical_count,
+        "needs_fix": needs_fix_count,
+        "needs_strengthen": needs_strengthen_count,
+        "issue_count": len(issues),
         "latest_draw_date": latest_date,
         "latest_numbers": latest_numbers,
         "latest_taiwan_update_time": latest_tw,
@@ -564,7 +571,7 @@ def main():
     ]:
         path.write_text(markdown, encoding="utf-8")
 
-    print(json.dumps({"status": status, "issues": len(issues), "critical": sum(1 for item in issues if item["severity"] == "嚴重")}, ensure_ascii=False))
+    print(json.dumps({"status": status, "issues": len(issues), "critical": critical_count}, ensure_ascii=False))
     if args.fail_on_critical and has_critical:
         raise SystemExit(2)
 
