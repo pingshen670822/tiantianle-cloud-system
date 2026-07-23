@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-23T13:21:47+08:00",
+  "checked_at_taiwan": "2026-07-23T13:33:19+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-23T13:21:44+08:00",
+    "generated_at_taiwan": "2026-07-23T13:33:16+08:00",
     "latest_draw_date": "2026-07-22",
     "latest_numbers": [
       1,
@@ -44,7 +44,7 @@
     "engine": "industrial_v20_rank_window_drift_correction_20260723"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-23T13:21:44+08:00",
+    "generated_at_taiwan": "2026-07-23T13:33:16+08:00",
     "latest_draw_date": "2026-07-22",
     "latest_numbers": [
       1,
