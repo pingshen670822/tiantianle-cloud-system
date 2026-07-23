@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-23T10:29:27+08:00",
+  "checked_at_taiwan": "2026-07-23T10:34:27+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-23T10:26:24+08:00",
+    "generated_at_taiwan": "2026-07-23T10:34:24+08:00",
     "latest_draw_date": "2026-07-22",
     "latest_numbers": [
       1,
@@ -44,7 +44,7 @@
     "engine": "industrial_v20_rank_window_drift_correction_20260723"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-23T10:26:24+08:00",
+    "generated_at_taiwan": "2026-07-23T10:34:24+08:00",
     "latest_draw_date": "2026-07-22",
     "latest_numbers": [
       1,
@@ -85,48 +85,7 @@
     ],
     "engine": "industrial_v20_rank_window_drift_correction_20260723"
   },
-  "remote": {
-    "generated_at_taiwan": "2026-07-23T10:26:24+08:00",
-    "latest_draw_date": "2026-07-22",
-    "latest_numbers": [
-      1,
-      14,
-      16,
-      22,
-      23
-    ],
-    "target_draw_date": "2026-07-23",
-    "target_taiwan_time": "2026-07-24 09:50",
-    "top9": [
-      25,
-      28,
-      9,
-      21,
-      30,
-      10,
-      32,
-      27,
-      12
-    ],
-    "top15": [
-      25,
-      28,
-      9,
-      21,
-      30,
-      10,
-      32,
-      27,
-      12,
-      11,
-      19,
-      38,
-      39,
-      6,
-      24
-    ],
-    "engine": "industrial_v20_rank_window_drift_correction_20260723"
-  },
+  "remote": {},
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
   "mismatches": []
