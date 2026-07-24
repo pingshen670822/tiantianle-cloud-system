@@ -1,55 +1,55 @@
 {
-  "checked_at_taiwan": "2026-07-24T06:04:12+08:00",
+  "checked_at_taiwan": "2026-07-24T10:36:19+08:00",
   "status": "無嚴重缺漏，仍需模型補強",
   "critical": 0,
   "needs_fix": 0,
   "needs_strengthen": 7,
   "issue_count": 7,
-  "latest_draw_date": "2026-07-22",
+  "latest_draw_date": "2026-07-23",
   "latest_numbers": [
-    1,
-    14,
+    3,
     16,
-    22,
+    19,
+    30,
+    33
+  ],
+  "latest_taiwan_update_time": "2026-07-24 09:50",
+  "target_draw_date": "2026-07-24",
+  "target_taiwan_time": "2026-07-25 09:50",
+  "top9": [
+    2,
+    34,
+    35,
+    7,
+    17,
+    37,
+    14,
+    1,
     23
   ],
-  "latest_taiwan_update_time": "2026-07-23 09:50",
-  "target_draw_date": "2026-07-23",
-  "target_taiwan_time": "2026-07-24 09:50",
-  "top9": [
-    25,
-    28,
-    9,
-    21,
-    30,
-    10,
-    32,
-    27,
-    12
-  ],
   "top15": [
-    25,
-    28,
-    9,
-    21,
-    30,
-    10,
-    32,
-    27,
-    12,
-    11,
-    19,
-    38,
-    39,
+    2,
+    34,
+    35,
+    7,
+    17,
+    37,
+    14,
+    1,
+    23,
+    31,
     6,
-    24
+    22,
+    36,
+    4,
+    15
   ],
-  "draw_count": 11866,
+  "draw_count": 11867,
   "database": {
     "exists": true,
-    "count": 11866,
+    "count": 11867,
     "first_date": "1992-02-04",
-    "latest_date": "2026-07-22"
+    "latest_date": "2026-07-23"
   },
   "review_storage": {
     "snapshot_duplicate_groups": 0,
@@ -60,72 +60,83 @@
   "multi_model_correction": {
     "status": "已執行",
     "policy": "原排序達標不足時立即啟動多模型競賽，弱模型降權、漏抓與後段命中模型前移、剛開出與連續落空號硬隔離。",
-    "critical_mode": false,
-    "recent_top10_avg": 1.6,
-    "recent_top15_avg": 2.4,
+    "critical_mode": true,
+    "recent_top10_avg": 1.4,
+    "recent_top15_avg": 2.2,
     "variant_weights": {
-      "交叉驗證優先": 0.16,
-      "實戰成熟度優先": 0.14,
-      "遺漏回收": 0.13,
-      "型態缺口橋接": 0.12,
-      "相似歷史近鄰": 0.11,
-      "遺漏相位回彈": 0.1,
-      "上期失誤修正": 0.09,
-      "尾數區間平衡": 0.08,
-      "原始綜合分": 0.05,
-      "前九名前移": 0.02
+      "上期失誤修正": 0.18,
+      "遺漏回收": 0.16,
+      "型態缺口橋接": 0.13,
+      "相似歷史近鄰": 0.12,
+      "遺漏相位回彈": 0.12,
+      "交叉驗證優先": 0.11,
+      "實戰成熟度優先": 0.09,
+      "尾數區間平衡": 0.06,
+      "原始綜合分": 0.02,
+      "前九名前移": 0.01
     },
     "old_top9": [
-      9,
-      10,
-      19,
-      21,
-      25,
-      27,
-      28,
-      30,
-      32
+      2,
+      7,
+      14,
+      17,
+      23,
+      31,
+      34,
+      35,
+      37
     ],
     "new_top9": [
-      27,
-      25,
-      28,
-      9,
-      21,
-      30,
-      10,
-      32,
-      38
+      2,
+      34,
+      35,
+      7,
+      17,
+      37,
+      14,
+      1,
+      4
     ],
     "promoted_to_top9": [
-      38
+      1,
+      4
     ],
     "demoted_from_top9": [
-      19
+      23,
+      31
     ],
-    "forced_reserve_recovery": [],
+    "forced_reserve_recovery": [
+      {
+        "number": 4,
+        "replaced": 23
+      }
+    ],
     "rank_window_drift_correction": {
       "status": "啟動",
       "active": true,
       "front_rebuild_required": true,
-      "pressure": 1.514,
+      "pressure": 1.646,
       "reserve_slots": 3,
-      "last5_top10_avg": 1.6,
-      "last5_top15_avg": 2.4,
+      "last5_top10_avg": 1.4,
+      "last5_top15_avg": 2.2,
       "last5_top15_minus_top10": 0.8,
-      "monthly_top10_avg": 1.409,
-      "monthly_top15_avg": 2.182,
-      "monthly_top15_minus_top10": 0.773,
+      "monthly_top10_avg": 1.391,
+      "monthly_top15_avg": 2.174,
+      "monthly_top15_minus_top10": 0.783,
       "bucket_hits": {
-        "前五": 3,
-        "第十到第十五": 7,
-        "第十六到第二十四": 3,
-        "第六到第九": 2
+        "前五": 4,
+        "第十到第十五": 6,
+        "第十六到第二十四": 4,
+        "第六到第九": 1
       },
       "late_hit_numbers": [
         {
           "number": 14,
           "count": 2
+        },
+        {
+          "number": 19,
+          "count": 1
         },
         {
           "number": 22,
@@ -138,24 +149,28 @@
         {
           "number": 28,
           "count": 1
-        },
-        {
-          "number": 33,
-          "count": 1
-        },
-        {
-          "number": 12,
-          "count": 1
         }
       ],
       "missed_top10_numbers": [
         {
           "number": 16,
+          "count": 3
+        },
+        {
+          "number": 33,
           "count": 2
         },
         {
           "number": 27,
           "count": 2
+        },
+        {
+          "number": 3,
+          "count": 1
+        },
+        {
+          "number": 19,
+          "count": 1
         },
         {
           "number": 1,
@@ -174,10 +189,6 @@
           "count": 1
         },
         {
-          "number": 33,
-          "count": 1
-        },
-        {
           "number": 29,
           "count": 1
         },
@@ -188,35 +199,23 @@
         {
           "number": 21,
           "count": 1
-        },
-        {
-          "number": 28,
-          "count": 1
-        },
-        {
-          "number": 13,
-          "count": 1
         }
       ],
       "failed_top9_numbers": [
         {
-          "number": 26,
-          "count": 3
-        },
-        {
-          "number": 6,
-          "count": 3
-        },
-        {
-          "number": 11,
-          "count": 3
-        },
-        {
-          "number": 35,
+          "number": 32,
           "count": 2
         },
         {
-          "number": 5,
+          "number": 12,
+          "count": 2
+        },
+        {
+          "number": 21,
+          "count": 2
+        },
+        {
+          "number": 35,
           "count": 2
         },
         {
@@ -228,23 +227,27 @@
           "count": 2
         },
         {
-          "number": 2,
+          "number": 26,
           "count": 2
         },
         {
-          "number": 36,
+          "number": 6,
           "count": 2
         },
         {
-          "number": 37,
+          "number": 11,
           "count": 2
         },
         {
-          "number": 23,
-          "count": 2
+          "number": 9,
+          "count": 1
         },
         {
-          "number": 33,
+          "number": 10,
+          "count": 1
+        },
+        {
+          "number": 25,
           "count": 1
         }
       ],
@@ -254,8 +257,12 @@
           "count": 2
         },
         {
+          "tail": 9,
+          "count": 1
+        },
+        {
           "tail": 2,
-          "count": 2
+          "count": 1
         },
         {
           "tail": 6,
@@ -263,10 +270,6 @@
         },
         {
           "tail": 8,
-          "count": 1
-        },
-        {
-          "tail": 3,
           "count": 1
         }
       ],
@@ -278,30 +281,26 @@
         {
           "zone": "21-30",
           "count": 2
-        },
-        {
-          "zone": "31-39",
-          "count": 1
         }
       ],
       "message": "前十五命中明顯高於前十，啟動排名錯位修正與第十到十五名有效訊號前移。"
     },
     "blocked_numbers": [
-      12,
-      11,
-      39,
       6,
       36,
-      33,
-      2,
-      34,
-      16,
       15,
-      13,
-      4,
-      35,
+      26,
+      28,
+      29,
+      5,
+      16,
+      27,
+      3,
       18,
-      3
+      21,
+      10,
+      33,
+      11
     ],
     "message": "排序已完成自動換模型校正，後續強牌與戰報全部使用本次重排結果。"
   },
@@ -313,11 +312,11 @@
     "global_checks": {
       "全歷史主回測": {
         "passed": true,
-        "evidence": "回測 30 輪，前十平均 1.333，隨機基準 1.282，優勢 0.051"
+        "evidence": "回測 30 輪，前十平均 1.3，隨機基準 1.282，優勢 0.018"
       },
       "近況分段回測": {
         "passed": true,
-        "evidence": "0.0513、0.0513"
+        "evidence": "0.0179、0.0179"
       },
       "多模型校正": {
         "passed": true,
@@ -334,80 +333,79 @@
     },
     "main_count": 9,
     "main_numbers": [
-      25,
-      28,
-      9,
-      21,
-      30,
-      10,
-      32,
-      27,
-      12
-    ],
-    "core_passed_numbers": [
-      25,
-      28,
-      9,
-      21,
-      30,
-      10,
-      32
-    ],
-    "coverage_passed_numbers": [
-      27,
-      12,
-      11,
-      19
-    ],
-    "reserve_numbers": [
-      38,
-      39,
-      6,
-      24,
-      33,
       2,
       34,
-      8,
-      15,
       35,
+      7,
       17,
-      3,
+      37,
+      14,
+      1,
+      23
+    ],
+    "core_passed_numbers": [
+      2,
+      34,
+      35,
+      7
+    ],
+    "coverage_passed_numbers": [
+      17,
+      37,
+      14,
+      1,
+      23,
+      31,
+      6,
+      22,
+      36
+    ],
+    "reserve_numbers": [
+      4,
+      15,
       26,
-      29
+      28,
+      29,
+      5,
+      13,
+      27,
+      8,
+      18,
+      21,
+      10,
+      32,
+      11,
+      9
     ],
     "blocked_numbers": [
-      36,
       16,
-      13,
-      4,
-      1,
-      14,
-      22,
-      23,
-      18,
-      7,
-      5,
-      37,
+      3,
+      33,
+      19,
       20,
-      31
+      30,
+      12,
+      25,
+      39,
+      24
     ],
     "failed_numbers_from_previous_review": [],
     "previous_prediction_numbers": [
-      2,
-      5,
-      7,
+      6,
+      9,
+      10,
       11,
-      14,
-      18,
-      20,
-      22,
-      23,
-      26,
-      29,
-      31,
-      33,
-      35,
-      36
+      12,
+      19,
+      21,
+      24,
+      25,
+      27,
+      28,
+      30,
+      32,
+      38,
+      39
     ],
     "message": "主列放行門已套用於候選排序、強牌組合、精算小牌與戰報顯示。"
   },
@@ -426,110 +424,108 @@
       "requires_no_previous_prediction_reuse": true
     },
     "last_settled": {
-      "based_on_date": "2026-07-21",
-      "actual_date": "2026-07-22",
+      "based_on_date": "2026-07-22",
+      "actual_date": "2026-07-23",
       "actual_numbers": [
-        1,
-        14,
+        3,
         16,
-        22,
-        23
+        19,
+        30,
+        33
       ],
       "candidate_numbers": [
-        29,
-        33,
-        31,
-        23,
-        18,
-        20,
-        5,
-        35,
-        26,
-        14,
-        22,
+        25,
+        28,
+        9,
+        21,
+        30,
+        10,
+        32,
+        27,
+        12,
         11,
-        2,
-        7,
-        36
+        19,
+        38,
+        39,
+        6,
+        24
       ],
       "top5_hits": 1,
-      "top10_hits": 2,
-      "top15_hits": 3
+      "top10_hits": 1,
+      "top15_hits": 2
     },
     "missed_actual_numbers": [
-      1,
-      14,
+      3,
       16,
-      22
+      19,
+      33
     ],
     "missed_actual_top15_numbers": [
-      1,
-      16
+      3,
+      16,
+      33
     ],
     "failed_top9_numbers": [
-      5,
-      18,
-      20,
-      26,
-      29,
-      31,
-      33,
-      35
+      9,
+      10,
+      12,
+      21,
+      25,
+      27,
+      28,
+      32
     ],
     "failed_top15_numbers": [
-      2,
-      5,
-      7,
+      6,
+      9,
+      10,
       11,
-      18,
-      20,
-      26,
-      29,
-      31,
-      33,
-      35,
-      36
+      12,
+      21,
+      24,
+      25,
+      27,
+      28,
+      32,
+      38,
+      39
     ],
     "repeated_failed_numbers": [
       {
         "number": 11,
-        "miss_count": 14
+        "miss_count": 11
       },
       {
         "number": 6,
-        "miss_count": 14
+        "miss_count": 9
       },
       {
-        "number": 26,
-        "miss_count": 10
+        "number": 39,
+        "miss_count": 9
       },
       {
-        "number": 36,
-        "miss_count": 10
+        "number": 25,
+        "miss_count": 8
       },
       {
         "number": 29,
         "miss_count": 8
       },
       {
+        "number": 26,
+        "miss_count": 8
+      },
+      {
+        "number": 21,
+        "miss_count": 7
+      },
+      {
         "number": 35,
-        "miss_count": 8
-      },
-      {
-        "number": 39,
-        "miss_count": 8
-      },
-      {
-        "number": 37,
-        "miss_count": 8
-      },
-      {
-        "number": 2,
         "miss_count": 7
       },
       {
-        "number": 31,
-        "miss_count": 7
+        "number": 9,
+        "miss_count": 6
       },
       {
         "number": 33,
@@ -540,19 +536,27 @@
         "miss_count": 6
       },
       {
-        "number": 34,
-        "miss_count": 6
-      },
-      {
         "number": 15,
         "miss_count": 6
       },
       {
-        "number": 5,
+        "number": 27,
+        "miss_count": 5
+      },
+      {
+        "number": 12,
+        "miss_count": 5
+      },
+      {
+        "number": 36,
         "miss_count": 5
       }
     ],
     "late_hit_numbers": [
+      {
+        "number": 19,
+        "late_hit_count": 3
+      },
       {
         "number": 16,
         "late_hit_count": 3
@@ -563,10 +567,6 @@
       },
       {
         "number": 28,
-        "late_hit_count": 1
-      },
-      {
-        "number": 12,
         "late_hit_count": 1
       },
       {
@@ -598,7 +598,7 @@
         "late_hit_count": 1
       },
       {
-        "number": 19,
+        "number": 6,
         "late_hit_count": 1
       }
     ],
@@ -608,85 +608,85 @@
         "missed_count": 2
       },
       {
+        "number": 33,
+        "missed_count": 1
+      },
+      {
+        "number": 3,
+        "missed_count": 1
+      },
+      {
+        "number": 19,
+        "missed_count": 1
+      },
+      {
         "number": 1,
         "missed_count": 1
       },
       {
         "number": 22,
         "missed_count": 1
-      },
-      {
-        "number": 25,
-        "missed_count": 1
-      },
-      {
-        "number": 27,
-        "missed_count": 1
-      },
-      {
-        "number": 39,
-        "missed_count": 1
       }
     ],
     "penalized_reasons": [
+      {
+        "reason": "全系統主列放行通過",
+        "miss": 25,
+        "hit": 4
+      },
       {
         "reason": "失準後多模型競賽重排",
         "miss": 25,
         "hit": 5
       },
       {
-        "reason": "全系統主列放行通過",
-        "miss": 16,
-        "hit": 2
-      },
-      {
         "reason": "前九核心保留",
-        "miss": 14,
-        "hit": 2
-      },
-      {
-        "reason": "共現關聯",
-        "miss": 12,
+        "miss": 18,
         "hit": 0
-      },
-      {
-        "reason": "freq_100",
-        "miss": 12,
-        "hit": 0
-      },
-      {
-        "reason": "日期牌",
-        "miss": 11,
-        "hit": 3
       },
       {
         "reason": "漏抓實開號月度回收",
-        "miss": 10,
+        "miss": 15,
         "hit": 0
       },
       {
-        "reason": "遺漏補償",
-        "miss": 10,
-        "hit": 3
-      },
-      {
-        "reason": "區間奇偶壓力",
-        "miss": 10,
-        "hit": 0
+        "reason": "多模型競賽校正",
+        "miss": 13,
+        "hit": 2
       },
       {
         "reason": "蒙地卡羅穩定",
-        "miss": 9,
+        "miss": 13,
+        "hit": 2
+      },
+      {
+        "reason": "九碼核心重排通過",
+        "miss": 13,
+        "hit": 4
+      },
+      {
+        "reason": "共現關聯",
+        "miss": 13,
         "hit": 0
       },
       {
         "reason": "神經網路綜合",
-        "miss": 9,
+        "miss": 13,
         "hit": 0
       },
       {
         "reason": "全系統備查通過不列主推",
-        "miss": 9,
+        "miss": 13,
+        "hit": 3
+      },
+      {
+        "reason": "尾數區間",
+        "miss": 12,
+        "hit": 4
+      },
+      {
+        "reason": "第十到第十五名命中回收",
+        "miss": 12,
         "hit": 3
       }
     ],
@@ -698,69 +698,69 @@
         "late_hit_count": 0
       },
       {
-        "reason": "尾數區間",
+        "reason": "全系統主列放行通過",
         "hit": 4,
-        "miss": 0,
+        "miss": 25,
         "late_hit_count": 0
       },
       {
-        "reason": "freq_10",
+        "reason": "遺漏補償",
         "hit": 4,
         "miss": 0,
         "late_hit_count": 0
       },
       {
         "reason": "九碼核心重排通過",
-        "hit": 3,
-        "miss": 0,
-        "late_hit_count": 0
-      },
-      {
-        "reason": "全系統備查通過不列主推",
-        "hit": 3,
-        "miss": 9,
+        "hit": 4,
+        "miss": 13,
         "late_hit_count": 0
       },
       {
         "reason": "滾動檢討漏抓尾數區間補位",
-        "hit": 3,
+        "hit": 4,
         "miss": 0,
         "late_hit_count": 0
       },
       {
         "reason": "交叉驗算與成熟度不足限高",
-        "hit": 3,
+        "hit": 4,
         "miss": 0,
         "late_hit_count": 0
       },
       {
-        "reason": "遺漏補償",
+        "reason": "尾數區間",
+        "hit": 4,
+        "miss": 12,
+        "late_hit_count": 0
+      },
+      {
+        "reason": "第十到第十五名命中回收",
         "hit": 3,
-        "miss": 10,
+        "miss": 12,
+        "late_hit_count": 0
+      },
+      {
+        "reason": "全系統備查通過不列主推",
+        "hit": 3,
+        "miss": 13,
         "late_hit_count": 0
       },
       {
         "reason": "日期牌",
         "hit": 3,
-        "miss": 11,
-        "late_hit_count": 0
-      },
-      {
-        "reason": "freq_20",
-        "hit": 3,
         "miss": 0,
         "late_hit_count": 0
       },
       {
-        "reason": "全系統主列放行通過",
+        "reason": "多模型競賽校正",
         "hit": 2,
-        "miss": 16,
+        "miss": 13,
         "late_hit_count": 0
       },
       {
-        "reason": "前九核心保留",
+        "reason": "蒙地卡羅穩定",
         "hit": 2,
-        "miss": 14,
+        "miss": 13,
         "late_hit_count": 0
       }
     ],
@@ -768,7 +768,7 @@
       {
         "pack": "strong_single",
         "numbers": [
-          29
+          25
         ],
         "hits": 0,
         "action": "降權並改由本期多模型重新競賽"
@@ -776,8 +776,8 @@
       {
         "pack": "two_hit_one",
         "numbers": [
-          29,
-          33
+          25,
+          27
         ],
         "hits": 0,
         "action": "降權並改由本期多模型重新競賽"
@@ -785,9 +785,9 @@
       {
         "pack": "three_hit_two",
         "numbers": [
-          29,
-          31,
-          33
+          25,
+          27,
+          28
         ],
         "hits": 0,
         "action": "降權並改由本期多模型重新競賽"
@@ -795,37 +795,29 @@
       {
         "pack": "five_hit_two",
         "numbers": [
-          23,
-          29,
-          31,
-          33,
-          35
+          9,
+          21,
+          25,
+          27,
+          28
         ],
-        "hits": 1,
+        "hits": 0,
         "action": "降權並改由本期多模型重新競賽"
       },
       {
         "pack": "nine_hit_three",
         "numbers": [
-          5,
-          18,
-          20,
-          23,
-          26,
-          29,
-          31,
-          33,
-          35
+          9,
+          10,
+          12,
+          21,
+          25,
+          27,
+          28,
+          30,
+          32
         ],
         "hits": 1,
-        "action": "降權並改由本期多模型重新競賽"
-      },
-      {
-        "pack": "precision_single",
-        "numbers": [
-          29
-        ],
-        "hits": 0,
         "action": "降權並改由本期多模型重新競賽"
       }
     ],
@@ -841,7 +833,7 @@
       },
       {
         "pack": "two_hit_one",
-        "best_variant": "dedicated",
+        "best_variant": "paircover",
         "passed": false,
         "research_passed": false,
         "avg_hits": 0.2,
@@ -853,7 +845,7 @@
         "best_variant": "paircover",
         "passed": false,
         "research_passed": false,
-        "avg_hits": 0.367,
+        "avg_hits": 0.333,
         "pass_rate": 0.0,
         "action": "降權觀察"
       },
@@ -862,7 +854,7 @@
         "best_variant": "top_rank",
         "passed": false,
         "research_passed": false,
-        "avg_hits": 0.6,
+        "avg_hits": 0.633,
         "pass_rate": 0.1,
         "action": "降權觀察"
       },
@@ -871,7 +863,7 @@
         "best_variant": "dedicated",
         "passed": true,
         "research_passed": true,
-        "avg_hits": 1.4,
+        "avg_hits": 1.467,
         "pass_rate": 0.133,
         "action": "保留"
       }
@@ -882,58 +874,60 @@
         "problem": "上期前九落空 8 顆，漏抓 4 顆",
         "numbers": {
           "落空": [
-            5,
-            18,
-            20,
-            26,
-            29,
-            31,
-            33,
-            35
+            9,
+            10,
+            12,
+            21,
+            25,
+            27,
+            28,
+            32
           ],
           "漏抓": [
-            1,
-            14,
+            3,
             16,
-            22
+            19,
+            33
           ]
         },
         "action": "落空號降權，漏抓號進入回收模型與主列重驗"
       },
       {
         "module": "第十到十五備查回收",
-        "problem": "上期前十五落空 12 顆，前十五漏抓 2 顆",
+        "problem": "上期前十五落空 13 顆，前十五漏抓 3 顆",
         "numbers": {
           "落空": [
-            2,
-            5,
-            7,
+            6,
+            9,
+            10,
             11,
-            18,
-            20,
-            26,
-            29,
-            31,
-            33,
-            35,
-            36
+            12,
+            21,
+            24,
+            25,
+            27,
+            28,
+            32,
+            38,
+            39
           ],
           "漏抓": [
-            1,
-            16
+            3,
+            16,
+            33
           ]
         },
         "action": "備查命中模型保留，漏抓模型提高回收權重"
       },
       {
         "module": "強牌組合",
-        "problem": "未達標強牌 6 組",
+        "problem": "未達標強牌 5 組",
         "numbers": {
           "失準組合": [
             {
               "pack": "strong_single",
               "numbers": [
-                29
+                25
               ],
               "hits": 0,
               "action": "降權並改由本期多模型重新競賽"
@@ -941,8 +935,8 @@
             {
               "pack": "two_hit_one",
               "numbers": [
-                29,
-                33
+                25,
+                27
               ],
               "hits": 0,
               "action": "降權並改由本期多模型重新競賽"
@@ -950,9 +944,9 @@
             {
               "pack": "three_hit_two",
               "numbers": [
-                29,
-                31,
-                33
+                25,
+                27,
+                28
               ],
               "hits": 0,
               "action": "降權並改由本期多模型重新競賽"
@@ -960,27 +954,27 @@
             {
               "pack": "five_hit_two",
               "numbers": [
-                23,
-                29,
-                31,
-                33,
-                35
+                9,
+                21,
+                25,
+                27,
+                28
               ],
-              "hits": 1,
+              "hits": 0,
               "action": "降權並改由本期多模型重新競賽"
             },
             {
               "pack": "nine_hit_three",
               "numbers": [
-                5,
-                18,
-                20,
-                23,
-                26,
-                29,
-                31,
-                33,
-                35
+                9,
+                10,
+                12,
+                21,
+                25,
+                27,
+                28,
+                30,
+                32
               ],
               "hits": 1,
               "action": "降權並改由本期多模型重新競賽"
@@ -993,16 +987,16 @@
         "module": "多模型競賽",
         "problem": "每期開獎後重新計算模型權重",
         "numbers": {
-          "交叉驗證優先": 0.16,
-          "實戰成熟度優先": 0.14,
-          "遺漏回收": 0.13,
-          "型態缺口橋接": 0.12,
-          "相似歷史近鄰": 0.11,
-          "遺漏相位回彈": 0.1,
-          "上期失誤修正": 0.09,
-          "尾數區間平衡": 0.08,
-          "原始綜合分": 0.05,
-          "前九名前移": 0.02
+          "上期失誤修正": 0.18,
+          "遺漏回收": 0.16,
+          "型態缺口橋接": 0.13,
+          "相似歷史近鄰": 0.12,
+          "遺漏相位回彈": 0.12,
+          "交叉驗證優先": 0.11,
+          "實戰成熟度優先": 0.09,
+          "尾數區間平衡": 0.06,
+          "原始綜合分": 0.02,
+          "前九名前移": 0.01
         },
         "action": "弱模型降權，漏抓與後段命中模型加權"
       },
@@ -1010,15 +1004,15 @@
         "module": "全系統主列放行",
         "problem": "主列通過 9 顆",
         "numbers": [
-          25,
-          28,
-          9,
-          21,
-          30,
-          10,
-          32,
-          27,
-          12
+          2,
+          34,
+          35,
+          7,
+          17,
+          37,
+          14,
+          1,
+          23
         ],
         "action": "未通過放行門者只能備查或觀察，不能包裝主推"
       }
@@ -1027,16 +1021,16 @@
   },
   "strong_single_validation": {
     "status": "已驗證",
-    "number": 25,
+    "number": 2,
     "must_output_single": true,
     "fake_data_guard": "通過",
     "latest_draw_reuse": false,
     "latest_draw_reuse_allowed": true,
-    "score": 204.19,
-    "candidate_score": 1.0,
-    "confidence_index": 99.0,
-    "cross_validation": "6/15",
-    "maturity_score": 87.9,
+    "score": 209.84,
+    "candidate_score": 0.93866,
+    "confidence_index": 96.0,
+    "cross_validation": "8/15",
+    "maturity_score": 96.7,
     "entry_status": "核心通過",
     "failed_checks": [],
     "evidence": [
@@ -1050,108 +1044,108 @@
   "model_maturity": {
     "policy": "live_prediction_practical_maturity_governor",
     "status": "passed",
-    "top10_avg_maturity": 78.7,
-    "top15_avg_maturity": 73.6,
-    "top10_mature_or_usable_count": 9,
+    "top10_avg_maturity": 74.0,
+    "top15_avg_maturity": 71.2,
+    "top10_mature_or_usable_count": 7,
     "top10_blocked_low_maturity_count": 0,
     "top10_tier_counts": {
       "mature": 2,
-      "usable_watch": 7,
-      "research_only": 1
+      "usable_watch": 5,
+      "research_only": 3
     },
     "required": "top10_avg_maturity>=70, 成熟通過_or_usable>=5, 成熟度不足=0",
     "action": "正式_release_allowed",
     "top10_numbers": [
       {
-        "number": 25,
-        "maturity": 87.9,
+        "number": 2,
+        "maturity": 96.7,
         "tier": "成熟通過",
-        "cross_validation_passed": 6
-      },
-      {
-        "number": 28,
-        "maturity": 80.2,
-        "tier": "可觀察",
-        "cross_validation_passed": 6
-      },
-      {
-        "number": 9,
-        "maturity": 75.5,
-        "tier": "可觀察",
         "cross_validation_passed": 8
       },
       {
-        "number": 21,
-        "maturity": 80.3,
-        "tier": "可觀察",
-        "cross_validation_passed": 8
-      },
-      {
-        "number": 30,
-        "maturity": 65.2,
-        "tier": "研究觀察",
-        "cross_validation_passed": 7
-      },
-      {
-        "number": 10,
-        "maturity": 73.8,
+        "number": 34,
+        "maturity": 77.8,
         "tier": "可觀察",
         "cross_validation_passed": 6
       },
       {
-        "number": 32,
-        "maturity": 74.3,
-        "tier": "可觀察",
+        "number": 35,
+        "maturity": 89.1,
+        "tier": "成熟通過",
         "cross_validation_passed": 7
       },
       {
-        "number": 27,
-        "maturity": 99.5,
-        "tier": "成熟通過",
-        "cross_validation_passed": 9
-      },
-      {
-        "number": 12,
-        "maturity": 74.1,
+        "number": 7,
+        "maturity": 71.4,
         "tier": "可觀察",
         "cross_validation_passed": 4
       },
       {
-        "number": 11,
-        "maturity": 75.8,
+        "number": 17,
+        "maturity": 72.6,
         "tier": "可觀察",
-        "cross_validation_passed": 8
+        "cross_validation_passed": 5
+      },
+      {
+        "number": 37,
+        "maturity": 76.9,
+        "tier": "可觀察",
+        "cross_validation_passed": 3
+      },
+      {
+        "number": 14,
+        "maturity": 61.5,
+        "tier": "研究觀察",
+        "cross_validation_passed": 4
+      },
+      {
+        "number": 1,
+        "maturity": 63.1,
+        "tier": "研究觀察",
+        "cross_validation_passed": 3
+      },
+      {
+        "number": 23,
+        "maturity": 60.3,
+        "tier": "研究觀察",
+        "cross_validation_passed": 4
+      },
+      {
+        "number": 31,
+        "maturity": 70.2,
+        "tier": "可觀察",
+        "cross_validation_passed": 3
       }
     ]
   },
   "low_probability_backtest": {
     "rounds": 30,
     "avoid_size": 10,
-    "avg_accidental_hits": 1.333,
+    "avg_accidental_hits": 1.267,
     "random_expectation": 1.282,
-    "edge_vs_random": 0.0513,
-    "zero_hit_rate": 0.233
+    "edge_vs_random": -0.0154,
+    "zero_hit_rate": 0.267
   },
   "low_probability_monthly_guard": {
     "five_miss": {
       "status": "通過",
-      "avg_accidental_hits": 0.545,
-      "pass_rate": 0.5,
+      "avg_accidental_hits": 0.522,
+      "pass_rate": 0.522,
       "worst_accidental_hits": 2
     },
     "ten_miss": {
       "status": "降級",
       "reason": "月度低機率誤開偏高",
-      "avg_accidental_hits": 0.909,
-      "pass_rate": 0.182,
+      "avg_accidental_hits": 0.87,
+      "pass_rate": 0.217,
       "worst_accidental_hits": 2,
       "confidence_cap": 62.0
     },
     "fifteen_miss": {
       "status": "降級",
       "reason": "月度低機率誤開偏高",
-      "avg_accidental_hits": 1.682,
-      "pass_rate": 0.045,
+      "avg_accidental_hits": 1.652,
+      "pass_rate": 0.043,
       "worst_accidental_hits": 4,
       "confidence_cap": 45.0
     }
@@ -1166,7 +1160,7 @@
     },
     {
       "area": "低機率暫避",
-      "problem": "暫避平均誤中 1.333，優勢值 0.0513",
+      "problem": "暫避平均誤中 1.267，優勢值 -0.0154",
       "impact": "低機率清單仍可能誤開偏高",
       "fix": "暫避核心排除前十五名、近期實開風險與回收號，並每日記錄誤開",
       "severity": "需補強"
