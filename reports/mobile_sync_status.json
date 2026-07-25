@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-25T13:43:30+08:00",
+  "checked_at_taiwan": "2026-07-25T15:25:28+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-25T13:43:26+08:00",
+    "generated_at_taiwan": "2026-07-25T15:25:25+08:00",
     "latest_draw_date": "2026-07-24",
     "latest_numbers": [
       11,
@@ -20,8 +20,8 @@
       36,
       26,
       38,
-      28,
       30,
+      28,
       6
     ],
     "top15": [
@@ -31,20 +31,20 @@
       36,
       26,
       38,
-      28,
       30,
+      28,
       6,
       29,
       21,
       3,
+      10,
       20,
-      12,
-      10
+      12
     ],
     "engine": "industrial_v20_rank_window_drift_correction_20260723"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-25T13:43:26+08:00",
+    "generated_at_taiwan": "2026-07-25T15:25:25+08:00",
     "latest_draw_date": "2026-07-24",
     "latest_numbers": [
       11,
@@ -62,8 +62,8 @@
       36,
       26,
       38,
-      28,
       30,
+      28,
       6
     ],
     "top15": [
@@ -73,15 +73,15 @@
       36,
       26,
       38,
-      28,
       30,
+      28,
       6,
       29,
       21,
       3,
+      10,
       20,
-      12,
-      10
+      12
     ],
     "engine": "industrial_v20_rank_window_drift_correction_20260723"
   },
