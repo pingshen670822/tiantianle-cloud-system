@@ -1103,6 +1103,57 @@ def slump_mode(review):
     return "normal"
 
 
+def slump_recovery_weight_shift(review):
+    rolling = rolling_adjustment_data(review)
+    recent = rolling.get("recent_performance") or {}
+    mode = slump_mode(review)
+    if mode == "normal":
+        return {
+            "status": "未啟動",
+            "mode": mode,
+            "reason": "近期命中未觸發低迷重整",
+            "boosted_features": [],
+            "reduced_features": [],
+        }
+    intensity = 1.0 if mode == "warning" else 1.45
+    boosted = [
+        "full_history_anchor",
+        "freq_all",
+        "freq_720",
+        "freq_1800",
+        "rank_window_drift_correction",
+        "rank_error_correction",
+        "missed_hit_recovery",
+        "omission_phase_rebound",
+        "similar_draw_knn",
+        "regime_gap_bridge",
+        "distribution_balance",
+        "positive_edge_core",
+    ]
+    reduced = [
+        "freq_5",
+        "freq_10",
+        "date",
+        "repeat",
+        "time_series",
+        "neural_network",
+        "transition",
+        "shape_follow",
+        "trend_alignment",
+    ]
+    return {
+        "status": "已啟動",
+        "mode": mode,
+        "intensity": round(intensity, 2),
+        "recent_top10_avg": recent.get("last5_top10_avg"),
+        "recent_top15_avg": recent.get("last5_top15_avg"),
+        "last2_top10_avg": recent.get("last2_top10_avg"),
+        "reason": "近期命中低於基準，改用全歷史錨點、錯位修正、漏抓回收與遺漏相位作主軸。",
+        "boosted_features": boosted,
+        "reduced_features": reduced,
+    }
+
+
 def build_feature_matrix(draws, review=None, include_dependency=True):
     windows = [5, 10, 20, 50, 100, 300, 720, 1800]
     feature_scores = {n: defaultdict(float) for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
@@ -1312,9 +1363,9 @@ def industrial_weights(review=None):
     mode = slump_mode(review)
     if mode in {"warning", "critical"}:
         intensity = 1.0 if mode == "warning" else 1.35
-        for key in ["freq_5", "freq_10", "date", "repeat", "time_series", "neural_network", "cross_consensus", "shape_follow", "trend_alignment"]:
+        for key in ["freq_5", "freq_10", "date", "repeat", "time_series", "neural_network", "cross_consensus", "shape_follow", "trend_alignment", "transition"]:
             if key in weights:
-                weights[key] *= 0.74 if mode == "warning" else 0.58
+                weights[key] *= 0.68 if mode == "warning" else 0.48
         for key in [
             "rank_error_correction",
             "rank_window_drift_correction",
@@ -1335,7 +1386,11 @@ def industrial_weights(review=None):
             "zone_parity_pressure",
         ]:
             if key in weights:
-                weights[key] *= 1.0 + 0.34 * intensity
+                weights[key] *= 1.0 + 0.46 * intensity
+        if mode == "critical":
+            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "missed_hit_recovery", "omission_phase_rebound"]:
+                if key in weights:
+                    weights[key] *= 1.18
     total = sum(weights.values()) or 1
     return {key: value / total for key, value in weights.items()}
 
@@ -1515,13 +1570,15 @@ def practical_maturity_score(
 def adaptive_feature_weights(draws, review=None, rounds=360):
     base_weights = industrial_weights(review)
     if realtime_timing_enabled():
+        shift = slump_recovery_weight_shift(review)
         return base_weights, {
-            "status": "realtime_fast_path",
+            "status": "realtime_slump_reweighted" if shift.get("status") == "已啟動" else "realtime_fast_path",
             "rounds": 0,
-            "method": "base_weights_with_failure_feedback_no_walk_forward",
-            "reason": "即時更新禁止跑重型權重回測，午後完整模式才執行深度權重校正。",
-            "top_boosted_features": [],
-            "top_penalized_features": [],
+            "method": "full_history_anchor_with_slump_recovery_shift_no_walk_forward",
+            "reason": shift.get("reason") or "即時更新禁止跑重型權重回測，午後完整模式才執行深度權重校正。",
+            "slump_recovery_weight_shift": shift,
+            "top_boosted_features": [{"feature": name, "reason": "低迷重整升權"} for name in shift.get("boosted_features", [])[:8]],
+            "top_penalized_features": [{"feature": name, "reason": "近期失準降權"} for name in shift.get("reduced_features", [])[:8]],
             "base_weights": {name: round(value, 5) for name, value in base_weights.items()},
             "calibrated_weights": {name: round(value, 5) for name, value in base_weights.items()},
         }
@@ -4469,6 +4526,9 @@ def apply_full_system_entry_gate(
     top10_avg = float(backtest_result.get("top10_avg_hits", 0) or 0)
     random_top10 = float(backtest_result.get("random_top10_expectation", DRAW_SIZE * 10 / NUMBER_MAX) or 0)
     edge = top10_avg - random_top10
+    top15_avg = float(backtest_result.get("top15_avg_hits", 0) or 0)
+    random_top15 = DRAW_SIZE * 15 / NUMBER_MAX
+    top15_edge = top15_avg - random_top15
     rounds = int(backtest_result.get("rounds", 0) or 0)
     rolling = backtest_result.get("rolling_windows") or {}
     window_edges = []
@@ -4499,7 +4559,35 @@ def apply_full_system_entry_gate(
             "evidence": f"回測輪數 {precision_tournament.get('rounds', 0)}",
         },
     }
-    global_passed = all(item["passed"] for item in global_checks.values())
+    strict_global_passed = all(item["passed"] for item in global_checks.values())
+    mode = slump_mode(review)
+    drift = rank_window_drift_diagnosis(review)
+    window_recovery_ok = bool(window_edges) and min(window_edges) >= -0.22
+    system_prerequisites_passed = all(
+        global_checks[name]["passed"]
+        for name in ["多模型校正", "強牌治理", "精算小牌競賽"]
+    )
+    slump_recovery_ready = (
+        mode in {"warning", "critical"}
+        and system_prerequisites_passed
+        and rounds >= 20
+        and edge >= -0.18
+        and window_recovery_ok
+        and (
+            top15_edge >= -0.10
+            or bool(drift.get("active"))
+            or (top15_avg - top10_avg) >= 0.45
+        )
+    )
+    global_checks["低迷重整放行"] = {
+        "passed": slump_recovery_ready,
+        "evidence": (
+            f"模式 {mode}，前十優勢 {round(edge, 4)}，前十五優勢 {round(top15_edge, 4)}，"
+            f"錯位修正 {'啟動' if drift.get('active') else '未啟動'}"
+        ),
+    }
+    global_passed = strict_global_passed
+    global_ready = strict_global_passed or slump_recovery_ready
 
     latest_actual = {
         int(number)
@@ -4536,8 +4624,8 @@ def apply_full_system_entry_gate(
         not_latest_repeat = number not in latest_actual or bool((row.get("repeat_guard") or {}).get("passed"))
 
         checks = [
-            ("全歷史回測達標", global_checks["全歷史主回測"]["passed"]),
-            ("近況回測達標", global_checks["近況分段回測"]["passed"]),
+            ("全歷史回測或低迷重整達標", global_checks["全歷史主回測"]["passed"] or slump_recovery_ready),
+            ("近況回測或錯位重整達標", global_checks["近況分段回測"]["passed"] or slump_recovery_ready),
             ("多模型校正完成", correction_detail.get("status") == "已執行" and model_count >= 3),
             ("強牌治理完成", global_checks["強牌治理"]["passed"]),
             ("精算小牌回測完成", global_checks["精算小牌競賽"]["passed"]),
@@ -4606,17 +4694,39 @@ def apply_full_system_entry_gate(
             ("備查觀察證據", cross_passed >= 1 or maturity_score >= 44 or stability >= 2 or recovery_count >= 1 or drift_signal >= 0.52),
         ]
 
-        core_passed = global_passed and not hard_blocked and all(passed for _, passed in core_checks)
-        coverage_passed = global_passed and not bool(firewall.get("blocked")) and all(passed for _, passed in coverage_checks)
-        reserve_passed = global_passed and not bool(firewall.get("blocked")) and all(passed for _, passed in reserve_checks)
+        slump_recovery_item_passed = (
+            slump_recovery_ready
+            and score >= 0.30
+            and confidence >= 62
+            and model_count >= 3
+            and stability >= 1
+            and (cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.48 or maturity_score >= 58)
+            and not bool(firewall.get("blocked"))
+            and not bool(failure_front.get("blocked"))
+        )
+
+        core_passed = global_ready and not hard_blocked and all(passed for _, passed in core_checks)
+        coverage_passed = (
+            global_ready
+            and not bool(firewall.get("blocked"))
+            and (all(passed for _, passed in coverage_checks) or slump_recovery_item_passed)
+        )
+        reserve_passed = (
+            global_ready
+            and not bool(firewall.get("blocked"))
+            and (all(passed for _, passed in reserve_checks) or slump_recovery_item_passed)
+        )
 
         if core_passed:
-            tier = "核心通過"
-            tier_order = 3
+            tier = "核心通過" if strict_global_passed else "低迷重整主列通過"
+            tier_order = 3 if strict_global_passed else 2
             passed_for_main = True
-            high_confidence_allowed = True
+            high_confidence_allowed = strict_global_passed
         elif coverage_passed:
-            tier = "主列重驗通過" if bool(failure_front.get("blocked")) else "主列補位通過"
+            if slump_recovery_item_passed and not strict_global_passed:
+                tier = "低迷重整主列通過"
+            else:
+                tier = "主列重驗通過" if bool(failure_front.get("blocked")) else "主列補位通過"
             tier_order = 2
             passed_for_main = True
             high_confidence_allowed = False
@@ -4633,7 +4743,7 @@ def apply_full_system_entry_gate(
 
         if tier == "核心通過":
             validation_checks = core_checks
-        elif tier in {"主列補位通過", "主列重驗通過"}:
+        elif tier in {"主列補位通過", "主列重驗通過", "低迷重整主列通過"}:
             validation_checks = coverage_checks
         elif tier in {"備查通過", "備查重驗通過"}:
             validation_checks = reserve_checks
@@ -4650,6 +4760,7 @@ def apply_full_system_entry_gate(
             "回收證據": recovery_count,
             "降權證據": penalty_count,
             "錯位修正": round(drift_signal, 4),
+            "低迷重整": slump_recovery_item_passed,
         }
         row["entry_validation"] = {
             "status": tier,
@@ -4658,6 +4769,8 @@ def apply_full_system_entry_gate(
             "high_confidence_allowed": high_confidence_allowed,
             "tier_order": tier_order,
             "global_passed": global_passed,
+            "global_ready": global_ready,
+            "slump_recovery_ready": slump_recovery_ready,
             "global_checks": global_checks,
             "evidence": evidence,
             "failed_checks": failed_checks[:8],
@@ -4727,12 +4840,16 @@ def apply_full_system_entry_gate(
         and (item.get("entry_validation") or {}).get("status") not in {"備查通過", "備查重驗通過"}
     ][:15]
 
-    status = "已執行" if len(main_numbers) >= front_limit and global_passed else "未達主列滿額"
+    status = "已執行" if len(main_numbers) >= front_limit and global_ready else "未達主列滿額"
     return adjusted, {
         "status": status,
         "policy": "必須多模組全系統檢測與回測達標才可列入前九主列；未過者只能備查或觀察，強牌不得使用。",
         "front_limit": front_limit,
         "global_passed": global_passed,
+        "global_ready": global_ready,
+        "slump_recovery_ready": slump_recovery_ready,
+        "slump_recovery_mode": mode,
+        "slump_recovery_policy": "近期命中低迷時，若全歷史資料、校正流程與錯位修正已完成，允許列為低迷重整主列；不得標示為正式保證。",
         "global_checks": global_checks,
         "main_count": len(main_numbers),
         "main_numbers": main_numbers,
@@ -5088,7 +5205,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v20_rank_window_drift_correction_20260723",
+        "engine_version": "industrial_v21_slump_recovery_weight_shift_20260727",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
