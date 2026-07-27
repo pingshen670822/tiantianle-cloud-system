@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-27T14:32:36+08:00",
+  "checked_at_taiwan": "2026-07-27T16:39:37+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-27T14:32:32+08:00",
+    "generated_at_taiwan": "2026-07-27T16:39:34+08:00",
     "latest_draw_date": "2026-07-26",
     "latest_numbers": [
       14,
@@ -15,36 +15,36 @@
     "target_taiwan_time": "2026-07-28 09:50",
     "top9": [
       22,
-      35,
       10,
-      34,
-      15,
+      35,
       9,
+      15,
       21,
+      34,
       17,
-      20
+      39
     ],
     "top15": [
       22,
-      35,
       10,
-      34,
-      15,
+      35,
       9,
+      15,
       21,
+      34,
       17,
-      20,
       39,
       30,
+      20,
       32,
       38,
       13,
-      19
+      1
     ],
     "engine": "industrial_v21_slump_recovery_weight_shift_20260727"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-27T14:32:32+08:00",
+    "generated_at_taiwan": "2026-07-27T16:39:34+08:00",
     "latest_draw_date": "2026-07-26",
     "latest_numbers": [
       14,
@@ -57,31 +57,31 @@
     "target_taiwan_time": "2026-07-28 09:50",
     "top9": [
       22,
-      35,
       10,
-      34,
-      15,
+      35,
       9,
+      15,
       21,
+      34,
       17,
-      20
+      39
     ],
     "top15": [
       22,
-      35,
       10,
-      34,
-      15,
+      35,
       9,
+      15,
       21,
+      34,
       17,
-      20,
       39,
       30,
+      20,
       32,
       38,
       13,
-      19
+      1
     ],
     "engine": "industrial_v21_slump_recovery_weight_shift_20260727"
   },
