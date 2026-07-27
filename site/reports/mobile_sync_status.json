@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-27T13:45:32+08:00",
+  "checked_at_taiwan": "2026-07-27T13:58:43+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-27T13:45:28+08:00",
+    "generated_at_taiwan": "2026-07-27T13:58:40+08:00",
     "latest_draw_date": "2026-07-26",
     "latest_numbers": [
       14,
@@ -44,7 +44,7 @@
     "engine": "industrial_v21_slump_recovery_weight_shift_20260727"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-27T13:45:28+08:00",
+    "generated_at_taiwan": "2026-07-27T13:58:40+08:00",
     "latest_draw_date": "2026-07-26",
     "latest_numbers": [
       14,
