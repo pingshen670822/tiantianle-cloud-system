@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-07-29T00:40:50+08:00",
+  "checked_at_taiwan": "2026-07-29T03:22:38+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-07-29T00:40:46+08:00",
+    "generated_at_taiwan": "2026-07-29T03:22:34+08:00",
     "latest_draw_date": "2026-07-27",
     "latest_numbers": [
       1,
@@ -44,7 +44,7 @@
     "engine": "industrial_v22_post9_leak_front_shift_20260728"
   },
   "site": {
-    "generated_at_taiwan": "2026-07-29T00:40:46+08:00",
+    "generated_at_taiwan": "2026-07-29T03:22:34+08:00",
     "latest_draw_date": "2026-07-27",
     "latest_numbers": [
       1,
