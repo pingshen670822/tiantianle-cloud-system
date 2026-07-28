@@ -1,4 +1,4 @@
-﻿one-click start: 2026-07-27 12:03:34
+﻿one-click start: 2026-07-28 15:12:54
 Force run: bypass freshness skip and recompute full model
 Step 1/8 prepare data and latest cache
 history csv synced
@@ -10,13 +10,3 @@ cache updated: lotterynet_latest.html
 cache updated: lotterynet_year.html
 Step 2/8 run main system
 Step 3/8 build mobile pages
-Step 3.5/8 clean stale legacy artifacts before audit
-Step 4/8 sanitize and audit system gaps
-Step 5/8 verify outputs
-outputs verified
-runtime cache cleaned
-Step 6/8 publish mobile cloud
-cloud mobile site published
-Step 7/8 verify mobile sync
-Step 8/8 open latest page
-one-click 完整: 2026-07-27 12:08:13

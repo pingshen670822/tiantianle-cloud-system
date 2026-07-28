@@ -178,6 +178,7 @@ def main():
     correction = industrial.get("multi_model_correction") or {}
     entry_gate = industrial.get("full_system_entry_gate") or {}
     post_draw_correction = industrial.get("post_draw_error_correction") or {}
+    post9_leak = industrial.get("post9_hit_leak_audit") or (entry_gate.get("post9_hit_leak_audit") or {})
     strong_single_validation = industrial.get("strong_single_validation") or {}
     low = analysis.get("low_probability_avoid") or {}
     low_backtest = low.get("backtest") or (industrial.get("unlikely_backtest") or {})
@@ -320,6 +321,15 @@ def main():
             "原模型方向會持續拖住下一期預測",
             "主程式必須自動換模型競賽、降權弱模型、前移漏抓與後段命中號",
             "嚴重",
+        )
+    if post9_leak.get("active"):
+        add_issue(
+            issues,
+            "九名後命中外漏",
+            f"近{post9_leak.get('checked_periods', 0)}期九名後命中 {post9_leak.get('post9_hits', 0)} 顆，前九命中 {post9_leak.get('front9_hits', 0)} 顆",
+            "有效號碼被壓到第十名後，前九精準度會下降",
+            "第22版已啟動有效命中前移，每期強制檢測並把第十到第二十四名有證據號碼拉回前九競賽",
+            "需補強",
         )
 
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
@@ -517,6 +527,7 @@ def main():
         "multi_model_correction": correction,
         "full_system_entry_gate": entry_gate,
         "post_draw_error_correction": post_draw_correction,
+        "post9_hit_leak_audit": post9_leak,
         "strong_single_validation": strong_single_validation,
         "model_maturity": maturity,
         "low_probability_backtest": low_backtest,
@@ -545,6 +556,7 @@ def main():
         f"- 發布守門：{release_status or '-'}",
         f"- 多模型競賽校正：{correction.get('status', '-')} / 前九重排 {numbers_text(correction.get('new_top9') or top9)}",
         f"- 全系統主列放行：{entry_gate.get('status', '-')} / 主列 {numbers_text(entry_gate.get('main_numbers') or [])}",
+        f"- 九名後外漏檢測：{post9_leak.get('status', '-')} / 前九 {post9_leak.get('front9_hits', 0)} / 九名後 {post9_leak.get('post9_hits', 0)}",
         f"- 錯誤模組滾動修正：{post_draw_correction.get('status', '-')} / 滾動重算 {post_draw_correction.get('rolling_recomputed', '-')}",
         f"- 最強獨支驗證：{strong_single_validation.get('status', '-')} / {numbers_text([strong_single_validation.get('number')]) if strong_single_validation.get('number') else '-'}",
         f"- 檢討快照重複：{review_storage['snapshot_duplicate_rows']} 筆",
