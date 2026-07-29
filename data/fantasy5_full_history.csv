@@ -11870,3 +11870,4 @@ local_index,draw_no,draw_date,n1,n2,n3,n4,n5,source
 11869,11869,2026-07-25,4,12,14,17,20,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
 11870,11870,2026-07-26,14,16,18,24,25,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
 11871,11871,2026-07-27,1,11,19,34,39,official:calottery
+11872,11872,2026-07-28,5,14,21,30,34,official:calottery
