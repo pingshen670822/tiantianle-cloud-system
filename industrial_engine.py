@@ -4412,6 +4412,7 @@ def apply_recent_failure_hard_front_gate(candidates, review=None, front_limit=9)
 def multi_model_correction_weights(review=None):
     rolling = rolling_adjustment_data(review)
     recent = rolling.get("recent_performance") or {}
+    leak_active = bool(post9_hit_leak_audit(review).get("active"))
     critical = bool(
         review
         and (
@@ -5449,7 +5450,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v22_post9_leak_front_shift_20260728",
+        "engine_version": "industrial_v23_cloud_auto_update_fix_20260731",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {

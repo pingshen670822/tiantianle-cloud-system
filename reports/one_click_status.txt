@@ -1,4 +1,4 @@
-﻿one-click start: 2026-07-28 15:12:54
+﻿one-click start: 2026-07-31 16:41:06
 Force run: bypass freshness skip and recompute full model
 Step 1/8 prepare data and latest cache
 history csv synced
@@ -19,4 +19,4 @@ Step 6/8 publish mobile cloud
 cloud mobile site published
 Step 7/8 verify mobile sync
 Step 8/8 open latest page
-one-click 完整: 2026-07-28 15:17:29
+one-click complete: 2026-07-31 16:45:23
