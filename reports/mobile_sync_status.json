@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-03T10:43:15+08:00",
+  "checked_at_taiwan": "2026-08-03T10:52:57+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-03T10:43:11+08:00",
+    "generated_at_taiwan": "2026-08-03T10:50:01+08:00",
     "latest_draw_date": "2026-08-02",
     "latest_numbers": [
       2,
@@ -14,37 +14,37 @@
     "target_draw_date": "2026-08-03",
     "target_taiwan_time": "2026-08-04 09:50",
     "top9": [
-      25,
       21,
       17,
+      25,
+      15,
       18,
+      10,
       32,
       13,
-      29,
-      9,
-      23
+      30
     ],
     "top15": [
-      25,
       21,
       17,
+      25,
+      15,
       18,
+      10,
       32,
       13,
-      29,
-      9,
-      23,
-      10,
-      22,
       30,
-      1,
+      23,
       28,
-      19
+      35,
+      31,
+      1,
+      29
     ],
-    "engine": "industrial_v23_cloud_auto_update_fix_20260731"
+    "engine": "industrial_v24_auto_publish_gate_fix_20260803"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-03T10:43:11+08:00",
+    "generated_at_taiwan": "2026-08-03T10:50:01+08:00",
     "latest_draw_date": "2026-08-02",
     "latest_numbers": [
       2,
@@ -56,36 +56,77 @@
     "target_draw_date": "2026-08-03",
     "target_taiwan_time": "2026-08-04 09:50",
     "top9": [
-      25,
       21,
       17,
+      25,
+      15,
       18,
+      10,
       32,
       13,
-      29,
-      9,
-      23
+      30
     ],
     "top15": [
-      25,
       21,
       17,
+      25,
+      15,
       18,
+      10,
       32,
       13,
-      29,
-      9,
-      23,
-      10,
-      22,
       30,
-      1,
+      23,
       28,
-      19
+      35,
+      31,
+      1,
+      29
     ],
-    "engine": "industrial_v23_cloud_auto_update_fix_20260731"
+    "engine": "industrial_v24_auto_publish_gate_fix_20260803"
   },
-  "remote": {},
+  "remote": {
+    "generated_at_taiwan": "2026-08-03T10:50:01+08:00",
+    "latest_draw_date": "2026-08-02",
+    "latest_numbers": [
+      2,
+      3,
+      20,
+      24,
+      27
+    ],
+    "target_draw_date": "2026-08-03",
+    "target_taiwan_time": "2026-08-04 09:50",
+    "top9": [
+      21,
+      17,
+      25,
+      15,
+      18,
+      10,
+      32,
+      13,
+      30
+    ],
+    "top15": [
+      21,
+      17,
+      25,
+      15,
+      18,
+      10,
+      32,
+      13,
+      30,
+      23,
+      28,
+      35,
+      31,
+      1,
+      29
+    ],
+    "engine": "industrial_v24_auto_publish_gate_fix_20260803"
+  },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
   "mismatches": []

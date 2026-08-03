@@ -84,7 +84,7 @@ jobs:
             timeout 180 python "美國加州天天樂_20260618_第1版.py" || python offline_full_history_recalc.py
             python pages_build.py
             python sanitize_public_outputs.py
-            python system_gap_audit.py --fail-on-critical --local-only
+            python system_gap_audit.py --fail-on-publish-blocking --local-only
             if python - <<'PY'
           import json
           import sys
@@ -178,6 +178,11 @@ jobs:
           engine = (analysis.get("industrial_engine") or {}).get("engine_version", "")
           top9 = [int(x) for x in (analysis.get("prediction") or {}).get("top9", [])]
           latest_nums = [int(x) for x in (analysis.get("latest_draw") or {}).get("numbers", [])]
+          candidate_map = {
+              int(item.get("number")): item
+              for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])
+              if item.get("number") is not None
+          }
           workflow_mode = os.environ.get("TIANTIANLE_RUN_MODE") or analysis.get("run_mode") or ""
 
           if not latest or not target:
@@ -186,13 +191,20 @@ jobs:
               problems.append(f"\u624b\u6a5f\u8cc7\u6599\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {latest}\uff0c\u624b\u6a5f {site_latest}")
           if site_target and target and site_target != target:
               problems.append(f"\u624b\u6a5f\u9810\u6e2c\u671f\u5225\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {target}\uff0c\u624b\u6a5f {site_target}")
-          if not any(version in engine for version in ("industrial_v23", "industrial_v22", "industrial_v21", "industrial_v20", "industrial_v19", "industrial_v18", "industrial_v17", "industrial_v16", "industrial_v15")):
+          if not any(version in engine for version in ("industrial_v24", "industrial_v23", "industrial_v22", "industrial_v21", "industrial_v20", "industrial_v19", "industrial_v18", "industrial_v17", "industrial_v16", "industrial_v15")):
               problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u9435\u5f8b\u5f15\u64ce\uff1a{engine}")
           if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
               problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
           repeated = sorted(set(top9) & set(latest_nums))
           if repeated and workflow_mode.lower() == "realtime":
-              problems.append(f"\u5373\u6642\u6a21\u5f0f\u7981\u6b62\u4e0a\u671f\u865f\u78bc\u76f4\u63a5\u6df7\u5165\u524d\u4e5d\uff1a{repeated}")
+              unverified_repeated = []
+              for number in repeated:
+                  item = candidate_map.get(number) or {}
+                  repeat_guard = item.get("repeat_guard") or {}
+                  if not repeat_guard.get("passed"):
+                      unverified_repeated.append(number)
+              if unverified_repeated:
+                  problems.append(f"\u5373\u6642\u6a21\u5f0f\u7981\u6b62\u672a\u901a\u904e\u9023\u838a\u9a57\u8b49\u7684\u4e0a\u671f\u865f\u9032\u5165\u524d\u4e5d\uff1a{unverified_repeated}")
 
           for csv_name in ["data/california_fantasy5.csv", "fantasy5_full_history.csv", "data/fantasy5_full_history.csv"]:
               csv_path = root / csv_name

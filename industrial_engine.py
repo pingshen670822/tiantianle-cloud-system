@@ -5450,7 +5450,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v23_cloud_auto_update_fix_20260731",
+        "engine_version": "industrial_v24_auto_publish_gate_fix_20260803",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {

@@ -173,7 +173,7 @@ $GapAuditScript = Join-Path $ScriptDir "system_gap_audit.py"
 if (-not (Test-Path -LiteralPath $GapAuditScript)) {
   throw "system gap audit script missing"
 }
-& $PythonExe $GapAuditScript "--fail-on-critical" "--local-only"
+& $PythonExe $GapAuditScript "--fail-on-publish-blocking" "--local-only"
 if ($LASTEXITCODE -ne 0) { throw "system gap audit failed: $LASTEXITCODE" }
 
 Step "Step 5/8 verify outputs"

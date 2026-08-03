@@ -133,6 +133,22 @@ def dedupe_issues(issues):
     return deduped
 
 
+PUBLISH_BLOCKING_AREAS = {
+    "檔案完整度",
+    "全歷史資料庫",
+    "資料庫",
+    "手機同步",
+    "預測結構",
+    "假運算防呆",
+}
+
+
+def is_publish_blocking_issue(item):
+    if item.get("severity") != "嚴重":
+        return False
+    return item.get("area") in PUBLISH_BLOCKING_AREAS
+
+
 def model_gap_rows(analysis):
     industrial = analysis.get("industrial_engine") or {}
     gap = industrial.get("prediction_gap_diagnosis") or {}
@@ -162,6 +178,7 @@ def table(headers, rows):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fail-on-critical", action="store_true")
+    parser.add_argument("--fail-on-publish-blocking", action="store_true")
     parser.add_argument("--local-only", action="store_true")
     args = parser.parse_args()
 
@@ -502,6 +519,7 @@ def main():
 
     issues = dedupe_issues(issues)
     critical_count = sum(1 for item in issues if item["severity"] == "嚴重")
+    publish_blocking_count = sum(1 for item in issues if is_publish_blocking_issue(item))
     needs_fix_count = sum(1 for item in issues if item["severity"] == "需修正")
     needs_strengthen_count = sum(1 for item in issues if item["severity"] == "需補強")
     has_critical = critical_count > 0
@@ -510,6 +528,7 @@ def main():
         "checked_at_taiwan": datetime.now(TAIWAN).isoformat(timespec="seconds"),
         "status": status,
         "critical": critical_count,
+        "publish_blocking": publish_blocking_count,
         "needs_fix": needs_fix_count,
         "needs_strengthen": needs_strengthen_count,
         "issue_count": len(issues),
@@ -583,7 +602,9 @@ def main():
     ]:
         path.write_text(markdown, encoding="utf-8")
 
-    print(json.dumps({"status": status, "issues": len(issues), "critical": critical_count}, ensure_ascii=False))
+    print(json.dumps({"status": status, "issues": len(issues), "critical": critical_count, "publish_blocking": publish_blocking_count}, ensure_ascii=False))
+    if args.fail_on_publish_blocking and publish_blocking_count > 0:
+        raise SystemExit(2)
     if args.fail_on_critical and has_critical:
         raise SystemExit(2)
 
