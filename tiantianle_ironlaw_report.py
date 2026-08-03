@@ -2648,6 +2648,7 @@ def build_low_probability_compact_report(analysis, settled):
   <section class="band"><h2>下期低機率暫避預測</h2><p><strong>台灣開獎時間：</strong>{esc(target_tw_label)} / <strong>對應開獎日：</strong>{esc(target_date)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
   <section class="band"><h2>下期逐號暫避驗算</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
   <section class="band"><h2>上期低機率誤開檢討</h2>{review}</section>
+  {low_probability_error_recovery_block(analysis)}
   <section class="band"><h2>低機率每日紀錄</h2>{table(["目標日", "暫避包", "預測號", "開獎日", "實際開獎", "誤中", "誤中號", "結果"], daily_rows, "目前沒有低機率每日紀錄")}</section>
   <section class="band"><h2>低機率每月總紀錄分析</h2>{table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], monthly_rows, "目前沒有低機率每月結算資料")}</section>
 </main>
