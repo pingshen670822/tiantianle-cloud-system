@@ -80,12 +80,12 @@ def display_time(value):
 
 def taiwan_time_label(value):
     text = display_time(value)
-    return f"{text} 台灣時間" if text and text != "-" else "-"
+    return f"台灣時間 {text}" if text and text != "-" else "-"
 
 
 def ca_date_note(value):
     text = "-" if value is None or value == "" else str(value)
-    return f"對應開獎日 {text}"
+    return f"開獎期別 {text}"
 
 
 def zh_join(values, limit=None):
@@ -2613,7 +2613,7 @@ def build_low_probability_compact_report(analysis, settled):
     number_rows = [[idx] + row[1:] for idx, row in enumerate(number_rows, 1)]
     daily_rows = low_probability_daily_rows_tiantianle(analysis)
     monthly_rows = monthly_low_probability_summary_rows_tiantianle(analysis)
-    report_time = display_time(analysis.get("generated_at_taiwan", "-"))
+    report_time = taiwan_time_label(analysis.get("generated_at_taiwan", "-"))
     target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
     target_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
     latest_time = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or "-"
@@ -2640,12 +2640,12 @@ def build_low_probability_compact_report(analysis, settled):
 <body>
   <header>
   <h1>天天樂 低機率精準暫避</h1>
-  <p>產生時間 {esc(report_time)} / 台灣最新可確認時間 {esc(latest_tw_label)} / 下期預測台灣時間 {esc(target_tw_label)}</p>
-  <p>對應開獎日 {esc(latest.get('draw_date'))} / 下期對應開獎日 {esc(target_date)}</p>
+  <p>產生：{esc(report_time)} / 最新開獎可確認：{esc(latest_tw_label)} / 下期開獎：{esc(target_tw_label)}</p>
+  <p>最新開獎期別：{esc(latest.get('draw_date'))} / 下期預測期別：{esc(target_date)}</p>
 </header>
 <main>
   <section class="band"><h2>低機率說明</h2><p>本頁只放經過運算的暫避號碼，用於風險控管；低機率不等於絕對不開。</p><p><a href="latest_battle_report.html">回到主戰報</a></p></section>
-  <section class="band"><h2>下期低機率暫避預測</h2><p><strong>台灣開獎時間：</strong>{esc(target_tw_label)} / <strong>對應開獎日：</strong>{esc(target_date)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
+  <section class="band"><h2>下期低機率暫避預測</h2><p><strong>下期開獎：</strong>{esc(target_tw_label)} / <strong>期別：</strong>{esc(target_date)}</p><p>這一區是新一期 5不中、10不中、15不中 暫避預測，不是上期檢討。</p><p>回測樣本：{esc(backtest.get('rounds', '-'))} 期</p>{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], rows)}</section>
   <section class="band"><h2>下期逐號暫避驗算</h2>{table(["#", "號碼", "避開信心", "等級", "出現評分", "候選排名", "避開理由"], number_rows, "本期無逐號暫避細項")}</section>
   <section class="band"><h2>上期低機率誤開檢討</h2>{review}</section>
   {low_probability_error_recovery_block(analysis)}
@@ -2765,7 +2765,7 @@ def compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, t
     ]
     return (
         '<div class="band">'
-        f'<h2>近期預測相似度稽核（資料依據台灣時間 {esc(latest_date)} / 預測台灣時間 {esc(target_date)}）</h2>'
+        f'<h2>近期預測相似度稽核</h2>'
         f'{table(["項目", "號碼", "數據", "判定"], rows)}'
         '</div>'
     )
@@ -2954,9 +2954,9 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest_time = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or "-"
     latest_tw_label = taiwan_time_label(latest_time)
     target_tw_label = taiwan_time_label(target_time)
-    latest_ca_note = ca_date_note(latest_date)
-    target_ca_note = ca_date_note(target_date)
-    report_time = display_time(analysis.get("generated_at_taiwan", "-"))
+    latest_period_note = ca_date_note(latest_date)
+    target_period_note = ca_date_note(target_date)
+    report_time = taiwan_time_label(analysis.get("generated_at_taiwan", "-"))
     history_info = analysis.get("history_completeness") or {}
     count = analysis.get("draw_count", "-")
     status_text = compact_status(freshness.get("status", "ok"))
@@ -2979,23 +2979,23 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     strong_single_validation_html = compact_strong_single_validation_html_tiantianle(analysis)
     post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
-    candidate_heading = f"下期研究候選前9名（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
-    backup_heading = f"第10到第15名第二層備查（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
+    candidate_heading = "下期研究候選前9名"
+    backup_heading = "第10到第15名第二層備查"
     review_heading = (
         f"上期命中檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
         f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
     )
-    avoid_heading = f"低機率（資料依據台灣時間 {latest_tw_label} / 預測台灣時間 {target_tw_label}）"
+    avoid_heading = "低機率暫避"
     low_review_heading = (
         f"低機率誤開檢討（{settled.get('based_on_date', '-') if settled else '-'} 預測 / "
         f"{settled.get('actual_date', '-') if settled else '-'} 開獎）"
     )
-    model_heading = f"模型成效（資料截至台灣時間 {latest_tw_label} / 回測產生 {report_time}）"
-    candidate_rows = [[row[0], latest_tw_label, target_tw_label] + row[1:] for row in compact_candidate_rows_tiantianle(analysis, 9)]
+    model_heading = "模型成效"
+    candidate_rows = compact_candidate_rows_tiantianle(analysis, 9)
     backup_rows = compact_backup_rank_rows_tiantianle(analysis)
     backup_hit_rows = compact_backup_hit_rows_tiantianle(snapshots or [])
     backup_summary_rows = compact_backup_summary_rows_tiantianle(snapshots or [])
-    verification_rows = [[row[0], latest_tw_label, target_tw_label] + row[1:] for row in compact_number_verification_rows_tiantianle(analysis, 9)]
+    verification_rows = compact_number_verification_rows_tiantianle(analysis, 9)
     return f"""<!doctype html>
 <html lang="zh-Hant" data-compact-report="true">
 <head>
@@ -3038,9 +3038,9 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
 <body>
 <header>
   <h1>天天樂 精算預測戰報</h1>
-  <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(zh_text(history_info.get('status', '完整')))} / 共 {esc(count)} 筆</p>
-  <p>台灣最新可確認時間 {esc(latest_tw_label)} / {esc(latest_numbers)}　下期預測台灣時間 {esc(target_tw_label)}</p>
-  <p class="small">{esc(latest_ca_note)} / {esc(target_ca_note)}</p>
+  <p>產生：{esc(report_time)} / 全歷史資料 {esc(zh_text(history_info.get('status', '完整')))} / 共 {esc(count)} 筆</p>
+  <p>最新開獎可確認：{esc(latest_tw_label)} / 最新號碼：{esc(latest_numbers)} / 下期開獎：{esc(target_tw_label)}</p>
+  <p class="small">最新{esc(latest_period_note)} / 下期{esc(target_period_note)}</p>
 </header>
 <main>
   <nav class="tabs">
@@ -3055,21 +3055,21 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     <h2>本報表日期對照</h2>
     <div class="grid">
       <div class="card"><div class="label">全歷史資料範圍</div><div class="value">{esc(zh_text(date_text))}</div></div>
-      <div class="card"><div class="label">資料依據台灣可確認時間</div><div class="value">{esc(latest_tw_label)}</div></div>
+      <div class="card"><div class="label">最新開獎台灣時間</div><div class="value">{esc(latest_tw_label)}</div></div>
       <div class="card"><div class="label">最新開獎號碼</div><div class="value">{esc(latest_numbers)}</div></div>
-      <div class="card"><div class="label">資料對應開獎日</div><div class="value">{esc(latest_date)}</div></div>
-      <div class="card"><div class="label">下期預測台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
-      <div class="card"><div class="label">下期對應開獎日</div><div class="value">{esc(target_date)}</div></div>
-      <div class="card"><div class="label">戰報產生時間</div><div class="value">{esc(report_time)}</div></div>
+      <div class="card"><div class="label">最新開獎期別</div><div class="value">{esc(latest_date)}</div></div>
+      <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
+      <div class="card"><div class="label">下期預測期別</div><div class="value">{esc(target_date)}</div></div>
+      <div class="card"><div class="label">戰報產生台灣時間</div><div class="value">{esc(report_time)}</div></div>
     </div>
   </section>
   <section id="prediction" class="panel active">
     <div class="band">
-      <h2>核心決策（資料依據台灣時間 {esc(latest_tw_label)} / 預測台灣時間 {esc(target_tw_label)}）</h2>
+      <h2>核心決策</h2>
       <div class="grid">
         <div class="card"><div class="label">資料狀態</div><div class="value">{esc(status_text)}</div></div>
         <div class="card"><div class="label">檢查</div><div class="value">已重算</div></div>
-        <div class="card"><div class="label">下期預測台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
+        <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
         <div class="card hot-card"><div class="label">獨隻</div><div class="value">{fmt_numbers(decision.get('primary_single') or (analysis.get('strong_packs') or {}).get('strong_single', {}).get('numbers', [])) or '-'}</div></div>
         <div class="card"><div class="label">九碼核心</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
       </div>
@@ -3078,26 +3078,22 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
     {compact_super_single_html_tiantianle(analysis)}
     {strong_single_validation_html}
-    {post_draw_correction_html}
     <div class="band">
       <h2>{candidate_heading}</h2>
-      {table(["號碼", "資料依據台灣時間", "預測台灣時間", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
+      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
     </div>
     <div class="band warn">
       <h2>{backup_heading}</h2>
-      <p>你看到的狀況是對的：第10到第15名近期有補中能力，所以本區獨立列出。它是第二層備查池，不直接混入前九高信心核心；若連續達標，後續滾動模型會自動拉升權重。</p>
+      <p>本區只列本期第二層備查號碼，不列歷史統計。</p>
       {table(["排名", "號碼", "分數", "信心", "機率", "交叉驗算", "穩定與遺漏", "成熟度", "定位"], backup_rows, "本期沒有第10到第15名備查資料")}
-      <h3>最近第10到15名補中統計</h3>
-      {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "目前沒有已結算的第10到15名統計")}
-      {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "目前沒有第10到15名補中明細")}
     </div>
     <div class="band">
-      <h2>生成號碼逐號驗算（資料依據台灣時間 {esc(latest_tw_label)} / 預測台灣時間 {esc(target_tw_label)}）</h2>
+      <h2>生成號碼逐號驗算</h2>
       <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
-      {table(["號碼", "資料依據台灣時間", "預測台灣時間", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], verification_rows)}
+      {table(["號碼", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], verification_rows)}
     </div>
     <div class="band">
-      <h2>強牌組精算（資料依據台灣時間 {esc(latest_tw_label)} / 預測台灣時間 {esc(target_tw_label)}）</h2>
+      <h2>強牌組精算</h2>
       {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
     </div>
   </section>
@@ -3106,6 +3102,12 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     <div class="band">
       <h2>{review_heading}</h2>
       {review_html}
+    </div>
+    {post_draw_correction_html}
+    <div class="band warn">
+      <h2>第10到15名補中檢討</h2>
+      {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "目前沒有已結算的第10到15名統計")}
+      {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "目前沒有第10到15名補中明細")}
     </div>
     {failure_data_html}
   </section>
@@ -3526,14 +3528,14 @@ def make_markdown(analysis, settled):
     lines = [
         "# " + u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831"),
         "",
-        f"- 產生時間：{display_time(analysis.get('generated_at_taiwan'))}",
-        f"- 資料新鮮度：{freshness.get('status')} / 台灣最新可確認時間 {latest_tw_label}",
-        f"- 對應開獎日：{latest.get('draw_date')}",
+        f"- 產生時間：{taiwan_time_label(analysis.get('generated_at_taiwan'))}",
+        f"- 資料新鮮度：{freshness.get('status')} / 最新開獎可確認 {latest_tw_label}",
+        f"- 最新開獎期別：{latest.get('draw_date')}",
         f"- 最新號碼：{fmt_numbers(latest.get('numbers'))}",
         f"- 最新開獎來源：{freshness.get('latest_source') or latest.get('source') or '-'}",
         f"- 最新來源確認：{freshness.get('latest_source_confirmed')}",
-        f"- 預測台灣時間：{target_tw_label}",
-        f"- 下期對應開獎日：{analysis.get('target_draw_date')}",
+        f"- 下期開獎時間：{target_tw_label}",
+        f"- 下期預測期別：{analysis.get('target_draw_date')}",
         f"- 發布等級：{zh_text(release.get('status'))} / {release_label(analysis)}",
         f"- 穩定共識率：{stability.get('top10_retention')}",
         f"- 實戰成熟度：{zh_text(maturity_summary.get('status'))} / {maturity_summary.get('top10_avg_maturity')} / {zh_text(maturity_summary.get('action'))}",

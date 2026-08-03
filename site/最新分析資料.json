@@ -1,8 +1,8 @@
 {
   "engine_version": "天天樂最新版鐵律第9版_20260803_低機率誤開回收修正",
   "industrial_engine_version": "industrial_v25_low_probability_inversion_fix_20260803",
-  "generated_at_taiwan": "2026-08-03T11:31:44+08:00",
-  "generated_at_california": "2026-08-02T20:31:44-07:00",
+  "generated_at_taiwan": "2026-08-03T11:08:33+08:00",
+  "generated_at_california": "2026-08-02T20:08:33-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11877,
@@ -14,7 +14,7 @@
       24,
       27
     ],
-    "source": "正式:calottery"
+    "source": "consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer"
   },
   "target_draw_date": "2026-08-03",
   "prediction_draw_taiwan_time": "2026-08-04 09:50",
@@ -1953,7 +1953,7 @@
   },
   "freshness": {
     "california_today": "2026-08-02",
-    "california_time": "20:31:44",
+    "california_time": "20:08:33",
     "allowed_latest_draw_date": "2026-08-02",
     "age_days": 0,
     "status": "ok",
@@ -1965,7 +1965,7 @@
     "target_taiwan_safe_update_date": "2026-08-04",
     "timezone_rule": "California draw 18:30; safe update 18:50 PT. Taiwan is 09:50 during daylight time and 10:50 during standard time.",
     "official_prediction_allowed": true,
-    "latest_source": "正式:calottery",
+    "latest_source": "consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer",
     "latest_source_confirmed": true,
     "source_confirmation_status": "confirmed"
   },
@@ -155670,7 +155670,7 @@
     {
       "based_on_date": "2026-08-02",
       "target_date": "2026-08-03",
-      "created_at": "2026-08-03T11:31:44+08:00",
+      "created_at": "2026-08-03T11:08:33+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],

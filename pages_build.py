@@ -323,12 +323,12 @@ def display_time(value):
 
 def taiwan_time_label(value):
     text = display_time(value)
-    return f"{text} 台灣時間" if text and text != "-" else "-"
+    return f"台灣時間 {text}" if text and text != "-" else "-"
 
 
 def ca_date_note(value):
     text = "-" if value is None or value == "" else str(value)
-    return f"對應開獎日 {text}"
+    return f"開獎期別 {text}"
 
 
 def zh_join(values, limit=None):
@@ -757,7 +757,7 @@ def build_mobile_avoid_block(data):
     header = f"<tr><th>#</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u907f\\u958b\\u4fe1\\u5fc3')}</th><th>{u('\\u7b49\\u7d1a')}</th><th>{u('\\u7406\\u7531')}</th></tr>"
     return (
         f"<section class='band danger-zone'><h2>{u('\\u4e0b\\u671f\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u9810\\u6e2c')}</h2>"
-        f"<p><strong>{u('\\u53f0\\u7063\\u958b\\u734e\\u6642\\u9593')}：</strong>{esc(target_tw_label)} / <strong>{u('\\u5c0d\\u61c9\\u958b\\u734e\\u65e5')}：</strong>{esc(target_date)}</p>"
+        f"<p><strong>{u('\\u4e0b\\u671f\\u958b\\u734e')}：</strong>{esc(target_tw_label)} / <strong>{u('\\u671f\\u5225')}：</strong>{esc(target_date)}</p>"
         f"<p>{esc(avoid.get('warning', u('\\u4f4e\\u6a5f\\u7387\\u662f\\u98a8\\u63a7\\u907f\\u958b\\uff0c\\u4e0d\\u662f\\u7d55\\u5c0d\\u4fdd\\u8b49\\u3002')))}</p>"
         f"<p>{u('\\u56de\\u6e2c')}：{u('\\u6a23\\u672c')} {esc(backtest.get('rounds', '-'))} / {u('\\u96f6\\u8aa4\\u5165\\u7387')} {esc(backtest.get('zero_hit_rate', '-'))}</p>"
         f"<h3>{u('\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '五不中')}</table>"
@@ -808,8 +808,8 @@ def build_home_page():
     latest = data.get("latest_draw") or {}
     latest_tw_label = taiwan_time_label(freshness.get("latest_taiwan_safe_update_time") or data.get("latest_draw_taiwan_update_time") or "")
     target_tw_label = taiwan_time_label(freshness.get("target_taiwan_safe_update_time") or data.get("prediction_draw_taiwan_time") or "")
-    latest_ca_note = ca_date_note(latest.get("draw_date"))
-    target_ca_note = ca_date_note(data.get("target_draw_date"))
+    latest_period_note = ca_date_note(latest.get("draw_date"))
+    target_period_note = ca_date_note(data.get("target_draw_date"))
     industrial = data.get("industrial_engine") or {}
     maturity = industrial.get("practical_maturity") or {}
     release = industrial.get("release_gate") or {}
@@ -863,9 +863,9 @@ def build_home_page():
         add_pack_row(label, pack.get("numbers") or [], pack.get("hit_goal"), maturity_text)
     page_title = u("\\u5929\\u5929\\u6a02 \\u624b\\u6a5f\\u96f2\\u7aef\\u9996\\u9801")
     subtitle = (
-        f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(display_time(data.get('generated_at_taiwan')))} / "
-        f"{u('\\u53f0\\u7063\\u6700\\u65b0\\u53ef\\u78ba\\u8a8d\\u6642\\u9593')} {esc(latest_tw_label)} / "
-        f"{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u53f0\\u7063\\u6642\\u9593')} {esc(target_tw_label)}"
+        f"{u('\\u7522\\u751f')} {esc(taiwan_time_label(data.get('generated_at_taiwan')))} / "
+        f"{u('\\u6700\\u65b0\\u958b\\u734e')} {esc(latest_tw_label)} / "
+        f"{u('\\u4e0b\\u671f\\u958b\\u734e')} {esc(target_tw_label)}"
     )
     return f"""<!doctype html>
 <html lang="zh-Hant">
@@ -918,9 +918,9 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band diagnosis"><h2>{u('\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7')}</h2><p><strong>{u('\\u65b0\\u589e\\u6a21\\u578b')}:</strong> {esc(gap_diagnosis.get('new_model_added', '-'))} / <strong>{u('\\u72c0\\u614b')}:</strong> {esc(gap_diagnosis.get('status_label', gap_diagnosis.get('status', '-')))}</p><p class="small">{esc(gap_diagnosis.get('message', '-'))}</p><p class="small"><strong>{u('\\u5df2\\u555f\\u7528\\u52d5\\u4f5c')}:</strong> {esc(gap_action_text)}</p><table><tr><th>{u('\\u7f3a\\u53e3')}</th><th>{u('\\u8b49\\u64da')}</th><th>{u('\\u5df2\\u88dc\\u5f37')}</th></tr>{''.join(gap_rows)}</table></section>
 <section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u524d\\u4e5d\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u7b2c\\u5341\\u81f3\\u5341\\u4e94\\u540d\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
-<section class="card"><h2>{u('\\u53f0\\u7063\\u6700\\u65b0\\u53ef\\u78ba\\u8a8d\\u6642\\u9593')}</h2><div class="value">{esc(latest_tw_label)}</div><p class="small">{esc(latest_ca_note)}</p></section>
+<section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(latest_tw_label)}</div><p class="small">{esc(latest_period_note)}</p></section>
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u865f\\u78bc')}</h2><div class="value">{esc(fmt_numbers(latest.get('numbers', [])))}</div></section>
-<section class="card"><h2>{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(target_tw_label)}</div><p class="small">{esc(target_ca_note)}</p></section>
+<section class="card"><h2>{u('\\u4e0b\\u671f\\u958b\\u734e\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(target_tw_label)}</div><p class="small">{esc(target_period_note)}</p></section>
 <section class="card"><h2>{u('\\u5168\\u6b77\\u53f2\\u7b46\\u6578')}</h2><div class="value">{esc(data.get('draw_count'))}</div></section>
 <section class="card"><h2>{u('\\u767c\\u5e03\\u72c0\\u614b')}</h2><div class="value">{esc(mobile_status(release.get('status', '-')))}</div><p class="small">{u('\\u6b63\\u5f0f\\u767c\\u5e03') if data.get('official_release_allowed') else u('\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49')}</p></section>
 <section class="card"><h2>{u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}</h2><div class="value">{esc(maturity.get('top10_avg_maturity', '-'))}</div><p class="small">{esc(mobile_status(maturity.get('status', '-')))}</p></section>
