@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-03T13:38:25+08:00",
+  "checked_at_taiwan": "2026-08-03T13:46:35+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-03T13:38:21+08:00",
+    "generated_at_taiwan": "2026-08-03T13:43:18+08:00",
     "latest_draw_date": "2026-08-02",
     "latest_numbers": [
       2,
@@ -16,35 +16,35 @@
     "top9": [
       15,
       17,
-      21,
       18,
-      25,
-      32,
-      13,
-      1,
-      31
-    ],
-    "top15": [
-      15,
-      17,
-      21,
-      18,
-      25,
       32,
       13,
       1,
       31,
-      30,
-      37,
-      4,
-      38,
       10,
-      23
+      38
+    ],
+    "top15": [
+      15,
+      17,
+      18,
+      32,
+      13,
+      1,
+      31,
+      10,
+      38,
+      30,
+      4,
+      28,
+      25,
+      23,
+      29
     ],
     "engine": "industrial_v25_low_probability_inversion_fix_20260803"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-03T13:38:21+08:00",
+    "generated_at_taiwan": "2026-08-03T13:43:18+08:00",
     "latest_draw_date": "2026-08-02",
     "latest_numbers": [
       2,
@@ -58,34 +58,75 @@
     "top9": [
       15,
       17,
-      21,
       18,
-      25,
-      32,
-      13,
-      1,
-      31
-    ],
-    "top15": [
-      15,
-      17,
-      21,
-      18,
-      25,
       32,
       13,
       1,
       31,
-      30,
-      37,
-      4,
-      38,
       10,
-      23
+      38
+    ],
+    "top15": [
+      15,
+      17,
+      18,
+      32,
+      13,
+      1,
+      31,
+      10,
+      38,
+      30,
+      4,
+      28,
+      25,
+      23,
+      29
     ],
     "engine": "industrial_v25_low_probability_inversion_fix_20260803"
   },
-  "remote": {},
+  "remote": {
+    "generated_at_taiwan": "2026-08-03T13:43:18+08:00",
+    "latest_draw_date": "2026-08-02",
+    "latest_numbers": [
+      2,
+      3,
+      20,
+      24,
+      27
+    ],
+    "target_draw_date": "2026-08-03",
+    "target_taiwan_time": "2026-08-04 09:50",
+    "top9": [
+      15,
+      17,
+      18,
+      32,
+      13,
+      1,
+      31,
+      10,
+      38
+    ],
+    "top15": [
+      15,
+      17,
+      18,
+      32,
+      13,
+      1,
+      31,
+      10,
+      38,
+      30,
+      4,
+      28,
+      25,
+      23,
+      29
+    ],
+    "engine": "industrial_v25_low_probability_inversion_fix_20260803"
+  },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
   "mismatches": []

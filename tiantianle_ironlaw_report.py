@@ -1773,7 +1773,8 @@ def model_backtest_focus_block(analysis):
     }
     maturity_action = action_map.get(str(maturity.get("action", "")), maturity.get("action", "-"))
     rows = [
-        ["全歷史回測", f"{backtest.get('rounds', 0)} 期", f"前十平均 {backtest.get('top10_avg_hits', '-')}", f"前十五平均 {backtest.get('top15_avg_hits', '-')}", "已納入本期排序"],
+        ["全歷史資料庫", f"{analysis.get('draw_count', '-')} 筆", "用於號碼排序、頻率、拖牌、遺漏、回收模型", "不是只用短期資料", "已納入本期排序"],
+        ["滾動回測窗口", f"{backtest.get('rounds', 0)} 期", f"前十平均 {backtest.get('top10_avg_hits', '-')}", f"前十五平均 {backtest.get('top15_avg_hits', '-')}", backtest_window_text(backtest)],
         ["發布守門", release_label(analysis), f"優勢值 {release.get('actual_backtest_edge', '-')}", f"前十保留 {release.get('top10_retention', '-')}", "未過守門不寫成正式保證"],
         ["實戰成熟度", esc(maturity.get("status_label") or maturity.get("status") or "-"), f"平均 {maturity.get('top10_avg_maturity', '-')}", esc(maturity_action), "每期滾動修正"],
     ]
@@ -1797,13 +1798,13 @@ def model_backtest_focus_block(analysis):
         else:
             probability_text = f"理論覆蓋 {round((len(numbers) * 5 / 39) * 100, 2)}%"
         expected_hits = round(len(numbers) * 5 / 39, 3) if numbers else "-"
-        rounds_text = governance.get("rounds") or backtest.get("rounds", "-")
+        rounds_text = pack_governance_window_text(governance, backtest.get("rounds", "-"))
         pass_text = f"達成率 {governance.get('pass_rate')}" if governance.get("pass_rate") is not None else probability_text
         avg_text = f"平均命中 {governance.get('avg_hits')}" if governance.get("avg_hits") is not None else f"期望命中 {expected_hits}"
         pack_rows.append([
             label,
             fmt_numbers(numbers),
-            f"{rounds_text} 期",
+            rounds_text,
             pass_text,
             avg_text,
             "正式" if pack.get("official_release") else "觀察",
@@ -2043,12 +2044,40 @@ def compact_pack_rows_tiantianle(analysis):
             label,
             fmt_numbers(numbers),
             compact_pack_status(pack),
-            f"{gov.get('rounds') or backtest.get('rounds', '-')} 期",
+            pack_governance_window_text(gov, backtest.get("rounds", "-")),
             compact_percent(pass_rate, 2),
             compact_decimal(avg_hits, 3),
             "通過" if gov.get("passed") else "觀察",
         ])
     return rows
+
+
+def backtest_window_text(backtest):
+    windows = (backtest or {}).get("rolling_windows") or {}
+    parts = []
+    for key in ["60", "120", "360", "720"]:
+        item = windows.get(key) or {}
+        rounds = item.get("rounds")
+        if not rounds:
+            continue
+        avg = item.get("top10_avg_hits", "-")
+        edge = item.get("top10_edge_vs_random", "-")
+        parts.append(f"{key}期：前十{avg} / 優勢{edge}")
+    return "；".join(parts) or "-"
+
+
+def pack_governance_window_text(governance, fallback_rounds="-"):
+    windows = (governance or {}).get("windows") or {}
+    parts = []
+    for key in ["60", "120", "360", "720"]:
+        item = windows.get(key) or {}
+        rounds = item.get("rounds")
+        if not rounds:
+            continue
+        parts.append(f"{key}期{item.get('avg_hits', '-')}")
+    total = (governance or {}).get("rounds") or fallback_rounds
+    suffix = "；".join(parts)
+    return f"總{total}期" + (f" / {suffix}" if suffix else "")
 
 
 def compact_super_single_html_tiantianle(analysis):
@@ -2221,7 +2250,9 @@ def compact_model_rows_tiantianle(analysis):
     backtest = industrial_backtest(analysis)
     advanced = ((analysis.get("industrial_engine") or {}).get("advanced_model_backtest") or {})
     rows = [
+        ["全歷史資料庫", f"{analysis.get('draw_count', '-')} 筆", "全歷史參與排序", "頻率/拖牌/遺漏/回收", "不是只用30期", "已套用"],
         ["整體排序模型", f"{backtest.get('rounds', 0)} 期", backtest.get("top5_avg_hits", "-"), backtest.get("top10_avg_hits", "-"), backtest.get("top15_avg_hits", "-"), backtest.get("top10_edge_vs_random", "0")],
+        ["60/120/360窗口", backtest_window_text(backtest), "-", "-", "-", "短中長期同步檢查"],
         ["前九核心壓縮", f"{backtest.get('rounds', 0)} 期", "-", backtest.get("top10_avg_hits", "-"), backtest.get("top15_avg_hits", "-"), "每期重算"],
     ]
     for name, data in list((advanced.get("strategies") or advanced).items())[:6] if isinstance(advanced, dict) else []:

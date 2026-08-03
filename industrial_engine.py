@@ -400,13 +400,48 @@ def repeat_guard(draws, window=720):
 def failed_number_set(review):
     if not review or review.get("severity") != "critical":
         return set()
+
+    def valid_number(value):
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            return None
+        return number if NUMBER_MIN <= number <= NUMBER_MAX else None
+
     settled = review.get("last_settled", {})
-    failed = set((settled.get("candidate_numbers") or [])[:15])
+    failed = {
+        number
+        for number in (valid_number(value) for value in (settled.get("candidate_numbers") or [])[:15])
+        if number is not None
+    }
     for pack in (settled.get("strong_pack_hits") or {}).values():
         if not pack.get("passed"):
-            failed.update(pack.get("numbers", []))
-    failed -= set(settled.get("actual_numbers") or [])
-    return {n for n in failed if NUMBER_MIN <= n <= NUMBER_MAX}
+            failed.update(
+                number
+                for number in (valid_number(value) for value in pack.get("numbers", []))
+                if number is not None
+            )
+
+    failed.update(
+        number
+        for number in (valid_number(value) for value in review.get("rolling_failed_numbers", []))
+        if number is not None
+    )
+    rolling = rolling_adjustment_data(review)
+    for key in ("repeated_failed_numbers", "last2_failed_top10_numbers"):
+        failed.update(
+            number
+            for number in (valid_number(item.get("number")) for item in rolling.get(key, []))
+            if number is not None
+        )
+
+    actual_numbers = {
+        number
+        for number in (valid_number(value) for value in (settled.get("actual_numbers") or []))
+        if number is not None
+    }
+    failed -= actual_numbers
+    return failed
 
 
 def previous_prediction_set(review, limit=15):

@@ -8,12 +8,12 @@ from tiantianle_formula_engine import compute_formula_engine_analysis, blend_for
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-os.environ.setdefault("TIANTIANLE_PACK_GOVERNANCE_ROUNDS", "30")
-os.environ.setdefault("TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS", "30")
-os.environ.setdefault("TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS", "30")
-os.environ.setdefault("TIANTIANLE_ADVANCED_BACKTEST_ROUNDS", "30")
-os.environ.setdefault("TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS", "30")
-os.environ.setdefault("TIANTIANLE_CORE_BACKTEST_ROUNDS", "30")
+os.environ.setdefault("TIANTIANLE_PACK_GOVERNANCE_ROUNDS", "360")
+os.environ.setdefault("TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS", "180")
+os.environ.setdefault("TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS", "360")
+os.environ.setdefault("TIANTIANLE_ADVANCED_BACKTEST_ROUNDS", "180")
+os.environ.setdefault("TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS", "180")
+os.environ.setdefault("TIANTIANLE_CORE_BACKTEST_ROUNDS", "360")
 os.environ.setdefault("TIANTIANLE_GROUP_BACKTEST_SHORT", "30")
 os.environ.setdefault("TIANTIANLE_GROUP_BACKTEST_MID", "60")
 os.environ.setdefault("TIANTIANLE_GROUP_BACKTEST_LONG", "120")
@@ -333,15 +333,17 @@ def _fast_strong_packs(candidates):
     }
 
 def fast_compute_industrial_analysis(draws, review=None):
+    backtest_rounds = 360
+    formula_rounds = 240
     raw_candidates = mod.score_numbers(draws)
     weights = {}
     candidates = _candidate_enrich(draws, raw_candidates)
-    formula_engine = compute_formula_engine_analysis(draws, None, candidates, rounds=30)
+    formula_engine = compute_formula_engine_analysis(draws, None, candidates, rounds=formula_rounds)
     candidates = blend_formula_into_candidates(candidates, formula_engine)
     candidates, previous_guard = _apply_no_reuse_governor(draws, candidates)
     top_numbers = [int(item['number']) for item in candidates]
     packs = _fast_strong_packs(candidates)
-    bt = mod.backtest(draws, rounds=30)
+    bt = mod.backtest(draws, rounds=backtest_rounds)
     consensus_counts = {str(number): max(1, 5 - idx // 3) for idx, number in enumerate(top_numbers[:15])}
     avoid_rows = []
     for item in reversed(candidates[-15:]):
@@ -362,7 +364,19 @@ def fast_compute_industrial_analysis(draws, review=None):
         'three': {'numbers': top_numbers[:3], 'status': 'high_confidence_watch', 'score': candidates[0].get('confidence_index'), 'selected_model_label': '快速全歷史精算', 'recent_60': {'pass_rate': 0, 'rounds': 0}},
     }
     pack_stats = {
-        key: {'rounds': 30, 'passed': False, 'research_passed': True, 'pass_rate': 0, 'avg_hits': 0, 'zero_hit_rate': 0, 'windows': {'30': {'rounds': 30}}}
+        key: {
+            'rounds': backtest_rounds,
+            'passed': False,
+            'research_passed': True,
+            'pass_rate': 0,
+            'avg_hits': 0,
+            'zero_hit_rate': 0,
+            'windows': {
+                '60': {'rounds': 60, 'avg_hits': 0, 'pass_rate': 0},
+                '120': {'rounds': 120, 'avg_hits': 0, 'pass_rate': 0},
+                '360': {'rounds': backtest_rounds, 'avg_hits': 0, 'pass_rate': 0},
+            },
+        }
         for key in ['strong_single', 'two_hit_one', 'three_hit_two', 'five_hit_two', 'nine_hit_three']
     }
     formula_avoid = (formula_engine.get('avoid_analysis') or {}) if formula_engine else {}
@@ -384,7 +398,7 @@ def fast_compute_industrial_analysis(draws, review=None):
         'advanced_model_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'unlikely_number_analysis': formula_avoid if formula_avoid.get('numbers') else {'numbers': avoid_rows},
         'unlikely_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
-        'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': 30, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
+        'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': backtest_rounds, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
         'precision_model_tournament': {'status': 'deferred_fast_daily', 'rounds': 0, 'selected_models': {}},
         'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['deep_tournament_deferred_to_background']},
         'dependency_analysis': {'validated_links': [], 'validated_link_count': 0, 'lag_profile': [], 'warning': 'fast daily mode'},
