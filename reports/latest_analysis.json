@@ -1,8 +1,8 @@
 {
   "engine_version": "天天樂最新版鐵律第9版_20260803_低機率誤開回收修正",
   "industrial_engine_version": "industrial_v25_low_probability_inversion_fix_20260803",
-  "generated_at_taiwan": "2026-08-03T13:25:12+08:00",
-  "generated_at_california": "2026-08-02T22:25:12-07:00",
+  "generated_at_taiwan": "2026-08-03T13:38:21+08:00",
+  "generated_at_california": "2026-08-02T22:38:21-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11877,
@@ -1953,7 +1953,7 @@
   },
   "freshness": {
     "california_today": "2026-08-02",
-    "california_time": "22:25:12",
+    "california_time": "22:38:21",
     "allowed_latest_draw_date": "2026-08-02",
     "age_days": 0,
     "status": "ok",
@@ -155670,7 +155670,7 @@
     {
       "based_on_date": "2026-08-02",
       "target_date": "2026-08-03",
-      "created_at": "2026-08-03T13:25:12+08:00",
+      "created_at": "2026-08-03T13:38:21+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
