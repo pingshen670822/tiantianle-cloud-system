@@ -446,8 +446,10 @@ def _review_recovery_numbers(review):
     review = review or {}
     monthly = review.get("monthly_review") or {}
     rolling = review.get("rolling_summary") or {}
+    low_error = review.get("low_probability_error_recovery") or {}
     missed = set()
     late = set()
+    low_probability_error = set()
     for item in monthly.get("monthly_missed_actual_numbers", []):
         if item.get("number"):
             missed.add(int(item["number"]))
@@ -458,7 +460,12 @@ def _review_recovery_numbers(review):
     for number, count in hit_counts.items():
         if int(count or 0) >= 1:
             late.add(int(number))
-    return missed, late
+    for item in low_error.get("frequent_numbers") or []:
+        if item.get("number"):
+            low_probability_error.add(int(item["number"]))
+    for number in low_error.get("hard_block_low_probability_numbers") or []:
+        low_probability_error.add(int(number))
+    return missed, late, low_probability_error
 
 
 def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
@@ -469,7 +476,7 @@ def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
         except Exception:
             pass
     recent_counts, recent_tails, recent_zones, latest_numbers = _recent_pressure(draws)
-    missed_actual, late_hits = _review_recovery_numbers(review)
+    missed_actual, late_hits, low_probability_error = _review_recovery_numbers(review)
     rows = []
     for number in range(NUMBER_MIN, NUMBER_MAX + 1):
         weak_models = sum(1 for scores in models.values() if scores.get(number, 0.0) < 0.34)
@@ -481,9 +488,10 @@ def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
         tail_risk = min(1.0, recent_tails.get(number % 10, 0) / 8.0)
         zone_risk = min(1.0, recent_zones.get(number_zone(number), 0) / 12.0)
         recovery_risk = 1.0 if number in missed_actual or number in late_hits else 0.0
+        low_probability_error_risk = 1.0 if number in low_probability_error else 0.0
         if number in latest_numbers:
             recent_risk = max(recent_risk, 0.85)
-        avoid_score -= recent_risk * 0.34 + tail_risk * 0.10 + zone_risk * 0.08 + recovery_risk * 0.38
+        avoid_score -= recent_risk * 0.34 + tail_risk * 0.10 + zone_risk * 0.08 + recovery_risk * 0.38 + low_probability_error_risk * 0.52
         avoid_score = max(0.0, min(1.0, avoid_score))
         reasons = []
         if weak_models >= 5:
@@ -492,11 +500,13 @@ def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
             reasons.append("候選排序後段")
         if appearance < 0.30:
             reasons.append("綜合出現分偏低")
-        if recent_risk >= 0.5 or recovery_risk:
+        if recent_risk >= 0.5 or recovery_risk or low_probability_error_risk:
             reasons.append("近期實開或漏抓復活風險，禁止列入核心低機率")
         if not reasons:
             reasons.append("未達主推門檻")
-        blocked = bool(recent_risk >= 0.5 or recovery_risk or rank_map.get(number, 99) <= 15)
+        if low_probability_error_risk:
+            reasons.append("低機率誤開回收封鎖")
+        blocked = bool(recent_risk >= 0.5 or recovery_risk or low_probability_error_risk or rank_map.get(number, 99) <= 15)
         rows.append({
             "number": number,
             "avoid_score": round(avoid_score, 4),
@@ -506,6 +516,7 @@ def avoid_analysis(ensemble, models, candidates=None, draws=None, review=None):
             "weak_signal_count": weak_models,
             "recent_hit_risk": round(recent_risk, 4),
             "recovery_risk": round(recovery_risk, 4),
+            "low_probability_error_risk": round(low_probability_error_risk, 4),
             "avoid_blocked_by_recent_hit_risk": blocked,
             "reasons": reasons,
         })
@@ -540,7 +551,7 @@ def compute_formula_engine_analysis(draws, review=None, candidates=None, rounds=
     else:
         status = "只做風控降權"
     return {
-        "version": "formula_engine_v20260703_positive_edge_firewall_strict_repeat",
+        "version": "formula_engine_v20260803_low_probability_error_blocked",
         "status": status,
         "no_future_leakage": True,
         "research_notes": RESEARCH_NOTES,

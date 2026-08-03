@@ -739,7 +739,7 @@ def build_mobile_ironlaw_block(data):
         f"{action_row(u('\\u660e\\u78ba') + '2' + u('\\u4e2d') + '1', decision.get('two_hit_one') or [])}"
         f"{action_row(u('\\u660e\\u78ba') + '3' + u('\\u4e2d') + '1~3', decision.get('three_hit_one') or [])}"
         f"{action_row(u('\\u660e\\u78ba') + '5' + u('\\u4e2d') + '2', decision.get('five_hit_two') or [])}"
-        f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '3', decision.get('nine_hit_three') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '2' + u('\\u4f4e\\u6a19') + ' / 9' + u('\\u4e2d') + '3' + u('\\u5f37\\u6a19'), decision.get('nine_hit_three') or [])}"
         f"{action_row(u('\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c'), high_numbers[:9])}"
         f"{action_row(u('\\u9632\\u5b88\\u907f\\u958b'), avoid_numbers[:10])}"
         f"</table>"
@@ -762,7 +762,41 @@ def build_mobile_avoid_block(data):
         f"<p>{u('\\u56de\\u6e2c')}：{u('\\u6a23\\u672c')} {esc(backtest.get('rounds', '-'))} / {u('\\u96f6\\u8aa4\\u5165\\u7387')} {esc(backtest.get('zero_hit_rate', '-'))}</p>"
         f"<h3>{u('\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '五不中')}</table>"
         f"<h3>{u('\\u5341\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十不中')}</table>"
-        f"<h3>{u('\\u5341\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十五不中')}</table></section>"
+        f"<h3>{u('\\u5341\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十五不中')}</table>"
+        f"{build_mobile_low_error_recovery(data)}</section>"
+    )
+
+
+def mobile_low_error_payload(data):
+    review = data.get("failure_review") or {}
+    payload = review.get("low_probability_error_recovery") or {}
+    if not payload:
+        payload = ((data.get("industrial_engine") or {}).get("low_probability_error_recovery") or {})
+    return payload if isinstance(payload, dict) else {}
+
+
+def build_mobile_low_error_recovery(data):
+    payload = mobile_low_error_payload(data)
+    hard_block = fmt_numbers(payload.get("hard_block_low_probability_numbers", [])) or "-"
+    rows = []
+    for item in (payload.get("frequent_numbers") or [])[:12]:
+        number = item.get("number")
+        if number is None:
+            continue
+        rows.append(
+            f"<tr><td>{esc(f'{int(number):02d}')}</td>"
+            f"<td>{esc(item.get('count', 0))}</td>"
+            f"<td>{esc(item.get('recent_count', 0))}</td>"
+            f"<td>5不中 {esc(item.get('five_miss_hits', 0))} / 10不中 {esc(item.get('ten_miss_hits', 0))} / 15不中 {esc(item.get('fifteen_miss_hits', 0))}</td>"
+            f"<td>{esc(item.get('last_seen', '-'))}</td>"
+            f"<td>{u('\\u5c01\\u9396\\u4f4e\\u6a5f\\u7387\\uff0c\\u8f49\\u5165\\u4e3b\\u6392\\u5e8f\\u56de\\u6536')}</td></tr>"
+        )
+    body = "".join(rows) or f"<tr><td colspan='6'>{u('\\u76ee\\u524d\\u6c92\\u6709\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u56de\\u6536\\u8cc7\\u6599')}</td></tr>"
+    return (
+        f"<h3>{u('\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u56de\\u6536')}</h3>"
+        f"<p><strong>{u('\\u672c\\u671f\\u5c01\\u9396\\u4f4e\\u6a5f\\u7387\\u6838\\u5fc3')}：</strong>{esc(hard_block)}</p>"
+        f"<p>{esc(payload.get('message', u('\\u6bcf\\u671f\\u958b\\u734e\\u5f8c\\u81ea\\u52d5\\u91cd\\u7b97\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u3002')))}</p>"
+        f"<table><tr><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u7d2f\\u8a08\\u8aa4\\u958b')}</th><th>{u('\\u8fd1\\u671f')}</th><th>{u('\\u4f86\\u6e90')}</th><th>{u('\\u6700\\u8fd1')}</th><th>{u('\\u8655\\u7406')}</th></tr>{body}</table>"
     )
 def build_home_page():
     repo, workflow_url, page_url = cloud_links()

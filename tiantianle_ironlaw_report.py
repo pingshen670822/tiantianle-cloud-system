@@ -913,6 +913,8 @@ def monthly_pack_low_review_html_tiantianle(analysis, items):
         f'{table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows, "目前沒有低機率月結統計")}'
         "<h3>低機率每月總紀錄分析</h3>"
         f'{table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], monthly_low_probability_summary_rows_tiantianle(analysis), "目前沒有低機率每月結算資料")}'
+        "<h3>低機率誤開回收</h3>"
+        f'{table(["號碼", "累計誤開", "近期期數", "誤開來源", "最近誤開", "下期處理"], low_probability_error_recovery_rows(analysis), "目前沒有低機率誤開回收資料")}'
     )
 
 
@@ -1167,6 +1169,45 @@ def low_probability_avoid_block(analysis):
         f'<h3>{u("\\u4e94\\u4e0d\\u4e2d")}</h3>{table(headers, avoid_group_rows(analysis, "五不中"))}'
         f'<h3>{u("\\u5341\\u4e0d\\u4e2d")}</h3>{table(headers, avoid_group_rows(analysis, "十不中"))}'
         f'<h3>{u("\\u5341\\u4e94\\u4e0d\\u4e2d")}</h3>{table(headers, avoid_group_rows(analysis, "十五不中"))}</section>'
+    )
+
+
+def low_probability_error_recovery_payload(analysis):
+    review = analysis.get("failure_review") or {}
+    payload = review.get("low_probability_error_recovery") or {}
+    if not payload:
+        payload = ((analysis.get("industrial_engine") or {}).get("low_probability_error_recovery") or {})
+    return payload if isinstance(payload, dict) else {}
+
+
+def low_probability_error_recovery_rows(analysis):
+    payload = low_probability_error_recovery_payload(analysis)
+    rows = []
+    for item in (payload.get("frequent_numbers") or [])[:15]:
+        try:
+            number = int(item.get("number"))
+        except Exception:
+            continue
+        rows.append([
+            f"{number:02d}",
+            item.get("count", 0),
+            item.get("recent_count", 0),
+            f"5不中 {item.get('five_miss_hits', 0)} / 10不中 {item.get('ten_miss_hits', 0)} / 15不中 {item.get('fifteen_miss_hits', 0)}",
+            item.get("last_seen", "-"),
+            "封鎖低機率，轉入主排序回收",
+        ])
+    return safe_rows(rows)
+
+
+def low_probability_error_recovery_block(analysis):
+    payload = low_probability_error_recovery_payload(analysis)
+    hard_block = fmt_numbers(payload.get("hard_block_low_probability_numbers", [])) or "-"
+    message = payload.get("message") or "低機率誤開回收會在每期開獎後重新統計。"
+    return (
+        '<section class="band danger-zone"><h2>低機率誤開回收檢討</h2>'
+        f"<p>{esc(message)}</p>"
+        f"<p><strong>本期封鎖低機率核心：</strong>{esc(hard_block)}</p>"
+        f'{table(["號碼", "累計誤開", "近期期數", "誤開來源", "最近誤開", "下期處理"], low_probability_error_recovery_rows(analysis), "目前沒有低機率誤開回收資料")}</section>'
     )
 
 
@@ -3870,6 +3911,7 @@ def build_report():
     content += f'<section class="band notice"><h2>\u5168\u6b77\u53f2\u8cc7\u6599\u5eab\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u4f86\u6e90", "\u8655\u7406"], full_history_rows)}</section>'
     content += explicit_action_block(analysis)
     content += avoid_focus_block(analysis)
+    content += low_probability_error_recovery_block(analysis)
     content += model_backtest_focus_block(analysis)
     content += f'<section class="band"><h2>\u6bcf\u671f\u91cd\u65b0\u904b\u7b97\u8b49\u660e</h2>{table(["\u9805\u76ee", "\u7d50\u679c", "\u8aaa\u660e"], strict_recalculation_rows(analysis))}</section>'
     content += f'<section class="band notice"><h2>\u6efe\u52d5\u5f0f\u4fee\u6b63\u6458\u8981</h2>{table(["\u985e\u5225", "\u6aa2\u8a0e\u5167\u5bb9", "\u8abf\u6574\u52d5\u4f5c", "\u4f9d\u64da", "\u72c0\u614b"], rolling_adjustment_rows(analysis))}</section>'

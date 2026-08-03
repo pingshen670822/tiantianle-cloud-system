@@ -64,7 +64,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "天天樂最新版鐵律第8版_20260803"
+ENGINE_VERSION = "天天樂最新版鐵律第9版_20260803_低機率誤開回收修正"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -1655,6 +1655,118 @@ def monthly_low_probability_review(conn):
     }
 
 
+def low_probability_error_recovery_review(conn, limit=70, recent_limit=12):
+    rows = conn.execute(
+        """
+        SELECT target_date,actual_date,results_json
+        FROM low_probability_records
+        WHERE status='settled' AND results_json IS NOT NULL
+        ORDER BY actual_date DESC,id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    if not rows:
+        return {
+            "active": False,
+            "sample_size": 0,
+            "summary": {},
+            "frequent_numbers": [],
+            "hard_block_low_probability_numbers": [],
+            "message": "尚無低機率誤開樣本",
+        }
+    pack_counter = {
+        "five_miss": Counter(),
+        "ten_miss": Counter(),
+        "fifteen_miss": Counter(),
+    }
+    pack_rounds = Counter()
+    pack_hit_rounds = Counter()
+    pack_hit_total = Counter()
+    number_counter = Counter()
+    recent_counter = Counter()
+    weighted_counter = Counter()
+    first_seen = {}
+    last_seen = {}
+    for index, row in enumerate(rows):
+        target_date, actual_date, results_json = row
+        try:
+            results = json.loads(results_json or "{}")
+        except Exception:
+            results = {}
+        recency_weight = 1.0 + max(0.0, (recent_limit - index) / max(1, recent_limit)) * 1.15
+        for key in pack_counter:
+            item = results.get(key) or {}
+            hits = [
+                int(number)
+                for number in (item.get("hit_numbers") or [])
+                if str(number).isdigit() and 1 <= int(number) <= 39
+            ]
+            pack_rounds[key] += 1
+            pack_hit_total[key] += len(hits)
+            if hits:
+                pack_hit_rounds[key] += 1
+            for number in hits:
+                pack_counter[key][number] += 1
+                number_counter[number] += 1
+                weighted_counter[number] += recency_weight
+                if index < recent_limit:
+                    recent_counter[number] += 1
+                first_seen.setdefault(number, actual_date or target_date)
+                last_seen[number] = actual_date or target_date
+    pack_summary = {}
+    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
+        rounds = pack_rounds[key] or 1
+        pack_summary[key] = {
+            "name": label,
+            "rounds": pack_rounds[key],
+            "hit_rounds": pack_hit_rounds[key],
+            "hit_round_rate": round(pack_hit_rounds[key] / rounds, 3),
+            "avg_accidental_hits": round(pack_hit_total[key] / rounds, 3),
+            "frequent_hit_numbers": [{"number": n, "count": c} for n, c in pack_counter[key].most_common(12)],
+        }
+    frequent = []
+    for number, count in number_counter.most_common():
+        five_hits = pack_counter["five_miss"].get(number, 0)
+        ten_hits = pack_counter["ten_miss"].get(number, 0)
+        fifteen_hits = pack_counter["fifteen_miss"].get(number, 0)
+        weighted = weighted_counter[number] + five_hits * 0.75 + ten_hits * 0.35
+        frequent.append({
+            "number": number,
+            "count": count,
+            "recent_count": recent_counter.get(number, 0),
+            "weighted_score": round(weighted, 3),
+            "five_miss_hits": five_hits,
+            "ten_miss_hits": ten_hits,
+            "fifteen_miss_hits": fifteen_hits,
+            "first_seen": first_seen.get(number),
+            "last_seen": last_seen.get(number),
+        })
+    frequent.sort(key=lambda item: (item["recent_count"], item["weighted_score"], item["count"], -item["number"]), reverse=True)
+    hard_block = [
+        item["number"]
+        for item in frequent
+        if item["recent_count"] >= 1 or item["count"] >= 2 or item["five_miss_hits"] >= 1
+    ][:18]
+    active = bool(hard_block) or any(
+        value.get("avg_accidental_hits", 0) > threshold
+        for value, threshold in [
+            (pack_summary.get("five_miss", {}), 0.55),
+            (pack_summary.get("ten_miss", {}), 0.85),
+            (pack_summary.get("fifteen_miss", {}), 1.15),
+        ]
+    )
+    return {
+        "active": active,
+        "sample_size": len(rows),
+        "recent_limit": recent_limit,
+        "summary": pack_summary,
+        "frequent_numbers": frequent[:18],
+        "hard_block_low_probability_numbers": hard_block,
+        "message": "低機率誤開已轉入主排序回收，並封鎖再次列入低機率核心。" if active else "低機率誤開未達回收門檻。",
+    }
+
+
 def apply_low_probability_monthly_guard(analysis):
     monthly = analysis.get("monthly_low_probability_review") or {}
     pack_summary = monthly.get("pack_summary") or {}
@@ -2375,6 +2487,7 @@ def failure_review(conn):
     ]
 
     monthly_review = monthly_prediction_review(conn)
+    low_error_review = low_probability_error_recovery_review(conn)
     actions = [
         u"\u6700\u8fd15\u671f\u5df2\u7d0d\u5165\u6efe\u52d5\u6aa2\u8a0e\uff0cTop10\u5e73\u5747\u547d\u4e2d\u70ba"
         f" {avg_top10}",
@@ -2386,6 +2499,11 @@ def failure_review(conn):
             u"\u672c\u6708\u7e3d\u6aa2\u8a0e\u5df2\u7d0d\u5165\uff1aTop10\u5e73\u5747 "
             + str(monthly_review.get("avg_top10_hits"))
             + u"\uff0c\u5f37\u7368\u82075\u4e2d2\u672a\u904e\u5be6\u6230\u9580\u6abb\uff0c\u6539\u4ee5\u89c0\u5bdf\u6c60\u8207\u6708\u5ea6\u964d\u6b0a\u904b\u884c"
+        )
+    if low_error_review.get("active"):
+        actions.append(
+            u"\u4f4e\u6a5f\u7387\u8aa4\u958b\u5df2\u5f37\u5236\u56de\u6536\u9032\u4e3b\u6392\u5e8f\uff0c\u7981\u6b62\u518d\u5217\u4f4e\u6a5f\u7387\u6838\u5fc3\uff1a"
+            + fmt_numbers(low_error_review.get("hard_block_low_probability_numbers", [])[:9])
         )
     if pack_fail_counts:
         actions.append(
@@ -2409,6 +2527,7 @@ def failure_review(conn):
         "last_settled": settled_items[0],
         "recent_settled": settled_items,
         "monthly_review": monthly_review,
+        "low_probability_error_recovery": low_error_review,
         "rolling_summary": {
             "sample_size": sample_size,
             "avg_top5_hits": avg_top5,
@@ -2617,9 +2736,15 @@ def _build_low_probability_avoid(industrial, candidates):
     source_items = [dict(item) for item in (((industrial or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])]
     used = {int(item.get("number")) for item in source_items if item.get("number") is not None}
     latest_numbers = {int(number) for number in (((industrial or {}).get("recent_draw_firewall") or {}).get("latest_numbers") or [])}
+    low_error = (industrial or {}).get("low_probability_error_recovery") or {}
+    hard_block_low = {
+        int(number)
+        for number in (low_error.get("hard_block_low_probability_numbers") or [])
+        if str(number).isdigit()
+    }
     for item in reversed(candidates or []):
         number = int(item.get("number"))
-        if number in used:
+        if number in used or number in hard_block_low:
             continue
         rank = int(item.get("rank", 99))
         latest_blocked = number in latest_numbers
@@ -2639,18 +2764,26 @@ def _build_low_probability_avoid(industrial, candidates):
         if len(source_items) >= NUMBER_MAX:
             break
     profiles = [_avoid_confidence_profile(item) for item in source_items]
+    for item in profiles:
+        number = int(item.get("number", 0) or 0)
+        if number in hard_block_low:
+            item["avoid_blocked_by_recent_hit_risk"] = True
+            item["low_probability_error_blocked"] = True
+            reasons = list(item.get("reasons") or [])
+            reasons.insert(0, "低機率誤開回收封鎖")
+            item["reasons"] = list(dict.fromkeys(reasons))[:6]
 
     def avoid_rank(item):
         return _safe_int(item.get("candidate_rank", 99), 99)
 
     ordered_profiles = []
     buckets = [
-        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) <= 9],
-        [item for item in profiles if int(item.get("number", 0)) in latest_numbers],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) <= 9],
+        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) in latest_numbers],
     ]
     used_numbers = set()
     for bucket in buckets:
@@ -2676,6 +2809,7 @@ def _build_low_probability_avoid(industrial, candidates):
     }
     return {
         "warning": "低機率與不中清單是風控避開模型，不是絕對保證；每期仍會重新驗證與回測。",
+        "low_probability_error_recovery_blocked_numbers": sorted(hard_block_low),
         "groups": groups,
         "avoid_packs": avoid_packs,
         "backtest": (industrial or {}).get("unlikely_backtest") or {},
@@ -2723,10 +2857,16 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
     avoid_packs = (avoid_policy or {}).get("avoid_packs") or {}
     defensive_avoid = (avoid_packs.get("ten_miss") or {}).get("numbers") or [item.get("number") for item in ((avoid_policy or {}).get("groups") or {}).get("十不中", [])]
     return {
-        "version": "天天樂最新版鐵律第8版_20260803",
+        "version": "天天樂最新版鐵律第9版_20260803_低機率誤開回收修正",
         "action_label": action_label,
         "grade": grade,
-        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示",
+        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1必出、5中2基本、9中2低標",
+        "ironlaw_targets": {
+            "獨隻": "1中1必須每期輸出並列明驗算來源",
+            "五碼": "5中2為基本底線，5中3為強化目標",
+            "九碼": "9中2為最低標準，9中3以上為強化目標",
+            "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討",
+        },
         "primary_single": _pack_numbers(strong_packs, "strong_single", fallback, 1),
         "two_hit_one": _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
         "three_hit_one": _pack_numbers(strong_packs, "three_hit_two", fallback, 3),

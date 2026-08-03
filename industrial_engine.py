@@ -24,6 +24,7 @@ POSITIVE_EDGE_CORE_FEATURES = (
     "omission_phase_rebound",
     "rank_window_drift_correction",
     "effective_hit_front_shift",
+    "low_probability_error_recovery",
 )
 
 
@@ -743,6 +744,77 @@ def missed_hit_recovery_scores(review):
     return normalize(values)
 
 
+def low_probability_error_recovery_payload(review):
+    if not review or not review.get("has_review"):
+        return {}
+    payload = review.get("low_probability_error_recovery") or {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def low_probability_error_number_map(review):
+    payload = low_probability_error_recovery_payload(review)
+    rows = payload.get("frequent_numbers") or []
+    mapped = {}
+    for item in rows:
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            mapped[number] = item
+    return mapped
+
+
+def low_probability_error_recovery_scores(review):
+    payload = low_probability_error_recovery_payload(review)
+    if not payload or not payload.get("active"):
+        return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+
+    values = {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    tail_pressure = Counter()
+    zone_pressure = Counter()
+    for item in payload.get("frequent_numbers") or []:
+        try:
+            number = int(item.get("number"))
+        except (TypeError, ValueError):
+            continue
+        if not NUMBER_MIN <= number <= NUMBER_MAX:
+            continue
+        count = int(item.get("count", 0) or 0)
+        recent_count = int(item.get("recent_count", 0) or 0)
+        weighted = float(item.get("weighted_score", 0.0) or 0.0)
+        five_hits = int(item.get("five_miss_hits", 0) or 0)
+        ten_hits = int(item.get("ten_miss_hits", 0) or 0)
+        fifteen_hits = int(item.get("fifteen_miss_hits", 0) or 0)
+        score = (
+            min(1.0, weighted / 3.2) * 0.46
+            + min(1.0, count / 4.0) * 0.22
+            + min(1.0, recent_count / 2.0) * 0.18
+            + min(1.0, (five_hits * 1.6 + ten_hits * 1.15 + fifteen_hits) / 5.0) * 0.22
+        )
+        values[number] += score
+        tail_pressure[number % 10] += max(1, recent_count) + five_hits
+        zone_pressure[zone_label(number)] += max(1, recent_count) + ten_hits
+
+    hard_blocked = payload.get("hard_block_low_probability_numbers") or []
+    for number in hard_blocked:
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            values[number] += 0.36
+
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        if tail_pressure.get(number % 10):
+            values[number] += min(0.18, tail_pressure[number % 10] * 0.025)
+        if zone_pressure.get(zone_label(number)):
+            values[number] += min(0.14, zone_pressure[zone_label(number)] * 0.018)
+    return normalize(values)
+
+
 def rolling_adjustment_data(review):
     if not review or not review.get("has_review"):
         return {}
@@ -1290,6 +1362,7 @@ def slump_recovery_weight_shift(review):
         "effective_hit_front_shift",
         "rank_error_correction",
         "missed_hit_recovery",
+        "low_probability_error_recovery",
         "omission_phase_rebound",
         "similar_draw_knn",
         "regime_gap_bridge",
@@ -1364,6 +1437,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
     rank_error_correction = rank_error_correction_scores(review)
     rank_window_drift_correction = rank_window_drift_scores(review)
     effective_hit_front_shift = effective_hit_front_shift_scores(review)
+    low_probability_error_recovery = low_probability_error_recovery_scores(review)
     cross_consensus = cross_model_consensus_scores([
         window_scores[20],
         window_scores[50],
@@ -1389,6 +1463,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         rank_error_correction,
         rank_window_drift_correction,
         effective_hit_front_shift,
+        low_probability_error_recovery,
     ])
     monte_carlo_stability = monte_carlo_stability_scores([
         cross_consensus,
@@ -1406,6 +1481,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         rank_error_correction,
         rank_window_drift_correction,
         effective_hit_front_shift,
+        low_probability_error_recovery,
     ])
     next_date = next_draw_date(draws[-1]["draw_date"])
     date_set = set(date_numbers(next_date))
@@ -1440,6 +1516,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         feature_scores[number]["rank_error_correction"] = rank_error_correction[number]
         feature_scores[number]["rank_window_drift_correction"] = rank_window_drift_correction[number]
         feature_scores[number]["effective_hit_front_shift"] = effective_hit_front_shift[number]
+        feature_scores[number]["low_probability_error_recovery"] = low_probability_error_recovery[number]
         feature_scores[number]["date"] = date_score[number]
         feature_scores[number]["repeat"] = 1.0 if number in latest_set else 0.0
         feature_scores[number]["neighbor"] = 1.0 if any(abs(number - anchor) == 1 for anchor in latest_set) else 0.0
@@ -1487,6 +1564,7 @@ def industrial_weights(review=None):
         "rank_error_correction": 0.075,
         "rank_window_drift_correction": 0.064,
         "effective_hit_front_shift": 0.072,
+        "low_probability_error_recovery": 0.086,
         "positive_edge_core": 0.18,
         "date": 0.025,
         "repeat": 0.015,
@@ -1517,6 +1595,7 @@ def industrial_weights(review=None):
                 "rank_error_correction": 0.162,
                 "rank_window_drift_correction": 0.154,
                 "effective_hit_front_shift": 0.182,
+                "low_probability_error_recovery": 0.205,
                 "positive_edge_core": 0.28,
                 "repeat": 0.005,
                 "neighbor": 0.01,
@@ -1542,6 +1621,7 @@ def industrial_weights(review=None):
             "rank_error_correction",
             "rank_window_drift_correction",
             "effective_hit_front_shift",
+            "low_probability_error_recovery",
             "positive_edge_core",
             "full_history_anchor",
             "freq_all",
@@ -1561,7 +1641,7 @@ def industrial_weights(review=None):
             if key in weights:
                 weights[key] *= 1.0 + 0.46 * intensity
         if mode == "critical":
-            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "effective_hit_front_shift", "missed_hit_recovery", "omission_phase_rebound"]:
+            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "effective_hit_front_shift", "low_probability_error_recovery", "missed_hit_recovery", "omission_phase_rebound"]:
                 if key in weights:
                     weights[key] *= 1.18
     total = sum(weights.values()) or 1
@@ -1604,6 +1684,7 @@ MODEL_SOURCE_LABELS = {
     "rank_error_correction": "\u6392\u540d\u932f\u4f4d\u4fee\u6b63",
     "rank_window_drift_correction": "\u524d\u4e5d\u8207\u524d\u5341\u4e94\u932f\u4f4d\u4fee\u6b63",
     "effective_hit_front_shift": "\u6709\u6548\u547d\u4e2d\u524d\u79fb",
+    "low_probability_error_recovery": "\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536",
     "positive_edge_core": "\u6b63\u908a\u969b\u6838\u5fc3",
     "date": "\u65e5\u671f\u724c",
     "repeat": "\u9023\u838a\u56de\u6e2c",
@@ -1651,6 +1732,7 @@ def number_cross_validation(values):
         ("rank_error_correction", "\u6392\u540d\u932f\u4f4d\u4fee\u6b63", values.get("rank_error_correction", 0) >= 0.52),
         ("rank_window_drift_correction", "\u524d\u4e5d\u8207\u524d\u5341\u4e94\u932f\u4f4d\u4fee\u6b63", values.get("rank_window_drift_correction", 0) >= 0.52),
         ("effective_hit_front_shift", "\u6709\u6548\u547d\u4e2d\u524d\u79fb", values.get("effective_hit_front_shift", 0) >= 0.52),
+        ("low_probability_error_recovery", "\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536", values.get("low_probability_error_recovery", 0) >= 0.50),
         ("positive_edge_core", "\u6b63\u908a\u969b\u6838\u5fc3", values.get("positive_edge_core", 0) >= 0.58),
     ]
     passed = [{"key": key, "label": label} for key, label, ok in checks if ok]
@@ -1695,6 +1777,7 @@ def practical_maturity_score(
     score += values.get("positive_edge_core", 0.0) * 5.5
     score += values.get("rank_window_drift_correction", 0.0) * 4.2
     score += values.get("effective_hit_front_shift", 0.0) * 5.4
+    score += values.get("low_probability_error_recovery", 0.0) * 6.6
     score += values.get("distribution_balance", 0.0) * 3.0
 
     weak_overlap = reason_set & penalized_reasons
@@ -1713,8 +1796,11 @@ def practical_maturity_score(
         or values.get("missed_hit_recovery", 0) >= 0.5
         or values.get("rank_window_drift_correction", 0) >= 0.5
         or values.get("effective_hit_front_shift", 0) >= 0.48
+        or values.get("low_probability_error_recovery", 0) >= 0.5
     ):
         score += 10.0
+    if values.get("low_probability_error_recovery", 0) >= 0.58:
+        score += 6.0
     if number in late_hit_numbers:
         score += 5.0
     if passed <= 2:
@@ -1893,6 +1979,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
     last2_failed_top10_numbers = {int(item.get("number")) for item in rolling.get("last2_failed_top10_numbers", []) if item.get("number")}
     missed_actual_tails = {int(item.get("tail")) for item in rolling.get("missed_actual_tails", []) if item.get("tail") is not None}
     missed_actual_zones = {str(item.get("zone")) for item in rolling.get("missed_actual_zones", []) if item.get("zone")}
+    low_error_numbers = set(low_probability_error_number_map(review))
     mode = slump_mode(review)
     emergency_low_hit = bool((rolling.get("recent_performance") or {}).get("two_draw_low_hit"))
     latest_set = set(draws[-1]["numbers"])
@@ -1961,6 +2048,8 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             reasons[number].append("\u524d\u4e5d\u8207\u524d\u5341\u4e94\u932f\u4f4d\u4fee\u6b63")
         if values["effective_hit_front_shift"] >= 0.7:
             reasons[number].append("\u6709\u6548\u547d\u4e2d\u524d\u79fb")
+        if values["low_probability_error_recovery"] >= 0.62:
+            reasons[number].append("\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536")
         if values["positive_edge_core"] >= 0.66:
             reasons[number].append("\u6b63\u908a\u969b\u6838\u5fc3")
         if values["freq_50"] >= 0.7 or values["freq_100"] >= 0.7:
@@ -1986,10 +2075,14 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             values["rank_error_correction"] * 0.32
             + values["rank_window_drift_correction"] * 0.24
             + values["effective_hit_front_shift"] * 0.28
+            + values["low_probability_error_recovery"] * 0.34
             + values["missed_hit_recovery"] * 0.20
             + values["omission"] * 0.08
             + values["distribution_balance"] * 0.06
         )
+        if number in low_error_numbers and values["low_probability_error_recovery"] >= 0.46:
+            raw *= 1.72 if emergency_low_hit else 1.52 if mode == "critical" else 1.28
+            reasons[number].append("\u4f4e\u6a5f\u7387\u8aa4\u958b\u865f\u78bc\u5f37\u5236\u56de\u6536")
         if emergency_low_hit and number in last2_missed_actual_numbers and number not in latest_set:
             raw *= 1.36
             reasons[number].append("\u9023\u7e8c\u4f4e\u547d\u4e2d\u6f0f\u6293\u865f\u5f37\u5236\u56de\u6536")
@@ -2066,6 +2159,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
                     "rank_error_correction": round(features[number].get("rank_error_correction", 0.0), 4),
                     "rank_window_drift_correction": round(features[number].get("rank_window_drift_correction", 0.0), 4),
                     "effective_hit_front_shift": round(features[number].get("effective_hit_front_shift", 0.0), 4),
+                    "low_probability_error_recovery": round(features[number].get("low_probability_error_recovery", 0.0), 4),
                     "missed_hit_recovery": round(features[number].get("missed_hit_recovery", 0.0), 4),
                     "omission_phase_rebound": round(features[number].get("omission_phase_rebound", 0.0), 4),
                     "positive_edge_core": round(features[number].get("positive_edge_core", 0.0), 4),
@@ -4080,6 +4174,7 @@ def _recent_avoid_risk_profile(draws, review=None, lookback=10):
     for number, count in (rolling.get("hit_number_counts") or {}).items():
         if int(count or 0) >= 1:
             late_hit.add(int(number))
+    low_error = set(low_probability_error_number_map(review))
     return {
         "number_counts": number_counts,
         "tail_counts": tail_counts,
@@ -4087,6 +4182,7 @@ def _recent_avoid_risk_profile(draws, review=None, lookback=10):
         "latest_numbers": latest_numbers,
         "missed_actual": missed_actual,
         "late_hit": late_hit,
+        "low_probability_error": low_error,
     }
 
 
@@ -4097,7 +4193,7 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
     stability_counts = {int(number): count for number, count in stability.get("consensus_counts", {}).items()}
     latest_set = set(draws[-1]["numbers"])
     pressure = _recent_avoid_risk_profile(draws, review)
-    recovery_numbers = set(pressure["missed_actual"]) | set(pressure["late_hit"])
+    recovery_numbers = set(pressure["missed_actual"]) | set(pressure["late_hit"]) | set(pressure["low_probability_error"])
     previous_blocked = {
         item["number"] for item in candidates
         if item.get("previous_prediction_guard") and not item["previous_prediction_guard"].get("passed")
@@ -4117,12 +4213,14 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
         tail_risk = min(1.0, pressure["tail_counts"].get(number % 10, 0) / 8.0)
         zone_risk = min(1.0, pressure["zone_counts"].get(zone_label(number), 0) / 12.0)
         recovery_risk = 1.0 if number in recovery_numbers else 0.0
+        low_probability_error_risk = values.get("low_probability_error_recovery", 0.0)
         positive_signal_risk = max(
             values.get("positive_edge_core", 0),
             values.get("rank_error_correction", 0),
             values.get("missed_hit_recovery", 0),
             values.get("omission_phase_rebound", 0),
             values.get("similar_draw_knn", 0),
+            low_probability_error_risk,
         )
         if number in pressure["latest_numbers"]:
             recent_risk = max(recent_risk, 0.9)
@@ -4156,6 +4254,7 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
             - tail_risk * 0.08
             - zone_risk * 0.06
             - recovery_risk * 0.44
+            - low_probability_error_risk * 0.42
             - positive_signal_risk * 0.24
         )
         if rank_map.get(number, 99) <= 9:
@@ -4166,11 +4265,14 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
         blocked_by_hit_risk = bool(
             recent_risk >= 0.5
             or recovery_risk
+            or low_probability_error_risk >= 0.42
             or positive_signal_risk >= 0.62
             or rank_map.get(number, 99) <= 15
         )
         if blocked_by_hit_risk:
             reasons.append("開出風險過高，已移出低機率核心")
+        if low_probability_error_risk >= 0.42:
+            reasons.append("低機率誤開回收封鎖")
         if not reasons:
             reasons.append("綜合評分偏弱")
         rows.append(
@@ -4185,6 +4287,7 @@ def unlikely_number_analysis(draws, candidates, stability, review=None, limit=12
                 "tail_hit_risk": round(tail_risk, 4),
                 "zone_hit_risk": round(zone_risk, 4),
                 "recovery_risk": round(recovery_risk, 4),
+                "low_probability_error_risk": round(low_probability_error_risk, 4),
                 "positive_signal_risk": round(positive_signal_risk, 4),
                 "avoid_blocked_by_recent_hit_risk": blocked_by_hit_risk,
                 "reasons": reasons[:5],
@@ -5404,13 +5507,21 @@ def compute_industrial_analysis(draws, review=None):
     recent_edges = [rolling.get(str(window), {}).get("top10_edge_vs_random", -1) for window in [60, 120]]
     recent_passed = all(value >= 0 for value in recent_edges)
     pack_stats = pack_governance.get("pack_stats", {})
+    five_stat = pack_stats.get("five_hit_two", {})
+    nine_stat = pack_stats.get("nine_hit_three", {})
+    nine_hit_two_floor_passed = (
+        float(nine_stat.get("avg_hits", 0) or 0) >= 2.0
+        or float(nine_stat.get("research_avg_hits", 0) or 0) >= 2.0
+        or bool(nine_stat.get("passed", False))
+        or bool(nine_stat.get("research_passed", False))
+    )
     main_target_passed = (
-        pack_stats.get("five_hit_two", {}).get("passed", False)
-        and pack_stats.get("nine_hit_three", {}).get("passed", False)
+        five_stat.get("passed", False)
+        and nine_hit_two_floor_passed
     )
     research_main_targets_passed = (
-        pack_stats.get("five_hit_two", {}).get("research_passed", False)
-        and pack_stats.get("nine_hit_three", {}).get("research_passed", False)
+        five_stat.get("research_passed", False)
+        and nine_hit_two_floor_passed
     )
     pack_release_passed = pack_governance.get("release_light") in {"green", "yellow"} and main_target_passed
     research_release_passed = pack_governance.get("research_release_light") in {"green", "yellow"} and research_main_targets_passed
@@ -5450,7 +5561,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v24_auto_publish_gate_fix_20260803",
+        "engine_version": "industrial_v25_low_probability_inversion_fix_20260803",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -5472,6 +5583,7 @@ def compute_industrial_analysis(draws, review=None):
         "multi_model_correction": multi_model_correction,
         "rank_window_drift_correction": rank_window_drift,
         "post9_hit_leak_audit": post9_leak,
+        "low_probability_error_recovery": low_probability_error_recovery_payload(review),
         "full_system_entry_gate": full_system_entry_gate,
         "post_draw_error_correction": post_draw_error_correction,
         "strong_single_validation": strong_single_validation,
@@ -5493,7 +5605,14 @@ def compute_industrial_analysis(draws, review=None):
             "practical_maturity_status": maturity.get("status"),
             "practical_maturity_passed": maturity_passed,
             "top10_avg_maturity": maturity.get("top10_avg_maturity"),
-            "main_targets_required": ["five_hit_two", "nine_hit_three"],
+            "ironlaw_targets": {
+                "strong_single": "1中1必須輸出並驗算",
+                "five_hit_two": "5中2為基本底線，5中3為強標",
+                "nine_hit_two_floor": "9中2為最低標準",
+                "nine_hit_three": "9中3為強化目標",
+            },
+            "main_targets_required": ["strong_single", "five_hit_two", "nine_hit_two_floor"],
+            "nine_hit_two_floor_passed": nine_hit_two_floor_passed,
             "main_targets_passed": main_target_passed,
             "research_main_targets_passed": research_main_targets_passed,
             "top10_retention_required": 0.6,
