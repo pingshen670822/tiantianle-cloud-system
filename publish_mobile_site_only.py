@@ -1,5 +1,6 @@
 import base64
 import ctypes
+import hashlib
 import json
 import os
 import pathlib
@@ -102,6 +103,34 @@ def github_api(path, token, method="GET", data=None, tolerate=()):
     )
 
 
+def git_blob_sha(data):
+    header = f"blob {len(data)}\0".encode("utf-8")
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def existing_tree_blobs(token, parent):
+    if not parent:
+        return {}, set()
+    tree = github_api(
+        f"repos/{REPO}/git/trees/{parent}?recursive=1",
+        token,
+        tolerate=(404,),
+    )
+    if tree.get("_status") == 404:
+        return {}, set()
+    by_path = {}
+    by_sha = set()
+    for item in tree.get("tree") or []:
+        if item.get("type") != "blob":
+            continue
+        path = item.get("path")
+        sha = item.get("sha")
+        if path and sha:
+            by_path[path] = sha
+            by_sha.add(sha)
+    return by_path, by_sha
+
+
 def write_text_even_if_hidden(path, text, encoding="utf-8"):
     path = pathlib.Path(path)
     if os.name == "nt" and path.exists():
@@ -143,25 +172,49 @@ def publish(token):
     github_api(f"repos/{REPO}", token)
     ref = github_api(f"repos/{REPO}/git/ref/heads/gh-pages", token, tolerate=(404,))
     parent = None if ref.get("_status") == 404 else ref.get("object", {}).get("sha")
+    existing_by_path, existing_shas = existing_tree_blobs(token, parent)
     entries = []
     files = approved_files()
     if not files:
         raise RuntimeError("No site/data/reports files found.")
+    uploaded = 0
+    reused = 0
+    blob_cache = {}
     for rel, path in files:
+        data = path.read_bytes()
+        content_sha = git_blob_sha(data)
+        if existing_by_path.get(rel) == content_sha or content_sha in existing_shas:
+            sha = content_sha
+            reused += 1
+        elif content_sha in blob_cache:
+            sha = blob_cache[content_sha]
+            reused += 1
+        else:
+            blob = github_api(
+                f"repos/{REPO}/git/blobs",
+                token,
+                method="POST",
+                data={"content": base64.b64encode(data).decode(), "encoding": "base64"},
+            )
+            sha = blob["sha"]
+            blob_cache[content_sha] = sha
+            existing_shas.add(sha)
+            uploaded += 1
+        entries.append({"path": rel, "mode": "100644", "type": "blob", "sha": sha})
+    empty_sha = git_blob_sha(b"")
+    if existing_by_path.get(".nojekyll") == empty_sha or empty_sha in existing_shas:
+        nojekyll_sha = empty_sha
+        reused += 1
+    else:
         blob = github_api(
             f"repos/{REPO}/git/blobs",
             token,
             method="POST",
-            data={"content": base64.b64encode(path.read_bytes()).decode(), "encoding": "base64"},
+            data={"content": "", "encoding": "utf-8"},
         )
-        entries.append({"path": rel, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    blob = github_api(
-        f"repos/{REPO}/git/blobs",
-        token,
-        method="POST",
-        data={"content": "", "encoding": "utf-8"},
-    )
-    entries.append({"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": blob["sha"]})
+        nojekyll_sha = blob["sha"]
+        uploaded += 1
+    entries.append({"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha})
     tree = github_api(f"repos/{REPO}/git/trees", token, method="POST", data={"tree": entries})
     commit_data = {
         "message": "Fix Tiantianle mobile site homepage and data",
@@ -198,7 +251,7 @@ def publish(token):
         data={"source": {"branch": "gh-pages", "path": "/"}},
         tolerate=(404, 409),
     )
-    return commit["sha"], len(files)
+    return commit["sha"], len(files), uploaded, reused
 
 
 def main():
@@ -209,7 +262,7 @@ def main():
         token = device_token()
         token_path.write_text(token, encoding="utf-8")
     try:
-        sha, count = publish(token)
+        sha, count, uploaded, reused = publish(token)
     except RuntimeError as exc:
         message = str(exc)
         if "401" not in message and "Bad credentials" not in message:
@@ -218,11 +271,12 @@ def main():
             token_path.unlink()
         token = device_token()
         token_path.write_text(token, encoding="utf-8")
-        sha, count = publish(token)
+        sha, count, uploaded, reused = publish(token)
     url = "https://pingshen670822.github.io/tiantianle-cloud-system/"
     write_text_even_if_hidden(BASE / "tiantianle-mobile-cloud-url.txt", url + "\n", encoding="ascii")
     print("")
     print(f"已發布 {count} 個手機雲端檔案。")
+    print(f"本次實際上傳 {uploaded} 個，沿用未變更 {reused} 個。")
     print("雲端版本: " + sha)
     print("手機網址: " + url)
 

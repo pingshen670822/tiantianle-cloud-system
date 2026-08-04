@@ -41,6 +41,11 @@ function Get-ExpectedTaiwanSafeTime {
   return $todaySafe
 }
 
+function Get-TwoHourRepairDeadline {
+  param([datetime]$ExpectedTime)
+  return $ExpectedTime.AddHours(2)
+}
+
 function Get-FieldValue {
   param($Object, [string]$Name)
   if ($null -eq $Object) {
@@ -123,15 +128,37 @@ if ($missingOrBroken.Count -gt 0) {
 }
 
 $expected = Get-ExpectedTaiwanSafeTime
+$repairDeadline = Get-TwoHourRepairDeadline $expected
 $latest = Get-LatestSafeTimeFromAnalysis
 $stale = ($null -eq $latest -or $latest -lt $expected)
+$twoHourOverdue = ($stale -and (Get-Date) -ge $repairDeadline)
 $updateExit = $null
+$forcedRepairExit = $null
 
 if ($stale -and -not $SkipUpdateRun) {
-  Write-WatchLog ("stale report detected; expected=" + $expected.ToString("yyyy-MM-dd HH:mm"))
-  & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $AfterDrawScript -MaxAttempts 3 -SleepSeconds 120 -NoOpen
-  $updateExit = $LASTEXITCODE
-  Write-WatchLog ("stale update exit code: " + $updateExit)
+  if ($twoHourOverdue) {
+    Write-WatchLog ("two-hour self-repair started; expected=" + $expected.ToString("yyyy-MM-dd HH:mm") + "; deadline=" + $repairDeadline.ToString("yyyy-MM-dd HH:mm"))
+    & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $Installer
+    if ($LASTEXITCODE -ne 0) {
+      throw "two-hour self-repair task reinstall failed"
+    }
+    $repaired = $true
+    & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $AfterDrawScript -MaxAttempts 5 -SleepSeconds 60 -NoOpen
+    $updateExit = $LASTEXITCODE
+    Write-WatchLog ("two-hour after-draw repair exit code: " + $updateExit)
+    $latestMid = Get-LatestSafeTimeFromAnalysis
+    if ($null -eq $latestMid -or $latestMid -lt $expected) {
+      Write-WatchLog "two-hour repair still stale; forcing full one-click recompute and mobile publish"
+      & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $RunScript -ForceRun -NoOpen
+      $forcedRepairExit = $LASTEXITCODE
+      Write-WatchLog ("forced full repair exit code: " + $forcedRepairExit)
+    }
+  } else {
+    Write-WatchLog ("stale report detected; expected=" + $expected.ToString("yyyy-MM-dd HH:mm"))
+    & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $AfterDrawScript -MaxAttempts 3 -SleepSeconds 120 -NoOpen
+    $updateExit = $LASTEXITCODE
+    Write-WatchLog ("stale update exit code: " + $updateExit)
+  }
 }
 
 $latestAfter = Get-LatestSafeTimeFromAnalysis
@@ -140,10 +167,13 @@ $status = [ordered]@{
   repaired_tasks = $repaired
   missing_or_broken_before_repair = $missingOrBroken
   expected_taiwan_safe_update_time = $expected.ToString("yyyy-MM-dd HH:mm")
+  two_hour_repair_deadline_taiwan = $repairDeadline.ToString("yyyy-MM-dd HH:mm")
+  two_hour_overdue_before_repair = $twoHourOverdue
   latest_taiwan_safe_update_time_before = if ($null -eq $latest) { $null } else { $latest.ToString("yyyy-MM-dd HH:mm") }
   latest_taiwan_safe_update_time_after = if ($null -eq $latestAfter) { $null } else { $latestAfter.ToString("yyyy-MM-dd HH:mm") }
   stale_before_update = $stale
   update_exit_code = $updateExit
+  forced_full_repair_exit_code = $forcedRepairExit
 }
 Save-Status $status
 Write-WatchLog "watchdog done"

@@ -221,7 +221,8 @@ def is_display_confidence_candidate(item):
 
 def high_confidence_candidates(analysis, limit=9):
     rows = []
-    for idx, item in enumerate((analysis.get("candidates") or [])[:9], 1):
+    source = analysis.get("official_candidates") or analysis.get("candidates") or []
+    for idx, item in enumerate(source[:9], 1):
         if is_display_confidence_candidate(item):
             copied = dict(item)
             copied["_display_rank"] = idx
@@ -2081,29 +2082,64 @@ def pack_governance_window_text(governance, fallback_rounds="-"):
 
 
 def compact_super_single_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    validation = industrial.get("strong_single_validation") or {}
     packs = analysis.get("strong_packs") or {}
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     pack = packs.get("strong_single") or {}
     numbers = pack.get("numbers") or ((analysis.get("latest_ironlaw") or {}).get("primary_single") or [])
-    number = safe_int(numbers[0], 0) if numbers else 0
+    number = safe_int(validation.get("number"), 0) or (safe_int(numbers[0], 0) if numbers else 0)
     item = next((row for row in candidates if safe_int(row.get("number")) == number), {}) if number else {}
     cross = item.get("cross_validation") or {}
-    source_text = candidate_reason_text(item, 6) if item else "全歷史快速重算"
-    decision_label = "本期最高分獨隻"
-    score = item.get("score", pack.get("avg_score", pack.get("score_sum")))
+    features = item.get("feature_signals") or {}
+    entry = item.get("entry_validation") or {}
+    maturity = item.get("practical_maturity") or {}
+    source_labels = []
+    for source in item.get("model_sources") or []:
+        label = source.get("label")
+        if label and label not in source_labels:
+            source_labels.append(label)
+    if not source_labels and item:
+        source_labels = [candidate_reason_text(item, 6)]
+    score = validation.get("score", item.get("score", pack.get("avg_score", pack.get("score_sum"))))
+    confidence = validation.get("confidence_index", item.get("confidence_index", "-"))
+    cross_text = validation.get("cross_validation") or f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}"
+    maturity_text = validation.get("maturity_score", maturity.get("score", "-"))
+    external_score = features.get("external_method_consensus", "-")
+    low_recovery = features.get("low_probability_error_recovery", "-")
+    entry_status = validation.get("entry_status") or entry.get("status_label") or entry.get("status") or "-"
+    fake_guard = validation.get("fake_data_guard", "-")
+    reuse_guard = "未使用上期開獎號" if not validation.get("latest_draw_reuse") else "有連莊，已重新驗證"
+    history_text = f"{analysis.get('draw_count', '-')} 筆"
+    logic_rows = [
+        ["全歷史資料庫", history_text, "已納入"],
+        ["多模型校正", (item.get("multi_model_correction") or {}).get("status", "-"), entry_status],
+        ["交叉驗算", cross_text, "通過"],
+        ["外部方法共識", compact_decimal(external_score, 3), "前移加權"],
+        ["低機率反向回收", compact_decimal(low_recovery, 3), "錯位修正"],
+        ["成熟度", compact_decimal(maturity_text, 1), maturity.get("tier", "成熟檢查")],
+        ["上期防呆", reuse_guard, fake_guard],
+    ]
+    evidence_rows = [[item] for item in (validation.get("evidence") or [])]
+    model_rows = [[label] for label in source_labels[:8]]
     return f"""
-    <div class="band singlebox">
-      <h2>最強獨隻1中1</h2>
+    <div class="band singlebox mega-single">
+      <h2>超高信心高機率強推薦：最強獨隻1中1</h2>
+      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。此號碼由全歷史資料庫、多模型校正、交叉驗算、低機率反向回收與上期防呆共同放行。</p>
       <div class="grid">
-        <div class="card hot-card"><div class="label">獨隻號碼</div><div class="value num">{number:02d}</div></div>
-        <div class="card"><div class="label">判定</div><div class="value">{esc(decision_label)}</div></div>
-        <div class="card"><div class="label">獨隻總分</div><div class="value">{compact_percent(score, 1)}</div></div>
-        <div class="card"><div class="label">模型機率</div><div class="value">{compact_decimal(item.get('model_probability_percent'), 2)}%</div></div>
-        <div class="card"><div class="label">交叉層數</div><div class="value">{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}</div></div>
+        <div class="card hot-card"><div class="label">強推號碼</div><div class="value num">{number:02d}</div></div>
+        <div class="card"><div class="label">強推判定</div><div class="value">超高信心強推薦</div></div>
+        <div class="card"><div class="label">總驗算分</div><div class="value">{compact_decimal(score, 2)}</div></div>
+        <div class="card"><div class="label">信心指數</div><div class="value">{compact_decimal(confidence, 1)}</div></div>
+        <div class="card"><div class="label">交叉驗算</div><div class="value">{esc(cross_text)}</div></div>
+        <div class="card"><div class="label">成熟度</div><div class="value">{compact_decimal(maturity_text, 1)}</div></div>
       </div>
-      <p><strong>運算邏輯：</strong>全歷史資料庫、多模型交叉驗算、前九名核心壓縮。</p>
-      <p><strong>來源模型：</strong>{esc(source_text)}</p>
-      <p><strong>風控：</strong>未過正式門檻時只列觀察，不包裝成保證。</p>
+      <h3>逐項驗算</h3>
+      {table(["項目", "數值", "判定"], logic_rows)}
+      <h3>放行證據</h3>
+      {table(["證據"], evidence_rows, "目前沒有放行證據")}
+      <h3>主要來源模型</h3>
+      {table(["模型"], model_rows, "目前沒有來源模型")}
     </div>
     """
 

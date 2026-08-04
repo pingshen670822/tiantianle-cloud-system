@@ -200,6 +200,123 @@ def inject_mobile_panel(html):
     return html.replace("<main>", "<main>" + panel, 1)
 
 
+def mobile_open_sync_script(version):
+    script = """
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '{version}') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '{version}';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    """
+    return script.replace("{version}", version)
+
+
+def inject_mobile_open_sync(html):
+    if "TIANTIANLE_OPEN_SYNC_VERSION" in html:
+        return html
+    script = mobile_open_sync_script(build_version())
+    if "</body>" in html:
+        return html.replace("</body>", script + "</body>")
+    if "</html>" in html:
+        return html.replace("</html>", script + "</html>")
+    return html + script
+
+
+def apply_mobile_open_sync_to_site_html():
+    skip_names = {"reset.html", "清除快取.html", "offline.html", "離線頁.html"}
+    for path in SITE_DIR.rglob("*.html"):
+        if path.name in skip_names:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        updated = inject_mobile_open_sync(text)
+        if updated != text:
+            path.write_text(updated, encoding="utf-8")
+
+
 def copy_text(src, dst):
     if src.exists():
         dst.write_text(src.read_text(encoding="utf-8", errors="replace"), encoding="utf-8")
@@ -1213,6 +1330,7 @@ def main():
     write_pwa_files()
     write_install_page()
     write_alias(SITE_DIR / "install.html", "安裝手機版.html")
+    apply_mobile_open_sync_to_site_html()
     print(SITE_DIR / "index.html")
 
 

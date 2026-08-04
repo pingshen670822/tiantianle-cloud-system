@@ -3,6 +3,7 @@ import csv
 import hashlib
 import json
 import pathlib
+import re
 import sqlite3
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -15,6 +16,10 @@ DATA_DIR = ROOT / "data"
 ANALYSIS_PATH = REPORT_DIR / "latest_analysis.json"
 DB_PATH = DATA_DIR / "california_fantasy5.sqlite"
 TAIWAN = ZoneInfo("Asia/Taipei")
+OPEN_SYNC_SCRIPT_RE = re.compile(
+    r"\s*<script>\s*\(function\(\)\{\s*if \(window\.TIANTIANLE_OPEN_SYNC_VERSION.*?\}\)\(\);\s*</script>",
+    re.S,
+)
 
 
 def read_json(path):
@@ -41,6 +46,18 @@ def file_digest(path):
     if not path.exists():
         return ""
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def comparable_file_digest(path):
+    if not path.exists():
+        return ""
+    if path.suffix.lower() == ".html":
+        text = path.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
+        text = OPEN_SYNC_SCRIPT_RE.sub("", text)
+        text = re.sub(r"\s+</body>", "</body>", text)
+        text = re.sub(r"\s+</html>", "</html>", text)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return file_digest(path)
 
 
 def db_summary():
@@ -234,7 +251,7 @@ def main():
         (REPORT_DIR / "tiantianle_low_probability_avoid.html", SITE_DIR / "reports" / "tiantianle_low_probability_avoid.html", "低機率頁"),
     ]
     for left, right, label in sync_pairs:
-        if left.exists() and right.exists() and file_digest(left) != file_digest(right):
+        if left.exists() and right.exists() and comparable_file_digest(left) != comparable_file_digest(right):
             add_issue(
                 issues,
                 "手機同步",

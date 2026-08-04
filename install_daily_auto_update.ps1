@@ -41,12 +41,14 @@ $SafetyTrigger = New-ScheduledTaskTrigger -Daily -At "21:45"
 Register-ScheduledTask -TaskName $SafetyTaskName -Action $SafetyAction -Trigger $SafetyTrigger -Settings $Settings -Description "Night safety sync without opening windows." -Force | Out-Null
 
 $WatchdogAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$WatchdogScript`" -NoOpen" -WorkingDirectory $Root
-$WatchdogTrigger = New-DailyRepeatingTrigger "00:15" 180 1380
-Register-ScheduledTask -TaskName $WatchdogTaskName -Action $WatchdogAction -Trigger $WatchdogTrigger -Settings $Settings -Description "Every 3 hours, verify auto update tasks and run repair/update if the report is stale." -Force | Out-Null
+$WatchdogTriggers = @()
+$WatchdogTriggers += New-DailyRepeatingTrigger "00:15" 180 1380
+$WatchdogTriggers += New-ScheduledTaskTrigger -Daily -At "11:50"
+Register-ScheduledTask -TaskName $WatchdogTaskName -Action $WatchdogAction -Trigger $WatchdogTriggers -Settings $Settings -Description "Every 3 hours, plus two hours after Taiwan draw time, verify auto update tasks and self-repair stale reports." -Force | Out-Null
 
 Write-Host "Installed hidden auto update tasks:"
 Write-Host ("1. " + $AfterDrawTaskName + ": 09:50 every 5 minutes for 65 minutes, plus 10:55 safety")
 Write-Host ("2. " + $DeepTaskName + ": 13:00 deep recompute")
 Write-Host ("3. " + $SafetyTaskName + ": 21:45 safety sync")
-Write-Host ("4. " + $WatchdogTaskName + ": every 3 hours task repair and stale report check")
+Write-Host ("4. " + $WatchdogTaskName + ": every 3 hours, plus 11:50 two-hour self-repair check")
 

@@ -238,8 +238,22 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   }
   $PublishExitCode = 1
   for ($Attempt = 1; $Attempt -le 3; $Attempt++) {
-    & $PythonExe $PublishScript
-    $PublishExitCode = $LASTEXITCODE
+    $PublishOut = Join-Path $ReportsDir ("cloud_publish_stdout_attempt_" + $Attempt + ".log")
+    $PublishErr = Join-Path $ReportsDir ("cloud_publish_stderr_attempt_" + $Attempt + ".log")
+    $Process = Start-Process -FilePath $PythonExe -ArgumentList @($PublishScript) -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru -RedirectStandardOutput $PublishOut -RedirectStandardError $PublishErr
+    if (-not $Process.WaitForExit(420000)) {
+      Stop-Process -Id $Process.Id -Force
+      $PublishExitCode = 124
+      Step ("cloud publish timeout on attempt " + $Attempt)
+    } else {
+      $PublishExitCode = $Process.ExitCode
+    }
+    if (Test-Path -LiteralPath $PublishOut) {
+      Get-Content -LiteralPath $PublishOut -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 6 | ForEach-Object { Step ("cloud publish: " + $_) }
+    }
+    if (Test-Path -LiteralPath $PublishErr) {
+      Get-Content -LiteralPath $PublishErr -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 6 | ForEach-Object { Step ("cloud publish error: " + $_) }
+    }
     if ($PublishExitCode -eq 0) { break }
     Step ("cloud publish retry " + $Attempt + "/3 after exit " + $PublishExitCode)
     Start-Sleep -Seconds (5 * $Attempt)
