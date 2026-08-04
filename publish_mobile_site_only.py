@@ -149,6 +149,7 @@ def write_text_even_if_hidden(path, text, encoding="utf-8"):
 
 def approved_files():
     files = []
+    seen = set()
     for root_name in ("site", "data", "reports"):
         root = BASE / root_name
         if not root.exists():
@@ -164,6 +165,9 @@ def approved_files():
             rel = path.relative_to(root).as_posix()
             if root_name != "site":
                 rel = (pathlib.Path(root_name) / rel).as_posix()
+            if rel in seen:
+                continue
+            seen.add(rel)
             files.append((rel, path))
     return files
 

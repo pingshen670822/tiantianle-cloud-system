@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-08-04T08:19:09+08:00",
+  "checked_at_taiwan": "2026-08-04T08:23:43+08:00",
   "status": "同步",
   "local": {
     "generated_at_taiwan": "2026-08-04T08:16:23+08:00",
@@ -86,7 +86,7 @@
     "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
   },
   "remote": {
-    "generated_at_taiwan": "2026-08-04T07:41:08+08:00",
+    "generated_at_taiwan": "2026-08-04T08:16:23+08:00",
     "latest_draw_date": "2026-08-02",
     "latest_numbers": [
       2,
