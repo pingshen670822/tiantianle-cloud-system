@@ -56,7 +56,7 @@ def cloud_links():
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip() or DEFAULT_CLOUD_REPO or repo_from_git_remote()
     if "/" not in repo:
         repo = DEFAULT_CLOUD_REPO
-    workflow_url = f"https://github.com/{repo}/actions/workflows/daily-update.yml"
+    workflow_url = f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-auto-update.yml"
     owner, name = repo.split("/", 1)
     page_url = f"https://{owner}.github.io/{name}/"
     saved_url_path = ROOT / "tiantianle-mobile-cloud-url.txt"

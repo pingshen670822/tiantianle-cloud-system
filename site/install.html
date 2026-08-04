@@ -25,7 +25,7 @@ body{padding-bottom:82px}
     
 <section class="band">
 <button id="installBtn" class="btn">一鍵啟動天天樂雲端版</button>
-<a class="btn blue" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">登入雲端帳號後立即雲端更新</a>
+<a class="btn blue" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">登入雲端帳號後立即雲端更新</a>
 </section>
 <section class="band"><h2>真正手機網址</h2><p class="url">雲端網址已設定</p><p>手機安裝必須使用雲端網址，不是電腦本機路徑。</p></section>
 <section class="band">
@@ -51,8 +51,8 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worke
 
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260804081626') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260804081626';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260804144250') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260804144250';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;

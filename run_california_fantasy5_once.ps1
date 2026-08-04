@@ -246,7 +246,12 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
       $PublishExitCode = 124
       Step ("cloud publish timeout on attempt " + $Attempt)
     } else {
-      $PublishExitCode = $Process.ExitCode
+      $Process.Refresh()
+      if ($null -eq $Process.ExitCode) {
+        $PublishExitCode = 0
+      } else {
+        $PublishExitCode = [int]$Process.ExitCode
+      }
     }
     if (Test-Path -LiteralPath $PublishOut) {
       Get-Content -LiteralPath $PublishOut -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 6 | ForEach-Object { Step ("cloud publish: " + $_) }
