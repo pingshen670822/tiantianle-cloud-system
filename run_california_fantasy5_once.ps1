@@ -91,6 +91,12 @@ if (Test-Path -LiteralPath $UserCsv) {
 }
 
 if (-not $FastRefresh) {
+  $NoCacheStamp = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
+  $FetchHeaders = @{
+    "Cache-Control" = "no-cache"
+    "Pragma" = "no-cache"
+    "User-Agent" = "Mozilla/5.0 TiantianleIronlaw/20260805"
+  }
   $LatestPages = @(
     @{ Name = "calottery_official.html"; Url = 'https://www.calottery.com/en/draw-games/fantasy-5' },
     @{ Name = "lotto8_latest.html"; Url = 'https://www.lotto-8.com/usa/listltoFT5.asp?indexpage=1&orderby=new' },
@@ -100,11 +106,45 @@ if (-not $FastRefresh) {
     @{ Name = "lotterynet_year.html"; Url = ('https://www.lottery.net/california/fantasy-5/numbers/' + (Get-Date).Year) }
   )
   foreach ($Page in $LatestPages) {
+    $OutFile = Join-Path $CacheDir $Page.Name
+    $TempFile = $OutFile + ".tmp"
+    $PageUrl = $Page.Url
+    if ($PageUrl.Contains("?")) {
+      $PageUrl = $PageUrl + "&tiantianle_nocache=" + $NoCacheStamp
+    } else {
+      $PageUrl = $PageUrl + "?tiantianle_nocache=" + $NoCacheStamp
+    }
+    $Fetched = $false
     try {
-      Invoke-WebRequest -Uri $Page.Url -UseBasicParsing -TimeoutSec 15 -OutFile (Join-Path $CacheDir $Page.Name)
-      Step ("cache updated: " + $Page.Name)
+      for ($FetchAttempt = 1; $FetchAttempt -le 3; $FetchAttempt++) {
+        try {
+          if (Test-Path -LiteralPath $TempFile) {
+            Remove-Item -LiteralPath $TempFile -Force
+          }
+          Invoke-WebRequest -Uri $PageUrl -Headers $FetchHeaders -UseBasicParsing -TimeoutSec 45 -OutFile $TempFile
+          $TempItem = Get-Item -LiteralPath $TempFile -Force
+          if ($TempItem.Length -lt 500) {
+            throw "download too small"
+          }
+          Move-Item -LiteralPath $TempFile -Destination $OutFile -Force
+          Step ("cache updated: " + $Page.Name)
+          $Fetched = $true
+          break
+        } catch {
+          if ($FetchAttempt -ge 3) {
+            throw
+          }
+          Start-Sleep -Seconds (3 * $FetchAttempt)
+        }
+      }
     } catch {
-      Step ("cache skipped: " + $Page.Name)
+      if (Test-Path -LiteralPath $TempFile) {
+        Remove-Item -LiteralPath $TempFile -Force
+      }
+      Step ("cache failed: " + $Page.Name + " / " + $_.Exception.Message)
+    }
+    if (-not $Fetched -and -not (Test-Path -LiteralPath $OutFile)) {
+      Step ("cache unavailable: " + $Page.Name)
     }
   }
 }
