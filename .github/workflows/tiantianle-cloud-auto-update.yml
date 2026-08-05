@@ -35,8 +35,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: tiantianle-cloud-auto-update-main
+  cancel-in-progress: true
 
 jobs:
   update:
@@ -259,11 +259,31 @@ jobs:
           python verify_mobile_sync.py --local-only
       - name: Commit updated data
         run: |
+          set -e
           git config user.name "tiantianle automation"
           git config user.email "actions@users.noreply.github.com"
           git add data reports site
+          if git diff --cached --quiet; then
+            echo "No generated data changes to commit"
+            exit 0
+          fi
+          git stash push --staged -m "tiantianle generated data before rebase" || true
+          git pull --rebase origin main
+          if git stash list | grep -q "tiantianle generated data before rebase"; then
+            git stash pop
+          fi
+          git add data reports site
           git diff --cached --quiet || git commit -m "Update Tiantianle data and reports"
-          git push
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rejected; refresh remote and retry ${attempt}/5"
+            git pull --rebase origin main
+            sleep $((attempt * 5))
+          done
+          echo "git push failed after retries"
+          exit 1
       - uses: actions/configure-pages@v5
         with:
           enablement: true

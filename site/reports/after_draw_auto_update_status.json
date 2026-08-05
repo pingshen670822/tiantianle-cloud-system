@@ -1,43 +1,43 @@
 ﻿{
-    "archived_at_taiwan":  "2026-08-04T14:44:25+08:00",
-    "expected_taiwan_safe_update_time":  "2026-08-04 09:50",
-    "latest_draw_date":  "2026-08-03",
+    "archived_at_taiwan":  "2026-07-21T10:58:46+08:00",
+    "expected_taiwan_safe_update_time":  "2026-07-21 09:50",
+    "latest_draw_date":  "2026-07-20",
     "latest_numbers":  [
-                           8,
-                           16,
-                           19,
-                           24,
-                           32
+                           14,
+                           27,
+                           29,
+                           31,
+                           33
                        ],
-    "latest_taiwan_safe_update_time":  "2026-08-04 09:50",
-    "next_target_draw_date":  "2026-08-04",
-    "next_target_taiwan_time":  "2026-08-05 09:50",
+    "latest_taiwan_safe_update_time":  "2026-07-21 09:50",
+    "next_target_draw_date":  "2026-07-21",
+    "next_target_taiwan_time":  "2026-07-22 09:50",
     "next_top9":  [
-                      20,
-                      26,
+                      28,
+                      21,
+                      34,
+                      12,
+                      30,
                       2,
-                      3,
-                      9,
-                      37,
-                      5,
-                      29,
-                      25
+                      36,
+                      11,
+                      4
                   ],
-    "last_review_actual_date":  "2026-08-03",
-    "last_review_based_on_date":  "2026-08-02",
+    "last_review_actual_date":  "2026-07-20",
+    "last_review_based_on_date":  "2026-07-19",
     "last_review_top5_hits":  0,
-    "last_review_top9_hits":  1,
+    "last_review_top9_hits":  0,
     "last_review_top10_hits":  1,
     "last_review_top15_hits":  1,
     "last_review_top9_hit_numbers":  [
-                                         32
+
                                      ],
     "last_review_actual_numbers":  [
-                                       8,
-                                       16,
-                                       19,
-                                       24,
-                                       32
+                                       14,
+                                       27,
+                                       29,
+                                       31,
+                                       33
                                    ],
     "recalculation_status":  "已重新運算",
     "every_draw_recomputed":  true,

@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-05T09:05:18+08:00",
+  "checked_at_taiwan": "2026-08-04T14:45:21+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-05T09:05:15+08:00",
+    "generated_at_taiwan": "2026-08-04T14:42:47+08:00",
     "latest_draw_date": "2026-08-03",
     "latest_numbers": [
       8,
@@ -21,8 +21,8 @@
       9,
       37,
       5,
-      11,
-      27
+      29,
+      25
     ],
     "top15": [
       20,
@@ -32,19 +32,19 @@
       9,
       37,
       5,
-      11,
-      27,
-      23,
       29,
       25,
-      35,
+      23,
       7,
-      18
+      11,
+      27,
+      18,
+      22
     ],
     "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-05T09:05:15+08:00",
+    "generated_at_taiwan": "2026-08-04T14:42:47+08:00",
     "latest_draw_date": "2026-08-03",
     "latest_numbers": [
       8,
@@ -63,8 +63,8 @@
       9,
       37,
       5,
-      11,
-      27
+      29,
+      25
     ],
     "top15": [
       20,
@@ -74,18 +74,59 @@
       9,
       37,
       5,
-      11,
-      27,
-      23,
       29,
       25,
-      35,
+      23,
       7,
-      18
+      11,
+      27,
+      18,
+      22
     ],
     "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
   },
-  "remote": {},
+  "remote": {
+    "generated_at_taiwan": "2026-08-04T14:42:47+08:00",
+    "latest_draw_date": "2026-08-03",
+    "latest_numbers": [
+      8,
+      16,
+      19,
+      24,
+      32
+    ],
+    "target_draw_date": "2026-08-04",
+    "target_taiwan_time": "2026-08-05 09:50",
+    "top9": [
+      20,
+      26,
+      2,
+      3,
+      9,
+      37,
+      5,
+      29,
+      25
+    ],
+    "top15": [
+      20,
+      26,
+      2,
+      3,
+      9,
+      37,
+      5,
+      29,
+      25,
+      23,
+      7,
+      11,
+      27,
+      18,
+      22
+    ],
+    "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
+  },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
   "mismatches": []
