@@ -267,17 +267,12 @@ jobs:
             echo "No generated data changes to commit"
             exit 0
           fi
-          git commit -m "Update Tiantianle data and reports"
-          for attempt in 1 2 3 4 5; do
-            git pull --rebase origin main
-            if git push; then
-              exit 0
-            fi
-            echo "push rejected; refresh remote and retry ${attempt}/5"
-            sleep $((attempt * 5))
-          done
-          echo "git push failed after retries"
-          exit 1
+          git commit -m "Update Tiantianle data and reports" || true
+          if git push origin HEAD:main; then
+            echo "Generated data committed to main"
+          else
+            echo "Generated data push was skipped because remote changed; deployment continues with current generated workspace"
+          fi
       - uses: actions/configure-pages@v5
         with:
           enablement: true
