@@ -284,7 +284,15 @@ jobs:
           mkdir -p public_site/data public_site/reports
           cp -a site/. public_site/
           cp -a data/. public_site/data/
-          cp -a reports/. public_site/reports/
+          while IFS= read -r -d '' src; do
+            rel="${src#reports/}"
+            dest="public_site/reports/${rel}"
+            if [ -e "$dest" ]; then
+              continue
+            fi
+            mkdir -p "$(dirname "$dest")"
+            cp "$src" "$dest"
+          done < <(find reports -type f -print0)
           touch public_site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
