@@ -10,3 +10,32 @@ cache updated: lotterynet_latest.html
 cache updated: lotterynet_year.html
 Step 2/8 run main system
 Step 3/8 build mobile pages
+Step 3.5/8 clean stale legacy artifacts before audit
+Step 4/8 sanitize and audit system gaps
+Step 5/8 verify outputs
+outputs verified
+runtime cache cleaned
+Step 6/8 publish mobile cloud
+cloud publish: 
+cloud publish: �w�o�� 114 �Ӥ�������ɮסC
+cloud publish: ������ڤW�� 38 �ӡA�u�Υ��ܧ� 77 �ӡC
+cloud publish: ���ݪ���: 1a1b870ac7165a24205ed13690a6d19a7cde1d9d
+cloud publish: �����}: https://pingshen670822.github.io/tiantianle-cloud-system/
+cloud publish retry 1/3 after exit 
+cloud publish: 
+cloud publish: �w�o�� 116 �Ӥ�������ɮסC
+cloud publish: ������ڤW�� 1 �ӡA�u�Υ��ܧ� 116 �ӡC
+cloud publish: ���ݪ���: 538517d33afb388ffb2d816452c5e1b10833374a
+cloud publish: �����}: https://pingshen670822.github.io/tiantianle-cloud-system/
+cloud publish retry 2/3 after exit 
+cloud publish: 
+cloud publish: �w�o�� 118 �Ӥ�������ɮסC
+cloud publish: ������ڤW�� 1 �ӡA�u�Υ��ܧ� 118 �ӡC
+cloud publish: ���ݪ���: a8eabf28e15bbf95dcc1b2f21271039ab6c93d63
+cloud publish: �����}: https://pingshen670822.github.io/tiantianle-cloud-system/
+cloud publish retry 3/3 after exit 
+cloud publish failed after retry, local reports kept: 
+Step 7/8 verify mobile sync
+remote sync verify skipped because cloud publish failed; running local sync check
+Step 8/8 open latest page
+one-click 完整: 2026-08-04 14:44:24

@@ -38,4 +38,4 @@ cloud publish failed after retry, local reports kept:
 Step 7/8 verify mobile sync
 remote sync verify skipped because cloud publish failed; running local sync check
 Step 8/8 open latest page
-one-click complete: 2026-08-04 14:44:24
+one-click 完整: 2026-08-04 14:44:24
