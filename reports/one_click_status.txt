@@ -1,0 +1,27 @@
+﻿one-click start: 2026-08-06 08:19:49
+Force run: bypass freshness skip and recompute full model
+Step 1/8 prepare data and latest cache
+history csv synced
+cache failed: calottery_正式.html / 遠端伺服器傳回一個錯誤: (403) 禁止。
+cache unavailable: calottery_正式.html
+cache updated: lotto8_latest.html
+cache updated: lottolyzer_latest.html
+cache updated: lotteryusa_latest.html
+cache updated: lotterynet_latest.html
+cache updated: lotterynet_year.html
+Step 2/8 run main system
+Step 3/8 build mobile pages
+Step 3.5/8 clean stale legacy artifacts before audit
+Step 4/8 sanitize and audit system gaps
+Step 5/8 verify outputs
+outputs verified
+runtime cache cleaned
+Step 6/8 publish mobile cloud
+cloud publish error:   File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 1392, in https_open
+cloud publish error:     return self.do_open(http.client.HTTPSConnection, req,
+cloud publish error:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cloud publish error:   File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 1347, in do_open
+cloud publish error:     raise URLError(err)
+cloud publish error: urllib.error.URLError: <urlopen error [WinError 10060] �s�u���ե��ѡA�]���s�u��H���@�q�ɶ��å����T�^���A�άO�s�u�إߥ��ѡA�]���s�u���D���L�k�^���C>
+cloud mobile site published
+Step 7/8 verify mobile sync

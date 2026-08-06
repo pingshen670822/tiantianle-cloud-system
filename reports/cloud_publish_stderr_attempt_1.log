@@ -1,0 +1,59 @@
+Traceback (most recent call last):
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1358, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1404, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1353, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1113, in _send_output
+    self.send(msg)
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1057, in send
+    self.connect()
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1492, in connect
+    super().connect()
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\http\client.py", line 1023, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\socket.py", line 850, in create_connection
+    sock.connect(sa)
+TimeoutError: [WinError 10060] 連線嘗試失敗，因為連線對象有一段時間並未正確回應，或是連線建立失敗，因為連線的主機無法回應。
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\MSI\Documents\Codex\2026-06-05\539\天天樂鐵律專用版-20260721-更新工作區\publish_mobile_site_only.py", line 289, in <module>
+    main()
+  File "C:\Users\MSI\Documents\Codex\2026-06-05\539\天天樂鐵律專用版-20260721-更新工作區\publish_mobile_site_only.py", line 269, in main
+    sha, count, uploaded, reused = publish(token)
+                                   ^^^^^^^^^^^^^^
+  File "C:\Users\MSI\Documents\Codex\2026-06-05\539\天天樂鐵律專用版-20260721-更新工作區\publish_mobile_site_only.py", line 197, in publish
+    blob = github_api(
+           ^^^^^^^^^^^
+  File "C:\Users\MSI\Documents\Codex\2026-06-05\539\天天樂鐵律專用版-20260721-更新工作區\publish_mobile_site_only.py", line 97, in github_api
+    return request_json(
+           ^^^^^^^^^^^^^
+  File "C:\Users\MSI\Documents\Codex\2026-06-05\539\天天樂鐵律專用版-20260721-更新工作區\publish_mobile_site_only.py", line 36, in request_json
+    raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\urllib\request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [WinError 10060] 連線嘗試失敗，因為連線對象有一段時間並未正確回應，或是連線建立失敗，因為連線的主機無法回應。>
