@@ -356,7 +356,7 @@ def ultra_precision_recommendations(analysis):
         "two": best_combo(2),
         "three": best_combo(3),
         "ranked": scored,
-        "policy": "Top9-only ultra precision second pass; no Top10-15 high confidence promotion",
+        "policy": "前九專用超精算二次檢查；第十至十五名不得升格為高信心",
     }
 
 
@@ -670,7 +670,7 @@ def actual_review_rows(snapshot):
     rows = []
     for number in snapshot.get("actual_numbers", []):
         r = rank.get(number)
-        status = u("\\u5df2\\u9032Top15") if r and r <= 15 else (u("Top15\\u5916") if r else u("\\u672a\\u5165\\u699c"))
+        status = u("\\u5df2\\u9032\\u524d\\u5341\\u4e94") if r and r <= 15 else (u("\\u524d\\u5341\\u4e94\\u5916") if r else u("\\u672a\\u5165\\u699c"))
         explain = u("\\u8a72\\u865f\\u6709\\u88ab\\u6a21\\u578b\\u6355\\u6349\\uff0c\\u5f8c\\u7e8c\\u6aa2\\u67e5\\u6392\\u540d\\u8207\\u5f37\\u724c\\u914d\\u7f6e") if r else u("\\u5b8c\\u5168\\u6f0f\\u6293\\uff0c\\u9700\\u56de\\u67e5\\u6b0a\\u91cd\\u8207\\u724c\\u578b")
         rows.append([red(number), status, r or "-", esc(u("\\u3001").join(reason.get(number, [])) or explain)])
     return rows
@@ -979,12 +979,12 @@ def build_history_html(items):
             u("\\u72c0\\u614b"),
             u("\\u4f9d\\u64da\\u958b\\u734e\\u65e5"),
             u("\\u5be6\\u969b\\u958b\\u734e\\u65e5"),
-            u("\\u7576\\u671fTop10"),
+            u("\\u7576\\u671f\\u524d\\u5341"),
             u("\\u5be6\\u969b\\u958b\\u734e\\u865f"),
-            u("Top10\\u547d\\u4e2d\\u865f"),
-            "Top5",
-            "Top10",
-            "Top15",
+            u("\\u524d\\u5341\\u547d\\u4e2d\\u865f"),
+            u("\\u524d\\u4e94"),
+            u("\\u524d\\u5341"),
+            u("\\u524d\\u5341\\u4e94"),
             u("\\u5efa\\u7acb\\u6642\\u9593"),
         ],
         rows,
@@ -1059,21 +1059,21 @@ def single_precision_rows(analysis):
         [
             u("\\u56de\\u6e2c"),
             f"{backtest.get('rounds', 0)} {u('\\u671f\\u6efe\\u52d5')}",
-            f"Top10 {backtest.get('top10_avg_hits', 0)} / edge {release.get('actual_backtest_edge', 0)}",
+            f"{u('\\u524d\\u5341')} {backtest.get('top10_avg_hits', 0)} / {u('\\u512a\\u52e2')} {release.get('actual_backtest_edge', 0)}",
             esc(release.get("status", "")),
             u("\\u672a\\u904e\\u9580\\u6abb\\u53ea\\u5217\\u89c0\\u5bdf"),
         ],
         [
             u("\\u4ea4\\u53c9\\u6bd4\\u5c0d"),
             esc(redundant.get("status", "")),
-            f"Top10 {u('\\u91cd\\u758a')} {metric_count(redundant.get('overlap', []))} / Jaccard {redundant.get('jaccard', 0)}",
+            f"{u('\\u524d\\u5341')} {u('\\u91cd\\u758a')} {metric_count(redundant.get('overlap', []))} / {u('\\u76f8\\u4f3c\\u5ea6')} {redundant.get('jaccard', 0)}",
             u("\\u5df2\\u57f7\\u884c\\u96d9\\u901a\\u9053\\u6bd4\\u5c0d"),
             u("\\u901a\\u9053\\u5206\\u6b67\\u6642\\u7981\\u6b62\\u653e\\u5927\\u4fe1\\u5fc3"),
         ],
         [
             u("\\u518d\\u6bd4\\u5c0d"),
             u("\\u8207\\u4e0a\\u6b21\\u9810\\u6e2c\\u91cd\\u8907\\u5b88\\u9580"),
-            f"Top10 {metric_count(prev.get('current_top10_overlap', 0))} / Top15 {metric_count(prev.get('current_top15_overlap', 0))}",
+            f"{u('\\u524d\\u5341')} {metric_count(prev.get('current_top10_overlap', 0))} / {u('\\u524d\\u5341\\u4e94')} {metric_count(prev.get('current_top15_overlap', 0))}",
             u("\\u5df2\\u9632\\u6b62\\u76f4\\u63a5\\u62ff\\u4e0a\\u671f\\u7576\\u672c\\u671f"),
             u("\\u5b8c\\u6210\\u4e8c\\u6b21\\u5c0d\\u6bd4\\u5f8c\\u624d\\u5217\\u5165\\u7368\\u652f\\u5340"),
         ],
@@ -1277,9 +1277,9 @@ def rank_calibration_rows(analysis):
     backtest = industrial_backtest(analysis)
     candidates = analysis.get("candidates") or []
     return [
-        ["Top1-5", len(candidates[:5]), fmt_numbers([x.get("number") for x in candidates[:5]]), backtest.get("top10_avg_hits", "-"), u("\\u6301\\u7e8c\\u89c0\\u5bdf")],
-        ["Top6-9", len(candidates[5:9]), fmt_numbers([x.get("number") for x in candidates[5:9]]), backtest.get("random_top10_expectation", "-"), u("\\u524d9\\u6838\\u5fc3\\u58d3\\u7e2e")],
-        ["Top10-15", len(candidates[9:15]), fmt_numbers([x.get("number") for x in candidates[9:15]]), backtest.get("top15_avg_hits", "-"), u("\\u5099\\u67e5\\uff0c\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3")],
+        [u("\\u7b2c1\\u81f3\\u7b2c5"), len(candidates[:5]), fmt_numbers([x.get("number") for x in candidates[:5]]), backtest.get("top10_avg_hits", "-"), u("\\u6301\\u7e8c\\u89c0\\u5bdf")],
+        [u("\\u7b2c6\\u81f3\\u7b2c9"), len(candidates[5:9]), fmt_numbers([x.get("number") for x in candidates[5:9]]), backtest.get("random_top10_expectation", "-"), u("\\u524d9\\u6838\\u5fc3\\u58d3\\u7e2e")],
+        [u("\\u7b2c10\\u81f3\\u7b2c15"), len(candidates[9:15]), fmt_numbers([x.get("number") for x in candidates[9:15]]), backtest.get("top15_avg_hits", "-"), u("\\u5099\\u67e5\\uff0c\\u4e0d\\u5217\\u9ad8\\u4fe1\\u5fc3")],
     ]
 
 
@@ -1290,7 +1290,7 @@ def rolling_adjustment_rows(analysis):
     if summary:
         rows.append([
             u("\\u8fd15\\u671f\\u6efe\\u52d5"),
-            f"Top5/Top10/Top15 {summary.get('avg_top5_hits', 0)}/{summary.get('avg_top10_hits', 0)}/{summary.get('avg_top15_hits', 0)}",
+            f"{u('\\u524d\\u4e94')}/{u('\\u524d\\u5341')}/{u('\\u524d\\u5341\\u4e94')} {summary.get('avg_top5_hits', 0)}/{summary.get('avg_top10_hits', 0)}/{summary.get('avg_top15_hits', 0)}",
             u("\\u4f4e\\u547d\\u4e2d\\u5340\\u9593\\u81ea\\u52d5\\u6539\\u6b0a"),
             f"{summary.get('sample_size', 0)} {u('\\u671f')}",
             review.get("severity", "-"),
@@ -1310,7 +1310,7 @@ def rolling_adjustment_rows(analysis):
         settled = review.get("last_settled") or {}
         rows.append([
             u("\\u4e0a\\u671f\\u7d50\\u7b97"),
-            f"Top5/Top10/Top15 {settled.get('top5_hits')}/{settled.get('top10_hits')}/{settled.get('top15_hits')}",
+            f"{u('\\u524d\\u4e94')}/{u('\\u524d\\u5341')}/{u('\\u524d\\u5341\\u4e94')} {settled.get('top5_hits')}/{settled.get('top10_hits')}/{settled.get('top15_hits')}",
             fmt_numbers(settled.get("actual_numbers", [])),
             settled.get("actual_period", "-"),
             u("\\u6301\\u7e8c\\u6efe\\u52d5"),
@@ -1319,7 +1319,7 @@ def rolling_adjustment_rows(analysis):
         backtest = analysis.get("backtest") or {}
         rows.append([
             u("\\u6bcf\\u65e5\\u56de\\u6e2c"),
-            f"Top10 {backtest.get('top10_avg_hits', 0)} / Top15 {backtest.get('top15_avg_hits', 0)}",
+            f"{u('\\u524d\\u5341')} {backtest.get('top10_avg_hits', 0)} / {u('\\u524d\\u5341\\u4e94')} {backtest.get('top15_avg_hits', 0)}",
             u("\\u5df2\\u4f9d\\u6700\\u8fd1\\u8f38\\u8d0f\\u7d50\\u679c\\u8abf\\u6b0a"),
             backtest.get("rounds", 0),
             u("\\u5df2\\u57f7\\u884c"),
@@ -1342,7 +1342,7 @@ def core_model_rows(analysis):
             fmt_numbers(item.get("numbers", [])),
             goal,
             f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97\\u5206')} {item.get('score', 0)}",
-            "Top9",
+            u("\\u524d\\u4e5d"),
         ])
     labels = {
         "five_hit_two": "5\\u4e2d2~3",
@@ -3361,7 +3361,7 @@ def practical_maturity_rows(analysis):
     rows = [[
         u("\\u7e3d\\u9ad4\\u72c0\\u614b"),
         maturity.get("status", "-"),
-        f"Top10 {maturity.get('top10_avg_maturity', '-')} / Top15 {maturity.get('top15_avg_maturity', '-')}",
+        f"{u('\\u524d\\u5341')} {maturity.get('top10_avg_maturity', '-')} / {u('\\u524d\\u5341\\u4e94')} {maturity.get('top15_avg_maturity', '-')}",
         esc(maturity.get("required", "-")),
         esc(maturity.get("action", "-")),
     ]]
@@ -3433,19 +3433,19 @@ def rolling_model_rows(analysis):
         ],
         [
             u("\\u4e0a\\u671f\\u7d50\\u7b97\\u56de\\u994b"),
-            f"Top5/Top10/Top15 {((review.get('last_settled') or {}).get('top5_hits', 0))}/{((review.get('last_settled') or {}).get('top10_hits', 0))}/{((review.get('last_settled') or {}).get('top15_hits', 0))}",
+            f"{u('\\u524d\\u4e94')}/{u('\\u524d\\u5341')}/{u('\\u524d\\u5341\\u4e94')} {((review.get('last_settled') or {}).get('top5_hits', 0))}/{((review.get('last_settled') or {}).get('top10_hits', 0))}/{((review.get('last_settled') or {}).get('top15_hits', 0))}",
             u("\\u547d\\u4e2d\\u4f86\\u6e90\\u4fdd\\u7559\\uff0c\\u672a\\u547d\\u4e2d\\u4f86\\u6e90\\u964d\\u6b0a"),
             u("\\u5df2\\u9023\\u52d5\\u5230\\u672c\\u671f\\u9810\\u6e2c"),
         ],
         [
             u("\\u56de\\u6e2c\\u5dee\\u503c"),
-            f"Top10 edge {release.get('actual_backtest_edge', 0)} / {backtest.get('rounds', 0)} {u('\\u671f')}",
+            f"{u('\\u524d\\u5341\\u512a\\u52e2')} {release.get('actual_backtest_edge', 0)} / {backtest.get('rounds', 0)} {u('\\u671f')}",
             u("\\u512a\\u52e2\\u5c0f\\u6642\\u964d\\u4f4e\\u5f37\\u63a8\\u7b49\\u7d1a"),
             esc(release.get("status", "")),
         ],
         [
             u("\\u91cd\\u8907\\u5b88\\u9580"),
-            f"Top10 {metric_count(prev.get('current_top10_overlap', 0))} / Top15 {metric_count(prev.get('current_top15_overlap', 0))}",
+            f"{u('\\u524d\\u5341')} {metric_count(prev.get('current_top10_overlap', 0))} / {u('\\u524d\\u5341\\u4e94')} {metric_count(prev.get('current_top15_overlap', 0))}",
             u("\\u9632\\u6b62\\u76f4\\u63a5\\u62ff\\u4e0a\\u671f\\u9810\\u6e2c\\u7576\\u672c\\u671f"),
             u("\\u5df2\\u57f7\\u884c"),
         ],
@@ -3474,11 +3474,11 @@ def monthly_review_rows(analysis):
         return [[u("\\u672c\\u6708\\u6a23\\u672c"), 0, "-", u("\\u5c1a\\u7121\\u5df2\\u7d50\\u7b97\\u9810\\u6e2c")]]
     return safe_rows([
         [u("\\u6708\\u4efd"), monthly.get("month"), u("\\u6a23\\u672c"), monthly.get("sample_size")],
-        [u("Top5"), monthly.get("avg_top5_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
-        [u("Top10"), monthly.get("avg_top10_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), esc(monthly.get("top10_distribution"))],
-        [u("Top15"), monthly.get("avg_top15_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
+        [u("\\u524d\\u4e94"), monthly.get("avg_top5_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
+        [u("\\u524d\\u5341"), monthly.get("avg_top10_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), esc(monthly.get("top10_distribution"))],
+        [u("\\u524d\\u5341\\u4e94"), monthly.get("avg_top15_hits"), u("\\u672c\\u6708\\u5e73\\u5747\\u547d\\u4e2d"), "-"],
         [u("\\u672c\\u6708\\u53cd\\u8986\\u843d\\u7a7a\\u865f"), fmt_numbers(monthly.get("monthly_failed_numbers", [])), u("\\u4e0b\\u671f\\u8edf\\u964d\\u6b0a"), u("\\u5df2\\u5957\\u7528")],
-        [u("\\u672c\\u6708\\u5f8c\\u6bb5\\u547d\\u4e2d\\u865f"), fmt_numbers([item.get("number") for item in monthly.get("monthly_late_hit_numbers", [])]), u("\\u53ef\\u4f5cTop10\\u64e0\\u5165\\u89c0\\u5bdf"), u("\\u5df2\\u5957\\u7528")],
+        [u("\\u672c\\u6708\\u5f8c\\u6bb5\\u547d\\u4e2d\\u865f"), fmt_numbers([item.get("number") for item in monthly.get("monthly_late_hit_numbers", [])]), u("\\u53ef\\u4f5c\\u524d\\u5341\\u64e0\\u5165\\u89c0\\u5bdf"), u("\\u5df2\\u5957\\u7528")],
     ])
 
 
@@ -3567,10 +3567,10 @@ def aerospace_block(analysis):
         f"<p>{u('\\u5be9\\u6838\\u72c0\\u614b')}:{esc(assurance.get('status'))} / {u('\\u4fdd\\u8b49\\u5206\\u6578')} {esc(assurance.get('assurance_score'))}</p>"
         f"<p>{u('\\u8cc7\\u6599\\u6307\\u7d0b SHA-256')}:{esc(aerospace.get('input_fingerprint_sha256'))}</p>"
         f"<p>{u('\\u8f38\\u51fa\\u6307\\u7d0b SHA-256')}:{esc(aerospace.get('output_fingerprint_sha256'))}</p>"
-        f"<p>{u('\\u96d9\\u901a\\u9053\\u4ea4\\u53c9\\u9a57\\u8b49')}:{esc(redundant.get('status'))} / Top10 {u('\\u91cd\\u758a')} {esc(redundant.get('overlap_count'))} / Jaccard {esc(redundant.get('jaccard'))}</p>"
+        f"<p>{u('\\u96d9\\u901a\\u9053\\u4ea4\\u53c9\\u9a57\\u8b49')}:{esc(redundant.get('status'))} / {u('\\u524d\\u5341')} {u('\\u91cd\\u758a')} {esc(redundant.get('overlap_count'))} / {u('\\u76f8\\u4f3c\\u5ea6')} {esc(redundant.get('jaccard'))}</p>"
         f"<p>{u('\\u6a21\\u578b\\u6f02\\u79fb')}:{esc(drift.get('status'))} / TV {esc(drift.get('total_variation'))}</p>"
-        f"<p>{u('\\u8499\\u5730\\u5361\\u7f85\\u64fe\\u52d5\\u6e2c\\u8a66')}:{esc(uncertainty.get('simulations'))} / Top10 {u('\\u4fdd\\u7559\\u7387')} {esc(uncertainty.get('top10_retention'))}</p>"
-        + table([u("\\u865f\\u78bc"), u("\\u539f\\u6392\\u540d"), u("\\u64fe\\u52d5\\u5f8cTop10\\u7559\\u5b58\\u7387")], rows)
+        f"<p>{u('\\u8499\\u5730\\u5361\\u7f85\\u64fe\\u52d5\\u6e2c\\u8a66')}:{esc(uncertainty.get('simulations'))} / {u('\\u524d\\u5341')} {u('\\u4fdd\\u7559\\u7387')} {esc(uncertainty.get('top10_retention'))}</p>"
+        + table([u("\\u865f\\u78bc"), u("\\u539f\\u6392\\u540d"), u("\\u64fe\\u52d5\\u5f8c\\u524d\\u5341\\u7559\\u5b58\\u7387")], rows)
     )
     return body
 
@@ -3929,7 +3929,7 @@ def build_report():
       <p><span class="status fresh">{esc(fresh_text)}</span><span class="status blocked">{esc(release_text)}</span></p>
       <p><strong>{u('\\u904b\\u7b97\\u5f15\\u64ce')}:{esc(industrial.get('engine_version'))}</strong></p>
       <p>{u('\\u7f8e\\u570b\\u52a0\\u5dde\\u6700\\u65b0\\u958b\\u734e\\u65e5')}:{esc(freshness.get('latest_draw_date'))} / {u('\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593')}:{esc(latest_tw_time)} / {u('\\u4e0b\\u671f\\u9810\\u6e2c\\u6642\\u9593\\uff08\\u53f0\\u7063\\uff09')}:{esc(target_tw_time)} / {u('\\u7e3d\\u7b46\\u6578')}:{esc(analysis.get('draw_count'))}</p>
-      <p>{u('\\u767c\\u5e03\\u5224\\u5b9a')}: Top10 {u('\\u7a69\\u5b9a\\u5171\\u8b58')} {esc(stability.get('top10_retention'))} / edge {esc(release.get('actual_backtest_edge'))} / {esc(release.get('status'))}</p>
+      <p>{u('\\u767c\\u5e03\\u5224\\u5b9a')}: {u('\\u524d\\u5341')} {u('\\u7a69\\u5b9a\\u5171\\u8b58')} {esc(stability.get('top10_retention'))} / {u('\\u512a\\u52e2')} {esc(release.get('actual_backtest_edge'))} / {esc(release.get('status'))}</p>
       <p>{u('\\u63d0\\u9192\\uff1a\\u672c\\u6230\\u5831\\u70ba\\u6b77\\u53f2\\u7d71\\u8a08\\u5206\\u6790\\uff0c\\u4e0d\\u4fdd\\u8b49\\u958b\\u51fa\\u3002')}</p>
     </section>"""
     history_info = analysis.get("history_completeness") or {}

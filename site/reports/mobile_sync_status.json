@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-06T06:13:07+08:00",
+  "checked_at_taiwan": "2026-08-06T08:33:04+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-06T06:13:03+08:00",
+    "generated_at_taiwan": "2026-08-06T08:29:26+08:00",
     "latest_draw_date": "2026-08-04",
     "latest_numbers": [
       19,
@@ -15,36 +15,36 @@
     "target_taiwan_time": "2026-08-06 09:50",
     "top9": [
       24,
-      8,
+      20,
       4,
-      34,
+      35,
+      8,
       28,
-      39,
-      31,
-      32,
-      16
+      34,
+      11,
+      10
     ],
     "top15": [
       24,
-      8,
-      4,
-      34,
-      28,
-      39,
-      31,
-      32,
-      16,
-      18,
-      1,
       20,
-      6,
-      13,
-      35
+      4,
+      35,
+      8,
+      28,
+      34,
+      11,
+      10,
+      31,
+      36,
+      17,
+      25,
+      1,
+      33
     ],
-    "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
+    "engine": "industrial_v27_slump_emergency_rebuild_20260806"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-06T06:13:03+08:00",
+    "generated_at_taiwan": "2026-08-06T08:29:26+08:00",
     "latest_draw_date": "2026-08-04",
     "latest_numbers": [
       19,
@@ -57,35 +57,76 @@
     "target_taiwan_time": "2026-08-06 09:50",
     "top9": [
       24,
-      8,
+      20,
       4,
-      34,
+      35,
+      8,
       28,
-      39,
-      31,
-      32,
-      16
+      34,
+      11,
+      10
     ],
     "top15": [
       24,
-      8,
-      4,
-      34,
-      28,
-      39,
-      31,
-      32,
-      16,
-      18,
-      1,
       20,
-      6,
-      13,
-      35
+      4,
+      35,
+      8,
+      28,
+      34,
+      11,
+      10,
+      31,
+      36,
+      17,
+      25,
+      1,
+      33
     ],
-    "engine": "industrial_v26_external_consensus_inversion_fix_20260804"
+    "engine": "industrial_v27_slump_emergency_rebuild_20260806"
   },
-  "remote": {},
+  "remote": {
+    "generated_at_taiwan": "2026-08-06T08:29:26+08:00",
+    "latest_draw_date": "2026-08-04",
+    "latest_numbers": [
+      19,
+      23,
+      29,
+      30,
+      38
+    ],
+    "target_draw_date": "2026-08-05",
+    "target_taiwan_time": "2026-08-06 09:50",
+    "top9": [
+      24,
+      20,
+      4,
+      35,
+      8,
+      28,
+      34,
+      11,
+      10
+    ],
+    "top15": [
+      24,
+      20,
+      4,
+      35,
+      8,
+      28,
+      34,
+      11,
+      10,
+      31,
+      36,
+      17,
+      25,
+      1,
+      33
+    ],
+    "engine": "industrial_v27_slump_emergency_rebuild_20260806"
+  },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
   "mismatches": []

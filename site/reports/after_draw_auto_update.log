@@ -1,6 +1,6 @@
-﻿after draw auto update start: 2026-08-05 09:58:20
-2026-08-05 09:58:20 expected latest Taiwan safe update time: 2026-08-05 09:50
-2026-08-05 09:58:20 attempt 1/2 run update, settle review, recompute next prediction
-2026-08-05 10:08:24 main update exit code: 0
-2026-08-05 10:08:24 status fresh=True next=True review=True recalculation=True latest=2026-08-05 09:50 target=2026-08-06 09:50
-2026-08-05 10:08:24 after draw update complete and archived
+﻿after draw auto update start: 2026-08-05 10:50:01
+2026-08-05 10:50:01 expected latest Taiwan safe update time: 2026-08-05 09:50
+2026-08-05 10:50:01 attempt 1/12 run update, settle review, recompute next prediction
+2026-08-05 10:59:13 main update exit code: 0
+2026-08-05 10:59:14 status fresh=True next=True review=True recalculation=True latest=2026-08-05 09:50 target=2026-08-06 09:50
+2026-08-05 10:59:14 after draw update complete and archived
