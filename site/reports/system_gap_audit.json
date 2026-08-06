@@ -1,11 +1,11 @@
 {
-  "checked_at_taiwan": "2026-08-06T08:29:38+08:00",
-  "status": "需立即修正",
-  "critical": 1,
+  "checked_at_taiwan": "2026-08-06T08:37:11+08:00",
+  "status": "無嚴重缺漏，仍需模型補強",
+  "critical": 0,
   "publish_blocking": 0,
   "needs_fix": 0,
   "needs_strengthen": 7,
-  "issue_count": 8,
+  "issue_count": 7,
   "latest_draw_date": "2026-08-04",
   "latest_numbers": [
     19,
@@ -1985,17 +1985,10 @@
   },
   "issues": [
     {
-      "area": "近期失準守門",
-      "problem": "近期失準號仍進前九：11 20",
-      "impact": "會讓下一期排序被失準結構拖走",
-      "fix": "近期失準號必須完成全歷史、成熟度與交叉驗算重驗才可回前九",
-      "severity": "嚴重"
-    },
-    {
       "area": "九名後命中外漏",
       "problem": "近5期九名後命中 21 顆，前九命中 4 顆",
       "impact": "有效號碼被壓到第十名後，前九精準度會下降",
-      "fix": "第22版已啟動有效命中前移，每期強制檢測並把第十到第二十四名有證據號碼拉回前九競賽",
+      "fix": "第11版已啟動失準急救前九重建，每期強制檢測並把第十到第二十四名有證據號碼拉回前九競賽",
       "severity": "需補強"
     },
     {

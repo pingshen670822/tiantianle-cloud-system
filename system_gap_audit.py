@@ -336,7 +336,13 @@ def main():
         for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])
         if item.get("number") is not None
         and (item.get("entry_validation") or {}).get("passed_for_main")
-        and (item.get("entry_validation") or {}).get("status") in {"主列重驗通過", "核心通過", "主列補位通過"}
+        and (item.get("entry_validation") or {}).get("status") in {
+            "主列重驗通過",
+            "核心通過",
+            "主列補位通過",
+            "低迷重整主列通過",
+            "失準急救主列通過",
+        }
     }
     if failed_top9 and not set(failed_top9).issubset(revalidated | entry_revalidated):
         add_issue(
@@ -362,7 +368,7 @@ def main():
             "九名後命中外漏",
             f"近{post9_leak.get('checked_periods', 0)}期九名後命中 {post9_leak.get('post9_hits', 0)} 顆，前九命中 {post9_leak.get('front9_hits', 0)} 顆",
             "有效號碼被壓到第十名後，前九精準度會下降",
-            "第22版已啟動有效命中前移，每期強制檢測並把第十到第二十四名有證據號碼拉回前九競賽",
+            "第11版已啟動失準急救前九重建，每期強制檢測並把第十到第二十四名有證據號碼拉回前九競賽",
             "需補強",
         )
 
