@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260806_第11版_失準急救前九重建",
   "industrial_engine_version": "industrial_v27_slump_emergency_rebuild_20260806",
-  "generated_at_taiwan": "2026-08-06T14:17:37+08:00",
-  "generated_at_california": "2026-08-05T23:17:37-07:00",
+  "generated_at_taiwan": "2026-08-06T15:28:55+08:00",
+  "generated_at_california": "2026-08-06T00:28:55-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11880,
@@ -1919,8 +1919,8 @@
     "recommendation_message": "本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。"
   },
   "freshness": {
-    "california_today": "2026-08-05",
-    "california_time": "23:17:37",
+    "california_today": "2026-08-06",
+    "california_time": "00:28:55",
     "allowed_latest_draw_date": "2026-08-05",
     "age_days": 0,
     "status": "ok",
@@ -163451,7 +163451,7 @@
     {
       "based_on_date": "2026-08-05",
       "target_date": "2026-08-06",
-      "created_at": "2026-08-06T14:17:37+08:00",
+      "created_at": "2026-08-06T15:28:55+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
