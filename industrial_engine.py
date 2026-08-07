@@ -27,6 +27,7 @@ POSITIVE_EDGE_CORE_FEATURES = (
     "effective_hit_front_shift",
     "low_probability_error_recovery",
     "walk_forward_hit_signature",
+    "zero_hit_inversion_recovery",
     "external_method_consensus",
 )
 
@@ -401,7 +402,7 @@ def repeat_guard(draws, window=720):
 
 
 def failed_number_set(review):
-    if not review or review.get("severity") != "critical":
+    if not review or (review.get("severity") != "critical" and not zero_hit_top15_failure(review)):
         return set()
 
     def valid_number(value):
@@ -445,6 +446,44 @@ def failed_number_set(review):
     }
     failed -= actual_numbers
     return failed
+
+
+def zero_hit_top15_failure(review):
+    if not review or not review.get("has_review"):
+        return False
+    settled = review.get("last_settled") or {}
+    if not settled:
+        return False
+    try:
+        top15_hits = int(settled.get("top15_hits", 0) or 0)
+        candidate_count = len(settled.get("candidate_numbers") or [])
+        actual_count = len(settled.get("actual_numbers") or [])
+    except (TypeError, ValueError):
+        return False
+    return bool(candidate_count >= 15 and actual_count >= DRAW_SIZE and top15_hits == 0)
+
+
+def last_failed_candidate_set(review, limit=15):
+    if not review or not review.get("has_review"):
+        return set()
+    settled = review.get("last_settled") or {}
+    actual = set()
+    for value in settled.get("actual_numbers") or []:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            actual.add(number)
+    output = set()
+    for value in (settled.get("candidate_numbers") or [])[:limit]:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX and number not in actual:
+            output.add(number)
+    return output
 
 
 def previous_prediction_set(review, limit=15):
@@ -778,6 +817,69 @@ def missed_hit_recovery_scores(review):
             score += 0.34
         if any(1 <= abs(number - anchor) <= 2 for anchor in missed_actual):
             score += 0.24
+        values[number] = score
+    return normalize(values)
+
+
+def zero_hit_inversion_recovery_scores(review):
+    if not zero_hit_top15_failure(review):
+        return {n: 0.0 for n in range(NUMBER_MIN, NUMBER_MAX + 1)}
+
+    settled = review.get("last_settled") or {}
+    failed_top15 = last_failed_candidate_set(review, 15)
+    actual = set()
+    for value in settled.get("actual_numbers") or []:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            actual.add(number)
+
+    actual_tails = {number % 10 for number in actual}
+    actual_zones = {zone_label(number) for number in actual}
+    candidates = []
+    for value in settled.get("candidate_numbers") or []:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            candidates.append(number)
+    buried_actual = set(candidates[15:]) & actual
+    rolling = rolling_adjustment_data(review)
+    missed_actual = {
+        int(item.get("number"))
+        for item in rolling.get("missed_actual_numbers", [])
+        if item.get("number")
+    }
+    last2_missed_actual = {
+        int(item.get("number"))
+        for item in rolling.get("last2_missed_actual_numbers", [])
+        if item.get("number")
+    }
+
+    values = {}
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        score = 0.0
+        if number in failed_top15:
+            score -= 0.88
+        else:
+            score += 0.30
+        if number % 10 in actual_tails:
+            score += 0.24
+        if zone_label(number) in actual_zones:
+            score += 0.18
+        if any(1 <= abs(number - anchor) <= 2 for anchor in actual):
+            score += 0.16
+        if number in missed_actual:
+            score += 0.18
+        if number in last2_missed_actual:
+            score += 0.18
+        if number in buried_actual:
+            score += 0.14
+        if number in actual:
+            score -= 0.26
         values[number] = score
     return normalize(values)
 
@@ -1736,6 +1838,7 @@ def slump_recovery_weight_shift(review):
         "rank_error_correction",
         "missed_hit_recovery",
         "low_probability_error_recovery",
+        "zero_hit_inversion_recovery",
         "walk_forward_hit_signature",
         "omission_phase_rebound",
         "similar_draw_knn",
@@ -1812,6 +1915,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
     rank_window_drift_correction = rank_window_drift_scores(review)
     effective_hit_front_shift = effective_hit_front_shift_scores(review)
     low_probability_error_recovery = low_probability_error_recovery_scores(review)
+    zero_hit_inversion_recovery = zero_hit_inversion_recovery_scores(review)
     if include_dependency:
         walk_window = int(os.environ.get("TIANTIANLE_WALK_FORWARD_WINDOW", "540"))
     else:
@@ -1844,6 +1948,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         rank_window_drift_correction,
         effective_hit_front_shift,
         low_probability_error_recovery,
+        zero_hit_inversion_recovery,
         walk_forward_hit_signature,
         external_method_consensus,
     ])
@@ -1864,6 +1969,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         rank_window_drift_correction,
         effective_hit_front_shift,
         low_probability_error_recovery,
+        zero_hit_inversion_recovery,
         walk_forward_hit_signature,
         external_method_consensus,
     ])
@@ -1901,6 +2007,7 @@ def build_feature_matrix(draws, review=None, include_dependency=True):
         feature_scores[number]["rank_window_drift_correction"] = rank_window_drift_correction[number]
         feature_scores[number]["effective_hit_front_shift"] = effective_hit_front_shift[number]
         feature_scores[number]["low_probability_error_recovery"] = low_probability_error_recovery[number]
+        feature_scores[number]["zero_hit_inversion_recovery"] = zero_hit_inversion_recovery[number]
         feature_scores[number]["walk_forward_hit_signature"] = walk_forward_hit_signature[number]
         feature_scores[number]["external_method_consensus"] = external_method_consensus[number]
         feature_scores[number]["date"] = date_score[number]
@@ -1951,6 +2058,7 @@ def industrial_weights(review=None):
         "rank_window_drift_correction": 0.064,
         "effective_hit_front_shift": 0.072,
         "low_probability_error_recovery": 0.086,
+        "zero_hit_inversion_recovery": 0.075,
         "walk_forward_hit_signature": 0.125,
         "external_method_consensus": 0.104,
         "positive_edge_core": 0.18,
@@ -1984,6 +2092,7 @@ def industrial_weights(review=None):
                 "rank_window_drift_correction": 0.154,
                 "effective_hit_front_shift": 0.182,
                 "low_probability_error_recovery": 0.205,
+                "zero_hit_inversion_recovery": 0.245,
                 "walk_forward_hit_signature": 0.24,
                 "external_method_consensus": 0.225,
                 "positive_edge_core": 0.28,
@@ -2012,6 +2121,7 @@ def industrial_weights(review=None):
             "rank_window_drift_correction",
             "effective_hit_front_shift",
             "low_probability_error_recovery",
+            "zero_hit_inversion_recovery",
             "walk_forward_hit_signature",
             "external_method_consensus",
             "positive_edge_core",
@@ -2033,7 +2143,7 @@ def industrial_weights(review=None):
             if key in weights:
                 weights[key] *= 1.0 + 0.46 * intensity
         if mode == "critical":
-            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "effective_hit_front_shift", "low_probability_error_recovery", "walk_forward_hit_signature", "external_method_consensus", "missed_hit_recovery", "omission_phase_rebound"]:
+            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "effective_hit_front_shift", "low_probability_error_recovery", "zero_hit_inversion_recovery", "walk_forward_hit_signature", "external_method_consensus", "missed_hit_recovery", "omission_phase_rebound"]:
                 if key in weights:
                     weights[key] *= 1.18
     total = sum(weights.values()) or 1
@@ -2077,6 +2187,7 @@ MODEL_SOURCE_LABELS = {
     "rank_window_drift_correction": "\u524d\u4e5d\u8207\u524d\u5341\u4e94\u932f\u4f4d\u4fee\u6b63",
     "effective_hit_front_shift": "\u6709\u6548\u547d\u4e2d\u524d\u79fb",
     "low_probability_error_recovery": "\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536",
+    "zero_hit_inversion_recovery": "\u524d\u5341\u4e94\u5168\u843d\u7a7a\u53cd\u5411\u91cd\u5efa",
     "walk_forward_hit_signature": "\u6efe\u52d5\u547d\u4e2d\u6307\u7d0b",
     "external_method_consensus": "\u5916\u90e8\u65b9\u6cd5\u5171\u8b58\u6821\u6b63",
     "positive_edge_core": "\u6b63\u908a\u969b\u6838\u5fc3",
@@ -2127,6 +2238,7 @@ def number_cross_validation(values):
         ("rank_window_drift_correction", "\u524d\u4e5d\u8207\u524d\u5341\u4e94\u932f\u4f4d\u4fee\u6b63", values.get("rank_window_drift_correction", 0) >= 0.52),
         ("effective_hit_front_shift", "\u6709\u6548\u547d\u4e2d\u524d\u79fb", values.get("effective_hit_front_shift", 0) >= 0.52),
         ("low_probability_error_recovery", "\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536", values.get("low_probability_error_recovery", 0) >= 0.50),
+        ("zero_hit_inversion_recovery", "\u524d\u5341\u4e94\u5168\u843d\u7a7a\u53cd\u5411\u91cd\u5efa", values.get("zero_hit_inversion_recovery", 0) >= 0.56),
         ("walk_forward_hit_signature", "\u6efe\u52d5\u547d\u4e2d\u6307\u7d0b", values.get("walk_forward_hit_signature", 0) >= 0.54),
         ("external_method_consensus", "\u5916\u90e8\u65b9\u6cd5\u5171\u8b58", values.get("external_method_consensus", 0) >= 0.54),
         ("positive_edge_core", "\u6b63\u908a\u969b\u6838\u5fc3", values.get("positive_edge_core", 0) >= 0.58),
@@ -2174,6 +2286,7 @@ def practical_maturity_score(
     score += values.get("rank_window_drift_correction", 0.0) * 4.2
     score += values.get("effective_hit_front_shift", 0.0) * 5.4
     score += values.get("low_probability_error_recovery", 0.0) * 6.6
+    score += values.get("zero_hit_inversion_recovery", 0.0) * 6.2
     score += values.get("walk_forward_hit_signature", 0.0) * 5.8
     score += values.get("external_method_consensus", 0.0) * 5.2
     score += values.get("distribution_balance", 0.0) * 3.0
@@ -2195,12 +2308,15 @@ def practical_maturity_score(
         or values.get("rank_window_drift_correction", 0) >= 0.5
         or values.get("effective_hit_front_shift", 0) >= 0.48
         or values.get("low_probability_error_recovery", 0) >= 0.5
+        or values.get("zero_hit_inversion_recovery", 0) >= 0.56
         or values.get("walk_forward_hit_signature", 0) >= 0.55
         or values.get("external_method_consensus", 0) >= 0.58
     ):
         score += 10.0
     if values.get("low_probability_error_recovery", 0) >= 0.58:
         score += 8.0
+    if values.get("zero_hit_inversion_recovery", 0) >= 0.62:
+        score += 6.0
     if values.get("external_method_consensus", 0) >= 0.62:
         score += 5.0
     if values.get("walk_forward_hit_signature", 0) >= 0.62:
@@ -2388,6 +2504,8 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
     emergency_low_hit = bool((rolling.get("recent_performance") or {}).get("two_draw_low_hit"))
     latest_set = set(draws[-1]["numbers"])
     repeat_policy = repeat_guard(draws)
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     score = {}
     reasons = defaultdict(list)
 
@@ -2454,6 +2572,8 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             reasons[number].append("\u6709\u6548\u547d\u4e2d\u524d\u79fb")
         if values["low_probability_error_recovery"] >= 0.62:
             reasons[number].append("\u4f4e\u6a5f\u7387\u8aa4\u958b\u56de\u6536")
+        if values["zero_hit_inversion_recovery"] >= 0.66:
+            reasons[number].append("\u524d\u5341\u4e94\u5168\u843d\u7a7a\u53cd\u5411\u91cd\u5efa")
         if values["walk_forward_hit_signature"] >= 0.66:
             reasons[number].append("\u6efe\u52d5\u547d\u4e2d\u6307\u7d0b")
         if values["external_method_consensus"] >= 0.62:
@@ -2484,6 +2604,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             + values["rank_window_drift_correction"] * 0.24
             + values["effective_hit_front_shift"] * 0.28
             + values["low_probability_error_recovery"] * 0.34
+            + values["zero_hit_inversion_recovery"] * 0.32
             + values["walk_forward_hit_signature"] * 0.24
             + values["external_method_consensus"] * 0.26
             + values["missed_hit_recovery"] * 0.20
@@ -2499,6 +2620,12 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
         if mode == "critical" and values["walk_forward_hit_signature"] >= 0.66 and number not in latest_set:
             raw *= 1.28
             reasons[number].append("\u5168\u6b77\u53f2\u6efe\u52d5\u56de\u653e\u524d\u79fb")
+        if zero_hit_top15 and number in last_failed_top15:
+            raw *= 0.18
+            reasons[number].append("\u4e0a\u671f\u524d\u5341\u4e94\u5168\u843d\u7a7a\u786c\u9694\u96e2")
+        elif zero_hit_top15 and number not in latest_set and values["zero_hit_inversion_recovery"] >= 0.50:
+            raw *= 1.42
+            reasons[number].append("\u96f6\u547d\u4e2d\u53cd\u5411\u88dc\u4f4d")
         if emergency_low_hit and number in last2_missed_actual_numbers and number not in latest_set:
             raw *= 1.36
             reasons[number].append("\u9023\u7e8c\u4f4e\u547d\u4e2d\u6f0f\u6293\u865f\u5f37\u5236\u56de\u6536")
@@ -2576,6 +2703,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
                     "rank_window_drift_correction": round(features[number].get("rank_window_drift_correction", 0.0), 4),
                     "effective_hit_front_shift": round(features[number].get("effective_hit_front_shift", 0.0), 4),
                     "low_probability_error_recovery": round(features[number].get("low_probability_error_recovery", 0.0), 4),
+                    "zero_hit_inversion_recovery": round(features[number].get("zero_hit_inversion_recovery", 0.0), 4),
                     "walk_forward_hit_signature": round(features[number].get("walk_forward_hit_signature", 0.0), 4),
                     "external_method_consensus": round(features[number].get("external_method_consensus", 0.0), 4),
                     "missed_hit_recovery": round(features[number].get("missed_hit_recovery", 0.0), 4),
@@ -2653,6 +2781,8 @@ def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, 
     selected = []
     failed = failed_number_set(review)
     mode = slump_mode(review)
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     max_zone = 3
     max_tail = 2
 
@@ -2671,6 +2801,10 @@ def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, 
             penalty += 0.035
         penalty += adjacent_count * 0.025
         penalty += item_soft_risk_penalty(candidate_items.get(number, {"number": number}), failed) * 0.65
+        feature_signals = (candidate_items.get(number, {}) or {}).get("feature_signals") or {}
+        zero_signal = float(feature_signals.get("zero_hit_inversion_recovery", 0.0) or 0.0)
+        if zero_hit_top15 and number in last_failed_top15:
+            penalty += 0.42 if zero_signal < 0.82 else 0.16
         return penalty
 
     while len(selected) < 9 and pool:
@@ -2681,6 +2815,10 @@ def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, 
                 float(effective_scores.get(number, 0.0) or 0.0),
             )
 
+        def zero_inversion_signal(number):
+            feature_signals = (candidate_items.get(number, {}) or {}).get("feature_signals") or {}
+            return float(feature_signals.get("zero_hit_inversion_recovery", 0.0) or 0.0)
+
         best = max(
             pool,
             key=lambda number: (
@@ -2688,6 +2826,7 @@ def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, 
                 + float(drift_scores.get(number, 0.0) or 0.0) * (0.16 if drift.get("active") else 0.0)
                 + front_shift_signal(number) * (0.22 if drift.get("active") or mode == "critical" else 0.11)
                 + float(((candidate_items.get(number, {}) or {}).get("feature_signals") or {}).get("walk_forward_hit_signature", 0.0) or 0.0) * (0.14 if mode == "critical" else 0.07)
+                + zero_inversion_signal(number) * (0.26 if zero_hit_top15 else 0.0)
                 - selection_penalty(number)
                 + (0.004 if number in original_top9 and mode != "critical" else 0.0),
                 float(score_map.get(number, 0.0) or 0.0),
@@ -2727,12 +2866,16 @@ def strong_single_group(candidates, review=None):
     repeated_failed_numbers = {int(item.get("number")) for item in rolling.get("repeated_failed_numbers", []) if item.get("number")}
     scan_limit = 18 if slump_mode(review) == "critical" else 12
     drift_active = rank_window_drift_diagnosis(review).get("active")
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     ranked_items = sorted(
         candidates[:scan_limit],
         key=lambda item: (
             float(item.get("score", 0) or 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.18 if drift_active else 0.08)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.15 if slump_mode(review) == "critical" else 0.08)
+            + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.24 if zero_hit_top15 else 0.0)
+            - (0.42 if zero_hit_top15 and int(item.get("number")) in last_failed_top15 and float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82 else 0.0)
             + int(item.get("stability_count", 0) or 0) * 0.012
             + int((item.get("cross_validation") or {}).get("passed_count", 0) or 0) * 0.008
             - item_soft_risk_penalty(item, repeated_failed_numbers),
@@ -2746,6 +2889,9 @@ def strong_single_group(candidates, review=None):
         guard = item.get("previous_prediction_guard")
         drift_score = float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0)
         walk_score = float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0)
+        zero_score = float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0)
+        if zero_hit_top15 and number in last_failed_top15 and zero_score < 0.82:
+            continue
         if number in repeated_failed_numbers and item.get("score", 0) < 0.88:
             continue
         score = item.get("score", 0)
@@ -2760,6 +2906,8 @@ def strong_single_group(candidates, review=None):
             return [number]
         if walk_score >= 0.72 and score >= 0.62 and confidence >= 80 and stability >= 2:
             return [number]
+        if zero_hit_top15 and zero_score >= 0.72 and score >= 0.50 and confidence >= 74 and stability >= 1:
+            return [number]
     return []
 
 
@@ -2769,6 +2917,8 @@ def single_precision_group(candidates, review=None):
     boosted_reasons = {item.get("reason") for item in rolling.get("boosted_reasons", [])}
     late_hit_numbers = {int(item.get("number")) for item in rolling.get("late_hit_numbers", []) if item.get("number")}
     drift_active = rank_window_drift_diagnosis(review).get("active")
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     ranked = []
     for item in candidates[:18]:
         number = item["number"]
@@ -2782,7 +2932,9 @@ def single_precision_group(candidates, review=None):
             + (0.035 if number in late_hit_numbers else 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.10 if drift_active else 0.04)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.10 if slump_mode(review) == "critical" else 0.05)
+            + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.16 if zero_hit_top15 else 0.0)
             - item_soft_risk_penalty(item, failed)
+            - (0.35 if zero_hit_top15 and number in last_failed_top15 and float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82 else 0.0)
         )
         ranked.append((precision_score, item))
     ranked.sort(key=lambda pair: (pair[0], pair[1].get("score", 0), pair[1].get("confidence_index", 0), -pair[1]["number"]), reverse=True)
@@ -2792,6 +2944,8 @@ def single_precision_group(candidates, review=None):
 def five_hit_two_group(candidates, review=None):
     failed = failed_number_set(review)
     drift_active = rank_window_drift_diagnosis(review).get("active")
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     selected = []
     pool = sorted(
         candidates[:24],
@@ -2799,6 +2953,7 @@ def five_hit_two_group(candidates, review=None):
             item.get("score", 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.12 if drift_active else 0.04)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.10 if slump_mode(review) == "critical" else 0.04)
+            + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.14 if zero_hit_top15 else 0.0)
             - item_soft_risk_penalty(item, failed),
             item.get("stability_count", 0),
             -item["number"],
@@ -2809,6 +2964,8 @@ def five_hit_two_group(candidates, review=None):
         if len(selected) >= 5:
             break
         number = item["number"]
+        if zero_hit_top15 and number in last_failed_top15 and float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82:
+            continue
         if sum(1 for selected_number in selected if zone_label(selected_number) == zone_label(number)) >= 2:
             continue
         if sum(1 for selected_number in selected if selected_number % 10 == number % 10) >= 2:
@@ -2828,6 +2985,8 @@ def nine_hit_three_group(candidates, review=None):
     rolling = rolling_adjustment_data(review)
     late_hit_numbers = {int(item.get("number")) for item in rolling.get("late_hit_numbers", []) if item.get("number")}
     drift_active = rank_window_drift_diagnosis(review).get("active")
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     score_map = {item["number"]: item["score"] for item in candidates}
     pool = [
         item["number"] for item in candidates[:32]
@@ -2841,8 +3000,10 @@ def nine_hit_three_group(candidates, review=None):
                 score_map[number]
                 + (0.08 if number in late_hit_numbers else 0)
                 + float((item_map[number].get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.14 if drift_active else 0.05)
+                + float((item_map[number].get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.17 if zero_hit_top15 else 0.0)
                 - diversity_penalty(selected, number) * 1.35
                 - item_soft_risk_penalty(item_map[number], failed)
+                - (0.40 if zero_hit_top15 and number in last_failed_top15 and float((item_map[number].get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82 else 0.0)
                 - (0.08 if sum(1 for n in selected if zone_label(n) == zone_label(number)) >= 3 else 0)
             ),
         )
@@ -3034,6 +3195,7 @@ PRECISION_VARIANT_LABELS = {
     "omission_phase": "\u907a\u6f0f\u76f8\u4f4d\u56de\u5f48",
     "walk_forward_signature": "\u6efe\u52d5\u547d\u4e2d\u6307\u7d0b",
     "failure_corrector": "\u4e0a\u671f\u5931\u8aa4\u4fee\u6b63",
+    "zero_hit_inversion": "\u96f6\u547d\u4e2d\u53cd\u5411\u91cd\u5efa",
 }
 
 
@@ -3061,6 +3223,8 @@ def precision_variant_item_score(item, variant, review=None):
     late_hit_numbers = {int(row.get("number")) for row in rolling.get("late_hit_numbers", []) if row.get("number")}
     missed_actual_numbers = {int(row.get("number")) for row in rolling.get("missed_actual_numbers", []) if row.get("number")}
     repeated_failed_numbers = {int(row.get("number")) for row in rolling.get("repeated_failed_numbers", []) if row.get("number")}
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     number = int(item.get("number"))
 
     if variant == "raw_score":
@@ -3101,6 +3265,22 @@ def precision_variant_item_score(item, variant, review=None):
         if number in repeated_failed_numbers:
             recovery -= 0.22
         value = precision_norm * 0.38 + cross_norm * 0.20 + maturity_norm * 0.15 + frontload * 0.15 + recovery + base * 0.12
+    elif variant == "zero_hit_inversion":
+        zero_signal = max(
+            precision_source_signal(item, {"zero_hit_inversion_recovery"}),
+            float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0),
+        )
+        quarantine_penalty = 0.0
+        if zero_hit_top15 and number in last_failed_top15:
+            quarantine_penalty = 0.24 if zero_signal >= 0.82 else 0.46
+        value = (
+            zero_signal * 0.50
+            + precision_norm * 0.18
+            + cross_norm * 0.14
+            + maturity_norm * 0.10
+            + frontload * 0.08
+            - quarantine_penalty
+        )
     else:
         value = precision_norm * 0.50 + cross_norm * 0.16 + maturity_norm * 0.14 + stability_norm * 0.10 + frontload * 0.10
 
@@ -3529,6 +3709,8 @@ def top9_frontload_candidates(candidates, review=None):
     failed = failed_number_set(review)
     mode = slump_mode(review)
     emergency_low_hit = bool((rolling.get("recent_performance") or {}).get("two_draw_low_hit"))
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     original = {int(item["number"]): dict(item) for item in candidates}
     original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
     raw_frontload = {}
@@ -3550,6 +3732,7 @@ def top9_frontload_candidates(candidates, review=None):
         effective_shift = float(feature_signals.get("effective_hit_front_shift", 0) or 0)
         drift_shift = float(feature_signals.get("rank_window_drift_correction", 0) or 0)
         walk_forward_shift = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
+        zero_shift = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
         rank_anchor = clamp((len(candidates) - idx + 1) / max(len(candidates), 1), 0.0, 1.0)
         front_score = (
             item.get("score", 0) * 0.46
@@ -3561,6 +3744,7 @@ def top9_frontload_candidates(candidates, review=None):
             + effective_shift * (0.18 if mode == "critical" else 0.12)
             + drift_shift * (0.10 if mode == "critical" else 0.06)
             + walk_forward_shift * (0.16 if mode == "critical" else 0.09)
+            + zero_shift * (0.22 if zero_hit_top15 else 0.0)
         )
 
         if idx <= 9:
@@ -3590,10 +3774,14 @@ def top9_frontload_candidates(candidates, review=None):
                 front_score += 0.10
             if walk_forward_shift >= 0.68:
                 front_score += 0.12
+            if zero_hit_top15 and zero_shift >= 0.58:
+                front_score += 0.14
 
         risk = item_soft_risk_penalty(item, failed)
         if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
             risk += 0.045
+        if zero_hit_top15 and number in last_failed_top15:
+            risk += 0.42 if zero_shift < 0.82 else 0.16
         if emergency_low_hit and number in last2_failed_top10_counts and number not in last2_missed_actual_counts:
             risk += 0.14
         front_score -= risk * (1.45 if emergency_low_hit else 1.2 if mode == "critical" else 1.0)
@@ -4963,14 +5151,15 @@ def multi_model_correction_weights(review=None):
     )
     if critical or leak_active:
         weights = {
-            "failure_corrector": 0.18,
-            "walk_forward_signature": 0.15,
-            "omission_recovery": 0.16,
+            "zero_hit_inversion": 0.17,
+            "failure_corrector": 0.15,
+            "walk_forward_signature": 0.14,
+            "omission_recovery": 0.14,
             "regime_gap_bridge": 0.12,
             "similar_history_knn": 0.10,
             "omission_phase": 0.10,
             "cross_validation": 0.11,
-            "maturity": 0.09,
+            "maturity": 0.08,
             "tail_zone_balance": 0.06,
             "raw_score": 0.02,
             "frontload": 0.01,
@@ -4985,6 +5174,7 @@ def multi_model_correction_weights(review=None):
             "similar_history_knn": 0.10,
             "omission_phase": 0.09,
             "failure_corrector": 0.09,
+            "zero_hit_inversion": 0.08,
             "tail_zone_balance": 0.08,
             "raw_score": 0.04,
             "frontload": 0.01,
@@ -5034,6 +5224,8 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
         if NUMBER_MIN <= int(number) <= NUMBER_MAX
     ]
     last_failed_top9 = set(last_candidates[:9]) - latest_actual
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     repeated_failed = correction_count_map(rolling.get("repeated_failed_numbers"), "miss_count")
     late_hit_counts = correction_count_map(rolling.get("late_hit_numbers"), "late_hit_count")
     missed_actual_counts = correction_count_map(rolling.get("missed_actual_numbers"), "missed_count")
@@ -5093,6 +5285,7 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
         effective_signal = float(feature_signals.get("effective_hit_front_shift", 0) or 0)
         walk_signal = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external_signal = float(feature_signals.get("external_method_consensus", 0) or 0)
+        zero_signal = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
         if number in late_hit_counts:
             bonus = min(0.11, 0.045 + late_hit_counts[number] * 0.018)
             recovery_bonus += bonus
@@ -5121,6 +5314,10 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             bonus = min(0.16, 0.045 + external_signal * 0.12)
             recovery_bonus += bonus
             recovery_reasons.append("外部方法共識前移")
+        if zero_hit_top15 and number not in latest_actual and zero_signal >= 0.54:
+            bonus = min(0.20, 0.06 + zero_signal * 0.16)
+            recovery_bonus += bonus
+            recovery_reasons.append("前十五全落空反向補位")
 
         failure_penalty = 0.0
         penalty_reasons = []
@@ -5139,6 +5336,13 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
         if number in previous and row.get("previous_prediction_guard") and not row["previous_prediction_guard"].get("passed"):
             failure_penalty += 0.08
             penalty_reasons.append("上期回鍋未重驗")
+        if zero_hit_top15 and number in last_failed_top15:
+            if zero_signal >= 0.82 and walk_signal >= 0.62 and effective_signal >= 0.52:
+                failure_penalty += 0.18
+                penalty_reasons.append("前十五全落空強驗仍保守降權")
+            else:
+                failure_penalty += 0.38
+                penalty_reasons.append("前十五全落空硬隔離")
 
         firewall = row.get("recent_draw_firewall") or {}
         firewall_blocked = bool(firewall.get("blocked"))
@@ -5161,6 +5365,7 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             + cross_norm * 0.08
             + stability_norm * 0.08
             + walk_signal * (0.08 if critical else 0.04)
+            + zero_signal * (0.10 if zero_hit_top15 else 0.04)
             + recovery_bonus
             - failure_penalty
             - firewall_penalty
@@ -5189,6 +5394,7 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             "effective_hit_front_shift": round(effective_signal, 4),
             "walk_forward_hit_signature": round(walk_signal, 4),
             "external_method_consensus": round(external_signal, 4),
+            "zero_hit_inversion_recovery": round(zero_signal, 4),
             "rank_window_drift_signal": round(drift_signal, 4),
             "recovery_reasons": recovery_reasons,
             "penalty_reasons": penalty_reasons,
@@ -5214,7 +5420,10 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             10 <= original_rank.get(number, 99) <= (24 if (leak_active or effective_signal >= 0.45 or walk_signal >= 0.56) else 18 if drift_active else 15)
             and recovery_reasons
             and not row["_correction_blocked"]
-            and float(maturity.get("score", 0) or 0) >= (48 if (leak_active or effective_signal >= 0.45 or walk_signal >= 0.56) else 54 if drift_active else 58)
+            and (
+                float(maturity.get("score", 0) or 0) >= (48 if (leak_active or effective_signal >= 0.45 or walk_signal >= 0.56 or zero_signal >= 0.54) else 54 if drift_active else 58)
+                or (zero_hit_top15 and zero_signal >= 0.62 and number not in last_failed_top15)
+            )
         )
         adjusted.append(row)
 
@@ -5274,6 +5483,8 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
         "status": "已執行",
         "policy": "原排序達標不足時立即啟動多模型競賽，弱模型降權、漏抓與後段命中模型前移、剛開出與連續落空號硬隔離。",
         "critical_mode": critical,
+        "zero_hit_top15_failure": zero_hit_top15,
+        "quarantined_previous_top15": sorted(last_failed_top15),
         "recent_top10_avg": recent.get("last5_top10_avg"),
         "recent_top15_avg": recent.get("last5_top15_avg"),
         "variant_weights": {PRECISION_VARIANT_LABELS.get(name, name): round(value, 4) for name, value in variant_weights.items()},
@@ -5354,6 +5565,8 @@ def apply_full_system_entry_gate(
     drift = rank_window_drift_diagnosis(review)
     post9_leak = post9_hit_leak_audit(review)
     leak_active = bool(post9_leak.get("active"))
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
     window_recovery_ok = bool(window_edges) and min(window_edges) >= -0.22
     system_prerequisites_passed = all(
         global_checks[name]["passed"]
@@ -5369,6 +5582,7 @@ def apply_full_system_entry_gate(
             top15_edge >= -0.10
             or bool(drift.get("active"))
             or leak_active
+            or zero_hit_top15
             or (top15_avg - top10_avg) >= 0.45
         )
     )
@@ -5377,7 +5591,8 @@ def apply_full_system_entry_gate(
         "evidence": (
             f"模式 {mode}，前十優勢 {round(edge, 4)}，前十五優勢 {round(top15_edge, 4)}，"
             f"錯位修正 {'啟動' if drift.get('active') else '未啟動'}，"
-            f"九名後外漏 {'啟動' if leak_active else '觀察'}"
+            f"九名後外漏 {'啟動' if leak_active else '觀察'}，"
+            f"前十五全落空 {'啟動' if zero_hit_top15 else '未啟動'}"
         ),
     }
     global_passed = strict_global_passed
@@ -5416,7 +5631,9 @@ def apply_full_system_entry_gate(
         effective_signal = float(feature_signals.get("effective_hit_front_shift", 0) or 0)
         walk_signal = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external_signal = float(feature_signals.get("external_method_consensus", 0) or 0)
-        hard_blocked = bool(firewall.get("blocked")) or bool(failure_front.get("blocked"))
+        zero_signal = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
+        zero_reentry_blocked = bool(zero_hit_top15 and number in last_failed_top15 and zero_signal < 0.82)
+        hard_blocked = bool(firewall.get("blocked")) or bool(failure_front.get("blocked")) or zero_reentry_blocked
         reentry_ok = not previous_guard.get("reentry_required") or bool(previous_guard.get("reentry_passed"))
         not_unverified_repeat = number not in previous or reentry_ok
         not_latest_repeat = number not in latest_actual or bool((row.get("repeat_guard") or {}).get("passed"))
@@ -5430,6 +5647,7 @@ def apply_full_system_entry_gate(
             ("剛開出防火牆通過", not bool(firewall.get("blocked")) and not_latest_repeat),
             ("近期失準守門通過", not bool(failure_front.get("blocked"))),
             ("上期預測重驗通過", not_unverified_repeat),
+            ("前十五全落空隔離通過", not zero_reentry_blocked),
         ]
         core_checks = checks + [
             ("分數核心門檻", score >= 0.60),
@@ -5465,7 +5683,7 @@ def apply_full_system_entry_gate(
             ("信心補位門檻", confidence >= 66),
             ("多模組補位門檻", model_count >= 3),
             ("穩定補位門檻", stability >= 1),
-            ("交叉或回收證據", cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.50 or walk_signal >= 0.56 or external_signal >= 0.58 or stability >= 2),
+            ("交叉或回收證據", cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.50 or walk_signal >= 0.56 or external_signal >= 0.58 or zero_signal >= 0.56 or stability >= 2),
         ]
         reserve_failure_revalidated = (
             not bool(failure_front.get("blocked"))
@@ -5475,7 +5693,7 @@ def apply_full_system_entry_gate(
         reserve_signal_passed = (
             score >= 0.08
             and confidence >= 54
-            and (cross_passed >= 1 or stability >= 2 or maturity_score >= 45 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56)
+            and (cross_passed >= 1 or stability >= 2 or maturity_score >= 45 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56 or zero_signal >= 0.56)
         ) or (
             cross_passed >= 4
             and maturity_score >= 44
@@ -5498,9 +5716,10 @@ def apply_full_system_entry_gate(
             and confidence >= 62
             and model_count >= 3
             and stability >= 1
-            and (cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.48 or effective_signal >= 0.45 or walk_signal >= 0.54 or external_signal >= 0.56 or maturity_score >= 58)
+            and (cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.48 or effective_signal >= 0.45 or walk_signal >= 0.54 or external_signal >= 0.56 or zero_signal >= 0.56 or maturity_score >= 58)
             and not bool(firewall.get("blocked"))
             and not bool(failure_front.get("blocked"))
+            and not zero_reentry_blocked
         )
 
         core_passed = global_ready and not hard_blocked and all(passed for _, passed in core_checks)
@@ -5561,6 +5780,8 @@ def apply_full_system_entry_gate(
             "有效命中前移": round(effective_signal, 4),
             "滾動命中指紋": round(walk_signal, 4),
             "外部方法共識": round(external_signal, 4),
+            "前十五全落空反向": round(zero_signal, 4),
+            "前十五全落空隔離": zero_reentry_blocked,
             "低迷重整": slump_recovery_item_passed,
         }
         row["entry_validation"] = {
@@ -5701,6 +5922,8 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
     missed_actual_counts = correction_count_map(rolling.get("missed_actual_numbers"), "missed_count")
     last2_missed_counts = correction_count_map(rolling.get("last2_missed_actual_numbers"), "missed_count")
     low_error_numbers = set(low_probability_error_number_map(review))
+    zero_hit_top15 = zero_hit_top15_failure(review)
+    last_failed_top15 = last_failed_candidate_set(review, 15)
 
     adjusted = []
     for item in candidates:
@@ -5723,6 +5946,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
         drift = float(feature_signals.get("rank_window_drift_correction", 0) or 0)
         effective = float(feature_signals.get("effective_hit_front_shift", 0) or 0)
         low_error = float(feature_signals.get("low_probability_error_recovery", 0) or 0)
+        zero = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
         walk = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external = float(feature_signals.get("external_method_consensus", 0) or 0)
         omission_phase = float(feature_signals.get("omission_phase_rebound", 0) or 0)
@@ -5739,6 +5963,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             + effective * 0.16
             + drift * 0.12
             + low_error * 0.12
+            + zero * 0.22
             + external * 0.11
             + omission_phase * 0.06
             + positive_core * 0.08
@@ -5753,12 +5978,18 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             emergency_score += 0.12
         if recovery_reasons:
             emergency_score += min(0.10, len(recovery_reasons) * 0.035)
+        if zero_hit_top15 and number not in last_failed_top15 and zero >= 0.50:
+            emergency_score += 0.14
+            recovery_reasons = list(recovery_reasons) + ["前十五全落空反向重建"]
 
         firewall_blocked = bool(firewall.get("blocked"))
         repeat_blocked = number in latest_actual and not bool((row.get("repeat_guard") or {}).get("passed"))
         failure_blocked = bool(failure_front.get("blocked"))
+        zero_blocked = bool(zero_hit_top15 and number in last_failed_top15 and zero < 0.82)
         if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
             emergency_score -= 0.12
+        if zero_hit_top15 and number in last_failed_top15:
+            emergency_score -= 0.38 if zero < 0.82 else 0.16
         if number in repeated_failed and walk < 0.62 and effective < 0.56:
             emergency_score -= min(0.22, 0.08 + repeated_failed[number] * 0.018)
         if number in previous and previous_guard and not previous_guard.get("passed") and walk < 0.62:
@@ -5770,7 +6001,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
 
         emergency_score = round(clamp(emergency_score, 0.0, 1.0), 5)
         row["slump_emergency_rebuild_score"] = emergency_score
-        row["_slump_emergency_blocked"] = firewall_blocked or repeat_blocked or emergency_score <= 0.05
+        row["_slump_emergency_blocked"] = firewall_blocked or repeat_blocked or zero_blocked or emergency_score <= 0.05
         row["_slump_emergency_eligible"] = bool(
             not row["_slump_emergency_blocked"]
             and (
@@ -5829,6 +6060,8 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             validation["top9_released"] = False
         evidence = dict(validation.get("evidence") or {})
         evidence["失準急救分"] = row.get("slump_emergency_rebuild_score")
+        evidence["前十五全落空反向"] = round(float((row.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0), 4)
+        evidence["前十五全落空隔離"] = bool(zero_hit_top15 and number in last_failed_top15)
         validation["evidence"] = evidence
         row["entry_validation"] = validation
 
@@ -5837,6 +6070,8 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
         "status": "已執行",
         "policy": "嚴重失準或九名後外漏時，使用全歷史滾動回放、漏抓回收、後段命中回收與低機誤開回收重建前九。",
         "critical_mode": critical,
+        "zero_hit_top15_failure": zero_hit_top15,
+        "quarantined_previous_top15": sorted(last_failed_top15),
         "recent_top10_avg": recent.get("last5_top10_avg"),
         "recent_top15_avg": recent.get("last5_top15_avg"),
         "old_top9": old_top9,
@@ -5849,6 +6084,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
                 "score": item.get("slump_emergency_rebuild_score"),
                 "walk_forward": (item.get("feature_signals") or {}).get("walk_forward_hit_signature"),
                 "effective_front": (item.get("feature_signals") or {}).get("effective_hit_front_shift"),
+                "zero_hit_inversion": (item.get("feature_signals") or {}).get("zero_hit_inversion_recovery"),
             }
             for item in adjusted[:15]
         ],
@@ -6213,11 +6449,11 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v27_slump_emergency_rebuild_20260806",
+        "engine_version": "industrial_v28_zero_hit_inversion_20260807",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
-            "policy": "soft_penalty_previous_top15_with_recovery_revalidation",
+            "policy": "zero_hit_top15_hard_quarantine_with_recovery_revalidation",
             "previous_top15": sorted(previous),
             "reentry_passed": reentry_passed,
             "current_top9_overlap": top9_overlap,

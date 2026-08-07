@@ -64,7 +64,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "美國加州天天樂_20260806_第11版_失準急救前九重建"
+ENGINE_VERSION = "美國加州天天樂_20260807_第12版_前十五全落空反向重建"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -2465,9 +2465,12 @@ def failure_review(conn):
     avg_top10 = round(sum(top10_values) / sample_size, 3)
     avg_top15 = round(sum(top15_values) / sample_size, 3)
     zero_top10_count = sum(1 for value in top10_values if value == 0)
+    zero_top15_count = sum(1 for value in top15_values if value == 0)
     weak_top10_count = sum(1 for value in top10_values if value <= 1)
+    latest_settled = settled_items[0] if settled_items else {}
+    latest_zero_top15 = bool(int(latest_settled.get("top15_hits", 0) or 0) == 0)
     severity = "normal"
-    if avg_top10 < 1.2 or zero_top10_count >= 2:
+    if latest_zero_top15 or avg_top10 < 1.2 or zero_top10_count >= 2 or zero_top15_count >= 1:
         severity = "critical"
     elif avg_top10 < 2.0 or weak_top10_count >= 2:
         severity = "warning"
@@ -2519,6 +2522,10 @@ def failure_review(conn):
         actions.append(
             u"\u6a21\u578b\u5df2\u964d\u4f4e\u77ed\u671f\u71b1\u865f\u8207\u9023\u838a\u6b0a\u91cd\uff0c\u6539\u63d0\u9ad8\u907a\u6f0f\u3001\u5171\u73fe\u3001\u4e2d\u671f\u7a69\u5b9a\u6b0a\u91cd"
         )
+    if latest_zero_top15:
+        actions.append(
+            u"\u672c\u671f\u524d\u5341\u4e94\u5168\u843d\u7a7a\uff0c\u5df2\u555f\u52d5\u524d\u5341\u4e94\u786c\u9694\u96e2\u8207\u96f6\u547d\u4e2d\u53cd\u5411\u91cd\u5efa"
+        )
 
     return {
         "has_review": True,
@@ -2534,6 +2541,8 @@ def failure_review(conn):
             "avg_top10_hits": avg_top10,
             "avg_top15_hits": avg_top15,
             "zero_top10_count": zero_top10_count,
+            "zero_top15_count": zero_top15_count,
+            "latest_zero_top15": latest_zero_top15,
             "weak_top10_count": weak_top10_count,
             "failed_number_counts": dict(failed_counts.most_common(15)),
             "hit_number_counts": dict(hit_counts.most_common(15)),
@@ -2867,11 +2876,11 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
             "九碼": "9中2為最低標準，9中3以上為強化目標",
             "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討",
         },
-        "primary_single": _pack_numbers(strong_packs, "strong_single", fallback, 1),
-        "two_hit_one": _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
-        "three_hit_one": _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
-        "five_hit_two": _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
-        "nine_hit_three": _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
+        "primary_single": top_numbers[:1] or _pack_numbers(strong_packs, "strong_single", fallback, 1),
+        "two_hit_one": top_numbers[:2] or _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
+        "three_hit_one": top_numbers[:3] or _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
+        "five_hit_two": top_numbers[:5] or _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
+        "nine_hit_three": top_numbers[:9] or _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
         "high_confidence_numbers": high_rows,
         "high_confidence_core": high_numbers[:9],
         "defensive_avoid": [int(n) for n in defensive_avoid[:10] if n is not None],
