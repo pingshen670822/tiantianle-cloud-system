@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260807_第12版_前十五全落空反向重建",
   "industrial_engine_version": "industrial_v28_zero_hit_inversion_20260807",
-  "generated_at_taiwan": "2026-08-07T12:21:32+08:00",
-  "generated_at_california": "2026-08-06T21:21:32-07:00",
+  "generated_at_taiwan": "2026-08-07T12:38:19+08:00",
+  "generated_at_california": "2026-08-06T21:38:19-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11881,
@@ -1531,7 +1531,7 @@
       "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討"
     },
     "primary_single": [
-      10
+      14
     ],
     "two_hit_one": [
       14,
@@ -1539,26 +1539,26 @@
     ],
     "three_hit_one": [
       14,
-      37,
-      39
+      39,
+      37
     ],
     "five_hit_two": [
-      10,
       14,
-      36,
+      39,
       37,
-      39
+      36,
+      27
     ],
     "nine_hit_three": [
-      4,
-      6,
-      10,
       14,
-      23,
+      39,
+      37,
+      36,
       27,
       31,
-      37,
-      39
+      4,
+      10,
+      6
     ],
     "high_confidence_numbers": [
       {
@@ -1773,7 +1773,7 @@
       "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討"
     },
     "primary_single": [
-      10
+      14
     ],
     "two_hit_one": [
       14,
@@ -1781,26 +1781,26 @@
     ],
     "three_hit_one": [
       14,
-      37,
-      39
+      39,
+      37
     ],
     "five_hit_two": [
-      10,
       14,
-      36,
+      39,
       37,
-      39
+      36,
+      27
     ],
     "nine_hit_three": [
-      4,
-      6,
-      10,
       14,
-      23,
+      39,
+      37,
+      36,
       27,
       31,
-      37,
-      39
+      4,
+      10,
+      6
     ],
     "high_confidence_numbers": [
       {
@@ -2126,7 +2126,7 @@
   },
   "freshness": {
     "california_today": "2026-08-06",
-    "california_time": "21:21:32",
+    "california_time": "21:38:19",
     "allowed_latest_draw_date": "2026-08-06",
     "age_days": 0,
     "status": "ok",
@@ -170713,7 +170713,7 @@
     {
       "based_on_date": "2026-08-06",
       "target_date": "2026-08-07",
-      "created_at": "2026-08-07T12:21:32+08:00",
+      "created_at": "2026-08-07T12:38:19+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
