@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-07T10:50:51+08:00",
+  "checked_at_taiwan": "2026-08-07T12:16:42+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-07T10:50:47+08:00",
+    "generated_at_taiwan": "2026-08-07T12:16:38+08:00",
     "latest_draw_date": "2026-08-06",
     "latest_numbers": [
       8,
@@ -44,7 +44,7 @@
     "engine": "industrial_v27_slump_emergency_rebuild_20260806"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-07T10:50:47+08:00",
+    "generated_at_taiwan": "2026-08-07T12:16:38+08:00",
     "latest_draw_date": "2026-08-06",
     "latest_numbers": [
       8,
