@@ -25,4 +25,4 @@ cloud publish: �����}: https://pingshen670822.github.io/tiantianle-clo
 cloud mobile site published
 Step 7/8 verify mobile sync
 Step 8/8 open latest page
-one-click complete: 2026-08-07 12:40:01
+one-click 完整: 2026-08-07 12:40:01
