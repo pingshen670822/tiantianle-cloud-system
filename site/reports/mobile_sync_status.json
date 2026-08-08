@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-08T05:38:38+08:00",
+  "checked_at_taiwan": "2026-08-08T09:26:59+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-08T05:38:34+08:00",
+    "generated_at_taiwan": "2026-08-08T09:26:55+08:00",
     "latest_draw_date": "2026-08-06",
     "latest_numbers": [
       8,
@@ -44,7 +44,7 @@
     "engine": "industrial_v28_zero_hit_inversion_20260807"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-08T05:38:34+08:00",
+    "generated_at_taiwan": "2026-08-08T09:26:55+08:00",
     "latest_draw_date": "2026-08-06",
     "latest_numbers": [
       8,
