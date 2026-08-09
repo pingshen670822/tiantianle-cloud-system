@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260807_第12版_前十五全落空反向重建",
   "industrial_engine_version": "industrial_v28_zero_hit_inversion_20260807",
-  "generated_at_taiwan": "2026-08-09T17:38:42+08:00",
-  "generated_at_california": "2026-08-09T02:38:42-07:00",
+  "generated_at_taiwan": "2026-08-09T20:47:15+08:00",
+  "generated_at_california": "2026-08-09T05:47:15-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11883,
@@ -2129,7 +2129,7 @@
   },
   "freshness": {
     "california_today": "2026-08-09",
-    "california_time": "02:38:42",
+    "california_time": "05:47:15",
     "allowed_latest_draw_date": "2026-08-08",
     "age_days": 0,
     "status": "ok",
@@ -168631,7 +168631,7 @@
     {
       "based_on_date": "2026-08-08",
       "target_date": "2026-08-09",
-      "created_at": "2026-08-09T17:38:42+08:00",
+      "created_at": "2026-08-09T20:47:15+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
