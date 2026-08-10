@@ -401,6 +401,80 @@ def repeat_guard(draws, window=720):
     return guard
 
 
+def _safe_feature_float(source, key, default=0.0):
+    try:
+        return float((source or {}).get(key, default) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def front5_precision_signal_from_features(feature_signals, cross_passed=0, cross_total=20, maturity_score=0, stability_count=0):
+    walk = _safe_feature_float(feature_signals, "walk_forward_hit_signature")
+    external = _safe_feature_float(feature_signals, "external_method_consensus")
+    omission_phase = _safe_feature_float(feature_signals, "omission_phase_rebound")
+    drift = _safe_feature_float(feature_signals, "rank_window_drift_correction")
+    positive = _safe_feature_float(feature_signals, "positive_edge_core")
+    effective = _safe_feature_float(feature_signals, "effective_hit_front_shift")
+    low_error = _safe_feature_float(feature_signals, "low_probability_error_recovery")
+    support = max(walk, external, omission_phase)
+    supported_effective = effective * support
+    unsupported_low_penalty = max(0.0, low_error - support) * 0.20
+    cross_norm = clamp(float(cross_passed or 0) / max(1.0, float(cross_total or 20)), 0.0, 1.0)
+    maturity_norm = clamp(float(maturity_score or 0) / 100.0, 0.0, 1.0)
+    stability_norm = clamp(float(stability_count or 0) / 5.0, 0.0, 1.0)
+    signal = (
+        walk * 0.28
+        + external * 0.24
+        + omission_phase * 0.22
+        + drift * 0.08
+        + positive * 0.10
+        + supported_effective * 0.05
+        + cross_norm * 0.06
+        + maturity_norm * 0.05
+        + stability_norm * 0.03
+        - unsupported_low_penalty
+    )
+    return clamp(signal, 0.0, 1.0)
+
+
+def front5_precision_signal(item):
+    item = item or {}
+    cross = item.get("cross_validation") or {}
+    maturity = item.get("practical_maturity") or {}
+    return front5_precision_signal_from_features(
+        item.get("feature_signals") or {},
+        cross_passed=int(cross.get("passed_count", 0) or 0),
+        cross_total=int(cross.get("total_count", 20) or 20),
+        maturity_score=float(maturity.get("score", 0) or 0),
+        stability_count=int(item.get("stability_count", 0) or 0),
+    )
+
+
+def latest_repeat_reentry_allowed(item):
+    item = item or {}
+    feature_signals = item.get("feature_signals") or {}
+    cross = item.get("cross_validation") or {}
+    maturity = item.get("practical_maturity") or {}
+    cross_passed = int(cross.get("passed_count", 0) or 0)
+    maturity_score = float(maturity.get("score", 0) or 0)
+    front_signal = front5_precision_signal(item)
+    walk = _safe_feature_float(feature_signals, "walk_forward_hit_signature")
+    external = _safe_feature_float(feature_signals, "external_method_consensus")
+    omission_phase = _safe_feature_float(feature_signals, "omission_phase_rebound")
+    drift = _safe_feature_float(feature_signals, "rank_window_drift_correction")
+    strong_support = sum(
+        1
+        for value in [walk, external, omission_phase, drift]
+        if value >= 0.55
+    )
+    return bool(
+        front_signal >= 0.58
+        and cross_passed >= 5
+        and maturity_score >= 58
+        and strong_support >= 2
+    )
+
+
 def failed_number_set(review):
     if not review or (review.get("severity") != "critical" and not zero_hit_top15_failure(review)):
         return set()
@@ -2052,15 +2126,15 @@ def industrial_weights(review=None):
         "zone_parity_pressure": 0.062,
         "regime_gap_bridge": 0.086,
         "similar_draw_knn": 0.074,
-        "omission_phase_rebound": 0.068,
+        "omission_phase_rebound": 0.092,
         "missed_hit_recovery": 0.054,
         "rank_error_correction": 0.075,
         "rank_window_drift_correction": 0.064,
-        "effective_hit_front_shift": 0.072,
-        "low_probability_error_recovery": 0.086,
+        "effective_hit_front_shift": 0.048,
+        "low_probability_error_recovery": 0.046,
         "zero_hit_inversion_recovery": 0.075,
-        "walk_forward_hit_signature": 0.125,
-        "external_method_consensus": 0.104,
+        "walk_forward_hit_signature": 0.168,
+        "external_method_consensus": 0.138,
         "positive_edge_core": 0.18,
         "date": 0.025,
         "repeat": 0.015,
@@ -2086,15 +2160,15 @@ def industrial_weights(review=None):
                 "zone_parity_pressure": 0.096,
                 "regime_gap_bridge": 0.172,
                 "similar_draw_knn": 0.142,
-                "omission_phase_rebound": 0.136,
+                "omission_phase_rebound": 0.188,
                 "missed_hit_recovery": 0.128,
                 "rank_error_correction": 0.162,
                 "rank_window_drift_correction": 0.154,
-                "effective_hit_front_shift": 0.182,
-                "low_probability_error_recovery": 0.205,
+                "effective_hit_front_shift": 0.078,
+                "low_probability_error_recovery": 0.072,
                 "zero_hit_inversion_recovery": 0.245,
-                "walk_forward_hit_signature": 0.24,
-                "external_method_consensus": 0.225,
+                "walk_forward_hit_signature": 0.315,
+                "external_method_consensus": 0.285,
                 "positive_edge_core": 0.28,
                 "repeat": 0.005,
                 "neighbor": 0.01,
@@ -2119,11 +2193,10 @@ def industrial_weights(review=None):
         for key in [
             "rank_error_correction",
             "rank_window_drift_correction",
-            "effective_hit_front_shift",
-            "low_probability_error_recovery",
             "zero_hit_inversion_recovery",
             "walk_forward_hit_signature",
             "external_method_consensus",
+            "omission_phase_rebound",
             "positive_edge_core",
             "full_history_anchor",
             "freq_all",
@@ -2136,16 +2209,20 @@ def industrial_weights(review=None):
             "distribution_balance",
             "regime_gap_bridge",
             "similar_draw_knn",
-            "omission_phase_rebound",
+            "effective_hit_front_shift",
+            "low_probability_error_recovery",
             "pair",
             "zone_parity_pressure",
         ]:
             if key in weights:
                 weights[key] *= 1.0 + 0.46 * intensity
         if mode == "critical":
-            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "effective_hit_front_shift", "low_probability_error_recovery", "zero_hit_inversion_recovery", "walk_forward_hit_signature", "external_method_consensus", "missed_hit_recovery", "omission_phase_rebound"]:
+            for key in ["full_history_anchor", "freq_all", "rank_window_drift_correction", "zero_hit_inversion_recovery", "walk_forward_hit_signature", "external_method_consensus", "missed_hit_recovery", "omission_phase_rebound"]:
                 if key in weights:
                     weights[key] *= 1.18
+            for key in ["effective_hit_front_shift", "low_probability_error_recovery", "freq_5", "freq_10", "neural_network", "time_series"]:
+                if key in weights:
+                    weights[key] *= 0.62
     total = sum(weights.values()) or 1
     return {key: value / total for key, value in weights.items()}
 
@@ -2221,6 +2298,7 @@ def number_model_sources(values, weights, limit=8):
 
 
 def number_cross_validation(values):
+    front5_signal = front5_precision_signal_from_features(values)
     checks = [
         ("multi_model_consensus", "\u591a\u6a21\u578b\u5171\u8b58", values.get("cross_consensus", 0) >= 0.58),
         ("monte_carlo_stability", "\u8499\u5730\u5361\u7f85\u7a69\u5b9a", values.get("monte_carlo_stability", 0) >= 0.58),
@@ -2241,6 +2319,7 @@ def number_cross_validation(values):
         ("zero_hit_inversion_recovery", "\u524d\u5341\u4e94\u5168\u843d\u7a7a\u53cd\u5411\u91cd\u5efa", values.get("zero_hit_inversion_recovery", 0) >= 0.56),
         ("walk_forward_hit_signature", "\u6efe\u52d5\u547d\u4e2d\u6307\u7d0b", values.get("walk_forward_hit_signature", 0) >= 0.54),
         ("external_method_consensus", "\u5916\u90e8\u65b9\u6cd5\u5171\u8b58", values.get("external_method_consensus", 0) >= 0.54),
+        ("front5_precision_rebuild", "前五實戰前移重組", front5_signal >= 0.54),
         ("positive_edge_core", "\u6b63\u908a\u969b\u6838\u5fc3", values.get("positive_edge_core", 0) >= 0.58),
     ]
     passed = [{"key": key, "label": label} for key, label, ok in checks if ok]
@@ -2284,8 +2363,10 @@ def practical_maturity_score(
     score += values.get("bayesian_posterior", 0.0) * 3.5
     score += values.get("positive_edge_core", 0.0) * 5.5
     score += values.get("rank_window_drift_correction", 0.0) * 4.2
-    score += values.get("effective_hit_front_shift", 0.0) * 5.4
-    score += values.get("low_probability_error_recovery", 0.0) * 6.6
+    front_precision = front5_precision_signal_from_features(values, passed, 20, 0, 0)
+    score += front_precision * 8.2
+    score += values.get("effective_hit_front_shift", 0.0) * 2.1
+    score += values.get("low_probability_error_recovery", 0.0) * 1.8
     score += values.get("zero_hit_inversion_recovery", 0.0) * 6.2
     score += values.get("walk_forward_hit_signature", 0.0) * 5.8
     score += values.get("external_method_consensus", 0.0) * 5.2
@@ -2306,15 +2387,16 @@ def practical_maturity_score(
         values.get("rank_error_correction", 0) >= 0.4
         or values.get("missed_hit_recovery", 0) >= 0.5
         or values.get("rank_window_drift_correction", 0) >= 0.5
-        or values.get("effective_hit_front_shift", 0) >= 0.48
-        or values.get("low_probability_error_recovery", 0) >= 0.5
+        or front_precision >= 0.54
         or values.get("zero_hit_inversion_recovery", 0) >= 0.56
         or values.get("walk_forward_hit_signature", 0) >= 0.55
         or values.get("external_method_consensus", 0) >= 0.58
     ):
         score += 10.0
-    if values.get("low_probability_error_recovery", 0) >= 0.58:
-        score += 8.0
+    if front_precision >= 0.62:
+        score += 7.0
+    if values.get("low_probability_error_recovery", 0) >= 0.58 and front_precision >= 0.56:
+        score += 3.0
     if values.get("zero_hit_inversion_recovery", 0) >= 0.62:
         score += 6.0
     if values.get("external_method_consensus", 0) >= 0.62:
@@ -2513,6 +2595,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
         raw = sum(values.get(name, 0) * weight for name, weight in weights.items())
         core_blend = 0.62 if mode == "critical" else 0.52 if mode == "warning" else 0.46
         raw = raw * (1.0 - core_blend) + values.get("positive_edge_core", 0.0) * core_blend
+        front_signal_seed = front5_precision_signal_from_features(values)
         previous_policy = previous_prediction_guard(number, values, review)
         if previous_policy and not previous_policy["passed"]:
             raw *= 0.54 if emergency_low_hit else 0.66 if mode == "critical" else 0.74
@@ -2580,6 +2663,8 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             reasons[number].append("\u5916\u90e8\u65b9\u6cd5\u5171\u8b58\u6821\u6b63")
         if values["positive_edge_core"] >= 0.66:
             reasons[number].append("\u6b63\u908a\u969b\u6838\u5fc3")
+        if front_signal_seed >= 0.58:
+            reasons[number].append("前五實戰前移重組")
         if values["freq_50"] >= 0.7 or values["freq_100"] >= 0.7:
             reasons[number].append("\u4e2d\u671f\u7a69\u5b9a")
         if values["date"] > 0:
@@ -2587,10 +2672,13 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
         if number in latest_set:
             policy = repeat_policy.get(number, {})
             if policy.get("passed"):
-                raw *= 0.78
+                raw *= 0.88
                 reasons[number].append("\u9023\u838a\u5408\u683c\u9a57\u7b97")
+            elif front_signal_seed >= 0.58 and values["external_method_consensus"] >= 0.55 and values["walk_forward_hit_signature"] >= 0.35:
+                raw *= 0.68
+                reasons[number].append("剛開出號前五強驗觀察")
             else:
-                raw *= 0.36
+                raw *= 0.30
                 reasons[number].append("\u9023\u838a\u5b88\u9580\u672a\u901a\u904e")
         reason_set = set(reasons[number])
         if number in repeated_failed_numbers:
@@ -2602,22 +2690,27 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
         recovery_signal = (
             values["rank_error_correction"] * 0.32
             + values["rank_window_drift_correction"] * 0.24
-            + values["effective_hit_front_shift"] * 0.28
-            + values["low_probability_error_recovery"] * 0.34
+            + values["effective_hit_front_shift"] * 0.12
+            + values["low_probability_error_recovery"] * 0.08
             + values["zero_hit_inversion_recovery"] * 0.32
-            + values["walk_forward_hit_signature"] * 0.24
-            + values["external_method_consensus"] * 0.26
+            + values["walk_forward_hit_signature"] * 0.36
+            + values["external_method_consensus"] * 0.32
+            + values["omission_phase_rebound"] * 0.30
             + values["missed_hit_recovery"] * 0.20
             + values["omission"] * 0.08
             + values["distribution_balance"] * 0.06
         )
         if number in low_error_numbers and values["low_probability_error_recovery"] >= 0.46:
-            raw *= 2.35 if emergency_low_hit else 2.05 if mode == "critical" else 1.45
-            reasons[number].append("\u4f4e\u6a5f\u7387\u8aa4\u958b\u865f\u78bc\u5f37\u5236\u56de\u6536")
-        if values["external_method_consensus"] >= 0.70 and number not in latest_set:
+            if front_signal_seed >= 0.56:
+                raw *= 1.42 if emergency_low_hit else 1.24 if mode == "critical" else 1.12
+                reasons[number].append("\u4f4e\u6a5f\u7387\u8aa4\u958b\u865f\u78bc\u5f37\u5236\u56de\u6536")
+            else:
+                raw *= 0.74
+                reasons[number].append("低機率回收未過前五驗證降權")
+        if values["external_method_consensus"] >= 0.70 and (number not in latest_set or front_signal_seed >= 0.58):
             raw *= 1.34 if mode == "critical" else 1.22 if mode == "warning" else 1.12
             reasons[number].append("\u5916\u90e8\u7d71\u8a08\u6a21\u5f0f\u524d\u79fb")
-        if mode == "critical" and values["walk_forward_hit_signature"] >= 0.66 and number not in latest_set:
+        if mode == "critical" and values["walk_forward_hit_signature"] >= 0.66 and (number not in latest_set or front_signal_seed >= 0.58):
             raw *= 1.28
             reasons[number].append("\u5168\u6b77\u53f2\u6efe\u52d5\u56de\u653e\u524d\u79fb")
         if zero_hit_top15 and number in last_failed_top15:
@@ -2633,12 +2726,12 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
             values["rank_error_correction"] >= 0.4
             or values["missed_hit_recovery"] >= 0.5
             or values["rank_window_drift_correction"] >= 0.45
-            or values["effective_hit_front_shift"] >= 0.45
+            or front_signal_seed >= 0.54
         ):
             raw *= 2.05 if emergency_low_hit else 1.72 if mode == "critical" else 1.30
             reasons[number].append("\u6efe\u52d5\u6aa2\u8a0e\u6f0f\u6293\u5be6\u958b\u865f\u88dc\u4f4d")
-        elif values["effective_hit_front_shift"] >= 0.62 and number not in latest_set:
-            raw *= 1.52 if emergency_low_hit else 1.38 if mode == "critical" else 1.18
+        elif values["effective_hit_front_shift"] >= 0.62 and front_signal_seed >= 0.50 and number not in latest_set:
+            raw *= 1.24 if emergency_low_hit else 1.16 if mode == "critical" else 1.08
             reasons[number].append("\u6709\u6548\u547d\u4e2d\u524d\u79fb\u88dc\u5f37")
         elif values["rank_window_drift_correction"] >= 0.68 and number not in latest_set:
             raw *= 1.38 if emergency_low_hit else 1.26 if mode == "critical" else 1.14
@@ -2687,6 +2780,13 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
     for rank, number in enumerate(ranked, 1):
         model_sources = number_model_sources(features[number], weights)
         cross_validation = number_cross_validation(features[number])
+        front5_signal = front5_precision_signal_from_features(
+            features[number],
+            cross_validation.get("passed_count", 0),
+            cross_validation.get("total_count", 20),
+            maturity[number].get("score", 0),
+            0,
+        )
         candidates.append(
             {
                 "number": number,
@@ -2709,6 +2809,7 @@ def score_numbers(draws, review=None, include_dependency=True, weights_override=
                     "missed_hit_recovery": round(features[number].get("missed_hit_recovery", 0.0), 4),
                     "omission_phase_rebound": round(features[number].get("omission_phase_rebound", 0.0), 4),
                     "positive_edge_core": round(features[number].get("positive_edge_core", 0.0), 4),
+                    "front5_precision_rebuild": round(front5_signal, 4),
                 },
                 "source_model_count": len(model_sources),
                 "cross_validation": cross_validation,
@@ -2819,13 +2920,17 @@ def top9_diversity_rebalanced_order(ranked_numbers, score_map, candidate_items, 
             feature_signals = (candidate_items.get(number, {}) or {}).get("feature_signals") or {}
             return float(feature_signals.get("zero_hit_inversion_recovery", 0.0) or 0.0)
 
+        def front5_signal(number):
+            return front5_precision_signal(candidate_items.get(number, {"number": number}))
+
         best = max(
             pool,
             key=lambda number: (
                 float(score_map.get(number, 0.0) or 0.0)
                 + float(drift_scores.get(number, 0.0) or 0.0) * (0.16 if drift.get("active") else 0.0)
-                + front_shift_signal(number) * (0.22 if drift.get("active") or mode == "critical" else 0.11)
+                + front_shift_signal(number) * (0.08 if drift.get("active") or mode == "critical" else 0.04)
                 + float(((candidate_items.get(number, {}) or {}).get("feature_signals") or {}).get("walk_forward_hit_signature", 0.0) or 0.0) * (0.14 if mode == "critical" else 0.07)
+                + front5_signal(number) * (0.24 if mode == "critical" else 0.12)
                 + zero_inversion_signal(number) * (0.26 if zero_hit_top15 else 0.0)
                 - selection_penalty(number)
                 + (0.004 if number in original_top9 and mode != "critical" else 0.0),
@@ -2874,6 +2979,7 @@ def strong_single_group(candidates, review=None):
             float(item.get("score", 0) or 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.18 if drift_active else 0.08)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.15 if slump_mode(review) == "critical" else 0.08)
+            + front5_precision_signal(item) * (0.22 if slump_mode(review) == "critical" else 0.10)
             + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.24 if zero_hit_top15 else 0.0)
             - (0.42 if zero_hit_top15 and int(item.get("number")) in last_failed_top15 and float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82 else 0.0)
             + int(item.get("stability_count", 0) or 0) * 0.012
@@ -2932,6 +3038,7 @@ def single_precision_group(candidates, review=None):
             + (0.035 if number in late_hit_numbers else 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.10 if drift_active else 0.04)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.10 if slump_mode(review) == "critical" else 0.05)
+            + front5_precision_signal(item) * (0.16 if slump_mode(review) == "critical" else 0.08)
             + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.16 if zero_hit_top15 else 0.0)
             - item_soft_risk_penalty(item, failed)
             - (0.35 if zero_hit_top15 and number in last_failed_top15 and float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) < 0.82 else 0.0)
@@ -2953,6 +3060,7 @@ def five_hit_two_group(candidates, review=None):
             item.get("score", 0)
             + float((item.get("feature_signals") or {}).get("rank_window_drift_correction", 0) or 0) * (0.12 if drift_active else 0.04)
             + float((item.get("feature_signals") or {}).get("walk_forward_hit_signature", 0) or 0) * (0.10 if slump_mode(review) == "critical" else 0.04)
+            + front5_precision_signal(item) * (0.14 if slump_mode(review) == "critical" else 0.06)
             + float((item.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0) * (0.14 if zero_hit_top15 else 0.0)
             - item_soft_risk_penalty(item, failed),
             item.get("stability_count", 0),
@@ -4976,7 +5084,8 @@ def apply_recent_draw_hard_firewall(candidates, draws, formula_engine=None):
     for item in candidates:
         row = dict(item)
         number = int(row["number"])
-        if number in latest_numbers and number not in strict_allowed:
+        strong_reentry = latest_repeat_reentry_allowed(row)
+        if number in latest_numbers and number not in strict_allowed and not strong_reentry:
             row["_recent_firewall_blocked"] = True
             row["score"] = round(float(row.get("score", 0.0) or 0.0) * 0.05, 6)
             row["confidence_index"] = round(min(float(row.get("confidence_index", 0.0) or 0.0), 58.0), 3)
@@ -4994,10 +5103,19 @@ def apply_recent_draw_hard_firewall(candidates, draws, formula_engine=None):
             blocked.append(number)
         elif number in latest_numbers:
             row["_recent_firewall_blocked"] = False
+            if strong_reentry:
+                row["score"] = round(max(float(row.get("score", 0.0) or 0.0), min(0.78, 0.44 + front5_precision_signal(row) * 0.36)), 6)
+                row["confidence_index"] = round(max(float(row.get("confidence_index", 0.0) or 0.0), 50 + row["score"] * 49), 3)
+                reasons = list(row.get("reasons") or [])
+                reason = "剛開出號通過前五實戰強驗回補"
+                if reason not in reasons:
+                    reasons.insert(0, reason)
+                row["reasons"] = reasons[:8]
             row["recent_draw_firewall"] = {
                 "blocked": False,
-                "reason": "連莊通過公式正值與回測硬驗證",
+                "reason": "剛開出號通過前五實戰強驗回補" if strong_reentry else "連莊通過公式正值與回測硬驗證",
                 "latest_draw_date": latest_draw.get("date"),
+                "front5_precision_rebuild": round(front5_precision_signal(row), 4),
             }
             allowed.append(number)
         else:
@@ -5018,7 +5136,7 @@ def apply_recent_draw_hard_firewall(candidates, draws, formula_engine=None):
         row["top9_core"] = rank <= 9 and not blocked_row
     return adjusted, {
         "status": "enforced",
-        "policy": "即時版上一期剛開出號一律不得進入九碼主推；完整深算版也必須通過更高正值回測才准連莊。",
+        "policy": "剛開出號不得直接回主推；但若通過前五實戰前移、全歷史回放、外部共識、交叉驗算與成熟度強驗，可有限回補，避免錯殺有效連莊。",
         "latest_draw_date": latest_draw.get("date"),
         "latest_numbers": sorted(latest_numbers),
         "blocked_numbers": sorted(blocked),
@@ -5286,6 +5404,10 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
         walk_signal = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external_signal = float(feature_signals.get("external_method_consensus", 0) or 0)
         zero_signal = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
+        omission_phase_signal = float(feature_signals.get("omission_phase_rebound", 0) or 0)
+        low_error_signal = float(feature_signals.get("low_probability_error_recovery", 0) or 0)
+        front5_signal = front5_precision_signal(row)
+        latest_reentry_allowed = latest_repeat_reentry_allowed(row)
         if number in late_hit_counts:
             bonus = min(0.11, 0.045 + late_hit_counts[number] * 0.018)
             recovery_bonus += bonus
@@ -5298,27 +5420,34 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             bonus = min(0.10, 0.055 + last2_missed_counts[number] * 0.022)
             recovery_bonus += bonus
             recovery_reasons.append("近兩期漏抓立即補位")
-        if drift_active and drift_signal >= 0.52 and number not in latest_actual:
+        if front5_signal >= 0.58 and (number not in latest_actual or latest_reentry_allowed):
+            bonus = min(0.18, 0.045 + front5_signal * 0.18)
+            recovery_bonus += bonus
+            recovery_reasons.append("前五實戰前移重組")
+        if drift_active and drift_signal >= 0.52 and (number not in latest_actual or latest_reentry_allowed):
             bonus = min(0.17, 0.055 + drift_signal * 0.12)
             recovery_bonus += bonus
             recovery_reasons.append("前九與前十五錯位修正")
-        if (leak_active or critical) and effective_signal >= 0.50 and number not in latest_actual:
-            bonus = min(0.18, 0.055 + effective_signal * 0.13)
+        if (leak_active or critical) and effective_signal >= 0.50 and front5_signal >= 0.52 and (number not in latest_actual or latest_reentry_allowed):
+            bonus = min(0.09, 0.025 + effective_signal * 0.06)
             recovery_bonus += bonus
             recovery_reasons.append("有效命中前移")
-        if (leak_active or critical) and walk_signal >= 0.56 and number not in latest_actual:
+        if (leak_active or critical) and walk_signal >= 0.56 and (number not in latest_actual or latest_reentry_allowed):
             bonus = min(0.19, 0.05 + walk_signal * 0.14)
             recovery_bonus += bonus
             recovery_reasons.append("滾動命中指紋前移")
-        if (leak_active or critical) and external_signal >= 0.58 and number not in latest_actual:
+        if (leak_active or critical) and external_signal >= 0.58 and (number not in latest_actual or latest_reentry_allowed):
             bonus = min(0.16, 0.045 + external_signal * 0.12)
             recovery_bonus += bonus
             recovery_reasons.append("外部方法共識前移")
-        if zero_hit_top15 and number not in latest_actual and zero_signal >= 0.54:
+        if (leak_active or critical) and omission_phase_signal >= 0.58 and (number not in latest_actual or latest_reentry_allowed):
+            bonus = min(0.16, 0.04 + omission_phase_signal * 0.12)
+            recovery_bonus += bonus
+            recovery_reasons.append("遺漏相位前五回彈")
+        if zero_hit_top15 and (number not in latest_actual or latest_reentry_allowed) and zero_signal >= 0.54:
             bonus = min(0.20, 0.06 + zero_signal * 0.16)
             recovery_bonus += bonus
             recovery_reasons.append("前十五全落空反向補位")
-
         failure_penalty = 0.0
         penalty_reasons = []
         if number in failed:
@@ -5345,10 +5474,12 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
                 penalty_reasons.append("前十五全落空硬隔離")
 
         firewall = row.get("recent_draw_firewall") or {}
-        firewall_blocked = bool(firewall.get("blocked"))
+        firewall_blocked = bool(firewall.get("blocked")) and not latest_reentry_allowed
         firewall_penalty = 0.50 if firewall_blocked else 0.0
         if firewall_blocked:
             penalty_reasons.append("剛開出號硬防火牆")
+        elif number in latest_actual and latest_reentry_allowed:
+            penalty_reasons.append("剛開出號已通過前五強驗")
         failure_front = row.get("recent_failure_front_gate") or {}
         failure_front_blocked = bool(failure_front.get("blocked"))
         if failure_front_blocked:
@@ -5364,12 +5495,18 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             + maturity_norm * 0.10
             + cross_norm * 0.08
             + stability_norm * 0.08
-            + walk_signal * (0.08 if critical else 0.04)
+            + walk_signal * (0.11 if critical else 0.06)
+            + external_signal * (0.08 if critical else 0.04)
+            + omission_phase_signal * (0.08 if critical else 0.04)
+            + front5_signal * (0.14 if critical else 0.08)
             + zero_signal * (0.10 if zero_hit_top15 else 0.04)
             + recovery_bonus
             - failure_penalty
             - firewall_penalty
         )
+        if low_error_signal >= 0.70 and front5_signal < 0.52:
+            corrected -= 0.08
+            penalty_reasons.append("低機率回收未過前五重組降權")
         if int(cross.get("passed_count", 0) or 0) < 4 and float(maturity.get("score", 0) or 0) < 70:
             corrected = min(corrected, 0.68)
             penalty_reasons.append("交叉驗算與成熟度不足限高")
@@ -5394,6 +5531,8 @@ def apply_multi_model_correction_tournament(candidates, review=None, front_limit
             "effective_hit_front_shift": round(effective_signal, 4),
             "walk_forward_hit_signature": round(walk_signal, 4),
             "external_method_consensus": round(external_signal, 4),
+            "omission_phase_rebound": round(omission_phase_signal, 4),
+            "front5_precision_rebuild": round(front5_signal, 4),
             "zero_hit_inversion_recovery": round(zero_signal, 4),
             "rank_window_drift_signal": round(drift_signal, 4),
             "recovery_reasons": recovery_reasons,
@@ -5632,11 +5771,15 @@ def apply_full_system_entry_gate(
         walk_signal = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external_signal = float(feature_signals.get("external_method_consensus", 0) or 0)
         zero_signal = float(feature_signals.get("zero_hit_inversion_recovery", 0) or 0)
+        omission_phase_signal = float(feature_signals.get("omission_phase_rebound", 0) or 0)
+        front5_signal = front5_precision_signal(row)
+        latest_reentry_allowed = latest_repeat_reentry_allowed(row)
+        hard_firewall_blocked = bool(firewall.get("blocked")) and not latest_reentry_allowed
         zero_reentry_blocked = bool(zero_hit_top15 and number in last_failed_top15 and zero_signal < 0.82)
-        hard_blocked = bool(firewall.get("blocked")) or bool(failure_front.get("blocked")) or zero_reentry_blocked
+        hard_blocked = hard_firewall_blocked or bool(failure_front.get("blocked")) or zero_reentry_blocked
         reentry_ok = not previous_guard.get("reentry_required") or bool(previous_guard.get("reentry_passed"))
         not_unverified_repeat = number not in previous or reentry_ok
-        not_latest_repeat = number not in latest_actual or bool((row.get("repeat_guard") or {}).get("passed"))
+        not_latest_repeat = number not in latest_actual or bool((row.get("repeat_guard") or {}).get("passed")) or latest_reentry_allowed
 
         checks = [
             ("全歷史回測或低迷重整達標", global_checks["全歷史主回測"]["passed"] or slump_recovery_ready),
@@ -5644,7 +5787,7 @@ def apply_full_system_entry_gate(
             ("多模型校正完成", correction_detail.get("status") == "已執行" and model_count >= 3),
             ("強牌治理完成", global_checks["強牌治理"]["passed"]),
             ("精算小牌回測完成", global_checks["精算小牌競賽"]["passed"]),
-            ("剛開出防火牆通過", not bool(firewall.get("blocked")) and not_latest_repeat),
+            ("剛開出防火牆通過", not hard_firewall_blocked and not_latest_repeat),
             ("近期失準守門通過", not bool(failure_front.get("blocked"))),
             ("上期預測重驗通過", not_unverified_repeat),
             ("前十五全落空隔離通過", not zero_reentry_blocked),
@@ -5683,7 +5826,7 @@ def apply_full_system_entry_gate(
             ("信心補位門檻", confidence >= 66),
             ("多模組補位門檻", model_count >= 3),
             ("穩定補位門檻", stability >= 1),
-            ("交叉或回收證據", cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.50 or walk_signal >= 0.56 or external_signal >= 0.58 or zero_signal >= 0.56 or stability >= 2),
+            ("交叉或回收證據", cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.50 or walk_signal >= 0.56 or external_signal >= 0.58 or omission_phase_signal >= 0.58 or front5_signal >= 0.54 or zero_signal >= 0.56 or stability >= 2),
         ]
         reserve_failure_revalidated = (
             not bool(failure_front.get("blocked"))
@@ -5693,7 +5836,7 @@ def apply_full_system_entry_gate(
         reserve_signal_passed = (
             score >= 0.08
             and confidence >= 54
-            and (cross_passed >= 1 or stability >= 2 or maturity_score >= 45 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56 or zero_signal >= 0.56)
+            and (cross_passed >= 1 or stability >= 2 or maturity_score >= 45 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56 or omission_phase_signal >= 0.56 or front5_signal >= 0.52 or zero_signal >= 0.56)
         ) or (
             cross_passed >= 4
             and maturity_score >= 44
@@ -5707,7 +5850,7 @@ def apply_full_system_entry_gate(
         reserve_checks = reserve_base_checks + [
             ("備查分數或強驗算門檻", reserve_signal_passed),
             ("備查信心門檻", confidence >= 54 or cross_passed >= 4),
-            ("備查觀察證據", cross_passed >= 1 or maturity_score >= 44 or stability >= 2 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56),
+            ("備查觀察證據", cross_passed >= 1 or maturity_score >= 44 or stability >= 2 or recovery_count >= 1 or drift_signal >= 0.52 or effective_signal >= 0.48 or walk_signal >= 0.54 or external_signal >= 0.56 or omission_phase_signal >= 0.56 or front5_signal >= 0.52),
         ]
 
         slump_recovery_item_passed = (
@@ -5716,8 +5859,8 @@ def apply_full_system_entry_gate(
             and confidence >= 62
             and model_count >= 3
             and stability >= 1
-            and (cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.48 or effective_signal >= 0.45 or walk_signal >= 0.54 or external_signal >= 0.56 or zero_signal >= 0.56 or maturity_score >= 58)
-            and not bool(firewall.get("blocked"))
+            and (cross_passed >= 1 or recovery_count >= 1 or drift_signal >= 0.48 or effective_signal >= 0.45 or walk_signal >= 0.54 or external_signal >= 0.56 or omission_phase_signal >= 0.56 or front5_signal >= 0.54 or zero_signal >= 0.56 or maturity_score >= 58)
+            and not hard_firewall_blocked
             and not bool(failure_front.get("blocked"))
             and not zero_reentry_blocked
         )
@@ -5725,12 +5868,12 @@ def apply_full_system_entry_gate(
         core_passed = global_ready and not hard_blocked and all(passed for _, passed in core_checks)
         coverage_passed = (
             global_ready
-            and not bool(firewall.get("blocked"))
+            and not hard_firewall_blocked
             and (all(passed for _, passed in coverage_checks) or slump_recovery_item_passed)
         )
         reserve_passed = (
             global_ready
-            and not bool(firewall.get("blocked"))
+            and not hard_firewall_blocked
             and (all(passed for _, passed in reserve_checks) or slump_recovery_item_passed)
         )
 
@@ -5780,6 +5923,9 @@ def apply_full_system_entry_gate(
             "有效命中前移": round(effective_signal, 4),
             "滾動命中指紋": round(walk_signal, 4),
             "外部方法共識": round(external_signal, 4),
+            "遺漏相位前五回彈": round(omission_phase_signal, 4),
+            "前五實戰前移重組": round(front5_signal, 4),
+            "剛開出強驗回補": latest_reentry_allowed,
             "前十五全落空反向": round(zero_signal, 4),
             "前十五全落空隔離": zero_reentry_blocked,
             "低迷重整": slump_recovery_item_passed,
@@ -5950,6 +6096,8 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
         walk = float(feature_signals.get("walk_forward_hit_signature", 0) or 0)
         external = float(feature_signals.get("external_method_consensus", 0) or 0)
         omission_phase = float(feature_signals.get("omission_phase_rebound", 0) or 0)
+        front5 = front5_precision_signal(row)
+        latest_reentry_allowed = latest_repeat_reentry_allowed(row)
         positive_core = float(feature_signals.get("positive_edge_core", 0) or 0)
         recovery_reasons = correction.get("recovery_reasons") or []
 
@@ -5959,13 +6107,14 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             + cross_norm * 0.08
             + maturity_norm * 0.08
             + stability_norm * 0.06
-            + walk * 0.21
-            + effective * 0.16
-            + drift * 0.12
-            + low_error * 0.12
-            + zero * 0.22
-            + external * 0.11
-            + omission_phase * 0.06
+            + walk * 0.24
+            + effective * 0.06
+            + drift * 0.10
+            + low_error * 0.04
+            + zero * 0.20
+            + external * 0.16
+            + omission_phase * 0.14
+            + front5 * 0.22
             + positive_core * 0.08
         )
         if number in late_hit_counts:
@@ -5974,27 +6123,29 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             emergency_score += min(0.15, 0.055 + missed_actual_counts[number] * 0.022)
         if number in last2_missed_counts:
             emergency_score += min(0.13, 0.07 + last2_missed_counts[number] * 0.03)
-        if number in low_error_numbers:
-            emergency_score += 0.12
+        if number in low_error_numbers and front5 >= 0.54:
+            emergency_score += 0.06
+        elif number in low_error_numbers and front5 < 0.52:
+            emergency_score -= 0.10
         if recovery_reasons:
             emergency_score += min(0.10, len(recovery_reasons) * 0.035)
         if zero_hit_top15 and number not in last_failed_top15 and zero >= 0.50:
             emergency_score += 0.14
             recovery_reasons = list(recovery_reasons) + ["前十五全落空反向重建"]
 
-        firewall_blocked = bool(firewall.get("blocked"))
-        repeat_blocked = number in latest_actual and not bool((row.get("repeat_guard") or {}).get("passed"))
+        firewall_blocked = bool(firewall.get("blocked")) and not latest_reentry_allowed
+        repeat_blocked = number in latest_actual and not bool((row.get("repeat_guard") or {}).get("passed")) and not latest_reentry_allowed
         failure_blocked = bool(failure_front.get("blocked"))
         zero_blocked = bool(zero_hit_top15 and number in last_failed_top15 and zero < 0.82)
         if number in failed and number not in late_hit_counts and number not in missed_actual_counts:
             emergency_score -= 0.12
         if zero_hit_top15 and number in last_failed_top15:
             emergency_score -= 0.38 if zero < 0.82 else 0.16
-        if number in repeated_failed and walk < 0.62 and effective < 0.56:
+        if number in repeated_failed and walk < 0.62 and front5 < 0.56:
             emergency_score -= min(0.22, 0.08 + repeated_failed[number] * 0.018)
         if number in previous and previous_guard and not previous_guard.get("passed") and walk < 0.62:
             emergency_score -= 0.09
-        if failure_blocked and walk < 0.60 and effective < 0.55:
+        if failure_blocked and walk < 0.60 and front5 < 0.54:
             emergency_score -= 0.16
         if firewall_blocked or repeat_blocked:
             emergency_score -= 0.65
@@ -6009,7 +6160,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
                 or validation.get("status") in {"備查通過", "備查重驗通過", "主列補位通過", "主列重驗通過", "低迷重整主列通過"}
                 or (
                     emergency_score >= 0.44
-                    and (cross_norm >= 0.08 or maturity_norm >= 0.45 or walk >= 0.56 or effective >= 0.52)
+                    and (cross_norm >= 0.08 or maturity_norm >= 0.45 or walk >= 0.56 or external >= 0.56 or omission_phase >= 0.56 or front5 >= 0.54)
                 )
             )
         )
@@ -6060,6 +6211,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
             validation["top9_released"] = False
         evidence = dict(validation.get("evidence") or {})
         evidence["失準急救分"] = row.get("slump_emergency_rebuild_score")
+        evidence["前五實戰前移重組"] = round(front5_precision_signal(row), 4)
         evidence["前十五全落空反向"] = round(float((row.get("feature_signals") or {}).get("zero_hit_inversion_recovery", 0) or 0), 4)
         evidence["前十五全落空隔離"] = bool(zero_hit_top15 and number in last_failed_top15)
         validation["evidence"] = evidence
@@ -6084,6 +6236,7 @@ def apply_slump_emergency_front_rebuild(candidates, draws, review=None, front_li
                 "score": item.get("slump_emergency_rebuild_score"),
                 "walk_forward": (item.get("feature_signals") or {}).get("walk_forward_hit_signature"),
                 "effective_front": (item.get("feature_signals") or {}).get("effective_hit_front_shift"),
+                "front5_precision_rebuild": (item.get("feature_signals") or {}).get("front5_precision_rebuild"),
                 "zero_hit_inversion": (item.get("feature_signals") or {}).get("zero_hit_inversion_recovery"),
             }
             for item in adjusted[:15]
@@ -6231,6 +6384,7 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
             int(item["number"]) not in latest_actual
             or bool((item.get("repeat_guard") or {}).get("passed"))
             or bool((item.get("previous_prediction_guard") or {}).get("reentry_passed"))
+            or latest_repeat_reentry_allowed(item)
         )
     ]
 
@@ -6245,6 +6399,7 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
             + int(item.get("stability_count", 0) or 0) * 4.5
             + int(cross.get("passed_count", 0) or 0) * 3.2
             + float(maturity.get("score", 0) or 0) * 0.22
+            + front5_precision_signal(item) * 25
             + (8 if entry.get("status") == "核心通過" else 0)
             + (5 if correction.get("status") == "已執行" else 0)
         )
@@ -6280,13 +6435,20 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
     entry = selected.get("entry_validation") or {}
     correction = selected.get("multi_model_correction") or {}
     latest_reuse = number in latest_actual
-    latest_reuse_allowed = (not latest_reuse) or bool((selected.get("repeat_guard") or {}).get("passed")) or bool((selected.get("previous_prediction_guard") or {}).get("reentry_passed"))
+    front5_single_signal = front5_precision_signal(selected)
+    latest_reuse_allowed = (
+        (not latest_reuse)
+        or bool((selected.get("repeat_guard") or {}).get("passed"))
+        or bool((selected.get("previous_prediction_guard") or {}).get("reentry_passed"))
+        or latest_repeat_reentry_allowed(selected)
+    )
     validation_checks = [
         ("主列放行", bool(entry.get("passed_for_main"))),
         ("非上期開獎忽弄", latest_reuse_allowed),
         ("多模型重算", correction.get("status") == "已執行"),
         ("交叉驗算", int(cross.get("passed_count", 0) or 0) >= 3),
         ("成熟度", float(maturity.get("score", 0) or 0) >= 58),
+        ("前五實戰前移重組", front5_single_signal >= 0.54),
         ("信心分數", float(selected.get("confidence_index", 0) or 0) >= 68),
     ]
     failed_checks = [name for name, passed in validation_checks if not passed]
@@ -6300,6 +6462,7 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
         "score": round(single_score(selected), 2),
         "candidate_score": selected.get("score"),
         "confidence_index": selected.get("confidence_index"),
+        "front5_precision_rebuild": round(front5_single_signal, 4),
         "cross_validation": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
         "maturity_score": maturity.get("score"),
         "entry_status": entry.get("status"),
@@ -6308,6 +6471,7 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
             "全系統主列放行",
             "多模型校正完成",
             "交叉驗算與成熟度檢查",
+            "前五實戰前移重組",
             "上期開獎號防呆",
             "每期重新運算，不沿用上期預測",
         ],
@@ -6449,11 +6613,11 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v28_zero_hit_inversion_20260807",
+        "engine_version": "industrial_v29_front5_precision_rebuild_20260810",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
-            "policy": "zero_hit_top15_hard_quarantine_with_recovery_revalidation",
+            "policy": "front5_precision_reentry_with_zero_hit_quarantine",
             "previous_top15": sorted(previous),
             "reentry_passed": reentry_passed,
             "current_top9_overlap": top9_overlap,
