@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260810_第13版_前五實戰前移重組",
   "industrial_engine_version": "industrial_v29_front5_precision_rebuild_20260810",
-  "generated_at_taiwan": "2026-08-10T11:55:01+08:00",
-  "generated_at_california": "2026-08-09T20:55:01-07:00",
+  "generated_at_taiwan": "2026-08-10T12:20:19+08:00",
+  "generated_at_california": "2026-08-09T21:20:19-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11884,
@@ -1943,7 +1943,7 @@
   },
   "freshness": {
     "california_today": "2026-08-09",
-    "california_time": "20:55:01",
+    "california_time": "21:20:19",
     "allowed_latest_draw_date": "2026-08-09",
     "age_days": 0,
     "status": "ok",
@@ -172970,7 +172970,7 @@
     {
       "based_on_date": "2026-08-09",
       "target_date": "2026-08-10",
-      "created_at": "2026-08-10T11:55:01+08:00",
+      "created_at": "2026-08-10T12:20:19+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
