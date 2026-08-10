@@ -2124,6 +2124,11 @@ def compact_super_single_html_tiantianle(analysis):
     external_score = features.get("external_method_consensus", "-")
     low_recovery = features.get("low_probability_error_recovery", "-")
     zero_rebuild = features.get("zero_hit_inversion_recovery", "-")
+    front5_rebuild = (
+        validation.get("front5_precision_rebuild")
+        if use_validation and validation.get("front5_precision_rebuild") is not None
+        else features.get("front5_precision_rebuild", "-")
+    )
     entry_status = (validation.get("entry_status") if use_validation else None) or entry.get("status_label") or entry.get("status") or "-"
     fake_guard = (validation.get("fake_data_guard") if use_validation else None) or "通過"
     latest_numbers = {safe_int(n) for n in (latest.get("numbers") or [])}
@@ -2134,22 +2139,23 @@ def compact_super_single_html_tiantianle(analysis):
         ["多模型校正", (item.get("multi_model_correction") or {}).get("status", "-"), entry_status],
         ["交叉驗算", cross_text, "通過"],
         ["外部方法共識", compact_decimal(external_score, 3), "前移加權"],
-        ["低機率反向回收", compact_decimal(low_recovery, 3), "錯位修正"],
-        ["前十五全落空反向重建", compact_decimal(zero_rebuild, 3), "今日失準後重建"],
+        ["滾動前五重組", compact_decimal(front5_rebuild, 3), "核心驗證"],
+        ["低機率回收複驗", compact_decimal(low_recovery, 3), "未過前五即降權"],
+        ["前十五全落空修正", compact_decimal(zero_rebuild, 3), "失準後重建"],
         ["成熟度", compact_decimal(maturity_text, 1), maturity.get("tier", "成熟檢查")],
         ["上期防呆", reuse_guard, fake_guard],
     ]
     if use_validation:
         evidence_items = validation.get("evidence") or []
     else:
-        evidence_items = ["最終排序第一名，已套用今日未命中回灌與前十五全落空反向重建"]
+        evidence_items = ["最終排序第一名，已套用今日未命中回灌、前五實戰前移重組與前十五錯位修正"]
         evidence_items.extend([f"來源模型：{label}" for label in source_labels[:6]])
     evidence_rows = [[item] for item in evidence_items]
     model_rows = [[label] for label in source_labels[:8]]
     return f"""
     <div class="band singlebox mega-single">
       <h2>超高信心高機率強推薦：最強獨隻1中1</h2>
-      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。此號碼由全歷史資料庫、多模型校正、交叉驗算、低機率反向回收與上期防呆共同放行。</p>
+      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。此號碼由全歷史資料庫、多模型校正、交叉驗算、前五實戰前移重組與上期防呆共同放行。</p>
       <div class="grid">
         <div class="card hot-card"><div class="label">強推號碼</div><div class="value num">{number:02d}</div></div>
         <div class="card"><div class="label">強推判定</div><div class="value">超高信心強推薦</div></div>
@@ -2979,10 +2985,16 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     maturity = item.get("practical_maturity") or {}
     features = item.get("feature_signals") or {}
     checks = validation.get("failed_checks") if use_validation else []
+    front5_value = (
+        validation.get("front5_precision_rebuild")
+        if use_validation and validation.get("front5_precision_rebuild") is not None
+        else features.get("front5_precision_rebuild", "-")
+    )
     evidence = validation.get("evidence") if use_validation else [
         "最終排序第一名，今日未命中後重新計算",
-        "前十五全落空反向重建已納入",
-        f"前十五全落空反向值 {compact_decimal(features.get('zero_hit_inversion_recovery', '-'), 3)}",
+        "前五實戰前移重組已納入",
+        f"前五實戰前移值 {compact_decimal(front5_value, 3)}",
+        f"前十五錯位修正值 {compact_decimal(features.get('zero_hit_inversion_recovery', '-'), 3)}",
     ]
     latest_numbers = {safe_int(n) for n in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
     latest_reuse = number in latest_numbers
@@ -2991,6 +3003,7 @@ def compact_strong_single_validation_html_tiantianle(analysis):
         ["總分", validation.get("score", item.get("score", "-")) if use_validation else item.get("score", "-"), "每期重新計算"],
         ["主列狀態", validation.get("entry_status", entry.get("status_label", entry.get("status", "-"))) if use_validation else entry.get("status_label", entry.get("status", "-")), "必須通過主列放行"],
         ["交叉驗算", validation.get("cross_validation", f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}") if use_validation else f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}", "多模組驗證"],
+        ["前五實戰前移", compact_decimal(front5_value, 3), "強推必要驗證"],
         ["成熟度", validation.get("maturity_score", maturity.get("score", "-")) if use_validation else maturity.get("score", "-"), "實戰成熟檢查"],
         ["上期開獎防呆", "有重複" if latest_reuse else "未使用上期開獎號", "通過" if not latest_reuse else "連莊需重驗"],
         ["假資料防呆", validation.get("fake_data_guard", "通過") if use_validation else "通過", "禁止憑空產號"],
