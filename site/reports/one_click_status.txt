@@ -11,3 +11,18 @@ cache updated: lotterynet_latest.html
 cache updated: lotterynet_year.html
 Step 2/8 run main system
 Step 3/8 build mobile pages
+Step 3.5/8 clean stale legacy artifacts before audit
+Step 4/8 sanitize and audit system gaps
+Step 5/8 verify outputs
+outputs verified
+runtime cache cleaned
+Step 6/8 publish mobile cloud
+cloud publish: 
+cloud publish: �w�o�� 118 �Ӥ�������ɮסC
+cloud publish: ������ڤW�� 34 �ӡA�u�Υ��ܧ� 85 �ӡC
+cloud publish: ���ݪ���: 7a3e5ea1e7a46b0c5d1ad1182dd49f75d1aab298
+cloud publish: �����}: https://pingshen670822.github.io/tiantianle-cloud-system/
+cloud mobile site published
+Step 7/8 verify mobile sync
+Step 8/8 open latest page
+one-click 完整: 2026-08-11 09:04:52
