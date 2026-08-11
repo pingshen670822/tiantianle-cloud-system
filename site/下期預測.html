@@ -45,14 +45,14 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20260811054437">
+    <link rel="manifest" href="manifest.webmanifest?v=20260811070539">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head><body><header>
   <h1>天天樂 下期預測</h1>
-  <p>產生：台灣時間 2026-08-11 13:44 / 全歷史資料 完整 / 共 11885 筆</p>
+  <p>產生：台灣時間 2026-08-11 15:05 / 全歷史資料 完整 / 共 11885 筆</p>
   <p>最新開獎可確認：台灣時間 2026-08-11 09:50 / 最新號碼：09 10 11 13 25 / 下期開獎：台灣時間 2026-08-12 09:50</p>
   <p class="small">最新開獎期別 2026-08-10 / 下期開獎期別 2026-08-11</p>
 </header><main>
@@ -60,9 +60,9 @@
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20260811054437">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20260811070539">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20260811054437</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260811070539</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
@@ -133,7 +133,7 @@
     </div>
   </main>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20260811054437';
+    window.TIANTIANLE_BUILD_VERSION = '20260811070539';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -161,7 +161,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20260811054437&force=' + Date.now());
+      location.replace('首頁.html?v=20260811070539&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -178,7 +178,7 @@
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20260811054437', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20260811070539', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
@@ -207,8 +207,8 @@
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260811054437') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260811054437';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260811070539') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260811070539';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
