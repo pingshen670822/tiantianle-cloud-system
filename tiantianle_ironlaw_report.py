@@ -2174,6 +2174,90 @@ def compact_super_single_html_tiantianle(analysis):
     """
 
 
+def compact_perfect_date_drag_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    module = industrial.get("perfect_date_drag") or {}
+    if not module:
+        return '<div class="band"><h2>完美日期牌與完美必拖牌</h2><p>本期尚未產生模組資料。</p></div>'
+    backtest = module.get("backtest") or {}
+    windows = backtest.get("windows") or {}
+    release_passed = bool(backtest.get("release_passed"))
+    status_text = "超高信心高機率強推薦" if release_passed else "已回測，未升正式強拖"
+    summary_rows = [
+        ["回測判定", esc(module.get("validation_status") or "-"), status_text],
+        ["完美日期牌", fmt_numbers(module.get("date_cards") or []), "依預測日期、星期、月日尾數、同型態歷史重算"],
+        ["主膽", fmt_numbers(module.get("banker") or []), "必拖牌中心號"],
+        ["必拖牌", fmt_numbers(module.get("must_drag") or []), "主膽後四顆拖牌"],
+        ["主膽加必拖五碼", fmt_numbers(module.get("banker_plus_must_drag") or []), "用於五碼核心驗證"],
+        ["核心九碼", fmt_numbers(module.get("core_drag") or []), "必拖牌主要實戰範圍"],
+        ["備拖", fmt_numbers(module.get("backup_drag") or []), "第十到十五名備查"],
+        ["擋下", fmt_numbers(module.get("blocked_drag") or []), "未過強拖門檻或壓力偏高"],
+    ]
+    window_rows = []
+    for key in ["60", "120", "360", "720"]:
+        item = windows.get(key) or {}
+        if not item:
+            continue
+        window_rows.append([
+            f"近{key}期",
+            item.get("banker_pass_rate", "-"),
+            item.get("must_drag_avg_hits", "-"),
+            item.get("must_drag_pass_rate", "-"),
+            item.get("core_drag_avg_hits", "-"),
+            item.get("core_drag_pass_rate", "-"),
+            item.get("date_card_avg_hits", "-"),
+            item.get("date_card_pass_rate", "-"),
+            item.get("zero_core_rate", "-"),
+        ])
+    formula_rows = [
+        [
+            f"{safe_int(item.get('number')):02d}" if safe_int(item.get("number")) else "-",
+            esc(item.get("source", "-")),
+            esc(item.get("raw_value", "-")),
+        ]
+        for item in (module.get("date_formula") or [])
+    ]
+    ranking_rows = []
+    for row in (module.get("ranking") or [])[:15]:
+        evidence = "、".join(esc(item) for item in (row.get("evidence") or [])[:6])
+        date_evidence = "、".join(
+            f"{esc(item.get('source', '-'))}{esc(item.get('count', '-'))}"
+            for item in (row.get("date_evidence") or [])[:4]
+        )
+        drag_detail = row.get("drag_detail") or {}
+        drag_text = (
+            f"下期拖出率{compact_decimal(drag_detail.get('next_rate', '-'), 3)}；"
+            f"同牌共現率{compact_decimal(drag_detail.get('same_draw_rate', '-'), 3)}；"
+            f"錨號{fmt_numbers([drag_detail.get('strongest_anchor')]) if drag_detail.get('strongest_anchor') else '-'}"
+        )
+        ranking_rows.append([
+            row.get("rank", "-"),
+            esc(row.get("role", "-")),
+            f"<span class=\"num\">{safe_int(row.get('number')):02d}</span>",
+            compact_decimal(row.get("score", "-"), 3),
+            compact_decimal(row.get("date_score", "-"), 3),
+            compact_decimal(row.get("drag_score", "-"), 3),
+            compact_decimal(row.get("front5_support", "-"), 3),
+            esc(row.get("gate_status", "-")),
+            evidence,
+            date_evidence or "-",
+            drag_text,
+        ])
+    return f"""
+    <div class="band singlebox">
+      <h2>完美日期牌與完美必拖牌</h2>
+      <p><strong>{esc(status_text)}：</strong>本區只放下期預測資料；每期依全歷史資料、日期型態、拖牌共現、前五強支撐與回測重新運算。</p>
+      {table(["項目", "號碼或狀態", "說明"], summary_rows)}
+      <h3>回測驗證</h3>
+      {table(["窗口", "主膽命中率", "必拖平均中", "必拖達標率", "核心九碼平均中", "核心九碼達標率", "日期牌平均中", "日期牌達標率", "九碼零中率"], window_rows, "目前沒有回測資料")}
+      <h3>日期牌公式</h3>
+      {table(["號碼", "來源", "原始值"], formula_rows, "目前沒有日期牌公式")}
+      <h3>逐號必拖驗算</h3>
+      {table(["名次", "定位", "號碼", "總分", "日期分", "拖牌分", "前五支撐", "守門", "依據", "日期驗算", "拖牌驗算"], ranking_rows, "目前沒有必拖牌排行")}
+    </div>
+    """
+
+
 def compact_review_html_tiantianle(settled):
     if not settled:
         return "<p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>"
@@ -3099,6 +3183,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     reality_gate_html = compact_reality_gate_html_tiantianle(analysis)
     monthly_breakthrough_html = compact_monthly_breakthrough_html_tiantianle(analysis)
     strong_single_validation_html = compact_strong_single_validation_html_tiantianle(analysis)
+    perfect_date_drag_html = compact_perfect_date_drag_html_tiantianle(analysis)
     post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = "下期研究候選前9名"
@@ -3200,6 +3285,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
     {compact_super_single_html_tiantianle(analysis)}
     {strong_single_validation_html}
+    {perfect_date_drag_html}
     <div class="band">
       <h2>{candidate_heading}</h2>
       {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}

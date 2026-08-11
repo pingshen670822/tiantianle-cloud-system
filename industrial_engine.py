@@ -6584,6 +6584,526 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
     return packs, validation
 
 
+def date_number_entries(date_text):
+    date_value = datetime.strptime(str(date_text), "%Y-%m-%d")
+    roc_year = date_value.year - 1911
+    raw_entries = [
+        ("民國年", roc_year),
+        ("月份", date_value.month),
+        ("日期", date_value.day),
+        ("月日合併", int(f"{date_value.month}{date_value.day:02d}")),
+        ("西元數字總和", sum(int(ch) for ch in date_value.strftime("%Y%m%d"))),
+        ("民國年加月份", roc_year + date_value.month),
+        ("民國年加日期", roc_year + date_value.day),
+        ("月份加日期", date_value.month + date_value.day),
+        ("星期序位", date_value.weekday() + 1),
+        ("日期尾數加星期", (date_value.day % 10) + date_value.weekday() + 1),
+    ]
+    entries = []
+    seen = set()
+    for label, raw_value in raw_entries:
+        number = normalize_number(raw_value)
+        if number in seen:
+            continue
+        seen.add(number)
+        entries.append({"number": number, "source": label, "raw_value": raw_value})
+    return entries
+
+
+def date_profile_scores(draws, target_date):
+    scores = Counter()
+    evidence = defaultdict(Counter)
+    try:
+        target = datetime.strptime(str(target_date), "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return {number: 0.0 for number in range(NUMBER_MIN, NUMBER_MAX + 1)}, {}, []
+
+    target_digit_sum_tail = sum(int(ch) for ch in target.strftime("%Y%m%d")) % 10
+    formula_entries = date_number_entries(target.isoformat())
+    formula_numbers = {entry["number"] for entry in formula_entries}
+    for entry in formula_entries:
+        scores[entry["number"]] += 2.4
+        evidence[entry["number"]][f"日期公式：{entry['source']}"] += 1
+
+    for draw in draws:
+        try:
+            draw_date = datetime.strptime(str(draw.get("draw_date")), "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            continue
+        weight = 0.0
+        labels = []
+        if draw_date.weekday() == target.weekday():
+            weight += 1.0
+            labels.append("同星期")
+        if draw_date.month == target.month:
+            weight += 0.7
+            labels.append("同月份")
+        if draw_date.day == target.day:
+            weight += 1.2
+            labels.append("同日期")
+        if draw_date.day % 10 == target.day % 10:
+            weight += 0.65
+            labels.append("同日期尾數")
+        if sum(int(ch) for ch in draw_date.strftime("%Y%m%d")) % 10 == target_digit_sum_tail:
+            weight += 0.55
+            labels.append("同日期總和尾")
+        if not weight:
+            continue
+        for number in draw.get("numbers", []):
+            if not (NUMBER_MIN <= int(number) <= NUMBER_MAX):
+                continue
+            number = int(number)
+            scores[number] += weight
+            for label in labels:
+                evidence[number][label] += 1
+            if number in formula_numbers:
+                evidence[number]["日期公式重疊"] += 1
+
+    normalized = normalize({number: scores.get(number, 0.0) for number in range(NUMBER_MIN, NUMBER_MAX + 1)})
+    evidence_rows = {
+        number: [
+            {"source": label, "count": count}
+            for label, count in counter.most_common(6)
+        ]
+        for number, counter in evidence.items()
+    }
+    return normalized, evidence_rows, formula_entries
+
+
+def drag_profile_scores(draws, anchor_numbers):
+    anchors = {
+        int(number)
+        for number in anchor_numbers or []
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    if not anchors or len(draws) < 3:
+        return {number: 0.0 for number in range(NUMBER_MIN, NUMBER_MAX + 1)}, {}
+
+    transition_counts = Counter()
+    co_counts = Counter()
+    anchor_transition_samples = 0
+    anchor_same_draw_samples = 0
+    pair_counts = defaultdict(Counter)
+    for idx in range(len(draws) - 1):
+        current = {int(number) for number in draws[idx].get("numbers", [])}
+        matched = current & anchors
+        if matched:
+            anchor_transition_samples += 1
+            following = [int(number) for number in draws[idx + 1].get("numbers", [])]
+            transition_counts.update(following)
+            for anchor in matched:
+                pair_counts[anchor].update(following)
+        if current & anchors:
+            anchor_same_draw_samples += 1
+            co_counts.update(current)
+
+    raw_scores = {}
+    detail = {}
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        next_rate = transition_counts.get(number, 0) / max(1, anchor_transition_samples)
+        co_rate = co_counts.get(number, 0) / max(1, anchor_same_draw_samples)
+        next_lift = max(0.0, next_rate - BASE_PROBABILITY)
+        co_lift = max(0.0, co_rate - BASE_PROBABILITY)
+        strongest_anchor = None
+        strongest_anchor_count = 0
+        for anchor in anchors:
+            count = pair_counts[anchor].get(number, 0)
+            if count > strongest_anchor_count:
+                strongest_anchor = anchor
+                strongest_anchor_count = count
+        raw_scores[number] = next_lift * 7.0 + co_lift * 3.8 + min(0.24, strongest_anchor_count / max(1, anchor_transition_samples))
+        detail[number] = {
+            "next_rate": round(next_rate, 4),
+            "same_draw_rate": round(co_rate, 4),
+            "next_lift": round(next_lift, 4),
+            "same_draw_lift": round(co_lift, 4),
+            "strongest_anchor": strongest_anchor,
+            "strongest_anchor_count": strongest_anchor_count,
+            "transition_samples": anchor_transition_samples,
+            "same_draw_samples": anchor_same_draw_samples,
+        }
+    return normalize(raw_scores), detail
+
+
+def date_drag_backtest_rank(train_draws, target_date):
+    date_scores, _, date_entries = date_profile_scores(train_draws, target_date)
+    drag_scores, _ = drag_profile_scores(train_draws, train_draws[-1].get("numbers", []))
+    full_freq = frequency(train_draws)
+    full_scores = normalize({
+        number: binomial_zscore(full_freq.get(number, 0), len(train_draws))
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    })
+    omissions = omission(train_draws)
+    omission_scores = normalize({
+        number: math.log1p(omissions[number]) / math.log1p(EXPECTED_GAP * 4)
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+    })
+    date_formula_numbers = {entry["number"] for entry in date_entries}
+    rank_scores = {}
+    date_rank_scores = {}
+    for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+        formula = 1.0 if number in date_formula_numbers else 0.0
+        date_rank_scores[number] = date_scores[number] * 0.72 + formula * 0.28
+        rank_scores[number] = (
+            drag_scores[number] * 0.38
+            + date_scores[number] * 0.24
+            + full_scores[number] * 0.16
+            + omission_scores[number] * 0.12
+            + formula * 0.10
+        )
+    ranked = sorted(range(NUMBER_MIN, NUMBER_MAX + 1), key=lambda number: (rank_scores[number], date_rank_scores[number], -number), reverse=True)
+    date_ranked = sorted(range(NUMBER_MIN, NUMBER_MAX + 1), key=lambda number: (date_rank_scores[number], rank_scores[number], -number), reverse=True)
+    return ranked, date_ranked
+
+
+def perfect_date_drag_backtest(draws, rounds=None):
+    if len(draws) < 160:
+        return {
+            "status": "資料不足",
+            "rounds": 0,
+            "windows": {},
+            "release_passed": False,
+            "message": "資料筆數不足，無法執行完美日期牌與必拖牌回測",
+        }
+    rounds = runtime_rounds("TIANTIANLE_PERFECT_DRAG_BACKTEST_ROUNDS", 720, minimum=120, maximum=720) if rounds is None else int(rounds)
+    start = max(120, len(draws) - rounds - 1)
+    hit_history = []
+    date_buckets = {
+        "weekday": defaultdict(Counter),
+        "month": defaultdict(Counter),
+        "day": defaultdict(Counter),
+        "day_tail": defaultdict(Counter),
+        "digit_sum_tail": defaultdict(Counter),
+    }
+    transition_by_anchor = defaultdict(Counter)
+    transition_samples = Counter()
+    same_by_anchor = defaultdict(Counter)
+    same_samples = Counter()
+    cumulative_frequency = Counter()
+    last_seen = {number: None for number in range(NUMBER_MIN, NUMBER_MAX + 1)}
+
+    def parsed_date(index):
+        return datetime.strptime(str(draws[index].get("draw_date")), "%Y-%m-%d").date()
+
+    def date_keys(date_obj):
+        return [
+            ("weekday", date_obj.weekday(), 1.0),
+            ("month", date_obj.month, 0.7),
+            ("day", date_obj.day, 1.2),
+            ("day_tail", date_obj.day % 10, 0.65),
+            ("digit_sum_tail", sum(int(ch) for ch in date_obj.strftime("%Y%m%d")) % 10, 0.55),
+        ]
+
+    def update_draw(index):
+        draw_date = parsed_date(index)
+        numbers = [int(number) for number in draws[index].get("numbers", [])]
+        for bucket, key, _weight in date_keys(draw_date):
+            date_buckets[bucket][key].update(numbers)
+        cumulative_frequency.update(numbers)
+        for number in numbers:
+            last_seen[number] = index
+        for anchor in numbers:
+            same_samples[anchor] += 1
+            same_by_anchor[anchor].update(numbers)
+
+    def update_transition(index):
+        current = [int(number) for number in draws[index].get("numbers", [])]
+        following = [int(number) for number in draws[index + 1].get("numbers", [])]
+        for anchor in current:
+            transition_samples[anchor] += 1
+            transition_by_anchor[anchor].update(following)
+
+    for index in range(0, start + 1):
+        update_draw(index)
+        if index < start:
+            update_transition(index)
+
+    for idx in range(start, len(draws) - 1):
+        actual = {int(number) for number in draws[idx + 1].get("numbers", [])}
+        target = parsed_date(idx + 1)
+        date_raw = {number: 0.0 for number in range(NUMBER_MIN, NUMBER_MAX + 1)}
+        for bucket, key, weight in date_keys(target):
+            counter = date_buckets[bucket].get(key, Counter())
+            for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+                date_raw[number] += counter.get(number, 0) * weight
+        date_score = normalize(date_raw)
+        date_formula_numbers = {entry["number"] for entry in date_number_entries(draws[idx + 1].get("draw_date"))}
+
+        latest = [int(number) for number in draws[idx].get("numbers", [])]
+        transition_counts = Counter()
+        co_counts = Counter()
+        transition_sample_count = 0
+        same_sample_count = 0
+        for anchor in latest:
+            transition_sample_count += transition_samples.get(anchor, 0)
+            same_sample_count += same_samples.get(anchor, 0)
+            transition_counts.update(transition_by_anchor.get(anchor, Counter()))
+            co_counts.update(same_by_anchor.get(anchor, Counter()))
+        drag_raw = {}
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+            next_rate = transition_counts.get(number, 0) / max(1, transition_sample_count)
+            same_rate = co_counts.get(number, 0) / max(1, same_sample_count)
+            drag_raw[number] = max(0.0, next_rate - BASE_PROBABILITY) * 7.0 + max(0.0, same_rate - BASE_PROBABILITY) * 3.8
+        drag_score = normalize(drag_raw)
+
+        seen_draws = idx + 1
+        full_score = normalize({
+            number: binomial_zscore(cumulative_frequency.get(number, 0), seen_draws)
+            for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+        })
+        omission_score = normalize({
+            number: math.log1p(idx - last_seen[number] if last_seen[number] is not None else seen_draws) / math.log1p(EXPECTED_GAP * 4)
+            for number in range(NUMBER_MIN, NUMBER_MAX + 1)
+        })
+        rank_scores = {}
+        date_rank_scores = {}
+        for number in range(NUMBER_MIN, NUMBER_MAX + 1):
+            formula = 1.0 if number in date_formula_numbers else 0.0
+            date_rank_scores[number] = date_score[number] * 0.72 + formula * 0.28
+            rank_scores[number] = (
+                drag_score[number] * 0.38
+                + date_score[number] * 0.24
+                + full_score[number] * 0.16
+                + omission_score[number] * 0.12
+                + formula * 0.10
+            )
+        ranked = sorted(range(NUMBER_MIN, NUMBER_MAX + 1), key=lambda number: (rank_scores[number], date_rank_scores[number], -number), reverse=True)
+        date_ranked = sorted(range(NUMBER_MIN, NUMBER_MAX + 1), key=lambda number: (date_rank_scores[number], rank_scores[number], -number), reverse=True)
+        banker_hit = 1 if ranked and ranked[0] in actual else 0
+        must_hits = len(set(ranked[:5]) & actual)
+        core_hits = len(set(ranked[:9]) & actual)
+        date_hits = len(set(date_ranked[:5]) & actual)
+        hit_history.append({
+            "banker": banker_hit,
+            "must_drag": must_hits,
+            "core_drag": core_hits,
+            "date_card": date_hits,
+            "zero_core": 1 if core_hits == 0 else 0,
+        })
+        if idx < len(draws) - 2:
+            update_transition(idx)
+            update_draw(idx + 1)
+
+    def window_summary(window):
+        sample = hit_history[-window:]
+        rounds_done = len(sample)
+        if not rounds_done:
+            return {
+                "rounds": 0,
+                "banker_pass_rate": 0,
+                "must_drag_avg_hits": 0,
+                "must_drag_pass_rate": 0,
+                "core_drag_avg_hits": 0,
+                "core_drag_pass_rate": 0,
+                "date_card_avg_hits": 0,
+                "date_card_pass_rate": 0,
+                "zero_core_rate": 0,
+            }
+        banker_passes = sum(item["banker"] for item in sample)
+        must_passes = sum(1 for item in sample if item["must_drag"] >= 1)
+        core_passes = sum(1 for item in sample if item["core_drag"] >= 2)
+        date_passes = sum(1 for item in sample if item["date_card"] >= 1)
+        return {
+            "rounds": rounds_done,
+            "banker_pass_rate": round(banker_passes / rounds_done, 3),
+            "must_drag_avg_hits": round(sum(item["must_drag"] for item in sample) / rounds_done, 3),
+            "must_drag_pass_rate": round(must_passes / rounds_done, 3),
+            "core_drag_avg_hits": round(sum(item["core_drag"] for item in sample) / rounds_done, 3),
+            "core_drag_pass_rate": round(core_passes / rounds_done, 3),
+            "date_card_avg_hits": round(sum(item["date_card"] for item in sample) / rounds_done, 3),
+            "date_card_pass_rate": round(date_passes / rounds_done, 3),
+            "zero_core_rate": round(sum(item["zero_core"] for item in sample) / rounds_done, 3),
+        }
+
+    windows = {str(window): window_summary(window) for window in [60, 120, 360, 720]}
+    random_must_avg = DRAW_SIZE * 5 / NUMBER_MAX
+    random_core_avg = DRAW_SIZE * 9 / NUMBER_MAX
+    recent_60 = windows["60"]
+    recent_120 = windows["120"]
+    release_passed = bool(
+        recent_60["rounds"] >= 60
+        and recent_120["rounds"] >= 120
+        and recent_60["must_drag_avg_hits"] >= random_must_avg
+        and recent_120["must_drag_avg_hits"] >= random_must_avg
+        and recent_60["core_drag_avg_hits"] >= random_core_avg
+        and recent_120["core_drag_avg_hits"] >= random_core_avg
+        and recent_60["zero_core_rate"] <= 0.38
+    )
+    return {
+        "status": "已回測",
+        "version": "完美日期牌與必拖牌回測20260811",
+        "rounds": len(hit_history),
+        "windows": windows,
+        "random_baseline": {
+            "must_drag_avg_hits": round(random_must_avg, 3),
+            "core_drag_avg_hits": round(random_core_avg, 3),
+            "banker_hit_rate": round(BASE_PROBABILITY, 3),
+        },
+        "release_passed": release_passed,
+        "rules": [
+            "每一期用該期以前的全歷史資料重算",
+            "主膽看第一名是否命中",
+            "必拖五碼看至少中一顆與平均命中",
+            "核心九碼看至少中兩顆與平均命中",
+            "日期牌看同日期型態是否補到實際開獎",
+        ],
+    }
+
+
+def build_perfect_date_drag_module(candidates, draws, review=None):
+    review = review or {}
+    if not candidates or not draws:
+        return {"status": "未執行", "reason": "沒有候選號或開獎資料"}
+
+    target_date = next_draw_date(draws[-1]["draw_date"])
+    latest_numbers = {int(number) for number in draws[-1].get("numbers", [])}
+    date_scores, date_evidence, date_entries = date_profile_scores(draws, target_date)
+    drag_scores, drag_detail = drag_profile_scores(draws, latest_numbers)
+    backtest = perfect_date_drag_backtest(draws)
+    repeated_failed = {
+        int(number)
+        for number in (review.get("rolling_failed_numbers") or review.get("repeated_failed_numbers") or [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+
+    rows = []
+    for rank, item in enumerate(candidates, 1):
+        number = int(item["number"])
+        features = item.get("feature_signals") or {}
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        entry = item.get("entry_validation") or {}
+        front5 = front5_precision_signal(item)
+        support_count = front5_core_support_count(features)
+        pressure = unsupported_recovery_pressure(features)
+        date_score = date_scores.get(number, 0.0)
+        drag_score = drag_scores.get(number, 0.0)
+        cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / max(1, int(cross.get("total_count", 20) or 20)), 0.0, 1.0)
+        maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100.0, 0.0, 1.0)
+        stability_norm = clamp(float(item.get("stability_count", 0) or 0) / 5.0, 0.0, 1.0)
+        formula_hit = 1.0 if number in {entry["number"] for entry in date_entries} else 0.0
+        latest_reuse = number in latest_numbers
+        latest_reuse_allowed = (not latest_reuse) or latest_repeat_reentry_allowed(item)
+        base_score = float(item.get("score", 0) or 0)
+        raw_score = (
+            base_score * 0.20
+            + front5 * 0.22
+            + drag_score * 0.18
+            + date_score * 0.13
+            + _safe_feature_float(features, "walk_forward_hit_signature") * 0.11
+            + _safe_feature_float(features, "external_method_consensus") * 0.08
+            + _safe_feature_float(features, "omission_phase_rebound") * 0.07
+            + cross_norm * 0.05
+            + maturity_norm * 0.04
+            + stability_norm * 0.03
+            + formula_hit * 0.04
+            - pressure * 0.18
+        )
+        if latest_reuse and not latest_reuse_allowed:
+            raw_score -= 0.18
+        if number in repeated_failed and front5 < 0.60:
+            raw_score -= 0.08
+        passed_gate = bool(
+            (entry.get("passed_for_main") or rank <= 9)
+            and latest_reuse_allowed
+            and support_count >= 2
+            and front5 >= 0.56
+            and pressure <= 0.42
+            and int(cross.get("passed_count", 0) or 0) >= 2
+        )
+        evidence = []
+        if date_score >= 0.55 or formula_hit:
+            evidence.append("日期牌")
+        if drag_score >= 0.55:
+            evidence.append("拖牌共現")
+        if front5 >= 0.56:
+            evidence.append("前五強支撐")
+        if _safe_feature_float(features, "walk_forward_hit_signature") >= 0.55:
+            evidence.append("滾動命中指紋")
+        if _safe_feature_float(features, "external_method_consensus") >= 0.55:
+            evidence.append("多方法共識")
+        if _safe_feature_float(features, "omission_phase_rebound") >= 0.55:
+            evidence.append("遺漏相位")
+        if not evidence:
+            evidence.append("一般候選")
+        rows.append({
+            "number": number,
+            "original_rank": rank,
+            "score": round(clamp(raw_score, 0.0, 1.0), 4),
+            "date_score": round(date_score, 4),
+            "drag_score": round(drag_score, 4),
+            "front5_support": round(front5, 4),
+            "support_count": support_count,
+            "pressure": round(pressure, 4),
+            "cross_validation": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+            "maturity_score": maturity.get("score"),
+            "latest_draw_reuse": latest_reuse,
+            "latest_draw_reuse_allowed": latest_reuse_allowed,
+            "gate_status": "通過" if passed_gate else "未過強拖門檻",
+            "date_evidence": date_evidence.get(number, [])[:5],
+            "drag_detail": drag_detail.get(number, {}),
+            "evidence": evidence,
+        })
+
+    rows.sort(key=lambda row: (row["score"], row["drag_score"], row["date_score"], -row["number"]), reverse=True)
+    for idx, row in enumerate(rows, 1):
+        row["rank"] = idx
+        if idx == 1:
+            row["role"] = "主膽"
+        elif idx <= 5:
+            row["role"] = "必拖"
+        elif idx <= 9:
+            row["role"] = "核心拖"
+        elif idx <= 15:
+            row["role"] = "備拖"
+        else:
+            row["role"] = "觀察"
+
+    banker = [rows[0]["number"]] if rows else []
+    must_drag = [row["number"] for row in rows[1:5]]
+    core_drag = [row["number"] for row in rows[:9]]
+    backup_drag = [row["number"] for row in rows[9:15]]
+    blocked_drag = [
+        row["number"]
+        for row in rows
+        if row.get("gate_status") != "通過" or row.get("pressure", 0) >= 0.42
+    ][:10]
+    date_ranked = sorted(
+        rows,
+        key=lambda row: (row["date_score"], row["score"], -row["number"]),
+        reverse=True,
+    )
+    date_cards = [row["number"] for row in date_ranked[:5]]
+    backtest_windows = backtest.get("windows") or {}
+    validation_status = "已回測通過" if backtest.get("release_passed") else "已回測未達正式強拖門檻"
+    return {
+        "status": "已執行",
+        "version": "完美日期牌必拖牌20260811",
+        "target_draw_date": target_date,
+        "latest_anchor_numbers": sorted(latest_numbers),
+        "policy": "每期依全歷史資料、日期牌、拖牌共現、前五強支撐、滾動命中指紋、外部共識、遺漏相位重新運算；未過強支撐不得列強拖。",
+        "validation_status": validation_status,
+        "date_cards": date_cards,
+        "banker": banker,
+        "must_drag": must_drag,
+        "banker_plus_must_drag": banker + must_drag,
+        "core_drag": core_drag,
+        "backup_drag": backup_drag,
+        "blocked_drag": blocked_drag,
+        "date_formula": date_entries,
+        "ranking": rows[:15],
+        "backtest": backtest,
+        "summary": {
+            "banker_text": banker[0] if banker else None,
+            "must_drag_count": len(must_drag),
+            "core_drag_count": len(core_drag),
+            "latest_60_core_avg_hits": (backtest_windows.get("60") or {}).get("core_drag_avg_hits"),
+            "latest_120_core_avg_hits": (backtest_windows.get("120") or {}).get("core_drag_avg_hits"),
+            "release_passed": bool(backtest.get("release_passed")),
+        },
+    }
+
+
 def compute_industrial_analysis(draws, review=None):
     timing_log("開始")
     timing_log("自適應權重開始")
@@ -6632,6 +7152,38 @@ def compute_industrial_analysis(draws, review=None):
     packs = strong_packs(candidates, review, pack_governance)
     packs = attach_precision_micro_packs(packs, precision_micro, candidates)
     packs, strong_single_validation = ensure_verified_strong_single_pack(packs, candidates, review)
+    timing_log("完美日期牌必拖牌開始")
+    perfect_date_drag = build_perfect_date_drag_module(candidates, draws, review)
+    perfect_score_map = {number: 0.01 for number in range(NUMBER_MIN, NUMBER_MAX + 1)}
+    perfect_score_map.update({
+        int(row["number"]): float(row.get("score", 0) or 0)
+        for row in (perfect_date_drag.get("ranking") or [])
+    })
+    if perfect_score_map:
+        perfect_release = bool((perfect_date_drag.get("backtest") or {}).get("release_passed"))
+        packs["perfect_date_card"] = watch_pack(
+            "完美日期牌",
+            1,
+            perfect_date_drag.get("date_cards") or [],
+            perfect_score_map,
+            "完美日期牌必須符合日期型態與回測驗證；未過正式門檻只列研究",
+        )
+        packs["perfect_drag_card"] = watch_pack(
+            "完美必拖牌",
+            2,
+            perfect_date_drag.get("core_drag") or [],
+            perfect_score_map,
+            "完美必拖牌必須符合拖牌共現、前五強支撐與回測驗證；未過正式門檻只列研究",
+        )
+        for key in ["perfect_date_card", "perfect_drag_card"]:
+            packs[key]["validation_status"] = perfect_date_drag.get("validation_status")
+            packs[key]["governance"] = perfect_date_drag.get("backtest") or {}
+            packs[key]["module"] = "完美日期牌必拖牌"
+            if perfect_release:
+                packs[key]["status"] = "released"
+                packs[key]["official_release"] = True
+                packs[key].pop("withheld_reason", None)
+                packs[key]["release_note"] = "已通過完美日期牌必拖牌回測門檻"
     timing_log("錯誤模組滾動修正協議開始")
     post_draw_error_correction = build_post_draw_error_correction_protocol(
         candidates,
@@ -6709,7 +7261,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v30_front5_strong_support_20260811",
+        "engine_version": "industrial_v31_perfect_date_drag_20260811",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -6736,6 +7288,20 @@ def compute_industrial_analysis(draws, review=None):
         "full_system_entry_gate": full_system_entry_gate,
         "post_draw_error_correction": post_draw_error_correction,
         "strong_single_validation": strong_single_validation,
+        "perfect_date_drag": perfect_date_drag,
+        "perfect_date_card": {
+            "numbers": perfect_date_drag.get("date_cards") or [],
+            "validation_status": perfect_date_drag.get("validation_status"),
+            "backtest": perfect_date_drag.get("backtest") or {},
+        },
+        "perfect_drag_card": {
+            "banker": perfect_date_drag.get("banker") or [],
+            "must_drag": perfect_date_drag.get("must_drag") or [],
+            "core_drag": perfect_date_drag.get("core_drag") or [],
+            "backup_drag": perfect_date_drag.get("backup_drag") or [],
+            "validation_status": perfect_date_drag.get("validation_status"),
+            "backtest": perfect_date_drag.get("backtest") or {},
+        },
         "top10_promotion_audit": promotion_audit,
         "dependency_analysis": {
             "method": "three_fold_conditional_lift_with_fdr",
