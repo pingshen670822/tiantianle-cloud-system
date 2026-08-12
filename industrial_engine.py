@@ -7104,6 +7104,271 @@ def build_perfect_date_drag_module(candidates, draws, review=None):
     }
 
 
+def apply_top9_concentration_gate(candidates, draws, review=None, front_limit=9):
+    if not candidates:
+        return candidates, {
+            "status": "略過",
+            "reason": "沒有候選號",
+            "old_top9": [],
+            "new_top9": [],
+        }
+
+    review = review or {}
+    rolling = rolling_adjustment_data(review)
+    leak = post9_hit_leak_audit(review)
+    drift = rank_window_drift_diagnosis(review)
+    recent = rolling.get("recent_performance") or {}
+    top10_avg = float(recent.get("last5_top10_avg", 0) or 0)
+    top15_avg = float(recent.get("last5_top15_avg", 0) or 0)
+    late_gap = round(top15_avg - top10_avg, 3)
+    active = bool(leak.get("active") or drift.get("active") or late_gap >= 0.35)
+    old_top9 = [int(item["number"]) for item in candidates[:front_limit]]
+    if not active:
+        return candidates, {
+            "status": "觀察",
+            "reason": "近期未觸發第十到十五名命中外漏",
+            "old_top9": old_top9,
+            "new_top9": old_top9,
+            "late_gap": late_gap,
+        }
+
+    late_hit_counts = correction_count_map(rolling.get("late_hit_numbers"), "late_hit_count")
+    missed_actual_counts = correction_count_map(rolling.get("missed_actual_numbers"), "missed_count")
+    last2_missed_counts = correction_count_map(rolling.get("last2_missed_actual_numbers"), "missed_count")
+    repeated_failed = correction_count_map(rolling.get("repeated_failed_numbers"), "miss_count")
+    drift_late = {
+        int(item.get("number")): int(item.get("count", 0) or 0)
+        for item in drift.get("late_hit_numbers", [])
+        if item.get("number")
+    }
+    drift_missed = {
+        int(item.get("number")): int(item.get("count", 0) or 0)
+        for item in drift.get("missed_top10_numbers", [])
+        if item.get("number")
+    }
+    monthly = review.get("monthly_review") or {}
+    monthly_late = {
+        int(item.get("number")): int(item.get("count", 0) or 0)
+        for item in monthly.get("monthly_late_hit_numbers", [])
+        if item.get("number")
+    }
+    monthly_missed = {
+        int(item.get("number")): int(item.get("count", 0) or 0)
+        for item in monthly.get("monthly_missed_actual_numbers", [])
+        if item.get("number")
+    }
+    latest_actual = {
+        int(number)
+        for number in (review.get("last_settled") or {}).get("actual_numbers", [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    failed = failed_number_set(review)
+    target_date = next_draw_date(draws[-1]["draw_date"]) if draws else None
+    date_scores, _, _ = date_profile_scores(draws, target_date) if target_date else ({}, {}, [])
+    drag_scores, _ = drag_profile_scores(draws, draws[-1].get("numbers", [])) if draws else ({}, {})
+
+    raw_scores = {}
+    diagnostics = {}
+    original = {int(item["number"]): dict(item) for item in candidates}
+    original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
+    for idx, item in enumerate(candidates, 1):
+        number = int(item["number"])
+        features = item.get("feature_signals") or {}
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        entry = item.get("entry_validation") or {}
+        base = clamp(float(item.get("score", 0) or 0), 0.0, 1.0)
+        confidence = float(item.get("confidence_index", 50) or 50)
+        confidence_norm = clamp((confidence - 50.0) / 49.0, 0.0, 1.0)
+        cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / max(1, int(cross.get("total_count", 1) or 1)), 0.0, 1.0)
+        maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100.0, 0.0, 1.0)
+        stability_norm = clamp(int(item.get("stability_count", 0) or 0) / 5.0, 0.0, 1.0)
+        front5 = front5_precision_signal(item)
+        support_count = front5_core_support_count(features)
+        pressure = unsupported_recovery_pressure(features)
+        walk = _safe_feature_float(features, "walk_forward_hit_signature")
+        external = _safe_feature_float(features, "external_method_consensus")
+        omission_phase = _safe_feature_float(features, "omission_phase_rebound")
+        effective = _safe_feature_float(features, "effective_hit_front_shift")
+        drift_signal = _safe_feature_float(features, "rank_window_drift_correction")
+        date_score = float(date_scores.get(number, 0.0) or 0.0)
+        drag_score = float(drag_scores.get(number, 0.0) or 0.0)
+        late_signal = (
+            late_hit_counts.get(number, 0)
+            + drift_late.get(number, 0)
+            + monthly_late.get(number, 0)
+        )
+        missed_signal = (
+            missed_actual_counts.get(number, 0)
+            + last2_missed_counts.get(number, 0)
+            + drift_missed.get(number, 0)
+            + monthly_missed.get(number, 0)
+        )
+        reserve_band = 1.0 if 10 <= idx <= 15 else 0.55 if 16 <= idx <= 24 else 0.0
+        weak_top9_penalty = 0.0
+        if idx <= front_limit:
+            if repeated_failed.get(number, 0) >= 3 and late_signal == 0 and missed_signal == 0:
+                weak_top9_penalty += 0.18
+            if number in failed and front5 < 0.56 and late_signal == 0:
+                weak_top9_penalty += 0.12
+            if pressure >= 0.34 and front5 < 0.58:
+                weak_top9_penalty += 0.08
+        recent_reuse_penalty = 0.0
+        if number in latest_actual and not latest_repeat_reentry_allowed(item):
+            recent_reuse_penalty = 0.16
+        gate_support = bool(
+            (front5 >= 0.54 and support_count >= 2)
+            or (walk >= 0.60 and external >= 0.55)
+            or (date_score >= 0.62 and drag_score >= 0.08 and cross_norm >= 0.10)
+            or late_signal >= 2
+            or missed_signal >= 2
+        )
+        gate_quality = bool(
+            gate_support
+            and pressure <= 0.48
+            and recent_reuse_penalty < 0.16
+            and (
+                entry.get("passed_for_main")
+                or idx <= 15
+                or front5 >= 0.58
+                or late_signal
+                or missed_signal
+            )
+        )
+        score = (
+            base * 0.16
+            + confidence_norm * 0.06
+            + front5 * 0.22
+            + walk * 0.15
+            + external * 0.12
+            + omission_phase * 0.10
+            + effective * 0.08
+            + drift_signal * 0.08
+            + date_score * 0.08
+            + drag_score * 0.08
+            + cross_norm * 0.05
+            + maturity_norm * 0.04
+            + stability_norm * 0.04
+            + min(0.22, late_signal * 0.055)
+            + min(0.20, missed_signal * 0.040)
+            + reserve_band * (0.16 if late_gap >= 0.55 else 0.11)
+            + (0.05 if support_count >= 2 else 0.0)
+            - pressure * 0.18
+            - weak_top9_penalty
+            - recent_reuse_penalty
+        )
+        if not gate_quality:
+            score -= 0.22
+        raw_scores[number] = score
+        diagnostics[number] = {
+            "number": number,
+            "old_rank": idx,
+            "gate_quality": gate_quality,
+            "front5": round(front5, 4),
+            "support_count": support_count,
+            "late_signal": late_signal,
+            "missed_signal": missed_signal,
+            "date_score": round(date_score, 4),
+            "drag_score": round(drag_score, 4),
+            "pressure": round(pressure, 4),
+            "weak_top9_penalty": round(weak_top9_penalty, 4),
+        }
+
+    normalized = normalize(raw_scores)
+    ranked = sorted(
+        normalized,
+        key=lambda number: (
+            normalized[number],
+            1 if diagnostics[number]["gate_quality"] else 0,
+            original[number].get("score", 0),
+            -number,
+        ),
+        reverse=True,
+    )
+    top9 = set(ranked[:front_limit])
+    adjusted = []
+    promoted = []
+    demoted = []
+    for new_rank, number in enumerate(ranked, 1):
+        row = dict(original[number])
+        old_rank = original_rank[number]
+        concentrated_score = normalized[number]
+        old_score = clamp(float(row.get("score", 0) or 0), 0.0, 1.0)
+        blended_score = clamp(old_score * 0.38 + concentrated_score * 0.62, 0.0, 1.0)
+        if new_rank <= front_limit and old_rank > front_limit:
+            blended_score = max(blended_score, min(1.0, old_score + 0.055))
+            promoted.append({
+                "number": number,
+                "from_rank": old_rank,
+                "to_rank": new_rank,
+                "concentration_score": round(concentrated_score, 4),
+                "late_signal": diagnostics[number]["late_signal"],
+                "missed_signal": diagnostics[number]["missed_signal"],
+            })
+        elif new_rank > front_limit and old_rank <= front_limit:
+            blended_score = max(0.0, blended_score - 0.04)
+            demoted.append({
+                "number": number,
+                "from_rank": old_rank,
+                "to_rank": new_rank,
+                "concentration_score": round(concentrated_score, 4),
+                "reason": "前九集中閘門降至備查",
+            })
+        reasons = list(row.get("reasons") or [])
+        if new_rank <= front_limit:
+            if "前九集中閘門" not in reasons:
+                reasons.insert(0, "前九集中閘門")
+            validation = dict(row.get("entry_validation") or {})
+            validation["top9_released"] = True
+            validation["passed_for_main"] = True
+            validation["status"] = "前九集中通過"
+            validation["status_label"] = "前九集中通過"
+            row["entry_validation"] = validation
+            action = "top9_concentrated"
+        else:
+            if 10 <= new_rank <= 15 and "第十至第十五備查" not in reasons:
+                reasons.append("第十至第十五備查")
+            validation = dict(row.get("entry_validation") or {})
+            validation["top9_released"] = False
+            row["entry_validation"] = validation
+            action = "reserve_10_15" if new_rank <= 15 else "reserve_only"
+        row["rank"] = new_rank
+        row["top9_core"] = bool(number in top9)
+        row["top9_concentration_score"] = round(concentrated_score, 4)
+        row["top9_concentration_action"] = action
+        row["score"] = round(blended_score, 4)
+        row["confidence_index"] = round(50 + blended_score * 49, 1)
+        row["model_probability_percent"] = conservative_probability_percent(blended_score)
+        row["reasons"] = reasons[:9]
+        adjusted.append(row)
+
+    new_top9 = [int(item["number"]) for item in adjusted[:front_limit]]
+    return adjusted, {
+        "status": "已執行",
+        "policy": "第十到十五名命中外漏時，最後一關把有效補中、日期牌、拖牌、前五支撐與交叉驗證集中到前九；未過品質閘門不得擠入前九。",
+        "active": True,
+        "late_gap": late_gap,
+        "last5_top10_avg": round(top10_avg, 3),
+        "last5_top15_avg": round(top15_avg, 3),
+        "post9_hits": leak.get("post9_hits"),
+        "front9_hits": leak.get("front9_hits"),
+        "old_top9": old_top9,
+        "new_top9": new_top9,
+        "reserve_10_15_numbers": [int(item["number"]) for item in adjusted[9:15]],
+        "promoted_to_top9": promoted,
+        "demoted_from_top9": demoted,
+        "top_scores": [
+            {
+                **diagnostics[int(item["number"])],
+                "new_rank": idx + 1,
+                "concentration_score": item.get("top9_concentration_score"),
+            }
+            for idx, item in enumerate(adjusted[:15])
+        ],
+        "message": "已把第十到十五名高補中訊號壓縮進前九競賽，前九以外只保留備查，不列主推。",
+    }
+
+
 def compute_industrial_analysis(draws, review=None):
     timing_log("開始")
     timing_log("自適應權重開始")
@@ -7142,6 +7407,12 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("失準急救前九重建開始")
     candidates, slump_emergency_front_rebuild = apply_slump_emergency_front_rebuild(
+        candidates,
+        draws,
+        review,
+    )
+    timing_log("前九集中閘門開始")
+    candidates, top9_concentration_gate = apply_top9_concentration_gate(
         candidates,
         draws,
         review,
@@ -7261,7 +7532,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v31_perfect_date_drag_20260811",
+        "engine_version": "industrial_v32_top9_concentration_20260812",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -7282,6 +7553,7 @@ def compute_industrial_analysis(draws, review=None):
         "recent_failure_front_gate": recent_failure_front_gate,
         "multi_model_correction": multi_model_correction,
         "slump_emergency_front_rebuild": slump_emergency_front_rebuild,
+        "top9_concentration_gate": top9_concentration_gate,
         "rank_window_drift_correction": rank_window_drift,
         "post9_hit_leak_audit": post9_leak,
         "low_probability_error_recovery": low_probability_error_recovery_payload(review),

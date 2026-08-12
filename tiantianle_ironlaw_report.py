@@ -2258,6 +2258,75 @@ def compact_perfect_date_drag_html_tiantianle(analysis):
     """
 
 
+def compact_top9_concentration_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    gate = industrial.get("top9_concentration_gate") or {}
+    if not gate:
+        return '<div class="band"><h2>前九集中閘門</h2><p>本期尚未產生前九集中資料。</p></div>'
+
+    summary_rows = [
+        ["執行狀態", esc(gate.get("status") or "-")],
+        ["處理鐵律", esc(gate.get("policy") or gate.get("reason") or "-")],
+        ["近五期前九命中", gate.get("front9_hits", "-")],
+        ["近五期九名後命中", gate.get("post9_hits", "-")],
+        ["前十平均命中", compact_decimal(gate.get("last5_top10_avg", "-"), 3)],
+        ["前十五平均命中", compact_decimal(gate.get("last5_top15_avg", "-"), 3)],
+        ["前十五減前十差距", compact_decimal(gate.get("late_gap", "-"), 3)],
+        ["原前九", fmt_numbers(gate.get("old_top9") or []) or "-"],
+        ["新前九", fmt_numbers(gate.get("new_top9") or []) or "-"],
+        ["第10到15名備查", fmt_numbers(gate.get("reserve_10_15_numbers") or []) or "-"],
+    ]
+    promoted_rows = []
+    for item in gate.get("promoted_to_top9") or []:
+        promoted_rows.append([
+            f"<span class=\"num\">{safe_int(item.get('number')):02d}</span>",
+            item.get("from_rank", "-"),
+            item.get("to_rank", "-"),
+            compact_decimal(item.get("concentration_score", "-"), 4),
+            item.get("late_signal", "-"),
+            item.get("missed_signal", "-"),
+        ])
+    demoted_rows = []
+    for item in gate.get("demoted_from_top9") or []:
+        demoted_rows.append([
+            f"<span class=\"num\">{safe_int(item.get('number')):02d}</span>",
+            item.get("from_rank", "-"),
+            item.get("to_rank", "-"),
+            compact_decimal(item.get("concentration_score", "-"), 4),
+            esc(item.get("reason", "-")),
+        ])
+    score_rows = []
+    for item in gate.get("top_scores") or []:
+        number = safe_int(item.get("number"))
+        score_rows.append([
+            item.get("new_rank", "-"),
+            f"<span class=\"num\">{number:02d}</span>" if number else "-",
+            item.get("old_rank", "-"),
+            compact_decimal(item.get("concentration_score", "-"), 4),
+            compact_decimal(item.get("front5", "-"), 4),
+            item.get("support_count", "-"),
+            item.get("late_signal", "-"),
+            item.get("missed_signal", "-"),
+            compact_decimal(item.get("date_score", "-"), 4),
+            compact_decimal(item.get("drag_score", "-"), 4),
+            compact_decimal(item.get("pressure", "-"), 4),
+            "通過" if item.get("gate_quality") else "未通過",
+        ])
+    return f"""
+    <div class="band warn">
+      <h2>前九集中閘門</h2>
+      <p><strong>目標：</strong>把近期第10到15名補中外漏的有效訊號壓回前九主推，正式主推不超過9顆；未通過多項驗算者只留備查。</p>
+      {table(["項目", "數值"], summary_rows)}
+      <h3>推進前九</h3>
+      {table(["號碼", "原排名", "新排名", "集中分", "後段補中訊號", "漏抓訊號"], promoted_rows, "本期沒有第10到15名被推進前九")}
+      <h3>降出前九</h3>
+      {table(["號碼", "原排名", "新排名", "集中分", "原因"], demoted_rows, "本期沒有前九號碼被降出")}
+      <h3>前十五集中檢查</h3>
+      {table(["新排名", "號碼", "原排名", "集中分", "前五支撐", "支撐數", "後段補中", "漏抓", "日期分", "拖牌分", "壓力", "品質閘門"], score_rows, "目前沒有前十五集中檢查資料")}
+    </div>
+    """
+
+
 def compact_review_html_tiantianle(settled):
     if not settled:
         return "<p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>"
@@ -3184,6 +3253,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     monthly_breakthrough_html = compact_monthly_breakthrough_html_tiantianle(analysis)
     strong_single_validation_html = compact_strong_single_validation_html_tiantianle(analysis)
     perfect_date_drag_html = compact_perfect_date_drag_html_tiantianle(analysis)
+    top9_concentration_html = compact_top9_concentration_html_tiantianle(analysis)
     post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = "下期研究候選前9名"
@@ -3286,6 +3356,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     {compact_super_single_html_tiantianle(analysis)}
     {strong_single_validation_html}
     {perfect_date_drag_html}
+    {top9_concentration_html}
     <div class="band">
       <h2>{candidate_heading}</h2>
       {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
