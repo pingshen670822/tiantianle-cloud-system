@@ -1,54 +1,43 @@
 <!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111827">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Tiantianle">
-<link rel="manifest" href="manifest.webmanifest?v={version}">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>天天樂手機雲端獨立版</title>
-<style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}
-header{background:#111827;color:white;padding:18px}main{max-width:760px;margin:auto;padding:14px}
-.band{background:white;border:1px solid #d8dee9;border-radius:8px;margin:12px 0;padding:16px}
-.btn{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;margin:10px 0;border:0;border-radius:8px;background:#166534;color:#fff;text-decoration:none;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
-.sticky-launch{position:fixed;left:12px;right:12px;bottom:12px;width:calc(100% - 24px);z-index:9999}
-body{padding-bottom:82px}
-.btn.blue{background:#1d4ed8}.btn.gray{background:#475569}.warn{border-color:#f97316;background:#fff7ed}ol{padding-left:22px}li{margin:8px 0}.url{word-break:break-all;font-weight:900;color:#14532d}
-</style>
-</head>
-<body>
-<header><h1>天天樂手機雲端獨立版</h1><p>使用雲端頁面與雲端自動更新，電腦關機也能從手機開啟。</p></header>
-<main>
-    
-<section class="band">
-<button id="installBtn" class="btn">一鍵啟動天天樂雲端版</button>
-<a class="btn blue" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">登入雲端帳號後立即雲端更新</a>
-</section>
-<section class="band"><h2>真正手機網址</h2><p class="url">雲端網址已設定</p><p>手機安裝必須使用雲端網址，不是電腦本機路徑。</p></section>
-<section class="band">
-<h2>安卓手機瀏覽器</h2>
-<ol><li>手機開雲端網址。</li><li>點上方一鍵啟動天天樂雲端版。</li><li>瀏覽器若跳出安裝提示，選擇安裝手機版。</li><li>安裝後從手機主畫面開啟天天樂。</li></ol>
-<h2>蘋果手機瀏覽器</h2>
-<ol><li>點瀏覽器分享按鈕。</li><li>選擇「加入主畫面」。</li><li>完成後從主畫面開啟天天樂。</li></ol>
-</section>
-<section class="band"><p>這是雲端版入口：更新由雲端自動執行，畫面由雲端頁面提供。手機不需要連回電腦。</p></section>
-</main>
-<button id="stickyBtn" class="btn sticky-launch">一鍵啟動天天樂雲端版</button>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>天天樂手機強制同步</title>
+<style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}main{max-width:680px;margin:auto;padding:28px}.box{background:#fff;border:1px solid #d8dee9;border-radius:8px;padding:18px}.status{font-weight:900;color:#166534}a{display:block;margin-top:14px;padding:14px;background:#166534;color:#fff;text-align:center;border-radius:8px;text-decoration:none;font-weight:900}</style></head>
+<body><main><div class="box"><h1>天天樂手機強制同步</h1><p class="status" id="status">正在解除舊版手機快取控制</p><a href="prediction.html?v=20260812140910&manual=1">立即開啟最新預測</a></div></main>
 <script>
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt', function(e){e.preventDefault();deferredPrompt=e;});
-async function launchTiantianle(){
-  if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;return;}
-  location.href='首頁.html';
-}
-document.getElementById('installBtn').addEventListener('click', launchTiantianle);
-document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
-if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=' + Date.now(), { updateViaCache: 'none' });
+(async function(){
+  var VERSION = '20260812140910';
+  var status = document.getElementById('status');
+  function setStatus(text) { if (status) status.textContent = text; }
+  async function clearEverything() {
+    if ('serviceWorker' in navigator) {
+      var regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(async function(reg) {
+        try {
+          if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          await reg.update();
+          await reg.unregister();
+        } catch (err) {}
+      }));
+    }
+    if ('caches' in window) {
+      var keys = await caches.keys();
+      await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+    }
+  }
+  try {
+    await clearEverything();
+    setStatus('舊快取已清除，正在重新拉取雲端');
+    await fetch('service-worker.js?force=' + Date.now(), { cache: 'reload' }).catch(function(){});
+    await fetch('version.json?force=' + Date.now(), { cache: 'no-store' }).catch(function(){});
+    await fetch('prediction.html?force=' + Date.now(), { cache: 'no-store' }).catch(function(){});
+  } catch (err) {
+    setStatus('已啟動強制同步，正在進入最新版');
+  }
+  location.replace('prediction.html?v=' + VERSION + '&force_sync=' + Date.now());
+})();
 </script>
-
     <script>
     (function(){
       if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260812140910') return;
