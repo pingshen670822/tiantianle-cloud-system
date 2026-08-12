@@ -6500,16 +6500,9 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
         )
 
     selected = None
-    existing = packs.get("strong_single") or {}
-    existing_numbers = [
-        int(number)
-        for number in existing.get("numbers", [])
-        if NUMBER_MIN <= int(number) <= NUMBER_MAX
-    ]
-    if existing_numbers:
-        candidate = candidate_map.get(existing_numbers[0])
-        if candidate and candidate in eligible:
-            selected = candidate
+    front_runner = candidates[0] if candidates else None
+    if front_runner and front_runner in eligible:
+        selected = front_runner
     if selected is None and eligible:
         selected = max(eligible, key=lambda item: (single_score(item), float(item.get("score", 0) or 0), -int(item["number"])))
 
@@ -6568,6 +6561,7 @@ def ensure_verified_strong_single_pack(packs, candidates, review=None):
             "多模型校正完成",
             "交叉驗算與成熟度檢查",
             "前五實戰前移重組",
+            "前九集中排序第一",
             "上期開獎號防呆",
             "每期重新運算，不沿用上期預測",
         ],
@@ -7532,7 +7526,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v32_top9_concentration_20260812",
+        "engine_version": "industrial_v33_top9_single_sync_20260812",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {

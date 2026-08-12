@@ -1,8 +1,8 @@
 {
-  "engine_version": "美國加州天天樂_20260812_第16版_前九集中閘門版",
-  "industrial_engine_version": "industrial_v32_top9_concentration_20260812",
-  "generated_at_taiwan": "2026-08-12T09:24:30+08:00",
-  "generated_at_california": "2026-08-11T18:24:30-07:00",
+  "engine_version": "美國加州天天樂_20260812_第17版_前九獨隻同步版",
+  "industrial_engine_version": "industrial_v33_top9_single_sync_20260812",
+  "generated_at_taiwan": "2026-08-12T09:41:38+08:00",
+  "generated_at_california": "2026-08-11T18:41:38-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11885,
@@ -25,7 +25,7 @@
     "previous_prediction_reused": false,
     "backtest_recomputed": true,
     "review_recomputed": true,
-    "fingerprint": "becb567aa2f6aced",
+    "fingerprint": "60103d8042125bc5",
     "basis": {
       "latest_draw_date": "2026-08-10",
       "latest_numbers": [
@@ -53,7 +53,7 @@
         36,
         35
       ],
-      "industrial_engine": "industrial_v32_top9_concentration_20260812",
+      "industrial_engine": "industrial_v33_top9_single_sync_20260812",
       "review_severity": "critical",
       "target_taiwan_safe_update_time": "2026-08-12 09:50"
     },
@@ -1267,7 +1267,7 @@
     }
   },
   "latest_ironlaw": {
-    "version": "美國加州天天樂_20260812_第16版_前九集中閘門版",
+    "version": "美國加州天天樂_20260812_第17版_前九獨隻同步版",
     "action_label": "正式高信心推薦",
     "grade": "甲級",
     "conclusion": "正式高信心推薦 / 等級 甲級 / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1必出、5中2基本、9中2低標",
@@ -1403,7 +1403,7 @@
     },
     "release_rule": "只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。",
     "recompute_rule": "每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。",
-    "engine": "industrial_v32_top9_concentration_20260812",
+    "engine": "industrial_v33_top9_single_sync_20260812",
     "time_table": [
       {
         "item": "每日開獎時間",
@@ -1457,7 +1457,7 @@
     }
   },
   "decisive_battle_plan": {
-    "version": "美國加州天天樂_20260812_第16版_前九集中閘門版",
+    "version": "美國加州天天樂_20260812_第17版_前九獨隻同步版",
     "action_label": "正式高信心推薦",
     "grade": "甲級",
     "conclusion": "正式高信心推薦 / 等級 甲級 / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1必出、5中2基本、9中2低標",
@@ -1593,7 +1593,7 @@
     },
     "release_rule": "只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。",
     "recompute_rule": "每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。",
-    "engine": "industrial_v32_top9_concentration_20260812",
+    "engine": "industrial_v33_top9_single_sync_20260812",
     "time_table": [
       {
         "item": "每日開獎時間",
@@ -1759,7 +1759,7 @@
   },
   "freshness": {
     "california_today": "2026-08-11",
-    "california_time": "18:24:30",
+    "california_time": "18:41:38",
     "allowed_latest_draw_date": "2026-08-10",
     "age_days": 0,
     "status": "ok",
@@ -5109,7 +5109,7 @@
     ]
   },
   "industrial_engine": {
-    "engine_version": "industrial_v32_top9_concentration_20260812",
+    "engine_version": "industrial_v33_top9_single_sync_20260812",
     "leakage_guard": true,
     "repeat_guard": {
       "9": {
@@ -9008,16 +9008,16 @@
     },
     "strong_single_validation": {
       "status": "觀察輸出",
-      "number": 14,
+      "number": 33,
       "must_output_single": true,
       "fake_data_guard": "僅觀察，不得標示高信心",
       "latest_draw_reuse": false,
       "latest_draw_reuse_allowed": true,
-      "score": 223.39,
-      "candidate_score": 0.8938,
-      "confidence_index": 93.8,
-      "front5_precision_rebuild": 0.6066,
-      "cross_validation": "11/21",
+      "score": 231.55,
+      "candidate_score": 0.9948,
+      "confidence_index": 98.7,
+      "front5_precision_rebuild": 0.6412,
+      "cross_validation": "8/21",
       "maturity_score": 100.0,
       "entry_status": "前九集中通過",
       "failed_checks": [
@@ -9028,6 +9028,7 @@
         "多模型校正完成",
         "交叉驗算與成熟度檢查",
         "前五實戰前移重組",
+        "前九集中排序第一",
         "上期開獎號防呆",
         "每期重新運算，不沿用上期預測"
       ]
@@ -52541,16 +52542,16 @@
     ],
     "strong_prediction_packs": {
       "strong_single": {
-        "name": "最強單支",
+        "name": "最強獨隻1中1",
         "hit_goal": 1,
         "numbers": [
-          14
+          33
         ],
-        "score_sum": 0.8938,
-        "avg_score": 0.8938,
+        "score_sum": 0.9948,
+        "avg_score": 0.9948,
         "status": "研究預測",
         "official_release": false,
-        "withheld_reason": "monthly settled predictions did not pass precision gate; output as daily research prediction",
+        "withheld_reason": "最強獨支由全系統放行門重新選出",
         "release_note": "daily research prediction is always provided, but 正式 confidence gate did not pass",
         "theoretical_probability": {
           "hit_goal": 1,
@@ -52559,217 +52560,25 @@
           "odds_1_in": 7.8
         },
         "zones": {
-          "11-20": 1
+          "31-39": 1
         },
         "tails": {
-          "4": 1
+          "3": 1
         },
-        "governance": {
-          "rounds": 360,
-          "goal": 1,
-          "size": 1,
-          "pass_rate": 0.111,
-          "avg_hits": 0.111,
-          "zero_hit_rate": 0.889,
-          "random_success_probability": 0.128,
-          "random_avg_hits": 0.128,
-          "required_pass_rate": 0.2,
-          "pass_rate_edge_vs_random": -0.017,
-          "avg_hits_edge_vs_random": -0.017,
-          "min_pass_rate": 0.2,
-          "min_avg_hits": 0.2,
-          "recent_windows_passed": false,
-          "research_windows_passed": false,
-          "research_passed": false,
-          "windows": {
-            "60": {
-              "rounds": 60,
-              "pass_rate": 0.117,
-              "avg_hits": 0.117,
-              "zero_hit_rate": 0.883
-            },
-            "120": {
-              "rounds": 120,
-              "pass_rate": 0.1,
-              "avg_hits": 0.1,
-              "zero_hit_rate": 0.9
-            },
-            "360": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889
-            }
-          },
-          "passed": false,
-          "best_variant": "top_rank",
-          "variant_results": {
-            "single_precision": {
-              "rounds": 360,
-              "pass_rate": 0.106,
-              "avg_hits": 0.106,
-              "zero_hit_rate": 0.894,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.106,
-                  "avg_hits": 0.106,
-                  "zero_hit_rate": 0.894
-                }
-              }
-            },
-            "dedicated": {
-              "rounds": 360,
-              "pass_rate": 0.089,
-              "avg_hits": 0.089,
-              "zero_hit_rate": 0.911,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.067,
-                  "avg_hits": 0.067,
-                  "zero_hit_rate": 0.933
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.089,
-                  "avg_hits": 0.089,
-                  "zero_hit_rate": 0.911
-                }
-              }
-            },
-            "top_rank": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.117,
-                  "avg_hits": 0.117,
-                  "zero_hit_rate": 0.883
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            },
-            "stability": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.117,
-                  "avg_hits": 0.117,
-                  "zero_hit_rate": 0.883
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            },
-            "paircover": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.075,
-                  "avg_hits": 0.075,
-                  "zero_hit_rate": 0.925
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            }
-          }
-        },
-        "maturity": {
-          "avg_score": 100.0,
-          "min_required": 82.0,
-          "passed": true,
-          "tiers": {
-            "mature": 1
-          }
-        },
-        "maturity_governance": {
-          "policy": "practical_maturity_gate",
-          "pack_key": "strong_single",
-          "reason": "recent live prediction quality, cross validation, repeated failure and recovery signals"
-        },
-        "monthly_governance": {
-          "rounds": 10,
-          "passes": 0,
-          "pass_rate": 0.0,
-          "avg_hits": 0.0,
-          "zero_hit_rate": 1.0,
-          "status": "strict_downshift"
-        },
+        "governance": {},
         "must_output_single": true,
         "strong_single_validation": {
           "status": "觀察輸出",
-          "number": 14,
+          "number": 33,
           "must_output_single": true,
           "fake_data_guard": "僅觀察，不得標示高信心",
           "latest_draw_reuse": false,
           "latest_draw_reuse_allowed": true,
-          "score": 223.39,
-          "candidate_score": 0.8938,
-          "confidence_index": 93.8,
-          "front5_precision_rebuild": 0.6066,
-          "cross_validation": "11/21",
+          "score": 231.55,
+          "candidate_score": 0.9948,
+          "confidence_index": 98.7,
+          "front5_precision_rebuild": 0.6412,
+          "cross_validation": "8/21",
           "maturity_score": 100.0,
           "entry_status": "前九集中通過",
           "failed_checks": [
@@ -52780,6 +52589,7 @@
             "多模型校正完成",
             "交叉驗算與成熟度檢查",
             "前五實戰前移重組",
+            "前九集中排序第一",
             "上期開獎號防呆",
             "每期重新運算，不沿用上期預測"
           ]
@@ -54839,7 +54649,7 @@
       }
     },
     "industrial_engine": {
-      "engine_version": "industrial_v32_top9_concentration_20260812",
+      "engine_version": "industrial_v33_top9_single_sync_20260812",
       "leakage_guard": true,
       "repeat_guard": {
         "9": {
@@ -58738,16 +58548,16 @@
       },
       "strong_single_validation": {
         "status": "觀察輸出",
-        "number": 14,
+        "number": 33,
         "must_output_single": true,
         "fake_data_guard": "僅觀察，不得標示高信心",
         "latest_draw_reuse": false,
         "latest_draw_reuse_allowed": true,
-        "score": 223.39,
-        "candidate_score": 0.8938,
-        "confidence_index": 93.8,
-        "front5_precision_rebuild": 0.6066,
-        "cross_validation": "11/21",
+        "score": 231.55,
+        "candidate_score": 0.9948,
+        "confidence_index": 98.7,
+        "front5_precision_rebuild": 0.6412,
+        "cross_validation": "8/21",
         "maturity_score": 100.0,
         "entry_status": "前九集中通過",
         "failed_checks": [
@@ -58758,6 +58568,7 @@
           "多模型校正完成",
           "交叉驗算與成熟度檢查",
           "前五實戰前移重組",
+          "前九集中排序第一",
           "上期開獎號防呆",
           "每期重新運算，不沿用上期預測"
         ]
@@ -102271,16 +102082,16 @@
       ],
       "strong_prediction_packs": {
         "strong_single": {
-          "name": "最強單支",
+          "name": "最強獨隻1中1",
           "hit_goal": 1,
           "numbers": [
-            14
+            33
           ],
-          "score_sum": 0.8938,
-          "avg_score": 0.8938,
+          "score_sum": 0.9948,
+          "avg_score": 0.9948,
           "status": "研究預測",
           "official_release": false,
-          "withheld_reason": "monthly settled predictions did not pass precision gate; output as daily research prediction",
+          "withheld_reason": "最強獨支由全系統放行門重新選出",
           "release_note": "daily research prediction is always provided, but 正式 confidence gate did not pass",
           "theoretical_probability": {
             "hit_goal": 1,
@@ -102289,217 +102100,25 @@
             "odds_1_in": 7.8
           },
           "zones": {
-            "11-20": 1
+            "31-39": 1
           },
           "tails": {
-            "4": 1
+            "3": 1
           },
-          "governance": {
-            "rounds": 360,
-            "goal": 1,
-            "size": 1,
-            "pass_rate": 0.111,
-            "avg_hits": 0.111,
-            "zero_hit_rate": 0.889,
-            "random_success_probability": 0.128,
-            "random_avg_hits": 0.128,
-            "required_pass_rate": 0.2,
-            "pass_rate_edge_vs_random": -0.017,
-            "avg_hits_edge_vs_random": -0.017,
-            "min_pass_rate": 0.2,
-            "min_avg_hits": 0.2,
-            "recent_windows_passed": false,
-            "research_windows_passed": false,
-            "research_passed": false,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.117,
-                "avg_hits": 0.117,
-                "zero_hit_rate": 0.883
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.1,
-                "avg_hits": 0.1,
-                "zero_hit_rate": 0.9
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889
-              }
-            },
-            "passed": false,
-            "best_variant": "top_rank",
-            "variant_results": {
-              "single_precision": {
-                "rounds": 360,
-                "pass_rate": 0.106,
-                "avg_hits": 0.106,
-                "zero_hit_rate": 0.894,
-                "windows": {
-                  "60": {
-                    "rounds": 60,
-                    "pass_rate": 0.1,
-                    "avg_hits": 0.1,
-                    "zero_hit_rate": 0.9
-                  },
-                  "120": {
-                    "rounds": 120,
-                    "pass_rate": 0.083,
-                    "avg_hits": 0.083,
-                    "zero_hit_rate": 0.917
-                  },
-                  "360": {
-                    "rounds": 360,
-                    "pass_rate": 0.106,
-                    "avg_hits": 0.106,
-                    "zero_hit_rate": 0.894
-                  }
-                }
-              },
-              "dedicated": {
-                "rounds": 360,
-                "pass_rate": 0.089,
-                "avg_hits": 0.089,
-                "zero_hit_rate": 0.911,
-                "windows": {
-                  "60": {
-                    "rounds": 60,
-                    "pass_rate": 0.083,
-                    "avg_hits": 0.083,
-                    "zero_hit_rate": 0.917
-                  },
-                  "120": {
-                    "rounds": 120,
-                    "pass_rate": 0.067,
-                    "avg_hits": 0.067,
-                    "zero_hit_rate": 0.933
-                  },
-                  "360": {
-                    "rounds": 360,
-                    "pass_rate": 0.089,
-                    "avg_hits": 0.089,
-                    "zero_hit_rate": 0.911
-                  }
-                }
-              },
-              "top_rank": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889,
-                "windows": {
-                  "60": {
-                    "rounds": 60,
-                    "pass_rate": 0.117,
-                    "avg_hits": 0.117,
-                    "zero_hit_rate": 0.883
-                  },
-                  "120": {
-                    "rounds": 120,
-                    "pass_rate": 0.1,
-                    "avg_hits": 0.1,
-                    "zero_hit_rate": 0.9
-                  },
-                  "360": {
-                    "rounds": 360,
-                    "pass_rate": 0.111,
-                    "avg_hits": 0.111,
-                    "zero_hit_rate": 0.889
-                  }
-                }
-              },
-              "stability": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889,
-                "windows": {
-                  "60": {
-                    "rounds": 60,
-                    "pass_rate": 0.117,
-                    "avg_hits": 0.117,
-                    "zero_hit_rate": 0.883
-                  },
-                  "120": {
-                    "rounds": 120,
-                    "pass_rate": 0.1,
-                    "avg_hits": 0.1,
-                    "zero_hit_rate": 0.9
-                  },
-                  "360": {
-                    "rounds": 360,
-                    "pass_rate": 0.111,
-                    "avg_hits": 0.111,
-                    "zero_hit_rate": 0.889
-                  }
-                }
-              },
-              "paircover": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889,
-                "windows": {
-                  "60": {
-                    "rounds": 60,
-                    "pass_rate": 0.083,
-                    "avg_hits": 0.083,
-                    "zero_hit_rate": 0.917
-                  },
-                  "120": {
-                    "rounds": 120,
-                    "pass_rate": 0.075,
-                    "avg_hits": 0.075,
-                    "zero_hit_rate": 0.925
-                  },
-                  "360": {
-                    "rounds": 360,
-                    "pass_rate": 0.111,
-                    "avg_hits": 0.111,
-                    "zero_hit_rate": 0.889
-                  }
-                }
-              }
-            }
-          },
-          "maturity": {
-            "avg_score": 100.0,
-            "min_required": 82.0,
-            "passed": true,
-            "tiers": {
-              "mature": 1
-            }
-          },
-          "maturity_governance": {
-            "policy": "practical_maturity_gate",
-            "pack_key": "strong_single",
-            "reason": "recent live prediction quality, cross validation, repeated failure and recovery signals"
-          },
-          "monthly_governance": {
-            "rounds": 10,
-            "passes": 0,
-            "pass_rate": 0.0,
-            "avg_hits": 0.0,
-            "zero_hit_rate": 1.0,
-            "status": "strict_downshift"
-          },
+          "governance": {},
           "must_output_single": true,
           "strong_single_validation": {
             "status": "觀察輸出",
-            "number": 14,
+            "number": 33,
             "must_output_single": true,
             "fake_data_guard": "僅觀察，不得標示高信心",
             "latest_draw_reuse": false,
             "latest_draw_reuse_allowed": true,
-            "score": 223.39,
-            "candidate_score": 0.8938,
-            "confidence_index": 93.8,
-            "front5_precision_rebuild": 0.6066,
-            "cross_validation": "11/21",
+            "score": 231.55,
+            "candidate_score": 0.9948,
+            "confidence_index": 98.7,
+            "front5_precision_rebuild": 0.6412,
+            "cross_validation": "8/21",
             "maturity_score": 100.0,
             "entry_status": "前九集中通過",
             "failed_checks": [
@@ -102510,6 +102129,7 @@
               "多模型校正完成",
               "交叉驗算與成熟度檢查",
               "前五實戰前移重組",
+              "前九集中排序第一",
               "上期開獎號防呆",
               "每期重新運算，不沿用上期預測"
             ]
@@ -103838,7 +103458,7 @@
       "engine_version": "aerospace_assurance_v1",
       "principle": "fail_closed_redundant_verified_deterministic",
       "input_fingerprint_sha256": "f8d24595c692392f6d58b5a818ee46f185e9dbc3eb5693cf675dbb60a6aba2ee",
-      "output_fingerprint_sha256": "def4480fe5a9ab2c2b9ac7b41d143a28913d9b5c31f6c8faa0483a4d3a6c7dcf",
+      "output_fingerprint_sha256": "8d14fee68ee66673c834e863db08e3495d02e1a2c27afbf4edff615fd21a0e41",
       "input_invariants": {
         "passed": true,
         "checked_draws": 11885,
@@ -133102,16 +132722,16 @@
     ],
     "strong_prediction_packs": {
       "strong_single": {
-        "name": "最強單支",
+        "name": "最強獨隻1中1",
         "hit_goal": 1,
         "numbers": [
-          14
+          33
         ],
-        "score_sum": 0.8938,
-        "avg_score": 0.8938,
+        "score_sum": 0.9948,
+        "avg_score": 0.9948,
         "status": "研究預測",
         "official_release": false,
-        "withheld_reason": "monthly settled predictions did not pass precision gate; output as daily research prediction",
+        "withheld_reason": "最強獨支由全系統放行門重新選出",
         "release_note": "daily research prediction is always provided, but 正式 confidence gate did not pass",
         "theoretical_probability": {
           "hit_goal": 1,
@@ -133120,217 +132740,25 @@
           "odds_1_in": 7.8
         },
         "zones": {
-          "11-20": 1
+          "31-39": 1
         },
         "tails": {
-          "4": 1
+          "3": 1
         },
-        "governance": {
-          "rounds": 360,
-          "goal": 1,
-          "size": 1,
-          "pass_rate": 0.111,
-          "avg_hits": 0.111,
-          "zero_hit_rate": 0.889,
-          "random_success_probability": 0.128,
-          "random_avg_hits": 0.128,
-          "required_pass_rate": 0.2,
-          "pass_rate_edge_vs_random": -0.017,
-          "avg_hits_edge_vs_random": -0.017,
-          "min_pass_rate": 0.2,
-          "min_avg_hits": 0.2,
-          "recent_windows_passed": false,
-          "research_windows_passed": false,
-          "research_passed": false,
-          "windows": {
-            "60": {
-              "rounds": 60,
-              "pass_rate": 0.117,
-              "avg_hits": 0.117,
-              "zero_hit_rate": 0.883
-            },
-            "120": {
-              "rounds": 120,
-              "pass_rate": 0.1,
-              "avg_hits": 0.1,
-              "zero_hit_rate": 0.9
-            },
-            "360": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889
-            }
-          },
-          "passed": false,
-          "best_variant": "top_rank",
-          "variant_results": {
-            "single_precision": {
-              "rounds": 360,
-              "pass_rate": 0.106,
-              "avg_hits": 0.106,
-              "zero_hit_rate": 0.894,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.106,
-                  "avg_hits": 0.106,
-                  "zero_hit_rate": 0.894
-                }
-              }
-            },
-            "dedicated": {
-              "rounds": 360,
-              "pass_rate": 0.089,
-              "avg_hits": 0.089,
-              "zero_hit_rate": 0.911,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.067,
-                  "avg_hits": 0.067,
-                  "zero_hit_rate": 0.933
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.089,
-                  "avg_hits": 0.089,
-                  "zero_hit_rate": 0.911
-                }
-              }
-            },
-            "top_rank": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.117,
-                  "avg_hits": 0.117,
-                  "zero_hit_rate": 0.883
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            },
-            "stability": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.117,
-                  "avg_hits": 0.117,
-                  "zero_hit_rate": 0.883
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.1,
-                  "avg_hits": 0.1,
-                  "zero_hit_rate": 0.9
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            },
-            "paircover": {
-              "rounds": 360,
-              "pass_rate": 0.111,
-              "avg_hits": 0.111,
-              "zero_hit_rate": 0.889,
-              "windows": {
-                "60": {
-                  "rounds": 60,
-                  "pass_rate": 0.083,
-                  "avg_hits": 0.083,
-                  "zero_hit_rate": 0.917
-                },
-                "120": {
-                  "rounds": 120,
-                  "pass_rate": 0.075,
-                  "avg_hits": 0.075,
-                  "zero_hit_rate": 0.925
-                },
-                "360": {
-                  "rounds": 360,
-                  "pass_rate": 0.111,
-                  "avg_hits": 0.111,
-                  "zero_hit_rate": 0.889
-                }
-              }
-            }
-          }
-        },
-        "maturity": {
-          "avg_score": 100.0,
-          "min_required": 82.0,
-          "passed": true,
-          "tiers": {
-            "mature": 1
-          }
-        },
-        "maturity_governance": {
-          "policy": "practical_maturity_gate",
-          "pack_key": "strong_single",
-          "reason": "recent live prediction quality, cross validation, repeated failure and recovery signals"
-        },
-        "monthly_governance": {
-          "rounds": 10,
-          "passes": 0,
-          "pass_rate": 0.0,
-          "avg_hits": 0.0,
-          "zero_hit_rate": 1.0,
-          "status": "strict_downshift"
-        },
+        "governance": {},
         "must_output_single": true,
         "strong_single_validation": {
           "status": "觀察輸出",
-          "number": 14,
+          "number": 33,
           "must_output_single": true,
           "fake_data_guard": "僅觀察，不得標示高信心",
           "latest_draw_reuse": false,
           "latest_draw_reuse_allowed": true,
-          "score": 223.39,
-          "candidate_score": 0.8938,
-          "confidence_index": 93.8,
-          "front5_precision_rebuild": 0.6066,
-          "cross_validation": "11/21",
+          "score": 231.55,
+          "candidate_score": 0.9948,
+          "confidence_index": 98.7,
+          "front5_precision_rebuild": 0.6412,
+          "cross_validation": "8/21",
           "maturity_score": 100.0,
           "entry_status": "前九集中通過",
           "failed_checks": [
@@ -133341,6 +132769,7 @@
             "多模型校正完成",
             "交叉驗算與成熟度檢查",
             "前五實戰前移重組",
+            "前九集中排序第一",
             "上期開獎號防呆",
             "每期重新運算，不沿用上期預測"
           ]
@@ -139953,7 +139382,7 @@
     "engine_version": "aerospace_assurance_v1",
     "principle": "fail_closed_redundant_verified_deterministic",
     "input_fingerprint_sha256": "f8d24595c692392f6d58b5a818ee46f185e9dbc3eb5693cf675dbb60a6aba2ee",
-    "output_fingerprint_sha256": "98d067a58e658f3cd6f17fbef708f9a24f845144b97ab9a56552cbb4f1d62143",
+    "output_fingerprint_sha256": "a65103947b517b5e4a4aa2a49d7031a81ff8f0f6cc658104435760a248d13f11",
     "input_invariants": {
       "passed": true,
       "checked_draws": 11885,
@@ -169180,16 +168609,16 @@
   ],
   "strong_packs": {
     "strong_single": {
-      "name": "最強單支",
+      "name": "最強獨隻1中1",
       "hit_goal": 1,
       "numbers": [
-        14
+        33
       ],
-      "score_sum": 0.8938,
-      "avg_score": 0.8938,
+      "score_sum": 0.9948,
+      "avg_score": 0.9948,
       "status": "研究預測",
       "official_release": false,
-      "withheld_reason": "monthly settled predictions did not pass precision gate; output as daily research prediction",
+      "withheld_reason": "最強獨支由全系統放行門重新選出",
       "release_note": "daily research prediction is always provided, but 正式 confidence gate did not pass",
       "theoretical_probability": {
         "hit_goal": 1,
@@ -169198,217 +168627,25 @@
         "odds_1_in": 7.8
       },
       "zones": {
-        "11-20": 1
+        "31-39": 1
       },
       "tails": {
-        "4": 1
+        "3": 1
       },
-      "governance": {
-        "rounds": 360,
-        "goal": 1,
-        "size": 1,
-        "pass_rate": 0.111,
-        "avg_hits": 0.111,
-        "zero_hit_rate": 0.889,
-        "random_success_probability": 0.128,
-        "random_avg_hits": 0.128,
-        "required_pass_rate": 0.2,
-        "pass_rate_edge_vs_random": -0.017,
-        "avg_hits_edge_vs_random": -0.017,
-        "min_pass_rate": 0.2,
-        "min_avg_hits": 0.2,
-        "recent_windows_passed": false,
-        "research_windows_passed": false,
-        "research_passed": false,
-        "windows": {
-          "60": {
-            "rounds": 60,
-            "pass_rate": 0.117,
-            "avg_hits": 0.117,
-            "zero_hit_rate": 0.883
-          },
-          "120": {
-            "rounds": 120,
-            "pass_rate": 0.1,
-            "avg_hits": 0.1,
-            "zero_hit_rate": 0.9
-          },
-          "360": {
-            "rounds": 360,
-            "pass_rate": 0.111,
-            "avg_hits": 0.111,
-            "zero_hit_rate": 0.889
-          }
-        },
-        "passed": false,
-        "best_variant": "top_rank",
-        "variant_results": {
-          "single_precision": {
-            "rounds": 360,
-            "pass_rate": 0.106,
-            "avg_hits": 0.106,
-            "zero_hit_rate": 0.894,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.1,
-                "avg_hits": 0.1,
-                "zero_hit_rate": 0.9
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.083,
-                "avg_hits": 0.083,
-                "zero_hit_rate": 0.917
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.106,
-                "avg_hits": 0.106,
-                "zero_hit_rate": 0.894
-              }
-            }
-          },
-          "dedicated": {
-            "rounds": 360,
-            "pass_rate": 0.089,
-            "avg_hits": 0.089,
-            "zero_hit_rate": 0.911,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.083,
-                "avg_hits": 0.083,
-                "zero_hit_rate": 0.917
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.067,
-                "avg_hits": 0.067,
-                "zero_hit_rate": 0.933
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.089,
-                "avg_hits": 0.089,
-                "zero_hit_rate": 0.911
-              }
-            }
-          },
-          "top_rank": {
-            "rounds": 360,
-            "pass_rate": 0.111,
-            "avg_hits": 0.111,
-            "zero_hit_rate": 0.889,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.117,
-                "avg_hits": 0.117,
-                "zero_hit_rate": 0.883
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.1,
-                "avg_hits": 0.1,
-                "zero_hit_rate": 0.9
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889
-              }
-            }
-          },
-          "stability": {
-            "rounds": 360,
-            "pass_rate": 0.111,
-            "avg_hits": 0.111,
-            "zero_hit_rate": 0.889,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.117,
-                "avg_hits": 0.117,
-                "zero_hit_rate": 0.883
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.1,
-                "avg_hits": 0.1,
-                "zero_hit_rate": 0.9
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889
-              }
-            }
-          },
-          "paircover": {
-            "rounds": 360,
-            "pass_rate": 0.111,
-            "avg_hits": 0.111,
-            "zero_hit_rate": 0.889,
-            "windows": {
-              "60": {
-                "rounds": 60,
-                "pass_rate": 0.083,
-                "avg_hits": 0.083,
-                "zero_hit_rate": 0.917
-              },
-              "120": {
-                "rounds": 120,
-                "pass_rate": 0.075,
-                "avg_hits": 0.075,
-                "zero_hit_rate": 0.925
-              },
-              "360": {
-                "rounds": 360,
-                "pass_rate": 0.111,
-                "avg_hits": 0.111,
-                "zero_hit_rate": 0.889
-              }
-            }
-          }
-        }
-      },
-      "maturity": {
-        "avg_score": 100.0,
-        "min_required": 82.0,
-        "passed": true,
-        "tiers": {
-          "mature": 1
-        }
-      },
-      "maturity_governance": {
-        "policy": "practical_maturity_gate",
-        "pack_key": "strong_single",
-        "reason": "recent live prediction quality, cross validation, repeated failure and recovery signals"
-      },
-      "monthly_governance": {
-        "rounds": 10,
-        "passes": 0,
-        "pass_rate": 0.0,
-        "avg_hits": 0.0,
-        "zero_hit_rate": 1.0,
-        "status": "strict_downshift"
-      },
+      "governance": {},
       "must_output_single": true,
       "strong_single_validation": {
         "status": "觀察輸出",
-        "number": 14,
+        "number": 33,
         "must_output_single": true,
         "fake_data_guard": "僅觀察，不得標示高信心",
         "latest_draw_reuse": false,
         "latest_draw_reuse_allowed": true,
-        "score": 223.39,
-        "candidate_score": 0.8938,
-        "confidence_index": 93.8,
-        "front5_precision_rebuild": 0.6066,
-        "cross_validation": "11/21",
+        "score": 231.55,
+        "candidate_score": 0.9948,
+        "confidence_index": 98.7,
+        "front5_precision_rebuild": 0.6412,
+        "cross_validation": "8/21",
         "maturity_score": 100.0,
         "entry_status": "前九集中通過",
         "failed_checks": [
@@ -169419,6 +168656,7 @@
           "多模型校正完成",
           "交叉驗算與成熟度檢查",
           "前五實戰前移重組",
+          "前九集中排序第一",
           "上期開獎號防呆",
           "每期重新運算，不沿用上期預測"
         ]
@@ -177007,7 +176245,7 @@
     {
       "based_on_date": "2026-08-10",
       "target_date": "2026-08-11",
-      "created_at": "2026-08-12T09:24:30+08:00",
+      "created_at": "2026-08-12T09:41:38+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],

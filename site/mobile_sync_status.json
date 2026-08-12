@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-08-12T09:26:07+08:00",
+  "checked_at_taiwan": "2026-08-12T09:43:12+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-08-12T09:24:30+08:00",
+    "generated_at_taiwan": "2026-08-12T09:41:38+08:00",
     "latest_draw_date": "2026-08-10",
     "latest_numbers": [
       9,
@@ -41,10 +41,10 @@
       36,
       35
     ],
-    "engine": "industrial_v32_top9_concentration_20260812"
+    "engine": "industrial_v33_top9_single_sync_20260812"
   },
   "site": {
-    "generated_at_taiwan": "2026-08-12T09:24:30+08:00",
+    "generated_at_taiwan": "2026-08-12T09:41:38+08:00",
     "latest_draw_date": "2026-08-10",
     "latest_numbers": [
       9,
@@ -83,10 +83,10 @@
       36,
       35
     ],
-    "engine": "industrial_v32_top9_concentration_20260812"
+    "engine": "industrial_v33_top9_single_sync_20260812"
   },
   "remote": {
-    "generated_at_taiwan": "2026-08-12T09:24:30+08:00",
+    "generated_at_taiwan": "2026-08-12T09:41:38+08:00",
     "latest_draw_date": "2026-08-10",
     "latest_numbers": [
       9,
@@ -125,7 +125,7 @@
       36,
       35
     ],
-    "engine": "industrial_v32_top9_concentration_20260812"
+    "engine": "industrial_v33_top9_single_sync_20260812"
   },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
