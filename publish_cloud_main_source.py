@@ -10,7 +10,18 @@ import urllib.request
 BASE = pathlib.Path(__file__).resolve().parent
 REPO = "pingshen670822/tiantianle-cloud-system"
 TOKEN_FILE = BASE / "mobile_access_token.txt"
-BLOCKED_DIRS = {".git", ".gh-cli", "__pycache__", "backups", "logs"}
+BLOCKED_DIRS = {
+    ".git",
+    ".gh-cli",
+    "__pycache__",
+    "backups",
+    "logs",
+    "site",
+    "reports",
+    "data",
+    "history_import",
+    "validation_sources",
+}
 BLOCKED_NAMES = {".env", ".env.local", ".env.production", ".gitconfig-gh"}
 BLOCKED_PARTS = ("token", "secret", "credential", "password", "github_device_login")
 

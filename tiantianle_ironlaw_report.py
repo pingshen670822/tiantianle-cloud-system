@@ -3289,6 +3289,73 @@ def compact_post_draw_correction_html_tiantianle(analysis):
     )
 
 
+def compact_clear_focus_html_tiantianle(analysis, settled, latest_tw_label, target_tw_label):
+    prediction = analysis.get("prediction") or {}
+    latest = analysis.get("latest_draw") or {}
+    strongest = prediction.get("strongest") or prediction.get("top1") or []
+    top9 = prediction.get("top9") or []
+    mode_text = zh_text(prediction.get("recommendation_mode") or "觀察強推")
+    message_text = zh_text(prediction.get("recommendation_message") or "本期只看正式主推表，其他模型號碼移到模型回測分頁。")
+    official_rows = [
+        ["最強主推", fmt_numbers(top9) or "-", "本期只看這一組，不超過九顆"],
+        ["最強獨隻", fmt_numbers(strongest) or "-", "本期唯一獨隻"],
+    ]
+    hit_rows = []
+    if settled:
+        actual = set(safe_int(number) for number in (settled.get("actual_numbers") or []))
+        actual.discard(0)
+        previous = [safe_int(number) for number in (settled.get("candidate_numbers") or []) if safe_int(number)]
+        hit_specs = [
+            ("上期獨隻", previous[:1], 1),
+            ("上期三碼", previous[:3], 1),
+            ("上期五碼", previous[:5], 2),
+            ("上期九碼", previous[:9], 2),
+            ("上期前十五", previous[:15], 1),
+        ]
+        for label, numbers, target_hits in hit_specs:
+            hits = sorted(set(numbers) & actual)
+            hit_rows.append([
+                label,
+                fmt_numbers(numbers) or "-",
+                fmt_numbers(settled.get("actual_numbers") or []) or "-",
+                f"{len(hits)}：{fmt_numbers(hits) or '-'}",
+                "達標" if len(hits) >= target_hits else "未達標，已回灌",
+            ])
+    else:
+        hit_rows.append(["上期命中", "-", "-", "-", "尚未結算"])
+
+    zero_gate = (analysis.get("industrial_engine") or {}).get("zero_hit_cluster_rescue_gate") or {}
+    rank_rows = []
+    for item in zero_gate.get("actual_previous_ranks") or []:
+        rank_rows.append([
+            f"{safe_int(item.get('number')):02d}",
+            esc(item.get("previous_rank", "-")),
+            "已用落點回灌" if zero_gate.get("status") else "等待回灌",
+        ])
+    if not rank_rows:
+        rank_rows = [["-", "-", "本期未觸發零中急救"]]
+    change_rows = [
+        ["最新開獎", fmt_numbers(latest.get("numbers") or []) or "-", esc(latest_tw_label)],
+        ["下期時間", esc(target_tw_label), "全部用台灣時間"],
+        ["上期實際落點", " / ".join(f"{row[0]}第{row[1]}名" for row in rank_rows if row[0] != "-") or "-", "用來修正本期排序"],
+        ["急救前九", fmt_numbers(zero_gate.get("new_top9") or top9) or "-", "若上期零中，直接以急救後排序為準"],
+    ]
+    return f"""
+    <div class="band singlebox">
+      <h2>本期最強主推</h2>
+      <p><strong>只看這一組：</strong>本頁只顯示本期最強主推；上期命中與失準檢討全部放在命中檢討分頁。</p>
+      <div class="grid">
+        <div class="card hot-card"><div class="label">最強獨隻</div><div class="value num">{fmt_numbers(strongest) or '-'}</div></div>
+        <div class="card hot-card"><div class="label">最強主推</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
+        <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
+        <div class="card"><div class="label">模式</div><div class="value">{esc(mode_text)}</div></div>
+      </div>
+      <p><strong>判讀：</strong>{esc(message_text)}</p>
+      {table(["類型", "號碼", "判讀"], official_rows)}
+    </div>
+    """
+
+
 def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
@@ -3333,6 +3400,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     top9_concentration_html = compact_top9_concentration_html_tiantianle(analysis)
     zero_hit_rescue_html = compact_zero_hit_rescue_html_tiantianle(analysis)
     post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
+    clear_focus_html = compact_clear_focus_html_tiantianle(analysis, settled, latest_tw_label, target_tw_label)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = "下期研究候選前9名"
     backup_heading = "第10到第15名第二層備查"
@@ -3375,6 +3443,8 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     .date-ribbon{{background:#ecfeff;border-color:#67e8f9;}}
     .label{{font-size:13px;color:#64748b;font-weight:700;}}
     .value{{font-size:22px;font-weight:900;margin-top:6px;}}
+    .advanced{{background:#fbfdff;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px;}}
+    .advanced summary{{cursor:pointer;font-weight:900;color:#0f766e;}}
     table{{width:100%;border-collapse:collapse;min-width:760px;}}
     th,td{{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}}
     th{{background:#f1f5f9;}}
@@ -3419,40 +3489,15 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
   </section>
   <section id="prediction" class="panel active">
-    <div class="band">
-      <h2>核心決策</h2>
-      <div class="grid">
-        <div class="card"><div class="label">資料狀態</div><div class="value">{esc(status_text)}</div></div>
-        <div class="card"><div class="label">檢查</div><div class="value">已重算</div></div>
-        <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">{esc(target_tw_label)}</div></div>
-        <div class="card hot-card"><div class="label">獨隻</div><div class="value">{fmt_numbers(primary_single) or '-'}</div></div>
-        <div class="card"><div class="label">九碼核心</div><div class="value">{fmt_numbers(top9) or '-'}</div></div>
-      </div>
-      <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
-      <p><strong>高機率信心牌：</strong>{fmt_numbers(high_numbers) or "本期未過正式高信心守門"}</p>
-    </div>
-    {compact_super_single_html_tiantianle(analysis)}
-    {strong_single_validation_html}
-    {perfect_date_drag_html}
-    {top9_concentration_html}
-    <div class="band">
-      <h2>{candidate_heading}</h2>
-      {table(["號碼", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "驗算來源"], candidate_rows)}
-    </div>
-    <div class="band warn">
-      <h2>{backup_heading}</h2>
-      <p>本區只列本期第二層備查號碼，不列歷史統計。</p>
-      {table(["排名", "號碼", "分數", "信心", "機率", "交叉驗算", "穩定與遺漏", "成熟度", "定位"], backup_rows, "本期沒有第10到第15名備查資料")}
-    </div>
-    <div class="band">
-      <h2>生成號碼逐號驗算</h2>
+    {clear_focus_html}
+    <details class="advanced">
+      <summary>九碼驗算明細</summary>
+      <div class="band">
+      <h2>九碼逐號驗算</h2>
       <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
       {table(["號碼", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], verification_rows)}
-    </div>
-    <div class="band">
-      <h2>強牌組精算</h2>
-      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
-    </div>
+      </div>
+    </details>
   </section>
   <section id="review" class="panel">
     {hits_html}
@@ -3493,6 +3538,10 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
   </section>
   <section id="models" class="panel">
+    {compact_super_single_html_tiantianle(analysis)}
+    {strong_single_validation_html}
+    {perfect_date_drag_html}
+    {top9_concentration_html}
     {formula_lab_html}
     {prediction_rebuild_html}
     {dual_track_html}
@@ -4127,6 +4176,7 @@ def apply_latest_battle_tabs(report_html):
     if (element.classList.contains("grid")) return "prediction";
     if (/低機率|暫避|避開|不中/.test(title)) return "avoid";
     if (/上期|檢討|KPI|校準|滾動|歷史對比|本月|未命中/.test(title)) return "review";
+    if (/超高信心|最強獨隻驗證|完美日期牌|完美必拖牌|強牌組精算|強牌實戰統計|前九集中閘門/.test(title)) return "models";
     if (/模型|回測|航太|版路|穩定共識|8區|連動|輪組|成熟度|權重|改善規劃|工業級/.test(title)) return "models";
     if (/重要日期|明確作戰|高機率|本期發布|日期基準|下期預測|候選|低機率|今日|本日|終極目標|獨支|逐號/.test(title)) return "prediction";
     return "prediction";
@@ -4159,7 +4209,7 @@ def apply_latest_battle_tabs(report_html):
   }};
   compactPanel(
     panels.prediction,
-    /重要日期|明確作戰|高機率|本期發布|日期基準|下期預測專區|精準度治理器|候選 Top 15/,
+    /本期最強主推|上期強推命中|資料變化對比|重要日期|明確作戰|本期發布|日期基準|下期預測專區/,
     "{u("\\u9032\\u968e\\u9810\\u6e2c\\u7d30\\u7bc0")}"
   );
   compactPanel(
