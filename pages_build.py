@@ -94,7 +94,7 @@ def inject_mobile_panel(html):
       <h2>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u96f2\\u7aef\\u7368\\u7acb\\u7248')}</h2>
       <a class="mobile-action" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0\\u6700\\u65b0\\u958b\\u734e')}</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">{u('\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\u6700\\u65b0\\u9801')}</button>
-      <a class="cloud-update-link" href="reset.html?v={version}">{u('\\u624b\\u6a5f\\u6c92\\u66f4\\u65b0\\u9ede\\u9019\\u88e1\\u6e05\\u9664\\u820a\\u5feb\\u53d6')}</a>
+      <a class="cloud-update-link" href="force-sync-{version}.html?v={version}">{u('\\u624b\\u6a5f\\u4e0d\\u4e00\\u6a23\\u9ede\\u9019\\u88e1\\u5f37\\u5236\\u540c\\u6b65')}</a>
       <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{u('\\u5df2\\u8a2d\\u5b9a\\uff0c\\u624b\\u6a5f\\u53ef\\u76f4\\u63a5\\u6536\\u85cf\\u672c\\u9801')}</span></p>
       <p class="cloud-note" id="mobileUpdateStatus">{u('\\u7248\\u672c')} {version}</p>
       {local_note}
@@ -1125,6 +1125,49 @@ def write_pwa_files():
 </script></body></html>"""
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
     (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
+    force_sync = f"""<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u5f37\\u5236\\u540c\\u6b65')}</title>
+<style>body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}}main{{max-width:680px;margin:auto;padding:28px}}.box{{background:#fff;border:1px solid #d8dee9;border-radius:8px;padding:18px}}.status{{font-weight:900;color:#166534}}a{{display:block;margin-top:14px;padding:14px;background:#166534;color:#fff;text-align:center;border-radius:8px;text-decoration:none;font-weight:900}}</style></head>
+<body><main><div class="box"><h1>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u5f37\\u5236\\u540c\\u6b65')}</h1><p class="status" id="status">{u('\\u6b63\\u5728\\u89e3\\u9664\\u820a\\u7248\\u624b\\u6a5f\\u5feb\\u53d6\\u63a7\\u5236')}</p><a href="prediction.html?v={version}&manual=1">{u('\\u7acb\\u5373\\u958b\\u555f\\u6700\\u65b0\\u9810\\u6e2c')}</a></div></main>
+<script>
+(async function(){{
+  var VERSION = '{version}';
+  var status = document.getElementById('status');
+  function setStatus(text) {{ if (status) status.textContent = text; }}
+  async function clearEverything() {{
+    if ('serviceWorker' in navigator) {{
+      var regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(async function(reg) {{
+        try {{
+          if (reg.active) reg.active.postMessage({{ type: 'CLEAR_CACHE' }});
+          if (reg.waiting) reg.waiting.postMessage({{ type: 'SKIP_WAITING' }});
+          await reg.update();
+          await reg.unregister();
+        }} catch (err) {{}}
+      }}));
+    }}
+    if ('caches' in window) {{
+      var keys = await caches.keys();
+      await Promise.all(keys.map(function(key) {{ return caches.delete(key); }}));
+    }}
+  }}
+  try {{
+    await clearEverything();
+    setStatus('{u('\\u820a\\u5feb\\u53d6\\u5df2\\u6e05\\u9664\\uff0c\\u6b63\\u5728\\u91cd\\u65b0\\u62c9\\u53d6\\u96f2\\u7aef')}');
+    await fetch('service-worker.js?force=' + Date.now(), {{ cache: 'reload' }}).catch(function(){{}});
+    await fetch('version.json?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
+    await fetch('prediction.html?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
+  }} catch (err) {{
+    setStatus('{u('\\u5df2\\u555f\\u52d5\\u5f37\\u5236\\u540c\\u6b65\\uff0c\\u6b63\\u5728\\u9032\\u5165\\u6700\\u65b0\\u7248')}');
+  }}
+  location.replace('prediction.html?v=' + VERSION + '&force_sync=' + Date.now());
+}})();
+</script></body></html>"""
+    (SITE_DIR / f"force-sync-{version}.html").write_text(force_sync, encoding="utf-8")
+    (SITE_DIR / "force-sync.html").write_text(force_sync, encoding="utf-8")
+    (SITE_DIR / "手機強制同步.html").write_text(force_sync, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
 const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/tiantianle_low_probability_avoid.html','reports/天天樂低機率精準暫避.html','reports/低機率精準暫避.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
