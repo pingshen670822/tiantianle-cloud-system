@@ -1,11 +1,11 @@
 {
-  "checked_at_taiwan": "2026-08-12T11:53:31+08:00",
-  "status": "需立即修正",
-  "critical": 1,
+  "checked_at_taiwan": "2026-08-12T12:13:18+08:00",
+  "status": "無嚴重缺漏，仍需模型補強",
+  "critical": 0,
   "publish_blocking": 0,
   "needs_fix": 0,
   "needs_strengthen": 7,
-  "issue_count": 8,
+  "issue_count": 7,
   "latest_draw_date": "2026-08-11",
   "latest_numbers": [
     5,
@@ -18,32 +18,32 @@
   "target_draw_date": "2026-08-12",
   "target_taiwan_time": "2026-08-13 09:50",
   "top9": [
-    33,
-    2,
-    36,
-    10,
-    3,
-    12,
-    22,
     9,
-    17
+    25,
+    15,
+    3,
+    34,
+    18,
+    28,
+    4,
+    23
   ],
   "top15": [
-    33,
-    2,
-    36,
-    10,
-    3,
-    12,
-    22,
     9,
-    17,
-    20,
-    27,
-    19,
-    24,
+    25,
+    15,
+    3,
+    34,
     18,
-    7
+    28,
+    4,
+    23,
+    11,
+    10,
+    38,
+    1,
+    29,
+    17
   ],
   "draw_count": 11886,
   "database": {
@@ -1971,20 +1971,23 @@
     "message": "九名後命中外漏已啟動強制前移修正"
   },
   "strong_single_validation": {
-    "status": "已驗證",
-    "number": 33,
+    "status": "觀察輸出",
+    "number": 9,
     "must_output_single": true,
-    "fake_data_guard": "通過",
+    "fake_data_guard": "僅觀察，不得標示高信心",
     "latest_draw_reuse": false,
     "latest_draw_reuse_allowed": true,
-    "score": 211.83,
-    "candidate_score": 0.8851,
-    "confidence_index": 93.4,
-    "front5_precision_rebuild": 0.6069,
-    "cross_validation": "10/21",
-    "maturity_score": 92.3,
-    "entry_status": "前九集中通過",
-    "failed_checks": [],
+    "score": 213.06,
+    "candidate_score": 0.9366,
+    "confidence_index": 95.9,
+    "front5_precision_rebuild": 0.3198,
+    "cross_validation": "12/21",
+    "maturity_score": 100.0,
+    "entry_status": "零中急救通過",
+    "failed_checks": [
+      "前五實戰前移重組",
+      "前五強支撐"
+    ],
     "evidence": [
       "全系統主列放行",
       "多模型校正完成",
@@ -1997,42 +2000,35 @@
   },
   "model_maturity": {
     "policy": "live_prediction_practical_maturity_governor",
-    "status": "觀察中",
-    "top10_avg_maturity": 79.7,
-    "top15_avg_maturity": 78.7,
-    "top10_mature_or_usable_count": 6,
-    "top10_blocked_low_maturity_count": 1,
+    "status": "passed",
+    "top10_avg_maturity": 93.7,
+    "top15_avg_maturity": 93.8,
+    "top10_mature_or_usable_count": 10,
+    "top10_blocked_low_maturity_count": 0,
     "top10_tier_counts": {
-      "mature": 6,
-      "blocked_low_maturity": 1,
-      "research_only": 3
+      "mature": 8,
+      "usable_watch": 2
     },
     "required": "top10_avg_maturity>=70, 成熟通過_or_usable>=5, 成熟度不足=0",
-    "action": "force_觀察中_and_re_rank",
+    "action": "正式_release_allowed",
     "top10_numbers": [
       {
-        "number": 33,
-        "maturity": 92.3,
+        "number": 9,
+        "maturity": 100.0,
         "tier": "成熟通過",
-        "cross_validation_passed": 10
+        "cross_validation_passed": 12
       },
       {
-        "number": 2,
-        "maturity": 83.4,
+        "number": 25,
+        "maturity": 100.0,
         "tier": "成熟通過",
         "cross_validation_passed": 11
       },
       {
-        "number": 36,
-        "maturity": 46.7,
-        "tier": "成熟度不足",
-        "cross_validation_passed": 4
-      },
-      {
-        "number": 10,
-        "maturity": 87.0,
+        "number": 15,
+        "maturity": 87.2,
         "tier": "成熟通過",
-        "cross_validation_passed": 8
+        "cross_validation_passed": 11
       },
       {
         "number": 3,
@@ -2041,34 +2037,40 @@
         "cross_validation_passed": 10
       },
       {
-        "number": 12,
-        "maturity": 60.4,
-        "tier": "研究觀察",
-        "cross_validation_passed": 7
+        "number": 34,
+        "maturity": 96.4,
+        "tier": "成熟通過",
+        "cross_validation_passed": 8
       },
       {
-        "number": 22,
-        "maturity": 68.4,
-        "tier": "研究觀察",
+        "number": 18,
+        "maturity": 98.8,
+        "tier": "成熟通過",
+        "cross_validation_passed": 10
+      },
+      {
+        "number": 28,
+        "maturity": 100.0,
+        "tier": "成熟通過",
+        "cross_validation_passed": 6
+      },
+      {
+        "number": 4,
+        "maturity": 78.3,
+        "tier": "可觀察",
         "cross_validation_passed": 4
       },
       {
-        "number": 9,
+        "number": 23,
+        "maturity": 76.1,
+        "tier": "可觀察",
+        "cross_validation_passed": 5
+      },
+      {
+        "number": 11,
         "maturity": 100.0,
         "tier": "成熟通過",
         "cross_validation_passed": 12
-      },
-      {
-        "number": 17,
-        "maturity": 100.0,
-        "tier": "成熟通過",
-        "cross_validation_passed": 9
-      },
-      {
-        "number": 20,
-        "maturity": 58.7,
-        "tier": "研究觀察",
-        "cross_validation_passed": 8
       }
     ]
   },
@@ -2106,17 +2108,10 @@
   },
   "issues": [
     {
-      "area": "近期失準守門",
-      "problem": "近期失準號仍進前九：02 12 22 36",
-      "impact": "會讓下一期排序被失準結構拖走",
-      "fix": "近期失準號必須完成全歷史、成熟度與交叉驗算重驗才可回前九",
-      "severity": "嚴重"
-    },
-    {
       "area": "九名後命中外漏",
       "problem": "近5期九名後命中 17 顆，前九命中 8 顆",
       "impact": "有效號碼被壓到第十名後，前九精準度會下降",
-      "fix": "第17版已啟動前九集中閘門與獨隻同步，將第十到十五名補中訊號、日期牌、拖牌、前五支撐與交叉驗證集中回前九，獨隻必須跟前九集中排序一致",
+      "fix": "第18版已啟動前十五零中族群急救，零中後以實際號碼落點、鄰號、尾數、區間與漏抓回收重建前九，上一期失敗前十五未重新通過者降權",
       "severity": "需補強"
     },
     {
