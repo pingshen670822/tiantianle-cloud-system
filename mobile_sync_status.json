@@ -1,6 +1,6 @@
 {
-  "checked_at_taiwan": "2026-08-12T12:49:45+08:00",
-  "status": "不同步",
+  "checked_at_taiwan": "2026-08-12T14:03:18+08:00",
+  "status": "同步",
   "local": {
     "generated_at_taiwan": "2026-08-12T12:13:10+08:00",
     "latest_draw_date": "2026-08-11",
@@ -86,7 +86,7 @@
     "engine": "industrial_v34_zero_hit_cluster_rescue_20260812"
   },
   "remote": {
-    "generated_at_taiwan": "2026-08-12T12:49:23+08:00",
+    "generated_at_taiwan": "2026-08-12T12:13:10+08:00",
     "latest_draw_date": "2026-08-11",
     "latest_numbers": [
       5,
@@ -99,8 +99,8 @@
     "target_taiwan_time": "2026-08-13 09:50",
     "top9": [
       9,
-      15,
       25,
+      15,
       3,
       34,
       18,
@@ -110,8 +110,8 @@
     ],
     "top15": [
       9,
-      15,
       25,
+      15,
       3,
       34,
       18,
@@ -119,18 +119,15 @@
       4,
       23,
       11,
+      10,
       38,
       1,
       29,
-      10,
-      16
+      17
     ],
     "engine": "industrial_v34_zero_hit_cluster_rescue_20260812"
   },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_error": "",
-  "mismatches": [
-    "本機與雲端:top9",
-    "本機與雲端:top15"
-  ]
+  "mismatches": []
 }
