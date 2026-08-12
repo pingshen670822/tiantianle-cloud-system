@@ -7363,6 +7363,261 @@ def apply_top9_concentration_gate(candidates, draws, review=None, front_limit=9)
     }
 
 
+def apply_zero_hit_cluster_rescue_gate(candidates, draws, review=None, front_limit=9):
+    if not candidates:
+        return candidates, {
+            "status": "略過",
+            "reason": "沒有候選號",
+            "old_top9": [],
+            "new_top9": [],
+        }
+    review = review or {}
+    settled = review.get("last_settled") or {}
+    active = zero_hit_top15_failure(review)
+    old_top9 = [int(item["number"]) for item in candidates[:front_limit]]
+    if not active:
+        return {
+            "status": "觀察",
+            "reason": "上期前十五沒有觸發零中急救",
+            "old_top9": old_top9,
+            "new_top9": old_top9,
+        }
+
+    actual = []
+    for value in settled.get("actual_numbers") or []:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            actual.append(number)
+    actual_set = set(actual)
+    previous_candidates = []
+    for value in settled.get("candidate_numbers") or []:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if NUMBER_MIN <= number <= NUMBER_MAX:
+            previous_candidates.append(number)
+    previous_rank = {number: idx + 1 for idx, number in enumerate(previous_candidates)}
+    failed_top15 = set(previous_candidates[:15]) - actual_set
+    latest_actual = {
+        int(number)
+        for number in (draws[-1].get("numbers", []) if draws else [])
+        if NUMBER_MIN <= int(number) <= NUMBER_MAX
+    }
+    actual_tails = {number % 10 for number in actual_set}
+    actual_zones = {zone_label(number) for number in actual_set}
+    rolling = rolling_adjustment_data(review)
+    missed_actual_counts = correction_count_map(rolling.get("missed_actual_numbers"), "missed_count")
+    last2_missed_counts = correction_count_map(rolling.get("last2_missed_actual_numbers"), "missed_count")
+    repeated_failed = correction_count_map(rolling.get("repeated_failed_numbers"), "miss_count")
+    date_scores = {}
+    drag_scores = {}
+    if draws:
+        target_date = next_draw_date(draws[-1]["draw_date"])
+        date_scores, _, _ = date_profile_scores(draws, target_date)
+        drag_scores, _ = drag_profile_scores(draws, draws[-1].get("numbers", []))
+
+    raw_scores = {}
+    original = {int(item["number"]): dict(item) for item in candidates}
+    original_rank = {int(item["number"]): idx for idx, item in enumerate(candidates, 1)}
+    diagnostics = {}
+    for idx, item in enumerate(candidates, 1):
+        number = int(item["number"])
+        features = item.get("feature_signals") or {}
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        base = clamp(float(item.get("score", 0) or 0), 0.0, 1.0)
+        front5 = front5_precision_signal(item)
+        pressure = unsupported_recovery_pressure(features)
+        zero_signal = _safe_feature_float(features, "zero_hit_inversion_recovery")
+        rank_drift = _safe_feature_float(features, "rank_window_drift_correction")
+        effective_shift = _safe_feature_float(features, "effective_hit_front_shift")
+        missed_recovery = _safe_feature_float(features, "missed_hit_recovery")
+        low_recovery = _safe_feature_float(features, "low_probability_error_recovery")
+        walk = _safe_feature_float(features, "walk_forward_hit_signature")
+        external = _safe_feature_float(features, "external_method_consensus")
+        omission_phase = _safe_feature_float(features, "omission_phase_rebound")
+        date_score = float(date_scores.get(number, 0.0) or 0.0)
+        drag_score = float(drag_scores.get(number, 0.0) or 0.0)
+        cross_norm = clamp(int(cross.get("passed_count", 0) or 0) / max(1, int(cross.get("total_count", 1) or 1)), 0.0, 1.0)
+        maturity_norm = clamp(float(maturity.get("score", 0) or 0) / 100.0, 0.0, 1.0)
+        min_distance = min((abs(number - anchor) for anchor in actual_set), default=99)
+        if number in actual_set:
+            neighbor_score = 0.25
+        elif min_distance == 1:
+            neighbor_score = 1.0
+        elif min_distance == 2:
+            neighbor_score = 0.78
+        elif min_distance == 3:
+            neighbor_score = 0.34
+        else:
+            neighbor_score = 0.0
+        tail_score = 1.0 if number % 10 in actual_tails else 0.0
+        zone_score = 1.0 if zone_label(number) in actual_zones else 0.0
+        family_score = clamp(neighbor_score * 0.56 + tail_score * 0.24 + zone_score * 0.20, 0.0, 1.0)
+        exact_latest = number in latest_actual
+        repeat_allowed = latest_repeat_reentry_allowed(item)
+        exact_penalty = 0.34 if exact_latest and not repeat_allowed else 0.08 if exact_latest else 0.0
+        failed_penalty = 0.0
+        if number in failed_top15:
+            failed_penalty = 0.34 if zero_signal < 0.88 else 0.18
+        if repeated_failed.get(number, 0) >= 3 and number not in actual_set:
+            failed_penalty += min(0.16, repeated_failed[number] * 0.025)
+        stale_front_penalty = 0.13 if idx <= front_limit and family_score < 0.32 and zero_signal < 0.72 else 0.0
+        recovery_count = missed_actual_counts.get(number, 0) + last2_missed_counts.get(number, 0)
+        score = (
+            base * 0.08
+            + zero_signal * 0.20
+            + missed_recovery * 0.11
+            + rank_drift * 0.10
+            + effective_shift * 0.10
+            + low_recovery * 0.07
+            + front5 * 0.10
+            + walk * 0.08
+            + external * 0.08
+            + omission_phase * 0.05
+            + date_score * 0.06
+            + drag_score * 0.04
+            + cross_norm * 0.04
+            + maturity_norm * 0.03
+            + family_score * 0.25
+            + min(0.13, recovery_count * 0.035)
+            - pressure * 0.12
+            - exact_penalty
+            - failed_penalty
+            - stale_front_penalty
+        )
+        rescue_quality = bool(
+            not exact_latest
+            and family_score >= 0.36
+            and zero_signal >= 0.50
+            and pressure <= 0.62
+            and (front5 >= 0.18 or walk >= 0.18 or external >= 0.35 or date_score >= 0.30 or recovery_count)
+        )
+        if not rescue_quality and number not in old_top9:
+            score -= 0.08
+        raw_scores[number] = score
+        diagnostics[number] = {
+            "number": number,
+            "old_rank": idx,
+            "previous_rank": previous_rank.get(number),
+            "family_score": round(family_score, 4),
+            "neighbor_score": round(neighbor_score, 4),
+            "tail_match": number % 10 in actual_tails,
+            "zone_match": zone_label(number) in actual_zones,
+            "zero_signal": round(zero_signal, 4),
+            "front5": round(front5, 4),
+            "date_score": round(date_score, 4),
+            "drag_score": round(drag_score, 4),
+            "pressure": round(pressure, 4),
+            "failed_previous_top15": number in failed_top15,
+            "latest_exact_blocked": bool(exact_latest and not repeat_allowed),
+            "rescue_quality": rescue_quality,
+        }
+
+    normalized = normalize(raw_scores)
+    ranked = sorted(
+        normalized,
+        key=lambda number: (
+            normalized[number],
+            1 if diagnostics[number]["rescue_quality"] else 0,
+            diagnostics[number]["family_score"],
+            original[number].get("score", 0),
+            -number,
+        ),
+        reverse=True,
+    )
+    top9 = set(ranked[:front_limit])
+    adjusted = []
+    promoted = []
+    demoted = []
+    for new_rank, number in enumerate(ranked, 1):
+        row = dict(original[number])
+        old_rank = original_rank[number]
+        rescue_score = normalized[number]
+        old_score = clamp(float(row.get("score", 0) or 0), 0.0, 1.0)
+        blended_score = clamp(old_score * 0.32 + rescue_score * 0.68, 0.0, 1.0)
+        reasons = list(row.get("reasons") or [])
+        if new_rank <= front_limit:
+            if "前十五零中族群急救" not in reasons:
+                reasons.insert(0, "前十五零中族群急救")
+            validation = dict(row.get("entry_validation") or {})
+            validation["top9_released"] = True
+            validation["passed_for_main"] = True
+            validation["status"] = "零中急救通過"
+            validation["status_label"] = "零中急救通過"
+            row["entry_validation"] = validation
+            action = "zero_hit_rescue_top9"
+            if old_rank > front_limit:
+                promoted.append({
+                    "number": number,
+                    "from_rank": old_rank,
+                    "to_rank": new_rank,
+                    "rescue_score": round(rescue_score, 4),
+                    "family_score": diagnostics[number]["family_score"],
+                    "zero_signal": diagnostics[number]["zero_signal"],
+                })
+        else:
+            if old_rank <= front_limit:
+                demoted.append({
+                    "number": number,
+                    "from_rank": old_rank,
+                    "to_rank": new_rank,
+                    "rescue_score": round(rescue_score, 4),
+                    "reason": "前十五零中後降至備查",
+                })
+            if 10 <= new_rank <= 15 and "零中後備查" not in reasons:
+                reasons.append("零中後備查")
+            validation = dict(row.get("entry_validation") or {})
+            validation["top9_released"] = False
+            row["entry_validation"] = validation
+            action = "zero_hit_rescue_reserve" if new_rank <= 15 else "reserve_only"
+        row["rank"] = new_rank
+        row["top9_core"] = bool(number in top9)
+        row["zero_hit_cluster_rescue_score"] = round(rescue_score, 4)
+        row["zero_hit_cluster_rescue_action"] = action
+        row["score"] = round(blended_score, 4)
+        row["confidence_index"] = round(50 + blended_score * 49, 1)
+        row["model_probability_percent"] = conservative_probability_percent(blended_score)
+        row["reasons"] = reasons[:9]
+        adjusted.append(row)
+
+    new_top9 = [int(item["number"]) for item in adjusted[:front_limit]]
+    actual_previous_ranks = [
+        {"number": number, "previous_rank": previous_rank.get(number, "未列入")}
+        for number in actual
+    ]
+    return adjusted, {
+        "status": "已執行",
+        "policy": "前十五零中後，立即檢討實際號碼落點，改用實際號碼的鄰號、尾數、區間、漏抓回收與零中反向分數重建前九；上一期失敗前十五未重新通過者降權。",
+        "actual_numbers": actual,
+        "actual_previous_ranks": actual_previous_ranks,
+        "failed_previous_top15": sorted(failed_top15),
+        "old_top9": old_top9,
+        "new_top9": new_top9,
+        "reserve_10_15_numbers": [int(item["number"]) for item in adjusted[9:15]],
+        "promoted_to_top9": promoted,
+        "demoted_from_top9": demoted,
+        "root_causes": [
+            "上期實際號碼全部落在前十五外，原前九集中閘門只處理第十到十五名外漏，未處理第十六名後整體錯位。",
+            "上一期失敗前十五仍有多顆保留在前排，導致漏抓族群沒有足夠權重進入前九。",
+            "實際號碼 08、32 分別只落在第十六、第十七名，顯示排序臨界區過度保守；05、11、21 被壓到更後段，表示低區與鄰號族群權重不足。",
+        ],
+        "top_scores": [
+            {
+                **diagnostics[int(item["number"])],
+                "new_rank": idx + 1,
+                "rescue_score": item.get("zero_hit_cluster_rescue_score"),
+            }
+            for idx, item in enumerate(adjusted[:15])
+        ],
+        "message": "已啟動前十五零中急救重建，下一期前九以零中後族群校正結果為準。",
+    }
+
+
 def compute_industrial_analysis(draws, review=None):
     timing_log("開始")
     timing_log("自適應權重開始")
@@ -7407,6 +7662,12 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("前九集中閘門開始")
     candidates, top9_concentration_gate = apply_top9_concentration_gate(
+        candidates,
+        draws,
+        review,
+    )
+    timing_log("前十五零中族群急救開始")
+    candidates, zero_hit_cluster_rescue_gate = apply_zero_hit_cluster_rescue_gate(
         candidates,
         draws,
         review,
@@ -7526,7 +7787,7 @@ def compute_industrial_analysis(draws, review=None):
     )
     timing_log("完成")
     return {
-        "engine_version": "industrial_v33_top9_single_sync_20260812",
+        "engine_version": "industrial_v34_zero_hit_cluster_rescue_20260812",
         "leakage_guard": True,
         "repeat_guard": repeat_guard(draws),
         "previous_prediction_guard": {
@@ -7548,6 +7809,7 @@ def compute_industrial_analysis(draws, review=None):
         "multi_model_correction": multi_model_correction,
         "slump_emergency_front_rebuild": slump_emergency_front_rebuild,
         "top9_concentration_gate": top9_concentration_gate,
+        "zero_hit_cluster_rescue_gate": zero_hit_cluster_rescue_gate,
         "rank_window_drift_correction": rank_window_drift,
         "post9_hit_leak_audit": post9_leak,
         "low_probability_error_recovery": low_probability_error_recovery_payload(review),

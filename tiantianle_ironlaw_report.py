@@ -2327,6 +2327,83 @@ def compact_top9_concentration_html_tiantianle(analysis):
     """
 
 
+def compact_zero_hit_rescue_html_tiantianle(analysis):
+    industrial = analysis.get("industrial_engine") or {}
+    gate = industrial.get("zero_hit_cluster_rescue_gate") or {}
+    if not gate:
+        return '<div class="band warn"><h2>前十五零中原因與急救</h2><p>本期尚未產生零中急救資料。</p></div>'
+    summary_rows = [
+        ["執行狀態", esc(gate.get("status") or "-")],
+        ["修正鐵律", esc(gate.get("policy") or gate.get("reason") or "-")],
+        ["上期實際開獎", fmt_numbers(gate.get("actual_numbers") or []) or "-"],
+        ["原前九", fmt_numbers(gate.get("old_top9") or []) or "-"],
+        ["急救後前九", fmt_numbers(gate.get("new_top9") or []) or "-"],
+        ["第10到15名備查", fmt_numbers(gate.get("reserve_10_15_numbers") or []) or "-"],
+    ]
+    rank_rows = []
+    for item in gate.get("actual_previous_ranks") or []:
+        rank_rows.append([
+            f"<span class=\"num\">{safe_int(item.get('number')):02d}</span>",
+            esc(item.get("previous_rank", "-")),
+            "前十五外" if isinstance(item.get("previous_rank"), int) and item.get("previous_rank") > 15 else "前十五內",
+        ])
+    reason_rows = [[esc(text)] for text in gate.get("root_causes") or []]
+    promoted_rows = []
+    for item in gate.get("promoted_to_top9") or []:
+        promoted_rows.append([
+            f"<span class=\"num\">{safe_int(item.get('number')):02d}</span>",
+            item.get("from_rank", "-"),
+            item.get("to_rank", "-"),
+            compact_decimal(item.get("rescue_score", "-"), 4),
+            compact_decimal(item.get("family_score", "-"), 4),
+            compact_decimal(item.get("zero_signal", "-"), 4),
+        ])
+    demoted_rows = []
+    for item in gate.get("demoted_from_top9") or []:
+        demoted_rows.append([
+            f"<span class=\"num\">{safe_int(item.get('number')):02d}</span>",
+            item.get("from_rank", "-"),
+            item.get("to_rank", "-"),
+            compact_decimal(item.get("rescue_score", "-"), 4),
+            esc(item.get("reason", "-")),
+        ])
+    score_rows = []
+    for item in gate.get("top_scores") or []:
+        number = safe_int(item.get("number"))
+        score_rows.append([
+            item.get("new_rank", "-"),
+            f"<span class=\"num\">{number:02d}</span>" if number else "-",
+            item.get("old_rank", "-"),
+            esc(item.get("previous_rank", "-")),
+            compact_decimal(item.get("rescue_score", "-"), 4),
+            compact_decimal(item.get("family_score", "-"), 4),
+            compact_decimal(item.get("zero_signal", "-"), 4),
+            compact_decimal(item.get("front5", "-"), 4),
+            "是" if item.get("tail_match") else "否",
+            "是" if item.get("zone_match") else "否",
+            "是" if item.get("failed_previous_top15") else "否",
+            "是" if item.get("latest_exact_blocked") else "否",
+            "通過" if item.get("rescue_quality") else "觀察",
+        ])
+    return f"""
+    <div class="band warn">
+      <h2>前十五零中原因與急救</h2>
+      <p>本區只檢討上期前十五零中原因，並列出下期排序已套用的急救重建；不和低機率頁混在一起。</p>
+      {table(["項目", "數值"], summary_rows)}
+      <h3>實際號碼上一期落點</h3>
+      {table(["實際號碼", "上一期排名", "判定"], rank_rows, "目前沒有上一期落點資料")}
+      <h3>失敗原因</h3>
+      {table(["原因"], reason_rows, "目前沒有失敗原因資料")}
+      <h3>急救推進前九</h3>
+      {table(["號碼", "原排名", "新排名", "急救分", "族群分", "零中反向分"], promoted_rows, "本期沒有急救推進號")}
+      <h3>急救降出前九</h3>
+      {table(["號碼", "原排名", "新排名", "急救分", "原因"], demoted_rows, "本期沒有急救降出號")}
+      <h3>急救後前十五檢查</h3>
+      {table(["新排名", "號碼", "原排名", "上期排名", "急救分", "族群分", "零中反向", "前五支撐", "同尾", "同區", "上期失敗前十五", "最新開獎原號封鎖", "品質"], score_rows, "目前沒有急救檢查資料")}
+    </div>
+    """
+
+
 def compact_review_html_tiantianle(settled):
     if not settled:
         return "<p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>"
@@ -3254,6 +3331,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     strong_single_validation_html = compact_strong_single_validation_html_tiantianle(analysis)
     perfect_date_drag_html = compact_perfect_date_drag_html_tiantianle(analysis)
     top9_concentration_html = compact_top9_concentration_html_tiantianle(analysis)
+    zero_hit_rescue_html = compact_zero_hit_rescue_html_tiantianle(analysis)
     post_draw_correction_html = compact_post_draw_correction_html_tiantianle(analysis)
     date_text = history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整"
     candidate_heading = "下期研究候選前9名"
@@ -3378,6 +3456,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
   </section>
   <section id="review" class="panel">
     {hits_html}
+    {zero_hit_rescue_html}
     <div class="band">
       <h2>{review_heading}</h2>
       {review_html}

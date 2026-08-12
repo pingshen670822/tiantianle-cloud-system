@@ -1,4 +1,4 @@
-﻿one-click start: 2026-08-12 09:31:09
+﻿one-click start: 2026-08-12 12:00:45
 Force run: bypass freshness skip and recompute full model
 Step 1/8 prepare data and latest cache
 history csv synced
@@ -11,18 +11,3 @@ cache updated: lotterynet_latest.html
 cache updated: lotterynet_year.html
 Step 2/8 run main system
 Step 3/8 build mobile pages
-Step 3.5/8 clean stale legacy artifacts before audit
-Step 4/8 sanitize and audit system gaps
-Step 5/8 verify outputs
-outputs verified
-runtime cache cleaned
-Step 6/8 publish mobile cloud
-cloud publish: 
-cloud publish: �w�o�� 118 �Ӥ�������ɮסC
-cloud publish: ������ڤW�� 34 �ӡA�u�Υ��ܧ� 85 �ӡC
-cloud publish: ���ݪ���: 47d64e6bf3599643af41de2c789bb40fbe798259
-cloud publish: �����}: https://pingshen670822.github.io/tiantianle-cloud-system/
-cloud mobile site published
-Step 7/8 verify mobile sync
-Step 8/8 open latest page
-one-click 完整: 2026-08-12 09:42:56
