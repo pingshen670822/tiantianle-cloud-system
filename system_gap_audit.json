@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-08-12T09:24:39+08:00",
+  "checked_at_taiwan": "2026-08-12T09:41:48+08:00",
   "status": "需立即修正",
   "critical": 1,
   "publish_blocking": 0,
@@ -1898,16 +1898,16 @@
   },
   "strong_single_validation": {
     "status": "觀察輸出",
-    "number": 14,
+    "number": 33,
     "must_output_single": true,
     "fake_data_guard": "僅觀察，不得標示高信心",
     "latest_draw_reuse": false,
     "latest_draw_reuse_allowed": true,
-    "score": 223.39,
-    "candidate_score": 0.8938,
-    "confidence_index": 93.8,
-    "front5_precision_rebuild": 0.6066,
-    "cross_validation": "11/21",
+    "score": 231.55,
+    "candidate_score": 0.9948,
+    "confidence_index": 98.7,
+    "front5_precision_rebuild": 0.6412,
+    "cross_validation": "8/21",
     "maturity_score": 100.0,
     "entry_status": "前九集中通過",
     "failed_checks": [
@@ -1918,6 +1918,7 @@
       "多模型校正完成",
       "交叉驗算與成熟度檢查",
       "前五實戰前移重組",
+      "前九集中排序第一",
       "上期開獎號防呆",
       "每期重新運算，不沿用上期預測"
     ]
@@ -2046,7 +2047,7 @@
       "area": "九名後命中外漏",
       "problem": "近5期九名後命中 17 顆，前九命中 8 顆",
       "impact": "有效號碼被壓到第十名後，前九精準度會下降",
-      "fix": "第16版已啟動前九集中閘門，將第十到十五名補中訊號、日期牌、拖牌、前五支撐與交叉驗證集中回前九，未過品質閘門不得擠入前九",
+      "fix": "第17版已啟動前九集中閘門與獨隻同步，將第十到十五名補中訊號、日期牌、拖牌、前五支撐與交叉驗證集中回前九，獨隻必須跟前九集中排序一致",
       "severity": "需補強"
     },
     {
