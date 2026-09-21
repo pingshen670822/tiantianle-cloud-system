@@ -307,19 +307,35 @@ jobs:
         shell: bash
         run: |
           set -e
+          python offline_full_history_recalc.py || echo "final offline rebuild warning"
+          python pages_build.py || echo "final pages build warning"
           rm -rf public_site
           mkdir -p public_site/data public_site/reports
-          cp -a site/. public_site/
-          cp -a data/. public_site/data/
-          while IFS= read -r -d '' src; do
-            rel="${src#reports/}"
-            dest="public_site/reports/${rel}"
-            if [ -e "$dest" ]; then
-              continue
-            fi
-            mkdir -p "$(dirname "$dest")"
-            cp "$src" "$dest"
-          done < <(find reports -type f -print0)
+          if [ -d site ]; then
+            cp -a site/. public_site/
+          fi
+          if [ -d data ]; then
+            cp -a data/. public_site/data/
+          fi
+          if [ -d reports ]; then
+            while IFS= read -r -d '' src; do
+              rel="${src#reports/}"
+              dest="public_site/reports/${rel}"
+              if [ -e "$dest" ]; then
+                continue
+              fi
+              mkdir -p "$(dirname "$dest")"
+              cp "$src" "$dest"
+            done < <(find reports -type f -print0)
+          fi
+          [ -s reports/latest_analysis.json ] && cp reports/latest_analysis.json public_site/latest_analysis.json
+          [ -s reports/latest_battle_report.html ] && cp reports/latest_battle_report.html public_site/latest_battle_report.html
+          [ -s reports/latest_battle_report.html ] && cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
+          [ -s reports/complete_report.html ] && cp reports/complete_report.html public_site/complete_report.html
+          [ -s reports/complete_report.html ] && cp reports/complete_report.html public_site/reports/complete_report.html
+          test -s public_site/index.html
+          test -s public_site/latest_analysis.json
+          test -s public_site/reports/latest_battle_report.html
           touch public_site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         if: ${{ false }}
