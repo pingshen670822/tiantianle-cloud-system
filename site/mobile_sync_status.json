@@ -1,0 +1,28 @@
+{
+  "checked_at_taiwan": "2026-09-21T11:54:37+08:00",
+  "status": "同步",
+  "local": {
+    "generated_at_taiwan": "",
+    "latest_draw_date": "",
+    "latest_numbers": [],
+    "target_draw_date": "",
+    "target_taiwan_time": "",
+    "top9": [],
+    "top15": [],
+    "engine": ""
+  },
+  "site": {
+    "generated_at_taiwan": "",
+    "latest_draw_date": "",
+    "latest_numbers": [],
+    "target_draw_date": "",
+    "target_taiwan_time": "",
+    "top9": [],
+    "top15": [],
+    "engine": ""
+  },
+  "remote": {},
+  "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
+  "remote_error": "",
+  "mismatches": []
+}

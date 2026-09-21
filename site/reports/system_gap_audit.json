@@ -1,0 +1,186 @@
+{
+  "checked_at_taiwan": "2026-09-21T11:54:36+08:00",
+  "status": "需立即修正",
+  "critical": 18,
+  "publish_blocking": 14,
+  "needs_fix": 1,
+  "needs_strengthen": 2,
+  "issue_count": 21,
+  "latest_draw_date": "",
+  "latest_numbers": [],
+  "latest_taiwan_update_time": "",
+  "target_draw_date": "",
+  "target_taiwan_time": "",
+  "top9": [],
+  "top15": [],
+  "draw_count": null,
+  "database": {
+    "exists": true,
+    "count": 781,
+    "first_date": "2024-01-01",
+    "latest_date": "2026-09-20"
+  },
+  "review_storage": {
+    "snapshot_duplicate_groups": 0,
+    "snapshot_duplicate_rows": 0,
+    "archive_duplicate_groups": 0
+  },
+  "release_status": "",
+  "multi_model_correction": {},
+  "full_system_entry_gate": {},
+  "post_draw_error_correction": {},
+  "post9_hit_leak_audit": {},
+  "strong_single_validation": {},
+  "model_maturity": {},
+  "low_probability_backtest": {},
+  "low_probability_monthly_guard": {},
+  "issues": [
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/latest_analysis.json",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/latest_battle_report.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/prediction.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/review.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/tiantianle_low_probability_avoid.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 reports/monthly_summary.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 site/latest_analysis.json",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "檔案完整度",
+      "problem": "缺少 site/reports/latest_battle_report.html",
+      "impact": "戰報或手機頁可能無法開啟",
+      "fix": "重新執行一鍵更新並禁止發布半成品",
+      "severity": "嚴重"
+    },
+    {
+      "area": "全歷史資料庫",
+      "problem": "fantasy5_full_history.csv 只有 781 筆",
+      "impact": "回測樣本不足會使排序不穩",
+      "fix": "重新匯入全歷史資料庫",
+      "severity": "嚴重"
+    },
+    {
+      "area": "全歷史資料庫",
+      "problem": "california_fantasy5.csv 只有 781 筆",
+      "impact": "回測樣本不足會使排序不穩",
+      "fix": "重新匯入全歷史資料庫",
+      "severity": "嚴重"
+    },
+    {
+      "area": "資料庫",
+      "problem": "本機資料庫不存在或筆數不足",
+      "impact": "模型無法用全歷史穩定回測",
+      "fix": "重建資料庫並匯入全歷史 CSV",
+      "severity": "嚴重"
+    },
+    {
+      "area": "預測結構",
+      "problem": "前九名格式錯誤：",
+      "impact": "九碼核心無法穩定檢討",
+      "fix": "前九名必須固定九顆且不得重複",
+      "severity": "嚴重"
+    },
+    {
+      "area": "預測結構",
+      "problem": "前十五名不足或重複",
+      "impact": "第十到第十五名備查會失真",
+      "fix": "補齊前十五名排序與重複檢查",
+      "severity": "嚴重"
+    },
+    {
+      "area": "全系統主列放行",
+      "problem": "放行門狀態 -",
+      "impact": "未達標號碼可能進入前九或強牌",
+      "fix": "每期必須先跑全歷史回測、多模型校正、強牌治理、精算小牌競賽，再放行主列",
+      "severity": "嚴重"
+    },
+    {
+      "area": "全系統主列放行",
+      "problem": "主列通過數 0 顆",
+      "impact": "前九主列未滿或含未過門號碼",
+      "fix": "未滿九顆時不得包裝成完整主推，必須重新校正模型與門檻",
+      "severity": "嚴重"
+    },
+    {
+      "area": "假運算防呆",
+      "problem": "重算宣告未明確禁止沿用上期預測",
+      "impact": "可能把上期預測包裝成新一期",
+      "fix": "每期必須重新產生 fingerprint，並寫入 previous_prediction_reused=false",
+      "severity": "嚴重"
+    },
+    {
+      "area": "錯誤模組滾動修正",
+      "problem": "缺少開獎後錯誤模組修正協議",
+      "impact": "失誤模組不會被降權或重新校正",
+      "fix": "開獎檢討後必須輸出落空、漏抓、強牌失準與模型權重修正清單",
+      "severity": "嚴重"
+    },
+    {
+      "area": "最強獨支",
+      "problem": "最強獨支不是一顆：",
+      "impact": "無法檢討 1中1 模型",
+      "fix": "每期必須由全系統放行主列產出一顆獨支，並保留驗證證據",
+      "severity": "嚴重"
+    },
+    {
+      "area": "發布守門",
+      "problem": "發布狀態不明：-",
+      "impact": "高信心區無法判讀",
+      "fix": "發布守門必須固定為正式、研究觀察或觀察中",
+      "severity": "需修正"
+    },
+    {
+      "area": "模型成熟度",
+      "problem": "前十平均成熟度 -",
+      "impact": "前十核心仍有不穩定號碼",
+      "fix": "成熟度未達 70 前不得升為正式高信心",
+      "severity": "需補強"
+    },
+    {
+      "area": "低機率暫避",
+      "problem": "暫避平均誤中 0.0，優勢值 0.0",
+      "impact": "低機率清單仍可能誤開偏高",
+      "fix": "暫避核心排除前十五名、近期實開風險與回收號，並每日記錄誤開",
+      "severity": "需補強"
+    }
+  ]
+}

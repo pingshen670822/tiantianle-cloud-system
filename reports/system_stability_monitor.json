@@ -1,0 +1,115 @@
+{
+  "checked_at_taiwan": "2026-09-21T11:54:37+08:00",
+  "status": "需立即修復",
+  "stability_score": 33.3,
+  "latest_draw_date": null,
+  "latest_numbers": [],
+  "latest_taiwan_safe_update_time": null,
+  "target_draw_date": null,
+  "target_taiwan_safe_update_time": null,
+  "top9": [],
+  "database": {
+    "ok": false,
+    "count": 781,
+    "latest": "2026-09-20",
+    "prediction_count": 0,
+    "prediction_latest": "",
+    "prediction_target": "",
+    "low_probability_count": 0,
+    "low_probability_latest": ""
+  },
+  "checks": [
+    {
+      "name": "本機最新資料",
+      "ok": false,
+      "detail": "戰報 - / 資料庫 2026-09-20",
+      "action": "重跑全歷史重算並重建戰報"
+    },
+    {
+      "name": "手機同步資料",
+      "ok": false,
+      "detail": "手機最新 - / 手機下期 -",
+      "action": "重建手機檔並重新發布雲端"
+    },
+    {
+      "name": "全歷史資料庫",
+      "ok": false,
+      "detail": "781 筆",
+      "action": "重新匯入全歷史 CSV 與快取頁面"
+    },
+    {
+      "name": "下期預測產生",
+      "ok": false,
+      "detail": "",
+      "action": "重新運算候選排序與九碼主推"
+    },
+    {
+      "name": "低機率紀錄",
+      "ok": false,
+      "detail": "低機率最新 -",
+      "action": "重建低機率每日紀錄與每月檢討"
+    },
+    {
+      "name": "手機同步檢測",
+      "ok": true,
+      "detail": "同步",
+      "action": "執行手機同步驗證與本機重建"
+    },
+    {
+      "name": "雲端發布狀態",
+      "ok": false,
+      "detail": "未記錄",
+      "action": "下一輪守護重試雲端發布"
+    },
+    {
+      "name": "開獎後自救",
+      "ok": true,
+      "detail": "未記錄",
+      "action": "開獎後腳本會重試並交由守護程式續修"
+    },
+    {
+      "name": "守護程式狀態",
+      "ok": true,
+      "detail": "未記錄",
+      "action": "守護程式下輪重新讀取並修復"
+    }
+  ],
+  "failed_actions": [
+    {
+      "name": "本機最新資料",
+      "ok": false,
+      "detail": "戰報 - / 資料庫 2026-09-20",
+      "action": "重跑全歷史重算並重建戰報"
+    },
+    {
+      "name": "手機同步資料",
+      "ok": false,
+      "detail": "手機最新 - / 手機下期 -",
+      "action": "重建手機檔並重新發布雲端"
+    },
+    {
+      "name": "全歷史資料庫",
+      "ok": false,
+      "detail": "781 筆",
+      "action": "重新匯入全歷史 CSV 與快取頁面"
+    },
+    {
+      "name": "下期預測產生",
+      "ok": false,
+      "detail": "",
+      "action": "重新運算候選排序與九碼主推"
+    },
+    {
+      "name": "低機率紀錄",
+      "ok": false,
+      "detail": "低機率最新 -",
+      "action": "重建低機率每日紀錄與每月檢討"
+    },
+    {
+      "name": "雲端發布狀態",
+      "ok": false,
+      "detail": "未記錄",
+      "action": "下一輪守護重試雲端發布"
+    }
+  ]
+}
