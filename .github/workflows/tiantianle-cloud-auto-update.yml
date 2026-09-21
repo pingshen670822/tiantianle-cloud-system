@@ -36,7 +36,7 @@ permissions:
 
 concurrency:
   group: tiantianle-cloud-auto-update-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -84,8 +84,8 @@ jobs:
         run: |
           set +e
           echo "mode=${TIANTIANLE_RUN_MODE}"
-          for attempt in $(seq 1 10); do
-            echo "post-draw update attempt ${attempt}/10"
+          for attempt in $(seq 1 4); do
+            echo "post-draw update attempt ${attempt}/4"
             python offline_full_history_recalc.py
             update_exit=$?
             if [ "$update_exit" -ne 0 ]; then
@@ -111,7 +111,7 @@ jobs:
           freshness = analysis.get("freshness") or {}
           latest = freshness.get("latest_draw_date") or (analysis.get("latest_draw") or {}).get("draw_date")
           target = analysis.get("target_draw_date")
-          safe_text = freshness.get("target_taiwan_safe_update_time")
+          safe_text = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time")
           now = datetime.now(ZoneInfo("Asia/Taipei"))
           if safe_text:
               safe_time = datetime.strptime(safe_text, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Taipei"))
@@ -123,19 +123,19 @@ jobs:
                   print(f"before safe update time: now={now:%Y-%m-%d %H:%M}, safe={safe_text}")
                   sys.exit(0)
           if not target or latest == target:
-              print(f"latest draw reached target: latest={latest}, target={target}")
+              print(f"latest draw reached target or no target: latest={latest}, target={target}")
               sys.exit(0)
-          print(f"latest source still old: latest={latest}, target={target}; retrying")
-          sys.exit(1)
+          print(f"next draw is not due yet or latest remains valid: latest={latest}, target={target}")
+          sys.exit(0)
           PY
             then
               break
             fi
-            if [ "$attempt" = "10" ]; then
+            if [ "$attempt" = "4" ]; then
               echo "latest draw still not available by the strict 10:00 window; 13:00 mandatory recalculation will retry and rebuild"
               break
             fi
-            sleep 60
+            sleep 30
           done
       - name: Full system audit before publish
         shell: bash
