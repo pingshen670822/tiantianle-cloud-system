@@ -82,21 +82,31 @@ jobs:
       - name: Update Tiantianle data and reports with post-draw retry
         shell: bash
         run: |
-          set -e
+          set +e
           echo "mode=${TIANTIANLE_RUN_MODE}"
           for attempt in $(seq 1 10); do
             echo "post-draw update attempt ${attempt}/10"
-            timeout 180 python "美國加州天天樂_20260618_第1版.py" || python offline_full_history_recalc.py
-            python pages_build.py
-            python sanitize_public_outputs.py
-            python system_gap_audit.py --fail-on-publish-blocking --local-only || python system_gap_audit.py --local-only || true
+            python offline_full_history_recalc.py
+            update_exit=$?
+            if [ "$update_exit" -ne 0 ]; then
+              echo "offline full-history recompute failed with ${update_exit}; running main-system repair"
+              timeout 240 python "美國加州天天樂_20260618_第1版.py"
+              main_exit=$?
+              echo "main-system repair exit=${main_exit}"
+              python offline_full_history_recalc.py
+              update_exit=$?
+            fi
+            echo "update_exit=${update_exit}"
+            python pages_build.py || echo "pages_build warning"
+            python sanitize_public_outputs.py || echo "sanitize warning"
+            python system_gap_audit.py --fail-on-publish-blocking --local-only || python system_gap_audit.py --local-only || echo "system_gap_audit warning"
             if python - <<'PY'
           import json
           import sys
           from datetime import datetime
           from zoneinfo import ZoneInfo
 
-          with open("reports/latest_analysis.json", encoding="utf-8") as fh:
+          with open("reports/latest_analysis.json", encoding="utf-8-sig") as fh:
               analysis = json.load(fh)
           freshness = analysis.get("freshness") or {}
           latest = freshness.get("latest_draw_date") or (analysis.get("latest_draw") or {}).get("draw_date")
