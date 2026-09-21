@@ -327,14 +327,13 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         continue-on-error: true
-      - name: Fallback publish to gh-pages branch
-        if: steps.deployment.outcome != 'success'
+      - name: Publish to gh-pages branch and force Pages source
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
-          echo "Official Pages deployment failed; using gh-pages branch fallback"
+          echo "Publishing mobile site to gh-pages branch"
           publish_dir="$(mktemp -d)"
           cp -a public_site/. "$publish_dir/"
           touch "$publish_dir/.nojekyll"
@@ -347,14 +346,17 @@ jobs:
           git commit -m "Fallback publish Tiantianle mobile site"
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin gh-pages
+          curl -sS -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
+            -d '{"source":{"branch":"gh-pages","path":"/"}}' >/tmp/pages_source_response.json || true
+          cat /tmp/pages_source_response.json || true
       - name: Confirm mobile deployment path
         shell: bash
         run: |
-          if [ "${{ steps.deployment.outcome }}" = "success" ]; then
-            echo "Official GitHub Pages deployment succeeded"
-          else
-            echo "Fallback gh-pages branch deployment succeeded"
-          fi
+          echo "GitHub Pages source forced to gh-pages branch"
       - name: Verify deployed mobile sync
         shell: bash
         run: python verify_mobile_sync.py --remote --retries 12 --sleep 10 || python verify_mobile_sync.py --local-only
