@@ -24,6 +24,17 @@ BLOCKED_DIRS = {
 }
 BLOCKED_NAMES = {".env", ".env.local", ".env.production", ".gitconfig-gh"}
 BLOCKED_PARTS = ("token", "secret", "credential", "password", "github_device_login")
+ALLOWLIST = {
+    ".github/workflows/tiantianle-cloud-auto-update.yml",
+    "offline_full_history_recalc.py",
+    "run_california_fantasy5_once.ps1",
+    "天天樂開獎後自動更新.ps1",
+    "天天樂自動更新鐵律守護.ps1",
+    "install_daily_auto_update.ps1",
+    "system_stability_monitor.py",
+    "publish_mobile_site_only.py",
+    "publish_cloud_main_source.py",
+}
 
 
 def request_json(path, token, data=None, method="GET", tolerate=()):
@@ -53,6 +64,8 @@ def allowed(path):
     rel_parts = path.relative_to(BASE).parts
     if any(part in BLOCKED_DIRS for part in rel_parts):
         return False
+    if any(part.startswith("__gh_pages_publish_") for part in rel_parts):
+        return False
     lower_name = path.name.lower()
     if lower_name in BLOCKED_NAMES:
         return False
@@ -65,10 +78,11 @@ def allowed(path):
 
 def source_files():
     files = []
-    for path in BASE.rglob("*"):
+    for rel in sorted(ALLOWLIST):
+        path = BASE / rel
         if not path.is_file() or not allowed(path):
             continue
-        files.append((path.relative_to(BASE).as_posix(), path))
+        files.append((rel, path))
     return sorted(files)
 
 
@@ -82,6 +96,10 @@ def main():
     request_json(f"repos/{REPO}", token)
     ref = request_json(f"repos/{REPO}/git/ref/heads/main", token, tolerate=(404,))
     parent = None if ref.get("_status") == 404 else ref.get("object", {}).get("sha")
+    parent_tree = None
+    if parent:
+        parent_commit = request_json(f"repos/{REPO}/git/commits/{parent}", token)
+        parent_tree = (parent_commit.get("tree") or {}).get("sha")
     entries = []
     for rel, path in source_files():
         blob = request_json(
@@ -91,7 +109,10 @@ def main():
             data={"content": base64.b64encode(path.read_bytes()).decode(), "encoding": "base64"},
         )
         entries.append({"path": rel, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    tree = request_json(f"repos/{REPO}/git/trees", token, method="POST", data={"tree": entries})
+    tree_payload = {"tree": entries}
+    if parent_tree:
+        tree_payload["base_tree"] = parent_tree
+    tree = request_json(f"repos/{REPO}/git/trees", token, method="POST", data=tree_payload)
     commit_data = {
         "message": "Update Tiantianle source, precision model, and instant refresh",
         "tree": tree["sha"],

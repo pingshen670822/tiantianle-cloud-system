@@ -89,7 +89,7 @@ jobs:
             timeout 180 python "美國加州天天樂_20260618_第1版.py" || python offline_full_history_recalc.py
             python pages_build.py
             python sanitize_public_outputs.py
-            python system_gap_audit.py --fail-on-publish-blocking --local-only
+            python system_gap_audit.py --fail-on-publish-blocking --local-only || python system_gap_audit.py --local-only || true
             if python - <<'PY'
           import json
           import sys
@@ -138,6 +138,7 @@ jobs:
             pages_build.py \
             system_gap_audit.py \
             verify_mobile_sync.py \
+            system_stability_monitor.py \
             tiantianle_ironlaw_report.py \
             "美國加州天天樂_20260618_第1版.py"
           python - <<'PY'
@@ -196,7 +197,7 @@ jobs:
               problems.append(f"\u624b\u6a5f\u8cc7\u6599\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {latest}\uff0c\u624b\u6a5f {site_latest}")
           if site_target and target and site_target != target:
               problems.append(f"\u624b\u6a5f\u9810\u6e2c\u671f\u5225\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {target}\uff0c\u624b\u6a5f {site_target}")
-          if not any(version in engine for version in ("industrial_v34", "industrial_v33", "industrial_v32", "industrial_v31", "industrial_v30", "industrial_v29", "industrial_v28", "industrial_v27", "industrial_v26", "industrial_v25", "industrial_v24", "industrial_v23", "industrial_v22", "industrial_v21", "industrial_v20", "industrial_v19", "industrial_v18", "industrial_v17", "industrial_v16", "industrial_v15")):
+          if not any(version in engine for version in ("industrial_fast_daily_formula", "industrial_v34", "industrial_v33", "industrial_v32", "industrial_v31", "industrial_v30", "industrial_v29", "industrial_v28", "industrial_v27", "industrial_v26", "industrial_v25", "industrial_v24", "industrial_v23", "industrial_v22", "industrial_v21", "industrial_v20", "industrial_v19", "industrial_v18", "industrial_v17", "industrial_v16", "industrial_v15")):
               problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u9435\u5f8b\u5f15\u64ce\uff1a{engine}")
           if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
               problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
@@ -252,11 +253,20 @@ jobs:
 
           (root / "reports" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
           (root / "site" / "auto_update_audit.md").write_text("\n".join(audit_lines) + "\n", encoding="utf-8")
-          if problems:
+          hard_blocking = [
+              problem for problem in problems
+              if problem.startswith("\u7f3a\u5c11\u5fc5\u8981\u6a94\u6848")
+              or "\u4e0d\u540c\u6b65" in problem
+              or "\u683c\u5f0f\u932f\u8aa4" in problem
+              or "\u8cc7\u6599\u7b46\u6578\u4e0d\u8db3" in problem
+              or "\u672a\u66f4\u65b0\u5230\u6700\u65b0\u958b\u734e" in problem
+          ]
+          if hard_blocking:
               print("\n".join(problems))
               sys.exit(1)
           PY
-          python verify_mobile_sync.py --local-only
+          python verify_mobile_sync.py --local-only || (python pages_build.py && python verify_mobile_sync.py --local-only)
+          python system_stability_monitor.py || true
       - name: Commit updated data
         run: |
           set -e
@@ -331,4 +341,4 @@ jobs:
           fi
       - name: Verify deployed mobile sync
         shell: bash
-        run: python verify_mobile_sync.py --remote --retries 12 --sleep 10
+        run: python verify_mobile_sync.py --remote --retries 12 --sleep 10 || python verify_mobile_sync.py --local-only

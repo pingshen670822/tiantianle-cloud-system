@@ -426,23 +426,36 @@ mod.compute_industrial_analysis = fast_compute_industrial_analysis
 mod.setup_dirs()
 with sqlite3.connect(mod.DB_PATH) as conn:
     mod.init_db(conn)
+    conn.execute("DELETE FROM draws WHERE draw_date > ?", (mod.latest_allowed_draw_date(),))
+    csv_imported = mod.auto_import_csv_files(conn)
+    cached_latest_import = mod.import_cached_latest_pages(conn)
     snapshot_backfill = mod.backfill_predictions_from_snapshots(conn)
     settled_count = mod.settle_predictions(conn)
     mod.export_csv(conn)
     draws = mod.fetch_draws(conn)
     if len(draws) < mod.FULL_HISTORY_MIN_ROWS:
         raise SystemExit(f'full_history_not_ready:{len(draws)}')
+    period_audit = mod.full_period_prediction_audit_and_backfill(conn, draws)
+    settled_count += mod.settle_predictions(conn)
+    low_probability_backfill = mod.backfill_low_probability_records_from_predictions(conn)
+    low_probability_settled_count = mod.settle_low_probability_records(conn)
     review = mod.failure_review(conn)
     analysis = mod.analyze(draws, review)
+    analysis['period_integrity_audit'] = period_audit
+    analysis['low_probability_daily_records'] = mod.low_probability_daily_record(conn)
+    analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
+    analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
     analysis['offline_full_history_recalc'] = True
     analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; deep tournament deferred'
-    mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     status = mod.store_prediction(conn, analysis)
+    analysis['low_probability_daily_records'] = mod.low_probability_daily_record(conn)
+    analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
+    analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
+    mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     data_audit = mod.data_integrity_audit(conn)
     network_diag = {'status': 'offline_full_history_fast_recalc', 'blocked_count': 0, 'checks': []}
     latest_fetch = {'status': 'skipped_offline_full_history_recalc', 'added': 0, 'draws': [], 'errors': []}
-    cached_latest = {'status': 'not_used_offline_full_history_recalc', 'added': 0, 'draws': []}
-    health = mod.prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest, data_audit)
+    health = mod.prediction_health(conn, analysis, network_diag, latest_fetch, cached_latest_import, data_audit)
     mod.render_reports(conn, analysis)
     conn.commit()
 
@@ -451,9 +464,13 @@ tiantianle_ironlaw_report.save_reports()
 import pages_build
 pages_build.main()
 import sanitize_public_outputs
+import system_stability_monitor
+system_stability_monitor.main()
 
 print(json.dumps({
     'main_program': str(main_path.name),
+    'csv_imported_files': len(csv_imported),
+    'cached_latest_added': cached_latest_import.get('added', 0) if isinstance(cached_latest_import, dict) else 0,
     'draw_count': len(draws),
     'latest_draw': analysis['latest_draw']['draw_date'],
     'latest_numbers': analysis['latest_draw']['numbers'],
@@ -461,7 +478,10 @@ print(json.dumps({
     'target_taiwan_time': analysis.get('prediction_draw_taiwan_time'),
     'top9': analysis['prediction']['top9'],
     'snapshot_backfill': snapshot_backfill,
+    'period_audit': period_audit,
     'settled_count': settled_count,
+    'low_probability_backfill': low_probability_backfill,
+    'low_probability_settled_count': low_probability_settled_count,
     'prediction_status': status,
     'health_status': health.get('status'),
     'system_completeness': health.get('system_completeness_percent'),

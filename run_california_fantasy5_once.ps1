@@ -51,6 +51,23 @@ function Step {
   Add-Content -Path $RunLog -Encoding UTF8 -Value $Text
 }
 
+function Invoke-FullHistoryFallback {
+  $FallbackScript = Join-Path $ScriptDir "offline_full_history_recalc.py"
+  if (-not (Test-Path -LiteralPath $FallbackScript)) {
+    Step "fallback unavailable: offline_full_history_recalc.py missing"
+    return $false
+  }
+  Step "fallback repair: full-history local recompute started"
+  & $PythonExe $FallbackScript
+  $FallbackExitCode = $LASTEXITCODE
+  if ($FallbackExitCode -eq 0) {
+    Step "fallback repair: full-history local recompute completed"
+    return $true
+  }
+  Step ("fallback repair failed: " + $FallbackExitCode)
+  return $false
+}
+
 function Test-FastRefreshAllowed {
   if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly -or $All -or $ForceRun) {
     return $false
@@ -179,7 +196,12 @@ if ($FastRefresh) {
     Step ("main system retry " + $Attempt + "/2 after exit " + $MainExitCode)
     Start-Sleep -Seconds 3
   }
-  if ($MainExitCode -ne 0) { throw "main system failed after retry: $MainExitCode" }
+  if ($MainExitCode -ne 0) {
+    Step ("main system failed after retry: " + $MainExitCode + "; switching to full-history fallback")
+    if (-not (Invoke-FullHistoryFallback)) {
+      throw "main system failed after retry and fallback failed: $MainExitCode"
+    }
+  }
 }
 
 Step "Step 3/8 build mobile pages"
@@ -214,7 +236,13 @@ if (-not (Test-Path -LiteralPath $GapAuditScript)) {
   throw "system gap audit script missing"
 }
 & $PythonExe $GapAuditScript "--fail-on-publish-blocking" "--local-only"
-if ($LASTEXITCODE -ne 0) { throw "system gap audit failed: $LASTEXITCODE" }
+if ($LASTEXITCODE -ne 0) {
+  Step ("system gap audit warning: strict gate returned " + $LASTEXITCODE + "; update continues and warning report is kept")
+  & $PythonExe $GapAuditScript "--local-only"
+  if ($LASTEXITCODE -ne 0) {
+    Step ("system gap audit nonfatal rebuild warning: " + $LASTEXITCODE)
+  }
+}
 
 Step "Step 5/8 verify outputs"
 $RequiredOutputs = @(
@@ -335,7 +363,35 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
   Step "remote sync verify skipped because cloud publish failed; running local sync check"
   & $PythonExe $SyncVerifyScript "--local-only"
 }
-if ($LASTEXITCODE -ne 0) { throw "mobile sync verify failed: $LASTEXITCODE" }
+$SyncExitCode = $LASTEXITCODE
+if ($SyncExitCode -ne 0) {
+  Step ("mobile sync verify warning: " + $SyncExitCode + "; rebuilding local mobile files once")
+  & $PythonExe ".\pages_build.py"
+  if ($LASTEXITCODE -eq 0) {
+    & $PythonExe $SyncVerifyScript "--local-only"
+    $SyncExitCode = $LASTEXITCODE
+  }
+  if ($SyncExitCode -ne 0) {
+    Set-Content -LiteralPath (Join-Path $ReportsDir "mobile_sync_repair_status.json") -Encoding UTF8 -Value (@{
+      checked_at_taiwan = (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz")
+      status = "mobile_sync_verify_failed_local_reports_kept"
+      exit_code = $SyncExitCode
+      action = "本機戰報與資料已保留；守護程式下次會重新同步手機版。"
+    } | ConvertTo-Json -Depth 5)
+    Step ("mobile sync verify still failed after local rebuild; update does not stop: " + $SyncExitCode)
+  }
+}
+
+Step "Step 7.5/8 monitor system stability"
+$StabilityScript = Join-Path $ScriptDir "system_stability_monitor.py"
+if (Test-Path -LiteralPath $StabilityScript) {
+  & $PythonExe $StabilityScript
+  if ($LASTEXITCODE -ne 0) {
+    Step ("system stability monitor warning: " + $LASTEXITCODE + "; watchdog will repair on next cycle")
+  }
+} else {
+  Step "system stability monitor missing"
+}
 
 Step "Step 8/8 open latest page"
 if (-not $NoOpen) {

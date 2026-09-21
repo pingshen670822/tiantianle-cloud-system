@@ -10,6 +10,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 BASE = pathlib.Path(__file__).resolve().parent
 REPO = "pingshen670822/tiantianle-cloud-system"
@@ -277,6 +279,19 @@ def main():
         token_path.write_text(token, encoding="utf-8")
         sha, count, uploaded, reused = publish(token)
     url = "https://pingshen670822.github.io/tiantianle-cloud-system/"
+    status_payload = {
+        "status": "cloud_published",
+        "checked_at_taiwan": datetime.now(ZoneInfo("Asia/Taipei")).isoformat(timespec="seconds"),
+        "exit_code": 0,
+        "commit_sha": sha,
+        "published_files": count,
+        "uploaded_files": uploaded,
+        "reused_files": reused,
+        "mobile_url": url,
+    }
+    for status_path in (BASE / "reports" / "cloud_publish_status.json", BASE / "site" / "cloud_publish_status.json"):
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps(status_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     write_text_even_if_hidden(BASE / "tiantianle-mobile-cloud-url.txt", url + "\n", encoding="ascii")
     print("")
     print(f"已發布 {count} 個手機雲端檔案。")

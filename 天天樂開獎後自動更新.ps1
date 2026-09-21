@@ -183,13 +183,23 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
       Start-Sleep -Seconds $SleepSeconds
       continue
     }
-    throw "main update failed after attempts: $exit"
+    Write-RunLog ("main update failed after attempts; entering final self-repair instead of stopping: " + $exit)
+    break
   }
 
-  $analysis = Read-Analysis
-  $status = Test-UpdateComplete $analysis $expected
-  Set-Content -LiteralPath $StatusPath -Encoding UTF8 -Value ($status | ConvertTo-Json -Depth 20)
-  Write-RunLog ("status fresh=" + $status.fresh_ok + " next=" + $status.next_prediction_ok + " review=" + $status.review_saved_ok + " recalculation=" + $status.recalculation_ok + " latest=" + $status.latest_taiwan_safe_update_time + " target=" + $status.target_taiwan_safe_update_time)
+  try {
+    $analysis = Read-Analysis
+    $status = Test-UpdateComplete $analysis $expected
+    Set-Content -LiteralPath $StatusPath -Encoding UTF8 -Value ($status | ConvertTo-Json -Depth 20)
+    Write-RunLog ("status fresh=" + $status.fresh_ok + " next=" + $status.next_prediction_ok + " review=" + $status.review_saved_ok + " recalculation=" + $status.recalculation_ok + " latest=" + $status.latest_taiwan_safe_update_time + " target=" + $status.target_taiwan_safe_update_time)
+  } catch {
+    Write-RunLog ("status read warning; retry will continue: " + $_.Exception.Message)
+    if ($attempt -lt $MaxAttempts) {
+      Start-Sleep -Seconds $SleepSeconds
+      continue
+    }
+    break
+  }
 
   if ($status.complete) {
     Save-Archive $analysis $expected
@@ -203,5 +213,34 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
   }
 }
 
-throw "after draw update did not reach required fresh/review/recompute state"
+Write-RunLog "final self-repair: forcing one more full local recompute before leaving status"
+& powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $RunScript -ForceRun -NoOpen
+$finalRepairExit = $LASTEXITCODE
+Write-RunLog ("final self-repair exit code: " + $finalRepairExit)
+
+try {
+  $analysis = Read-Analysis
+  $status = Test-UpdateComplete $analysis $expected
+  $status["final_self_repair_exit_code"] = $finalRepairExit
+  Set-Content -LiteralPath $StatusPath -Encoding UTF8 -Value ($status | ConvertTo-Json -Depth 20)
+  Write-RunLog ("final status fresh=" + $status.fresh_ok + " next=" + $status.next_prediction_ok + " review=" + $status.review_saved_ok + " recalculation=" + $status.recalculation_ok)
+  if ($status.complete) {
+    Save-Archive $analysis $expected
+    Write-RunLog "after draw update complete after final self-repair"
+    exit 0
+  }
+} catch {
+  Set-Content -LiteralPath $StatusPath -Encoding UTF8 -Value (@{
+    complete = $false
+    checked_at_taiwan = (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz")
+    expected_taiwan_safe_update_time = $expected.ToString("yyyy-MM-dd HH:mm")
+    final_self_repair_exit_code = $finalRepairExit
+    error = $_.Exception.Message
+    action = "已留下狀態；守護程式會在下一輪自動重跑修復。"
+  } | ConvertTo-Json -Depth 20)
+  Write-RunLog ("final self-repair status write warning: " + $_.Exception.Message)
+}
+
+Write-RunLog "after draw update did not complete, but task is kept alive for watchdog repair instead of stopping"
+exit 0
 

@@ -93,13 +93,18 @@ function Get-LatestSafeTimeFromAnalysis {
   if (-not (Test-Path -LiteralPath $AnalysisPath)) {
     return $null
   }
-  $analysis = Get-Content -LiteralPath $AnalysisPath -Raw -Encoding UTF8 | ConvertFrom-Json
-  $freshness = Get-FieldValue $analysis "freshness"
-  $latestText = Get-FieldValue $freshness "latest_taiwan_safe_update_time"
-  if ([string]::IsNullOrWhiteSpace($latestText)) {
-    $latestText = Get-FieldValue $analysis "latest_draw_taiwan_update_time"
+  try {
+    $analysis = Get-Content -LiteralPath $AnalysisPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $freshness = Get-FieldValue $analysis "freshness"
+    $latestText = Get-FieldValue $freshness "latest_taiwan_safe_update_time"
+    if ([string]::IsNullOrWhiteSpace($latestText)) {
+      $latestText = Get-FieldValue $analysis "latest_draw_taiwan_update_time"
+    }
+    return Parse-SafeTime $latestText
+  } catch {
+    Write-WatchLog ("analysis read warning; mark stale and repair: " + $_.Exception.Message)
+    return $null
   }
-  return Parse-SafeTime $latestText
 }
 
 function Save-Status {
@@ -109,6 +114,7 @@ function Save-Status {
 
 Write-WatchLog "watchdog start"
 $missingOrBroken = @()
+$repairWarnings = @()
 foreach ($check in $Checks) {
   $checkName = [string]$check["Name"]
   $checkNeedle = [string]$check["Contains"]
@@ -120,11 +126,18 @@ foreach ($check in $Checks) {
 $repaired = $false
 if ($missingOrBroken.Count -gt 0) {
   Write-WatchLog ("repair tasks: " + ($missingOrBroken -join ", "))
-  & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $Installer
-  if ($LASTEXITCODE -ne 0) {
-    throw "auto update task repair failed"
+  try {
+    & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $Installer
+    if ($LASTEXITCODE -ne 0) {
+      $repairWarnings += "auto update task repair failed: exit $LASTEXITCODE"
+      Write-WatchLog ("task repair warning exit code: " + $LASTEXITCODE)
+    } else {
+      $repaired = $true
+    }
+  } catch {
+    $repairWarnings += ("auto update task repair exception: " + $_.Exception.Message)
+    Write-WatchLog ("task repair warning: " + $_.Exception.Message)
   }
-  $repaired = $true
 }
 
 $expected = Get-ExpectedTaiwanSafeTime
@@ -138,11 +151,18 @@ $forcedRepairExit = $null
 if ($stale -and -not $SkipUpdateRun) {
   if ($twoHourOverdue) {
     Write-WatchLog ("two-hour self-repair started; expected=" + $expected.ToString("yyyy-MM-dd HH:mm") + "; deadline=" + $repairDeadline.ToString("yyyy-MM-dd HH:mm"))
-    & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $Installer
-    if ($LASTEXITCODE -ne 0) {
-      throw "two-hour self-repair task reinstall failed"
+    try {
+      & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $Installer
+      if ($LASTEXITCODE -ne 0) {
+        $repairWarnings += "two-hour self-repair task reinstall failed: exit $LASTEXITCODE"
+        Write-WatchLog ("two-hour task reinstall warning exit code: " + $LASTEXITCODE)
+      } else {
+        $repaired = $true
+      }
+    } catch {
+      $repairWarnings += ("two-hour self-repair task reinstall exception: " + $_.Exception.Message)
+      Write-WatchLog ("two-hour task reinstall warning: " + $_.Exception.Message)
     }
-    $repaired = $true
     & powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $AfterDrawScript -MaxAttempts 5 -SleepSeconds 60 -NoOpen
     $updateExit = $LASTEXITCODE
     Write-WatchLog ("two-hour after-draw repair exit code: " + $updateExit)
@@ -174,6 +194,7 @@ $status = [ordered]@{
   stale_before_update = $stale
   update_exit_code = $updateExit
   forced_full_repair_exit_code = $forcedRepairExit
+  repair_warnings = $repairWarnings
 }
 Save-Status $status
 Write-WatchLog "watchdog done"
