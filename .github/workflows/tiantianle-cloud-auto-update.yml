@@ -163,29 +163,34 @@ jobs:
           root = pathlib.Path(".")
           required = [
               "fantasy5_full_history.csv",
-              "data/california_fantasy5.csv",
-              "data/fantasy5_full_history.csv",
               "reports/latest_analysis.json",
               "reports/latest_battle_report.html",
-              "reports/prediction.html",
-              "reports/review.html",
               "site/index.html",
               "site/latest_analysis.json",
               "site/reports/latest_battle_report.html",
+          ]
+          optional_required = [
+              "data/california_fantasy5.csv",
+              "data/fantasy5_full_history.csv",
+              "reports/prediction.html",
+              "reports/review.html",
           ]
           problems = []
           for item in required:
               if not (root / item).exists():
                   problems.append(f"\u7f3a\u5c11\u5fc5\u8981\u6a94\u6848\uff1a{item}")
+          for item in optional_required:
+              if not (root / item).exists():
+                  problems.append(f"\u7f3a\u5c11\u8f14\u52a9\u6a94\u6848\uff1a{item}")
 
           analysis_path = root / "reports/latest_analysis.json"
           site_analysis_path = root / "site/latest_analysis.json"
           analysis = {}
           site_analysis = {}
           if analysis_path.exists():
-              analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
+              analysis = json.loads(analysis_path.read_text(encoding="utf-8-sig"))
           if site_analysis_path.exists():
-              site_analysis = json.loads(site_analysis_path.read_text(encoding="utf-8"))
+              site_analysis = json.loads(site_analysis_path.read_text(encoding="utf-8-sig"))
 
           latest = (analysis.get("latest_draw") or {}).get("draw_date") or (analysis.get("freshness") or {}).get("latest_draw_date")
           target = analysis.get("target_draw_date")
