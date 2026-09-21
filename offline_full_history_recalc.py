@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import shutil
 import sqlite3
 import sys
 from collections import Counter
@@ -424,6 +425,10 @@ def fast_compute_industrial_analysis(draws, review=None):
 
 mod.compute_industrial_analysis = fast_compute_industrial_analysis
 mod.setup_dirs()
+root_history_csv = base / "fantasy5_full_history.csv"
+if root_history_csv.exists():
+    mod.IMPORT_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(root_history_csv, mod.IMPORT_DIR / "00_root_fantasy5_full_history.csv")
 with sqlite3.connect(mod.DB_PATH) as conn:
     mod.init_db(conn)
     conn.execute("DELETE FROM draws WHERE draw_date > ?", (mod.latest_allowed_draw_date(),))
