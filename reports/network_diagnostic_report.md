@@ -1,8 +1,8 @@
 # 網路診斷報告
 
-- 產生時間：2026-09-21T12:08:12+08:00
+- 產生時間：2026-09-21T12:23:56+08:00
 - 狀態：blocked
-- 異常來源：1
+- 異常來源：2
 
 ## 檢查結果
 | 來源 | Host | DNS | TCP 443 | HTTPS | 錯誤 |
@@ -10,7 +10,7 @@
 | Lotto8 | www.lotto-8.com | ok | ok | ok | - |
 | Lottolyzer | en.lottolyzer.com | ok | ok | ok | - |
 | LotteryUSA | www.lotteryusa.com | ok | ok | failed | https: HTTP Error 404: Not Found |
-| LotteryNet | www.lottery.net | ok | ok | ok | - |
+| LotteryNet | www.lottery.net | ok | failed | failed | tcp443: timed out |
 | LotteryCorner | lotterycorner.com | ok | ok | ok | - |
 | LotteryPredictor | lotterypredictor.com | ok | ok | ok | - |
 
