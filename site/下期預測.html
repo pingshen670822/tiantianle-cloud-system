@@ -1,0 +1,257 @@
+<!doctype html><html lang="zh-Hant" data-compact-report="true"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天天樂 下期預測</title>
+  <style>
+    body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
+    header{background:#111827;color:white;padding:22px 24px;}
+    main{max-width:1180px;margin:0 auto;padding:18px;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}
+    .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
+    .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .band{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+    .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
+    .hot-card{border-color:#fecaca;background:#fff1f2;}
+    .singlebox{border-color:#fecaca;background:#fffafa;}
+    .warn{background:#fff7ed;border-color:#fed7aa;}
+    .date-ribbon{background:#ecfeff;border-color:#67e8f9;}
+    .label{font-size:13px;color:#64748b;font-weight:700;}
+    .value{font-size:22px;font-weight:900;margin-top:6px;}
+    .advanced{background:#fbfdff;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px;}
+    .advanced summary{cursor:pointer;font-weight:900;color:#0f766e;}
+    table{width:100%;border-collapse:collapse;min-width:760px;}
+    th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
+    th{background:#f1f5f9;}
+    .num{font-size:20px;font-weight:900;color:#b91c1c;}
+    .small{font-size:13px;line-height:1.5;}
+    .verify-table{min-width:1420px;}
+    .month-chart{display:grid;gap:8px;min-width:760px;}
+    .chart-row{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}
+    .chart-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
+    .chart-track span{display:block;height:100%;background:#0f766e;border-radius:999px;}
+    .chart-date,.chart-score,.chart-hit{font-weight:800;}
+    a{color:#0f766e;font-weight:800;}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}.chart-row{grid-template-columns:1fr;gap:4px}}
+  </style>
+
+    <style>
+      .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
+      .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
+      .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
+      .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
+      .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
+      .sticky-launch{position:fixed;left:12px;right:12px;bottom:12px;width:calc(100% - 24px);z-index:9999}
+      body{padding-bottom:82px}
+      @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
+    </style>
+    <link rel="manifest" href="manifest.webmanifest?v=20260921044018">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Tiantianle">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    </head><body><header>
+  <h1>天天樂 下期預測</h1>
+  <p>產生：台灣時間 2026-09-21 12:40 / 全歷史資料 完整 / 共 11926 筆</p>
+  <p>最新開獎可確認：台灣時間 2026-09-21 09:50 / 最新號碼：01 08 10 19 21 / 下期開獎：台灣時間 2026-09-22 09:50</p>
+  <p class="small">最新開獎期別 2026-09-20 / 下期開獎期別 2026-09-21</p>
+</header><main>
+    <section class="band launch-panel">
+      <h2>天天樂手機雲端獨立版</h2>
+      <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
+      <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
+      <a class="cloud-update-link" href="force-sync-20260921044018.html?v=20260921044018">手機不一樣點這裡強制同步</a>
+      <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260921044018</p>
+      
+    </section>
+    <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
+    <nav class="tabs"><a class="active" href="下期預測.html">下期預測</a><a href="上期未命中檢討.html">上期檢討</a><a href="latest_battle_report.html">完整戰報</a></nav>
+    
+    <div class="band singlebox">
+      <h2>本期最強主推</h2>
+      <p><strong>只看這一組：</strong>本頁只顯示本期最強主推；上期命中與失準檢討全部放在命中檢討分頁。</p>
+      <div class="grid">
+        <div class="card hot-card"><div class="label">最強獨隻</div><div class="value num">09</div></div>
+        <div class="card hot-card"><div class="label">最強主推</div><div class="value">09 19 39 38 30 24 11 02 35</div></div>
+        <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">台灣時間 2026-09-22 09:50</div></div>
+        <div class="card"><div class="label">模式</div><div class="value">高信心觀察</div></div>
+      </div>
+      <p><strong>判讀：</strong>本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。</p>
+      <table><thead><tr><th>類型</th><th>號碼</th><th>判讀</th></tr></thead><tbody><tr><td>最強主推</td><td>09 19 39 38 30 24 11 02 35</td><td>本期只看這一組，不超過九顆</td></tr><tr><td>最強獨隻</td><td>09</td><td>本期唯一獨隻</td></tr></tbody></table>
+    </div>
+    
+    <details class="advanced">
+      <summary>九碼驗算明細</summary>
+      <div class="band">
+      <h2>九碼逐號驗算</h2>
+      <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
+      <table><thead><tr><th>號碼</th><th>排名</th><th>版路分類</th><th>來源證據</th><th>交叉驗算</th><th>穩定與遺漏</th><th>守門驗證</th><th>結論</th></tr></thead><tbody><tr><td>09</td><td>1</td><td>頻率版路、尾數版路、日期版路、全歷史綜合</td><td>公式引擎：多週期頻率、趨勢轉折、牌型跟隨、二十期頻率、五十期頻率、尾數牌、日期牌、全歷史快速重算</td><td>6/6</td><td>穩定 4；遺漏 3</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 90.0；成熟通過；分數 100.0%；信心 99.0；交叉驗算 6/6；穩定層數 4；成熟度 90.0；非上期沿用</td></tr><tr><td>19</td><td>2</td><td>頻率版路</td><td>連莊達標保留、公式引擎：連莊驗證、多週期頻率、趨勢轉折、五期頻率、十期頻率、二十期頻率、五十期頻率</td><td>6/6</td><td>穩定 4；遺漏 0</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；連莊達標通過、降權 0.015、最新開出號需降權；門檻：分數 0.78、信心 95.0、交叉 6、穩定 4；實測：分數 0.9777、信心 97.9、交叉 6、穩定 4</td><td>成熟度 90.0；成熟通過；分數 96.3%；信心 96.1；交叉驗算 6/6；穩定層數 4；成熟度 90.0；連莊達標通過、降權 0.015、最新開出號需降權</td></tr><tr><td>39</td><td>3</td><td>頻率版路、拖牌共現、尾數版路</td><td>公式引擎：多週期頻率、趨勢轉折、牌型跟隨、二十期頻率、五十期頻率、一百期頻率、拖牌共現、尾數牌</td><td>6/6</td><td>穩定 4；遺漏 2</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 90.0；成熟通過；分數 91.6%；信心 94.9；交叉驗算 6/6；穩定層數 4；成熟度 90.0；非上期沿用</td></tr><tr><td>38</td><td>4</td><td>頻率版路、拖牌共現、全歷史綜合</td><td>二十期頻率、五十期頻率、拖牌共現、全歷史快速重算、九碼內信心前移</td><td>5/6</td><td>穩定 2；遺漏 4</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 89.0；成熟通過；分數 90.5%；信心 94.3；交叉驗算 5/6；穩定層數 2；成熟度 89.0；非上期沿用</td></tr><tr><td>30</td><td>5</td><td>尾數版路、日期版路、全歷史綜合</td><td>公式引擎：尾數區間平衡、趨勢轉折、牌型跟隨、日期牌、全歷史快速重算、九碼內信心前移</td><td>5/6</td><td>穩定 2；遺漏 4</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 86.2；成熟通過；分數 77.0%；信心 87.7；交叉驗算 5/6；穩定層數 2；成熟度 86.2；非上期沿用</td></tr><tr><td>24</td><td>6</td><td>頻率版路、日期版路、全歷史綜合</td><td>二十期頻率、日期牌、全歷史快速重算、九碼內信心前移</td><td>5/6</td><td>穩定 2；遺漏 5</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 86.2；成熟通過；分數 72.9%；信心 85.7；交叉驗算 5/6；穩定層數 2；成熟度 86.2；非上期沿用</td></tr><tr><td>11</td><td>7</td><td>頻率版路、全歷史綜合</td><td>公式引擎：多週期頻率、牌型跟隨、和值鄰近、一百期頻率、全歷史快速重算、九碼內信心前移</td><td>6/6</td><td>穩定 3；遺漏 3</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 90.0；成熟通過；分數 71.9%；信心 85.2；交叉驗算 6/6；穩定層數 3；成熟度 90.0；非上期沿用</td></tr><tr><td>02</td><td>8</td><td>頻率版路、遺漏補償、全歷史綜合</td><td>公式引擎：多週期頻率、趨勢轉折、遺漏相位、五十期頻率、全歷史快速重算、九碼內信心前移</td><td>6/6</td><td>穩定 4；遺漏 7</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 90.0；成熟通過；分數 69.8%；信心 84.2；交叉驗算 6/6；穩定層數 4；成熟度 90.0；非上期沿用</td></tr><tr><td>35</td><td>9</td><td>頻率版路、遺漏補償、全歷史綜合</td><td>公式引擎：多週期頻率、趨勢轉折、遺漏相位、二十期頻率、全歷史快速重算、九碼內信心前移</td><td>6/6</td><td>穩定 3；遺漏 8</td><td>全系統檢核；分數 -；信心 -；多模型 -；回收 -；非上期沿用；非上期沿用，不需連莊門檻；已通過一般候選守門</td><td>成熟度 89.4；成熟通過；分數 68.0%；信心 83.3；交叉驗算 6/6；穩定層數 3；成熟度 89.4；非上期沿用</td></tr></tbody></table>
+      </div>
+    </details>
+  </main>
+    <script>
+    window.TIANTIANLE_BUILD_VERSION = '20260921044018';
+    function setMobileStatus(text) {
+      var el = document.getElementById('mobileUpdateStatus');
+      if (el) el.textContent = text;
+    }
+    async function clearMobileCaches() {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(async function(reg) {
+          try {
+            if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+            await reg.update();
+            await reg.unregister();
+          } catch (err) {}
+        }));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+      }
+    }
+    const REFRESH_CHECK_MS = 30000;
+    async function forceRefresh() {
+      setMobileStatus('更新中 ' + new Date().toLocaleTimeString());
+      await clearMobileCaches();
+      try {
+        await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      location.replace('首頁.html?v=20260921044018&force=' + Date.now());
+    }
+    async function autoRefreshIfStale() {
+      try {
+        const res = await fetch('version.json?check=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stamp = String(data.version || data.generated_at_taiwan || data.generated_at || '').replace(/\D/g, '').slice(0, 14);
+        if (stamp && stamp !== window.TIANTIANLE_BUILD_VERSION && !sessionStorage.getItem('tiantianle_refreshed_' + stamp)) {
+          sessionStorage.setItem('tiantianle_refreshed_' + stamp, '1');
+          await clearMobileCaches();
+          location.replace('首頁.html?v=' + stamp + '&auto=' + Date.now());
+        }
+      } catch (err) {}
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js?v=20260921044018', { updateViaCache: 'none' }).then(function(reg){
+          reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }).catch(function(){});
+        autoRefreshIfStale();
+        setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+      });
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
+          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
+          location.reload();
+        }
+      });
+    } else {
+      window.addEventListener('load', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+    }
+    </script>
+    
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260921044018') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260921044018';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    </body></html>

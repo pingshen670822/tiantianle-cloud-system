@@ -1,0 +1,248 @@
+<!doctype html><html lang="zh-Hant" data-compact-report="true"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天天樂 上期檢討</title>
+  <style>
+    body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
+    header{background:#111827;color:white;padding:22px 24px;}
+    main{max-width:1180px;margin:0 auto;padding:18px;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}
+    .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
+    .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .band{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+    .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
+    .hot-card{border-color:#fecaca;background:#fff1f2;}
+    .singlebox{border-color:#fecaca;background:#fffafa;}
+    .warn{background:#fff7ed;border-color:#fed7aa;}
+    .date-ribbon{background:#ecfeff;border-color:#67e8f9;}
+    .label{font-size:13px;color:#64748b;font-weight:700;}
+    .value{font-size:22px;font-weight:900;margin-top:6px;}
+    .advanced{background:#fbfdff;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px;}
+    .advanced summary{cursor:pointer;font-weight:900;color:#0f766e;}
+    table{width:100%;border-collapse:collapse;min-width:760px;}
+    th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
+    th{background:#f1f5f9;}
+    .num{font-size:20px;font-weight:900;color:#b91c1c;}
+    .small{font-size:13px;line-height:1.5;}
+    .verify-table{min-width:1420px;}
+    .month-chart{display:grid;gap:8px;min-width:760px;}
+    .chart-row{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}
+    .chart-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
+    .chart-track span{display:block;height:100%;background:#0f766e;border-radius:999px;}
+    .chart-date,.chart-score,.chart-hit{font-weight:800;}
+    a{color:#0f766e;font-weight:800;}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}.chart-row{grid-template-columns:1fr;gap:4px}}
+  </style>
+
+    <style>
+      .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
+      .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
+      .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
+      .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
+      .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
+      .sticky-launch{position:fixed;left:12px;right:12px;bottom:12px;width:calc(100% - 24px);z-index:9999}
+      body{padding-bottom:82px}
+      @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
+    </style>
+    <link rel="manifest" href="manifest.webmanifest?v=20260921044018">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Tiantianle">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    </head><body><header>
+  <h1>天天樂 上期檢討</h1>
+  <p>產生：台灣時間 2026-09-21 12:40 / 全歷史資料 完整 / 共 11926 筆</p>
+  <p>最新開獎可確認：台灣時間 2026-09-21 09:50 / 最新號碼：01 08 10 19 21 / 下期開獎：台灣時間 2026-09-22 09:50</p>
+  <p class="small">最新開獎期別 2026-09-20 / 下期開獎期別 2026-09-21</p>
+</header><main>
+    <section class="band launch-panel">
+      <h2>天天樂手機雲端獨立版</h2>
+      <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
+      <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
+      <a class="cloud-update-link" href="force-sync-20260921044018.html?v=20260921044018">手機不一樣點這裡強制同步</a>
+      <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20260921044018</p>
+      
+    </section>
+    <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
+    <nav class="tabs"><a href="下期預測.html">下期預測</a><a class="active" href="上期未命中檢討.html">上期檢討</a><a href="latest_battle_report.html">完整戰報</a></nav>
+    <div class="band"><h2>最新命中結果</h2><p>本頁只放預測對實際開獎的命中結果，不混入低機率、不混入模型檢討。</p><table><thead><tr><th>項目</th><th>結果</th></tr></thead><tbody><tr><td colspan="2">已完成命中檢查，等待下一期結算</td></tr></tbody></table></div><div class="band"><h2>近期命中對照</h2><table><thead><tr><th>開獎日</th><th>預測前九</th><th>實際開獎</th><th>前九命中號</th><th>前九命中</th><th>前十命中</th><th>前十五命中</th></tr></thead><tbody><tr><td colspan="7">目前沒有可結算的近期命中紀錄</td></tr></tbody></table></div>
+    <div class="band warn"><h2>前十五零中原因與急救</h2><p>本期尚未產生零中急救資料。</p></div>
+    <div class="band">
+      <h2>上期命中檢討（- 預測 / - 開獎）</h2>
+      <p>目前沒有已結算資料；禁止用舊期檢討冒充上期。</p>
+    </div>
+    
+    <div class="band warn">
+      <h2>第10到15名補中檢討</h2>
+      <table><thead><tr><th>項目</th><th>數值</th><th>比例或合計</th><th>說明</th></tr></thead><tbody><tr><td colspan="4">目前沒有已結算的第10到15名統計</td></tr></tbody></table>
+      <table><thead><tr><th>開獎日</th><th>第10到15名</th><th>補中號</th><th>補中顆數</th><th>前九命中顆數</th><th>判讀</th></tr></thead><tbody><tr><td colspan="6">目前沒有第10到15名補中明細</td></tr></tbody></table>
+    </div>
+    <div class="band"><h2>未命中檢討數據</h2><p>目前沒有已結算資料；開獎後才建立檢討表。</p></div>
+  </main>
+    <script>
+    window.TIANTIANLE_BUILD_VERSION = '20260921044018';
+    function setMobileStatus(text) {
+      var el = document.getElementById('mobileUpdateStatus');
+      if (el) el.textContent = text;
+    }
+    async function clearMobileCaches() {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(async function(reg) {
+          try {
+            if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+            await reg.update();
+            await reg.unregister();
+          } catch (err) {}
+        }));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+      }
+    }
+    const REFRESH_CHECK_MS = 30000;
+    async function forceRefresh() {
+      setMobileStatus('更新中 ' + new Date().toLocaleTimeString());
+      await clearMobileCaches();
+      try {
+        await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      location.replace('首頁.html?v=20260921044018&force=' + Date.now());
+    }
+    async function autoRefreshIfStale() {
+      try {
+        const res = await fetch('version.json?check=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stamp = String(data.version || data.generated_at_taiwan || data.generated_at || '').replace(/\D/g, '').slice(0, 14);
+        if (stamp && stamp !== window.TIANTIANLE_BUILD_VERSION && !sessionStorage.getItem('tiantianle_refreshed_' + stamp)) {
+          sessionStorage.setItem('tiantianle_refreshed_' + stamp, '1');
+          await clearMobileCaches();
+          location.replace('首頁.html?v=' + stamp + '&auto=' + Date.now());
+        }
+      } catch (err) {}
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js?v=20260921044018', { updateViaCache: 'none' }).then(function(reg){
+          reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }).catch(function(){});
+        autoRefreshIfStale();
+        setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+      });
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
+          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
+          location.reload();
+        }
+      });
+    } else {
+      window.addEventListener('load', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+    }
+    </script>
+    
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20260921044018') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20260921044018';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    </body></html>

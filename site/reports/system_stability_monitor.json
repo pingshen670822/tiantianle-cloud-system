@@ -1,52 +1,68 @@
 {
-  "checked_at_taiwan": "2026-09-21T12:24:57+08:00",
-  "status": "需立即修復",
-  "stability_score": 33.3,
-  "latest_draw_date": null,
-  "latest_numbers": [],
-  "latest_taiwan_safe_update_time": null,
-  "target_draw_date": null,
-  "target_taiwan_safe_update_time": null,
-  "top9": [],
+  "checked_at_taiwan": "2026-09-21T12:40:18+08:00",
+  "status": "穩定",
+  "stability_score": 100.0,
+  "latest_draw_date": "2026-09-20",
+  "latest_numbers": [
+    1,
+    8,
+    10,
+    19,
+    21
+  ],
+  "latest_taiwan_safe_update_time": "2026-09-21 09:50",
+  "target_draw_date": "2026-09-21",
+  "target_taiwan_safe_update_time": "2026-09-22 09:50",
+  "top9": [
+    9,
+    19,
+    39,
+    38,
+    30,
+    24,
+    11,
+    2,
+    35
+  ],
   "database": {
-    "ok": false,
-    "count": 781,
+    "ok": true,
+    "count": 11926,
     "latest": "2026-09-20",
-    "prediction_count": 0,
-    "prediction_latest": "",
-    "prediction_target": "",
-    "low_probability_count": 0,
-    "low_probability_latest": ""
+    "prediction_count": 1,
+    "prediction_latest": "2026-09-20",
+    "prediction_target": "2026-09-21",
+    "low_probability_count": 1,
+    "low_probability_latest": "2026-09-20"
   },
   "checks": [
     {
       "name": "本機最新資料",
-      "ok": false,
-      "detail": "戰報 - / 資料庫 2026-09-20",
+      "ok": true,
+      "detail": "戰報 2026-09-20 / 資料庫 2026-09-20",
       "action": "重跑全歷史重算並重建戰報"
     },
     {
       "name": "手機同步資料",
-      "ok": false,
-      "detail": "手機最新 - / 手機下期 -",
+      "ok": true,
+      "detail": "手機最新 2026-09-20 / 手機下期 2026-09-21",
       "action": "重建手機檔並重新發布雲端"
     },
     {
       "name": "全歷史資料庫",
-      "ok": false,
-      "detail": "781 筆",
+      "ok": true,
+      "detail": "11926 筆",
       "action": "重新匯入全歷史 CSV 與快取頁面"
     },
     {
       "name": "下期預測產生",
-      "ok": false,
-      "detail": "",
+      "ok": true,
+      "detail": "09 19 39 38 30 24 11 02 35",
       "action": "重新運算候選排序與九碼主推"
     },
     {
       "name": "低機率紀錄",
-      "ok": false,
-      "detail": "低機率最新 -",
+      "ok": true,
+      "detail": "低機率最新 2026-09-20",
       "action": "重建低機率每日紀錄與每月檢討"
     },
     {
@@ -57,7 +73,7 @@
     },
     {
       "name": "雲端發布狀態",
-      "ok": false,
+      "ok": true,
       "detail": "未記錄",
       "action": "下一輪守護重試雲端發布"
     },
@@ -74,42 +90,5 @@
       "action": "守護程式下輪重新讀取並修復"
     }
   ],
-  "failed_actions": [
-    {
-      "name": "本機最新資料",
-      "ok": false,
-      "detail": "戰報 - / 資料庫 2026-09-20",
-      "action": "重跑全歷史重算並重建戰報"
-    },
-    {
-      "name": "手機同步資料",
-      "ok": false,
-      "detail": "手機最新 - / 手機下期 -",
-      "action": "重建手機檔並重新發布雲端"
-    },
-    {
-      "name": "全歷史資料庫",
-      "ok": false,
-      "detail": "781 筆",
-      "action": "重新匯入全歷史 CSV 與快取頁面"
-    },
-    {
-      "name": "下期預測產生",
-      "ok": false,
-      "detail": "",
-      "action": "重新運算候選排序與九碼主推"
-    },
-    {
-      "name": "低機率紀錄",
-      "ok": false,
-      "detail": "低機率最新 -",
-      "action": "重建低機率每日紀錄與每月檢討"
-    },
-    {
-      "name": "雲端發布狀態",
-      "ok": false,
-      "detail": "未記錄",
-      "action": "下一輪守護重試雲端發布"
-    }
-  ]
+  "failed_actions": []
 }
