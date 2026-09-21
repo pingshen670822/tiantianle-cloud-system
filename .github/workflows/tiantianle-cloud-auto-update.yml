@@ -300,6 +300,7 @@ jobs:
             echo "Generated data push was skipped because remote changed; deployment continues with current generated workspace"
           fi
       - uses: actions/configure-pages@v5
+        if: ${{ false }}
         with:
           enablement: true
       - name: Prepare public mobile package
@@ -321,9 +322,11 @@ jobs:
           done < <(find reports -type f -print0)
           touch public_site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ false }}
         with:
           path: public_site
       - name: Deploy Pages
+        if: ${{ false }}
         id: deployment
         uses: actions/deploy-pages@v4
         continue-on-error: true
