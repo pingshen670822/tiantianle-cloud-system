@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260702_strict_no_reuse",
-  "generated_at_taiwan": "2026-09-22T07:49:51+08:00",
-  "generated_at_california": "2026-09-21T16:49:51-07:00",
+  "generated_at_taiwan": "2026-09-22T11:25:29+08:00",
+  "generated_at_california": "2026-09-21T20:25:29-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11926,
@@ -1605,10 +1605,10 @@
   },
   "freshness": {
     "california_today": "2026-09-21",
-    "california_time": "16:49:51",
-    "allowed_latest_draw_date": "2026-09-20",
-    "age_days": 0,
-    "status": "ok",
+    "california_time": "20:25:29",
+    "allowed_latest_draw_date": "2026-09-21",
+    "age_days": 1,
+    "status": "late_after_draw",
     "latest_draw_date": "2026-09-20",
     "latest_taiwan_safe_update_time": "2026-09-21 09:50",
     "latest_taiwan_safe_update_date": "2026-09-21",
@@ -1616,7 +1616,7 @@
     "target_taiwan_safe_update_time": "2026-09-22 09:50",
     "target_taiwan_safe_update_date": "2026-09-22",
     "timezone_rule": "California draw 18:30; safe update 18:50 PT. Taiwan is 09:50 during daylight time and 10:50 during standard time.",
-    "official_prediction_allowed": true,
+    "official_prediction_allowed": false,
     "latest_source": "正式:calottery",
     "latest_source_confirmed": true,
     "source_confirmation_status": "confirmed"
@@ -9674,7 +9674,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-09-22T07:49:43+08:00"
+      "enforced_at_taiwan": "2026-09-22T11:25:19+08:00"
     },
     "adaptive_weight_calibration": {
       "status": "每日快速重算完成",
@@ -18519,7 +18519,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-09-22T07:49:43+08:00"
+        "enforced_at_taiwan": "2026-09-22T11:25:19+08:00"
       },
       "adaptive_weight_calibration": {
         "status": "每日快速重算完成",
@@ -33039,7 +33039,7 @@
     {
       "based_on_date": "2026-09-20",
       "target_date": "2026-09-21",
-      "created_at": "2026-09-22T07:49:51+08:00",
+      "created_at": "2026-09-22T11:25:29+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
