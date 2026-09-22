@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-09-22T14:49:31+08:00",
+  "checked_at_taiwan": "2026-09-22T14:51:26+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-09-22T14:49:30+08:00",
+    "generated_at_taiwan": "2026-09-22T14:51:24+08:00",
     "latest_draw_date": "2026-09-20",
     "latest_numbers": [
       1,
@@ -44,7 +44,7 @@
     "engine": "industrial_fast_daily_formula_v20260702_strict_no_reuse"
   },
   "site": {
-    "generated_at_taiwan": "2026-09-22T14:49:30+08:00",
+    "generated_at_taiwan": "2026-09-22T14:51:24+08:00",
     "latest_draw_date": "2026-09-20",
     "latest_numbers": [
       1,
