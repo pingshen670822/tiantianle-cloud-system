@@ -288,6 +288,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           import pathlib
           import ssl
           import sys
@@ -299,6 +300,15 @@ jobs:
           if not local_path.exists():
               raise SystemExit("missing reports/latest_analysis.json")
           local = json.loads(local_path.read_text(encoding="utf-8-sig"))
+
+          def skip_publish(message):
+              print(message)
+              env_file = os.environ.get("GITHUB_ENV")
+              if env_file:
+                  with open(env_file, "a", encoding="utf-8") as handle:
+                      handle.write("TIANTIANLE_SKIP_PUBLISH=true\n")
+                      handle.write("TIANTIANLE_SKIP_REASON=" + message.replace("\n", " ") + "\n")
+              sys.exit(0)
 
           def core(data):
               latest = data.get("latest_draw") or {}
@@ -319,19 +329,18 @@ jobs:
               print(f"remote regression check warning: {exc}")
 
           if remote_core.get("latest") and local_core.get("latest") and local_core["latest"] < remote_core["latest"]:
-              print(f"stale publish blocked: local latest {local_core['latest']} < cloud latest {remote_core['latest']}")
-              sys.exit(2)
+              skip_publish(f"stale publish skipped: local latest {local_core['latest']} < cloud latest {remote_core['latest']}")
           if (
               remote_core.get("target")
               and local_core.get("target")
               and local_core.get("latest") == remote_core.get("latest")
               and local_core["target"] < remote_core["target"]
           ):
-              print(f"target regression blocked: local target {local_core['target']} < cloud target {remote_core['target']}")
-              sys.exit(2)
+              skip_publish(f"target regression skipped: local target {local_core['target']} < cloud target {remote_core['target']}")
           print(f"regression guard passed: local={local_core}, cloud={remote_core}")
           PY
       - name: Commit updated data
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         run: |
           set -e
           git config user.name "tiantianle automation"
@@ -352,6 +361,7 @@ jobs:
         with:
           enablement: true
       - name: Prepare public mobile package
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         run: |
           set -e
@@ -395,6 +405,7 @@ jobs:
         uses: actions/deploy-pages@v4
         continue-on-error: true
       - name: Publish to gh-pages branch and force Pages source
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -421,9 +432,16 @@ jobs:
             -d '{"source":{"branch":"gh-pages","path":"/"}}' >/tmp/pages_source_response.json || true
           cat /tmp/pages_source_response.json || true
       - name: Confirm mobile deployment path
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         run: |
           echo "GitHub Pages source forced to gh-pages branch"
       - name: Verify deployed mobile sync
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         run: python verify_mobile_sync.py --remote --retries 12 --sleep 10 || python verify_mobile_sync.py --local-only
+      - name: Confirm publish skipped because cloud is newer
+        if: env.TIANTIANLE_SKIP_PUBLISH == 'true'
+        shell: bash
+        run: |
+          echo "Publish skipped safely: ${TIANTIANLE_SKIP_REASON}"
