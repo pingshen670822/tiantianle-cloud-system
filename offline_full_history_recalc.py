@@ -59,13 +59,19 @@ def _load_previous_prediction_guard(latest_draw_date):
         'previous_top9': [],
         'previous_top15': [],
         'previous_single': [],
+        'previous_actual_numbers': [],
+        'previous_top9_hit_numbers': [],
+        'previous_top10_hit_numbers': [],
+        'previous_top15_hit_numbers': [],
+        'zero_top9_rank_10_to_15_hit_numbers': [],
+        'previous_rank_map': {},
         'source': 'no_settled_previous_prediction',
     }
     try:
         with sqlite3.connect(mod.DB_PATH) as conn:
             row = conn.execute(
                 """
-                SELECT based_on_date,target_date,candidates_json,strong_packs_json,actual_date
+                SELECT based_on_date,target_date,candidates_json,strong_packs_json,actual_date,actual_numbers_json
                 FROM predictions
                 WHERE status='settled' AND actual_date=?
                 ORDER BY id DESC LIMIT 1
@@ -75,7 +81,7 @@ def _load_previous_prediction_guard(latest_draw_date):
             if not row:
                 row = conn.execute(
                     """
-                    SELECT based_on_date,target_date,candidates_json,strong_packs_json,actual_date
+                    SELECT based_on_date,target_date,candidates_json,strong_packs_json,actual_date,actual_numbers_json
                     FROM predictions
                     WHERE status='settled'
                     ORDER BY actual_date DESC, id DESC LIMIT 1
@@ -86,6 +92,18 @@ def _load_previous_prediction_guard(latest_draw_date):
             previous_candidates = json.loads(row[2] or "[]")
             previous_packs = json.loads(row[3] or "{}")
             previous_top15 = _candidate_numbers(previous_candidates, 15)
+            previous_actual_numbers = [int(number) for number in json.loads(row[5] or "[]")]
+            actual_set = set(previous_actual_numbers)
+            previous_rank_map = {str(number): idx + 1 for idx, number in enumerate(previous_top15)}
+            previous_top9_hit_numbers = sorted(set(previous_top15[:9]) & actual_set)
+            previous_top10_hit_numbers = sorted(set(previous_top15[:10]) & actual_set)
+            previous_top15_hit_numbers = sorted(set(previous_top15[:15]) & actual_set)
+            rank_10_to_15_hits = sorted(set(previous_top15[9:15]) & actual_set)
+            zero_top9_rank_10_to_15_hit_numbers = (
+                rank_10_to_15_hits
+                if not previous_top9_hit_numbers and rank_10_to_15_hits
+                else []
+            )
             previous_single = _candidate_numbers(
                 [{'number': number} for number in ((previous_packs.get('strong_single') or {}).get('numbers') or [])],
                 1,
@@ -99,6 +117,12 @@ def _load_previous_prediction_guard(latest_draw_date):
                 'previous_top9': previous_top15[:9],
                 'previous_top15': previous_top15,
                 'previous_single': previous_single,
+                'previous_actual_numbers': previous_actual_numbers,
+                'previous_top9_hit_numbers': previous_top9_hit_numbers,
+                'previous_top10_hit_numbers': previous_top10_hit_numbers,
+                'previous_top15_hit_numbers': previous_top15_hit_numbers,
+                'zero_top9_rank_10_to_15_hit_numbers': zero_top9_rank_10_to_15_hit_numbers,
+                'previous_rank_map': previous_rank_map,
                 'source': 'latest_settled_prediction',
             }
     except Exception as exc:
@@ -106,7 +130,8 @@ def _load_previous_prediction_guard(latest_draw_date):
         return empty
 
 
-def _reentry_gate(row, number, previous_single, previous_top5, previous_top9, previous_top15, latest_numbers):
+def _reentry_gate(row, number, previous_single, previous_top5, previous_top9, previous_top15, latest_numbers, zero_rescue_numbers=None):
+    zero_rescue_numbers = set(zero_rescue_numbers or [])
     required = number in previous_top15 or number in latest_numbers
     original_score = _safe_float(row.get('score'), 0.0)
     confidence = _safe_float(row.get('confidence_index'), 50 + original_score * 49)
@@ -125,14 +150,19 @@ def _reentry_gate(row, number, previous_single, previous_top5, previous_top9, pr
         thresholds.update({'score': 0.74, 'confidence': 92.0})
     if number in previous_single or number in previous_top5 or number in latest_numbers:
         thresholds.update({'score': 0.78, 'confidence': 95.0, 'cross_validation_passed': 6, 'stability_count': 4})
+    if number in zero_rescue_numbers:
+        thresholds.update({'score': 0.55, 'confidence': 76.0, 'cross_validation_passed': 2, 'stability_count': 1})
     evidence = {
         'score': round(original_score, 6),
         'confidence': round(confidence, 1),
         'cross_validation_passed': passed_count,
         'stability_count': stability_count,
+        'zero_hit_rescue': number in zero_rescue_numbers,
     }
+    rescue_override = number in zero_rescue_numbers and original_score >= 0.45 and confidence >= 70
     passed = (
         not required
+        or rescue_override
         or (
             original_score >= thresholds['score']
             and confidence >= thresholds['confidence']
@@ -151,6 +181,7 @@ def _apply_no_reuse_governor(draws, candidates):
     previous_top9 = set(guard.get('previous_top9') or [])
     previous_top15 = set(guard.get('previous_top15') or [])
     previous_single = set(guard.get('previous_single') or [])
+    zero_rescue_numbers = set(guard.get('zero_top9_rank_10_to_15_hit_numbers') or [])
     raw_top9 = _candidate_numbers(candidates, 9)
     adjusted = []
     for item in candidates:
@@ -159,10 +190,14 @@ def _apply_no_reuse_governor(draws, candidates):
         original_score = _safe_float(row.get('score'), 0.0)
         original_confidence = _safe_float(row.get('confidence_index'), 50 + original_score * 49)
         reentry_required, reentry_passed, thresholds, evidence = _reentry_gate(
-            row, number, previous_single, previous_top5, previous_top9, previous_top15, latest_numbers
+            row, number, previous_single, previous_top5, previous_top9, previous_top15, latest_numbers, zero_rescue_numbers
         )
         penalty = 0.0
+        rescue_bonus = 0.0
         flags = []
+        if number in zero_rescue_numbers:
+            rescue_bonus += 0.34
+            flags.append('前九零中後段命中回補')
         if reentry_required and not reentry_passed:
             if number in previous_single:
                 penalty += 0.26
@@ -182,12 +217,13 @@ def _apply_no_reuse_governor(draws, candidates):
         elif reentry_required:
             penalty += 0.015
             flags.append('連莊達標保留')
-        governed_score = max(0.001, original_score - penalty)
-        governed_confidence = max(40.0, min(99.0, original_confidence - penalty * 120))
+        governed_score = max(0.001, original_score + rescue_bonus - penalty)
+        governed_confidence = max(40.0, min(99.0, original_confidence + rescue_bonus * 115 - penalty * 120))
         row['original_score_before_no_reuse'] = round(original_score, 6)
         row['score'] = round(governed_score, 6)
         row['confidence_index'] = round(governed_confidence, 1)
         row['no_reuse_penalty'] = round(penalty, 3)
+        row['zero_hit_rescue_bonus'] = round(rescue_bonus, 3)
         row['previous_prediction_guard'] = {
             'passed': (not reentry_required) or reentry_passed,
             'mode': 'strict_no_previous_reuse',
@@ -202,6 +238,7 @@ def _apply_no_reuse_governor(draws, candidates):
             'previous_top5': number in previous_top5,
             'previous_single': number in previous_single,
             'latest_draw_number': number in latest_numbers,
+            'zero_hit_rescue_number': number in zero_rescue_numbers,
             'blocked_reason': '連莊未達標，禁止進入下期前九' if reentry_required and not reentry_passed else '',
         }
         row.setdefault('reasons', [])
@@ -209,6 +246,7 @@ def _apply_no_reuse_governor(draws, candidates):
             row['reasons'] = (flags + row['reasons'])[:6]
         adjusted.append(row)
     ranked = sorted(adjusted, key=lambda row: (-_safe_float(row.get('score')), -_safe_float(row.get('confidence_index')), int(row['number'])))
+    candidate_map = {int(row['number']): row for row in adjusted}
     selected = []
     blocked_rows = []
     for row in ranked:
@@ -230,6 +268,53 @@ def _apply_no_reuse_governor(draws, candidates):
                 selected.append(row)
             else:
                 blocked_rows.append(row)
+    forced_rescue_promoted = []
+    forced_rescue_demoted = []
+    previous_rank_map = guard.get('previous_rank_map') or {}
+    rescue_order = sorted(
+        zero_rescue_numbers,
+        key=lambda number: (
+            int(previous_rank_map.get(str(number), 99)) if str(number) in previous_rank_map else 99,
+            number,
+        ),
+    )
+    for number in rescue_order:
+        if any(int(item['number']) == number for item in selected):
+            continue
+        rescue_row = candidate_map.get(number)
+        if not rescue_row:
+            continue
+        if rescue_row in blocked_rows:
+            blocked_rows.remove(rescue_row)
+        rescue_row['zero_hit_forced_front9'] = True
+        rescue_row['score'] = round(max(_safe_float(rescue_row.get('score')), 0.88), 6)
+        rescue_row['confidence_index'] = round(max(_safe_float(rescue_row.get('confidence_index'), 50), 96.0), 1)
+        reasons = list(rescue_row.get('reasons') or [])
+        reasons.insert(0, '前九零中硬性前移')
+        rescue_row['reasons'] = reasons[:7]
+        if len(selected) >= 9:
+            replaceable = [
+                row for row in selected
+                if int(row['number']) not in zero_rescue_numbers
+                and int(row['number']) not in previous_single
+            ]
+            if not replaceable:
+                replaceable = [row for row in selected if int(row['number']) not in zero_rescue_numbers]
+            if replaceable:
+                victim = min(
+                    replaceable,
+                    key=lambda row: (
+                        _safe_float(row.get('score')),
+                        _safe_float(row.get('confidence_index'), 50),
+                        -int(row['number']),
+                    ),
+                )
+                selected.remove(victim)
+                forced_rescue_demoted.append(int(victim['number']))
+                blocked_rows.append(victim)
+        if len(selected) < 9:
+            selected.append(rescue_row)
+            forced_rescue_promoted.append(number)
     eligible_rest = [
         row for row in ranked
         if row not in selected and row not in blocked_rows
@@ -245,7 +330,6 @@ def _apply_no_reuse_governor(draws, candidates):
         row['model_probability_percent'] = round(max(1.0, min(28.0, (confidence - 50) / 49 * 25)), 2)
     governed_top9 = _candidate_numbers(ordered, 9)
     governed_top15 = _candidate_numbers(ordered, 15)
-    candidate_map = {int(row['number']): row for row in adjusted}
     reentry_passed_numbers = sorted(
         number for number, row in candidate_map.items()
         if (row.get('previous_prediction_guard') or {}).get('reentry_required')
@@ -268,6 +352,10 @@ def _apply_no_reuse_governor(draws, candidates):
         'current_top9_previous_top9_overlap': sorted(set(governed_top9) & previous_top9),
         'current_top10_overlap': sorted(set(_candidate_numbers(ordered, 10)) & previous_top15),
         'current_top15_overlap': sorted(set(governed_top15) & previous_top15),
+        'zero_top9_rank_10_to_15_hit_numbers': sorted(zero_rescue_numbers),
+        'zero_hit_rescue_entered_top9': sorted(set(governed_top9) & zero_rescue_numbers),
+        'zero_hit_forced_rescue_promoted': forced_rescue_promoted,
+        'zero_hit_forced_rescue_demoted': forced_rescue_demoted,
         'top9_overlap_rate': round(len(current_top9_previous_overlap) / 9, 3) if previous_top15 else 0,
         'top10_overlap_rate': round(len(set(_candidate_numbers(ordered, 10)) & previous_top15) / 10, 3) if previous_top15 else 0,
         'top15_overlap_rate': round(len(set(governed_top15) & previous_top15) / 15, 3) if previous_top15 else 0,
@@ -317,6 +405,332 @@ def _candidate_enrich(draws, raw_candidates):
         enriched.append(row)
     return enriched
 
+
+def _recent_omission_map(draws):
+    max_gap = len(draws) + 1
+    omissions = {number: max_gap for number in range(1, mod.NUMBER_MAX + 1)}
+    for offset, draw in enumerate(reversed(draws), 0):
+        for number in draw.get('numbers', []):
+            number = int(number)
+            if omissions.get(number, max_gap) == max_gap:
+                omissions[number] = offset
+    return omissions
+
+
+def _draw_history_recovery_map(draws):
+    windows = {
+        '14': Counter(number for draw in draws[-14:] for number in draw.get('numbers', [])),
+        '30': Counter(number for draw in draws[-30:] for number in draw.get('numbers', [])),
+        '60': Counter(number for draw in draws[-60:] for number in draw.get('numbers', [])),
+        '120': Counter(number for draw in draws[-120:] for number in draw.get('numbers', [])),
+    }
+    omissions = _recent_omission_map(draws)
+    latest_numbers = set(int(number) for number in draws[-1].get('numbers', []))
+    bonus_map = {}
+    detail_map = {}
+    for number in range(1, mod.NUMBER_MAX + 1):
+        recent_14 = windows['14'].get(number, 0)
+        recent_30 = windows['30'].get(number, 0)
+        recent_60 = windows['60'].get(number, 0)
+        recent_120 = windows['120'].get(number, 0)
+        omission = omissions.get(number, 999)
+        bonus = 0.0
+        reasons = []
+        if 5 <= omission <= 24:
+            bonus += 0.028
+            reasons.append('中段遺漏回補')
+        if recent_30 >= 4 and recent_14 <= 2:
+            bonus += 0.026
+            reasons.append('近月有效但短線未過熱')
+        if recent_60 >= 7 and recent_14 <= 3:
+            bonus += 0.022
+            reasons.append('雙月穩定回補')
+        if recent_120 >= 14 and recent_30 <= 4:
+            bonus += 0.018
+            reasons.append('長週期復活')
+        if number in latest_numbers:
+            bonus -= 0.018
+            reasons.append('最新開出連莊降溫')
+        bonus = max(-0.025, min(0.095, bonus))
+        bonus_map[number] = bonus
+        detail_map[number] = {
+            'omission': omission,
+            'recent_14_hits': recent_14,
+            'recent_30_hits': recent_30,
+            'recent_60_hits': recent_60,
+            'recent_120_hits': recent_120,
+            'bonus': round(bonus, 4),
+            'reasons': reasons,
+        }
+    return bonus_map, detail_map
+
+
+def _settled_rank_leak_profile(limit=90):
+    empty = {
+        'status': 'no_settled_prediction_data',
+        'rounds': 0,
+        'bonus_map': {},
+        'penalty_map': {},
+        'reserve_leak_numbers': [],
+        'overranked_numbers': [],
+        'position_histogram': {},
+        'zero_top9_rate': 0,
+        'avg_top9_hits': 0,
+        'avg_top10_to_25_hits': 0,
+        'latest_zero_top9_rescue': {},
+    }
+    try:
+        with sqlite3.connect(mod.DB_PATH) as conn:
+            rows = conn.execute(
+                """
+                SELECT candidates_json, actual_numbers_json, actual_date
+                FROM predictions
+                WHERE status='settled'
+                  AND candidates_json IS NOT NULL
+                  AND actual_numbers_json IS NOT NULL
+                ORDER BY actual_date DESC, id DESC
+                LIMIT ?
+                """,
+                (int(limit),),
+            ).fetchall()
+    except Exception as exc:
+        empty['status'] = 'profile_read_failed'
+        empty['error'] = str(exc)
+        return empty
+
+    if not rows:
+        return empty
+
+    front_hits = Counter()
+    reserve_hits = Counter()
+    deep_hits = Counter()
+    actual_hits = Counter()
+    top9_exposures = Counter()
+    top9_misses = Counter()
+    top15_exposures = Counter()
+    position_histogram = Counter()
+    total_top9_hits = 0
+    total_reserve_hits = 0
+    zero_top9 = 0
+    usable_rounds = 0
+    recent_miss_examples = []
+    latest_zero_top9_rescue = {}
+
+    for candidates_json, actual_numbers_json, actual_date in rows:
+        try:
+            candidate_rows = json.loads(candidates_json or '[]')
+            actual_numbers = [int(number) for number in json.loads(actual_numbers_json or '[]')]
+        except Exception:
+            continue
+        ranked_numbers = _candidate_numbers(candidate_rows)
+        if len(ranked_numbers) < 15 or not actual_numbers:
+            continue
+        usable_rounds += 1
+        position_map = {number: idx + 1 for idx, number in enumerate(ranked_numbers)}
+        actual_set = set(actual_numbers)
+        top9_set = set(ranked_numbers[:9])
+        top15_set = set(ranked_numbers[:15])
+        top9_hit_count = len(top9_set & actual_set)
+        reserve_hit_count = len(set(ranked_numbers[9:25]) & actual_set)
+        total_top9_hits += top9_hit_count
+        total_reserve_hits += reserve_hit_count
+        if top9_hit_count == 0:
+            zero_top9 += 1
+        for number in ranked_numbers[:9]:
+            top9_exposures[number] += 1
+            if number not in actual_set:
+                top9_misses[number] += 1
+        for number in ranked_numbers[:15]:
+            top15_exposures[number] += 1
+        missed_positions = {}
+        for number in actual_numbers:
+            actual_hits[number] += 1
+            position = position_map.get(number)
+            if not position:
+                continue
+            position_histogram[str(position)] += 1
+            missed_positions[str(number)] = position
+            if position <= 9:
+                front_hits[number] += 1
+            elif position <= 25:
+                reserve_hits[number] += 1
+            else:
+                deep_hits[number] += 1
+        if reserve_hit_count or top9_hit_count == 0:
+            recent_miss_examples.append({
+                'actual_date': actual_date,
+                'actual_numbers': sorted(actual_numbers),
+                'top9_hits': sorted(top9_set & actual_set),
+                'rank_10_to_25_hits': sorted(set(ranked_numbers[9:25]) & actual_set),
+                'actual_positions': missed_positions,
+            })
+        if usable_rounds == 1:
+            rank_10_to_15_hits = sorted(set(ranked_numbers[9:15]) & actual_set)
+            latest_zero_top9_rescue = {
+                'actual_date': actual_date,
+                'actual_numbers': sorted(actual_numbers),
+                'top9_hit_count': top9_hit_count,
+                'top10_hit_count': len(set(ranked_numbers[:10]) & actual_set),
+                'top15_hit_count': len(top15_set & actual_set),
+                'rank_10_to_15_hits': rank_10_to_15_hits,
+                'rank_10_to_25_hits': sorted(set(ranked_numbers[9:25]) & actual_set),
+                'failed_front9_numbers': ranked_numbers[:9],
+                'actual_positions': missed_positions,
+                'triggered': top9_hit_count == 0 and bool(rank_10_to_15_hits),
+            }
+
+    if not usable_rounds:
+        return empty
+
+    bonus_map = {}
+    penalty_map = {}
+    reserve_leak_numbers = []
+    overranked_numbers = []
+    latest_rescue_numbers = set(latest_zero_top9_rescue.get('rank_10_to_15_hits') or [])
+    latest_failed_front9_numbers = set(latest_zero_top9_rescue.get('failed_front9_numbers') or [])
+    for number in range(1, mod.NUMBER_MAX + 1):
+        reserve_count = reserve_hits.get(number, 0)
+        deep_count = deep_hits.get(number, 0)
+        actual_count = actual_hits.get(number, 0)
+        front_count = front_hits.get(number, 0)
+        exposure_count = top9_exposures.get(number, 0)
+        miss_count = top9_misses.get(number, 0)
+        leak_count = reserve_count + deep_count
+        missed_front_gap = max(0, leak_count - front_count)
+        leak_bonus = 0.0
+        if leak_count >= 2:
+            leak_bonus += reserve_count * 0.022 + deep_count * 0.016
+            leak_bonus += missed_front_gap * 0.018
+            leak_bonus += min(actual_count, 5) * 0.004
+        elif leak_count == 1 and front_count == 0:
+            leak_bonus += 0.024 + min(actual_count, 3) * 0.003
+        if leak_count >= 2 and missed_front_gap >= 2:
+            leak_bonus += 0.04
+            reserve_leak_numbers.append(number)
+        if reserve_count >= 2 and missed_front_gap >= 1 and top15_exposures.get(number, 0) >= 2:
+            leak_bonus += 0.025
+        if number in latest_rescue_numbers:
+            leak_bonus += 0.32
+            reserve_leak_numbers.append(number)
+        if front_count >= leak_count and front_count >= 2:
+            leak_bonus *= 0.45
+        leak_bonus = round(min(0.42, leak_bonus), 4)
+        if leak_bonus > 0:
+            bonus_map[str(number)] = leak_bonus
+
+        miss_rate = miss_count / exposure_count if exposure_count else 0
+        penalty = 0.0
+        if exposure_count >= 5 and miss_rate >= 0.78 and front_count <= 1:
+            penalty += min(0.16, 0.055 + miss_rate * 0.085)
+            overranked_numbers.append(number)
+        elif exposure_count >= 8 and front_count <= 2 and miss_rate >= 0.68:
+            penalty += min(0.12, 0.035 + miss_rate * 0.065)
+            overranked_numbers.append(number)
+        if latest_zero_top9_rescue.get('triggered') and number in latest_failed_front9_numbers:
+            penalty += 0.055
+            overranked_numbers.append(number)
+        if penalty > 0:
+            penalty_map[str(number)] = round(penalty, 4)
+
+    reserve_leak_numbers = sorted(set(reserve_leak_numbers), key=lambda n: (-bonus_map.get(str(n), 0), n))
+    overranked_numbers = sorted(set(overranked_numbers), key=lambda n: (-penalty_map.get(str(n), 0), n))
+    return {
+        'status': 'rank_leak_profile_ready',
+        'rounds': usable_rounds,
+        'bonus_map': bonus_map,
+        'penalty_map': penalty_map,
+        'reserve_leak_numbers': reserve_leak_numbers[:12],
+        'overranked_numbers': overranked_numbers[:12],
+        'position_histogram': dict(position_histogram),
+        'zero_top9_rate': round(zero_top9 / usable_rounds, 3),
+        'avg_top9_hits': round(total_top9_hits / usable_rounds, 3),
+        'avg_top10_to_25_hits': round(total_reserve_hits / usable_rounds, 3),
+        'recent_miss_examples': recent_miss_examples[:8],
+        'latest_zero_top9_rescue': latest_zero_top9_rescue,
+    }
+
+
+def _apply_rank_leak_calibration(draws, candidates, profile):
+    before_top15 = _candidate_numbers(candidates, 15)
+    history_bonus_map, history_detail_map = _draw_history_recovery_map(draws)
+    leak_bonus_map = {
+        int(number): _safe_float(value)
+        for number, value in (profile.get('bonus_map') or {}).items()
+    }
+    latest_rescue = profile.get('latest_zero_top9_rescue') or {}
+    latest_rescue_numbers = set(int(number) for number in (latest_rescue.get('rank_10_to_15_hits') or []))
+    penalty_map = {
+        int(number): _safe_float(value)
+        for number, value in (profile.get('penalty_map') or {}).items()
+    }
+    latest_numbers = set(int(number) for number in draws[-1].get('numbers', []))
+    adjusted = []
+    for item in candidates:
+        row = dict(item)
+        number = int(row['number'])
+        original_score = _safe_float(row.get('score'), 0.0)
+        original_confidence = _safe_float(row.get('confidence_index'), 50 + original_score * 49)
+        leak_bonus = leak_bonus_map.get(number, 0.0)
+        history_bonus = history_bonus_map.get(number, 0.0)
+        penalty = penalty_map.get(number, 0.0)
+        if number in latest_numbers and leak_bonus < 0.08:
+            penalty += 0.018
+        total_adjustment = leak_bonus + history_bonus - penalty
+        row['score'] = round(max(0.001, original_score + total_adjustment), 6)
+        row['confidence_index'] = round(max(40.0, min(99.0, original_confidence + total_adjustment * 115)), 1)
+        row['rank_leak_calibration'] = {
+            'original_score': round(original_score, 6),
+            'leak_bonus': round(leak_bonus, 4),
+            'history_recovery_bonus': round(history_bonus, 4),
+            'overrank_penalty': round(penalty, 4),
+            'total_adjustment': round(total_adjustment, 4),
+            'history_detail': history_detail_map.get(number, {}),
+        }
+        row.setdefault('reasons', [])
+        reasons = list(row.get('reasons') or [])
+        if leak_bonus >= 0.065:
+            reasons.insert(0, '九名後外漏命中回補')
+        elif leak_bonus > 0:
+            reasons.insert(0, '外漏命中校正')
+        if number in latest_rescue_numbers:
+            reasons.insert(0, '前九零中急救前移')
+        if history_bonus >= 0.045:
+            reasons.insert(0, '全歷史中段復活校正')
+        if penalty >= 0.055:
+            reasons.insert(0, '前九失準降權')
+        row['reasons'] = reasons[:7]
+        adjusted.append(row)
+
+    ranked = sorted(
+        adjusted,
+        key=lambda row: (
+            -_safe_float(row.get('score')),
+            -_safe_float(row.get('confidence_index')),
+            -_safe_float((row.get('rank_leak_calibration') or {}).get('total_adjustment')),
+            int(row['number']),
+        ),
+    )
+    after_top15 = _candidate_numbers(ranked, 15)
+    promoted_to_top9 = [number for number in after_top15[:9] if number not in before_top15[:9]]
+    demoted_from_top9 = [number for number in before_top15[:9] if number not in after_top15[:9]]
+    calibration = {
+        'status': 'rank_leak_calibration_enforced',
+        'policy': '每期結算後檢查前九失準與第十至二十五名外漏命中，下一期自動升降權。',
+        'before_top15': before_top15,
+        'after_top15': after_top15,
+        'promoted_to_top9': promoted_to_top9,
+        'demoted_from_top9': demoted_from_top9,
+        'reserve_leak_numbers': profile.get('reserve_leak_numbers', []),
+        'overranked_numbers': profile.get('overranked_numbers', []),
+        'latest_zero_top9_rescue': latest_rescue,
+        'zero_hit_rescue_promoted_to_top9': sorted(set(after_top15[:9]) & latest_rescue_numbers),
+        'zero_top9_rate': profile.get('zero_top9_rate', 0),
+        'avg_top9_hits': profile.get('avg_top9_hits', 0),
+        'avg_rank_10_to_25_hits': profile.get('avg_top10_to_25_hits', 0),
+        'enforced_at_taiwan': datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds'),
+    }
+    return ranked, calibration
+
 def _fast_pack_probability(pool_size, hit_goal):
     return mod.theoretical_probability(pool_size, hit_goal)
 
@@ -326,7 +740,7 @@ def _fast_strong_packs(candidates):
         'strong_single': {'name': '獨支精準1中1', 'hit_goal': 1, 'hit_goal_max': 1, 'numbers': nums[:1], 'theoretical_probability': _fast_pack_probability(1, 1), 'status': 'fast_daily_recomputed'},
         'two_hit_one': {'name': '最強2中1~2', 'hit_goal': 1, 'hit_goal_max': 2, 'numbers': nums[:2], 'theoretical_probability': _fast_pack_probability(2, 1), 'status': 'fast_daily_recomputed'},
         'three_hit_two': {'name': '最強3中1~3', 'hit_goal': 1, 'hit_goal_max': 3, 'numbers': nums[:3], 'theoretical_probability': _fast_pack_probability(3, 1), 'status': 'fast_daily_recomputed'},
-        'five_hit_two': {'name': '穩定5中2~3', 'hit_goal': 2, 'hit_goal_max': 3, 'numbers': nums[:5], 'theoretical_probability': _fast_pack_probability(5, 2), 'status': 'fast_daily_recomputed'},
+        'five_hit_two': {'name': '最強5中1~5', 'hit_goal': 1, 'hit_goal_max': 5, 'numbers': nums[:5], 'theoretical_probability': _fast_pack_probability(5, 1), 'status': 'fast_daily_recomputed'},
         'nine_hit_three': {'name': '最強9中3~5', 'hit_goal': 3, 'hit_goal_max': 5, 'numbers': nums[:9], 'theoretical_probability': _fast_pack_probability(9, 3), 'status': 'fast_daily_recomputed'},
         'precision_single': {'name': '精算獨隻1中1', 'hit_goal': 1, 'numbers': nums[:1], 'theoretical_probability': _fast_pack_probability(1, 1), 'status': 'fast_daily_recomputed'},
         'precision_two_hit_one': {'name': '精算2中1~2', 'hit_goal': 1, 'numbers': nums[:2], 'theoretical_probability': _fast_pack_probability(2, 1), 'status': 'fast_daily_recomputed'},
@@ -341,8 +755,30 @@ def fast_compute_industrial_analysis(draws, review=None):
     candidates = _candidate_enrich(draws, raw_candidates)
     formula_engine = compute_formula_engine_analysis(draws, None, candidates, rounds=formula_rounds)
     candidates = blend_formula_into_candidates(candidates, formula_engine)
+    rank_leak_profile = _settled_rank_leak_profile(limit=90)
+    candidates, rank_leak_calibration = _apply_rank_leak_calibration(draws, candidates, rank_leak_profile)
     candidates, previous_guard = _apply_no_reuse_governor(draws, candidates)
     top_numbers = [int(item['number']) for item in candidates]
+    zero_hit_rescue_numbers = [int(number) for number in (previous_guard.get('zero_top9_rank_10_to_15_hit_numbers') or [])]
+    previous_rank_map = previous_guard.get('previous_rank_map') or {}
+    zero_hit_cluster_rescue_gate = {
+        'status': '已啟動' if zero_hit_rescue_numbers else '',
+        'policy': '上期前九零命中且第十至十五名有命中時，該後段命中號下期強制進入急救前移驗算。',
+        'actual_date': previous_guard.get('actual_date'),
+        'actual_numbers': previous_guard.get('previous_actual_numbers', []),
+        'previous_top9_hits': previous_guard.get('previous_top9_hit_numbers', []),
+        'rank_10_to_15_hits': zero_hit_rescue_numbers,
+        'actual_previous_ranks': [
+            {
+                'number': int(number),
+                'previous_rank': previous_rank_map.get(str(number), '-'),
+                'action': '前移驗算',
+            }
+            for number in zero_hit_rescue_numbers
+        ],
+        'new_top9': top_numbers[:9],
+        'entered_top9': sorted(set(top_numbers[:9]) & set(zero_hit_rescue_numbers)),
+    }
     packs = _fast_strong_packs(candidates)
     bt = mod.backtest(draws, rounds=backtest_rounds)
     consensus_counts = {str(number): max(1, 5 - idx // 3) for idx, number in enumerate(top_numbers[:15])}
@@ -382,8 +818,11 @@ def fast_compute_industrial_analysis(draws, review=None):
     }
     formula_avoid = (formula_engine.get('avoid_analysis') or {}) if formula_engine else {}
     return {
-        'engine_version': 'industrial_fast_daily_formula_v20260702_strict_no_reuse',
+        'engine_version': 'industrial_fast_daily_formula_v20260702_strict_no_reuse_rank_leak_calibrated',
         'formula_engine': formula_engine,
+        'rank_leak_profile': rank_leak_profile,
+        'rank_leak_calibration': rank_leak_calibration,
+        'zero_hit_cluster_rescue_gate': zero_hit_cluster_rescue_gate,
         'fast_daily_mode': True,
         'leakage_guard': True,
         'candidates': candidates,
@@ -392,16 +831,16 @@ def fast_compute_industrial_analysis(draws, review=None):
         'precision_micro_models': precision_micro,
         'stability_consensus': {'snapshots': 1, 'top10_retention': 1.0, 'consensus_counts': consensus_counts},
         'release_gate': {'status': 'verified_research_complete', 'actual_backtest_edge': 0, 'recent_edges': [0, 0], 'recent_performance_passed': True, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'precision_governor_release_light': 'yellow'},
-        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用上期沿用守門'},
+        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用上期沿用守門與九名後外漏回補校正'},
         'practical_maturity': {'status': 'passed', 'required': 58, 'top10_avg_maturity': 72, 'action': 'fast_daily_publish_then_deep_review'},
         'backtest': bt,
-        'advanced_models': {'warning': '每日快速版保留全歷史排序；深度模型背景執行', 'consensus_top12': top_numbers[:12], 'models': {}},
+        'advanced_models': {'warning': '每日快速版保留全歷史排序；已加入九名後外漏回補與前排失準降權；深度模型背景執行', 'consensus_top12': top_numbers[:12], 'models': {}},
         'advanced_model_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'unlikely_number_analysis': formula_avoid if formula_avoid.get('numbers') else {'numbers': avoid_rows},
         'unlikely_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': backtest_rounds, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
         'precision_model_tournament': {'status': 'deferred_fast_daily', 'rounds': 0, 'selected_models': {}},
-        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['deep_tournament_deferred_to_background']},
+        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['rank_leak_calibration_enforced', 'overranked_front_numbers_demoted', 'rank_10_to_25_hit_leakage_promoted', 'deep_tournament_deferred_to_background']},
         'dependency_analysis': {'validated_links': [], 'validated_link_count': 0, 'lag_profile': [], 'warning': 'fast daily mode'},
         'repeat_guard': {
             'status': 'strict_reentry_gate_enforced',
@@ -412,11 +851,17 @@ def fast_compute_industrial_analysis(draws, review=None):
         'previous_prediction_guard': previous_guard,
         'adaptive_weight_calibration': {'status': 'fast_daily_recomputed', 'weights': weights},
         'top9_frontload_audit': {
-            'status': 'strict_no_previous_reuse_enforced',
+            'status': 'strict_no_previous_reuse_and_rank_leak_calibration_enforced',
             'top9_numbers': top_numbers[:9],
             'reserve_10_15_numbers': top_numbers[9:15],
             'demoted_from_raw_top9': previous_guard.get('demoted_from_raw_top9', []),
             'promoted_to_top9': previous_guard.get('promoted_to_top9', []),
+            'rank_leak_before_top15': rank_leak_calibration.get('before_top15', []),
+            'rank_leak_after_top15': rank_leak_calibration.get('after_top15', []),
+            'rank_leak_promoted_to_top9': rank_leak_calibration.get('promoted_to_top9', []),
+            'rank_leak_demoted_from_top9': rank_leak_calibration.get('demoted_from_top9', []),
+            'rank_10_to_25_avg_hits': rank_leak_calibration.get('avg_rank_10_to_25_hits', 0),
+            'zero_top9_rate_recent': rank_leak_calibration.get('zero_top9_rate', 0),
         },
         'top10_promotion_audit': {'status': 'strict_no_previous_reuse_enforced', 'top9_numbers': top_numbers[:9]},
         'weights': weights,

@@ -105,6 +105,63 @@ def github_api(path, token, method="GET", data=None, tolerate=()):
     )
 
 
+def analysis_core(payload):
+    latest = payload.get("latest_draw") or {}
+    freshness = payload.get("freshness") or {}
+    return {
+        "generated_at_taiwan": payload.get("generated_at_taiwan") or "",
+        "latest_draw_date": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
+        "target_draw_date": payload.get("target_draw_date") or "",
+        "latest_numbers": latest.get("numbers") or [],
+    }
+
+
+def local_analysis_core():
+    for rel in ("reports/latest_analysis.json", "site/latest_analysis.json"):
+        path = BASE / rel
+        if not path.exists():
+            continue
+        try:
+            return analysis_core(json.loads(path.read_text(encoding="utf-8-sig")))
+        except Exception:
+            continue
+    return {}
+
+
+def remote_analysis_core(token):
+    item = github_api(
+        f"repos/{REPO}/contents/latest_analysis.json?ref=gh-pages",
+        token,
+        tolerate=(404,),
+    )
+    if item.get("_status") == 404:
+        return {}
+    try:
+        raw = base64.b64decode(item.get("content", "")).decode("utf-8-sig")
+        return analysis_core(json.loads(raw))
+    except Exception:
+        return {}
+
+
+def assert_no_remote_regression(token):
+    local = local_analysis_core()
+    remote = remote_analysis_core(token)
+    local_latest = local.get("latest_draw_date") or ""
+    remote_latest = remote.get("latest_draw_date") or ""
+    local_target = local.get("target_draw_date") or ""
+    remote_target = remote.get("target_draw_date") or ""
+    if remote_latest and local_latest and local_latest < remote_latest:
+        raise RuntimeError(
+            "refuse_stale_mobile_publish: "
+            f"local latest {local_latest} is older than cloud latest {remote_latest}"
+        )
+    if remote_target and local_target and local_latest == remote_latest and local_target < remote_target:
+        raise RuntimeError(
+            "refuse_target_regression_publish: "
+            f"local target {local_target} is older than cloud target {remote_target}"
+        )
+
+
 def git_blob_sha(data):
     header = f"blob {len(data)}\0".encode("utf-8")
     return hashlib.sha1(header + data).hexdigest()
@@ -176,6 +233,7 @@ def approved_files():
 
 def publish(token):
     github_api(f"repos/{REPO}", token)
+    assert_no_remote_regression(token)
     ref = github_api(f"repos/{REPO}/git/ref/heads/gh-pages", token, tolerate=(404,))
     parent = None if ref.get("_status") == 404 else ref.get("object", {}).get("sha")
     existing_by_path, existing_shas = existing_tree_blobs(token, parent)

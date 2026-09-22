@@ -278,11 +278,59 @@ jobs:
           ]
           if hard_blocking:
               print("\n".join(problems))
-              print("publish continues; hard issues are recorded for watchdog/self-repair")
-              sys.exit(0)
+              print("publish blocked; hard issues must not overwrite the current mobile site")
+              sys.exit(2)
           PY
           python verify_mobile_sync.py --local-only || (python pages_build.py && python verify_mobile_sync.py --local-only)
           python system_stability_monitor.py || true
+      - name: Block stale mobile regression before commit and deploy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import ssl
+          import sys
+          import time
+          import urllib.request
+
+          root = pathlib.Path(".")
+          local_path = root / "reports" / "latest_analysis.json"
+          if not local_path.exists():
+              raise SystemExit("missing reports/latest_analysis.json")
+          local = json.loads(local_path.read_text(encoding="utf-8-sig"))
+
+          def core(data):
+              latest = data.get("latest_draw") or {}
+              freshness = data.get("freshness") or {}
+              return {
+                  "latest": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
+                  "target": data.get("target_draw_date") or "",
+                  "generated": data.get("generated_at_taiwan") or "",
+              }
+
+          local_core = core(local)
+          remote_core = {}
+          try:
+              url = "https://raw.githubusercontent.com/pingshen670822/tiantianle-cloud-system/gh-pages/latest_analysis.json?cb=" + str(int(time.time()))
+              raw = urllib.request.urlopen(url, timeout=60, context=ssl._create_unverified_context()).read().decode("utf-8-sig")
+              remote_core = core(json.loads(raw))
+          except Exception as exc:
+              print(f"remote regression check warning: {exc}")
+
+          if remote_core.get("latest") and local_core.get("latest") and local_core["latest"] < remote_core["latest"]:
+              print(f"stale publish blocked: local latest {local_core['latest']} < cloud latest {remote_core['latest']}")
+              sys.exit(2)
+          if (
+              remote_core.get("target")
+              and local_core.get("target")
+              and local_core.get("latest") == remote_core.get("latest")
+              and local_core["target"] < remote_core["target"]
+          ):
+              print(f"target regression blocked: local target {local_core['target']} < cloud target {remote_core['target']}")
+              sys.exit(2)
+          print(f"regression guard passed: local={local_core}, cloud={remote_core}")
+          PY
       - name: Commit updated data
         run: |
           set -e
@@ -307,7 +355,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          python offline_full_history_recalc.py || echo "final offline rebuild warning"
+          echo "Using audited reports for publish; final rebuild disabled to prevent stale overwrite"
           python pages_build.py || echo "final pages build warning"
           rm -rf public_site
           mkdir -p public_site/data public_site/reports
