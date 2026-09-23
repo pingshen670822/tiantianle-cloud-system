@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
-  "generated_at_taiwan": "2026-09-23T18:48:49+08:00",
-  "generated_at_california": "2026-09-23T03:48:49-07:00",
+  "generated_at_taiwan": "2026-09-24T00:09:15+08:00",
+  "generated_at_california": "2026-09-23T09:09:15-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11928,
@@ -1686,7 +1686,7 @@
   },
   "freshness": {
     "california_today": "2026-09-23",
-    "california_time": "03:48:49",
+    "california_time": "09:09:15",
     "allowed_latest_draw_date": "2026-09-22",
     "age_days": 0,
     "status": "ok",
@@ -4844,7 +4844,7 @@
       "zero_top9_rate": 0.5,
       "avg_top9_hits": 0.5,
       "avg_rank_10_to_25_hits": 1.5,
-      "enforced_at_taiwan": "2026-09-23T18:48:42+08:00"
+      "enforced_at_taiwan": "2026-09-24T00:09:07+08:00"
     },
     "breakthrough_rebuild": {
       "status": "已執行",
@@ -20710,7 +20710,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-09-23T18:48:42+08:00",
+      "enforced_at_taiwan": "2026-09-24T00:09:07+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -23128,7 +23128,7 @@
         "zero_top9_rate": 0.5,
         "avg_top9_hits": 0.5,
         "avg_rank_10_to_25_hits": 1.5,
-        "enforced_at_taiwan": "2026-09-23T18:48:42+08:00"
+        "enforced_at_taiwan": "2026-09-24T00:09:07+08:00"
       },
       "breakthrough_rebuild": {
         "status": "已執行",
@@ -38994,7 +38994,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-09-23T18:48:42+08:00",
+        "enforced_at_taiwan": "2026-09-24T00:09:07+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -69383,7 +69383,7 @@
     {
       "based_on_date": "2026-09-22",
       "target_date": "2026-09-23",
-      "created_at": "2026-09-23T18:48:49+08:00",
+      "created_at": "2026-09-24T00:09:15+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
