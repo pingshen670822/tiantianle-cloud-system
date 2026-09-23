@@ -13,6 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 REPORT_DIR = ROOT / "reports"
 SITE_DIR = ROOT / "site"
 REMOTE_ANALYSIS_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json"
+REMOTE_REPORT_ANALYSIS_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json"
 TAIWAN = ZoneInfo("Asia/Taipei")
 
 
@@ -140,6 +141,18 @@ def main():
             args.sleep,
         )
         mismatches.extend(remote_mismatches)
+        report_remote_payload, report_remote_mismatches, report_remote_error = fetch_remote_until_synced(
+            REMOTE_REPORT_ANALYSIS_URL,
+            local,
+            args.retries,
+            args.sleep,
+        )
+        if report_remote_mismatches:
+            mismatches.extend(["完整戰報雲端:" + item.replace("本機與雲端:", "") for item in report_remote_mismatches])
+            if report_remote_error and not remote_error:
+                remote_error = report_remote_error
+        else:
+            remote_payload = report_remote_payload or remote_payload
 
     status = "同步" if not mismatches else "不同步"
     payload = {
@@ -149,6 +162,7 @@ def main():
         "site": site,
         "remote": remote_payload,
         "remote_url": REMOTE_ANALYSIS_URL,
+        "remote_report_url": REMOTE_REPORT_ANALYSIS_URL,
         "remote_error": remote_error,
         "mismatches": mismatches,
     }
