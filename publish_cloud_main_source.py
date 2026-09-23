@@ -26,12 +26,22 @@ BLOCKED_NAMES = {".env", ".env.local", ".env.production", ".gitconfig-gh"}
 BLOCKED_PARTS = ("token", "secret", "credential", "password", "github_device_login")
 ALLOWLIST = {
     ".github/workflows/tiantianle-cloud-auto-update.yml",
+    "aerospace_engine.py",
+    "california_fantasy5_system.py",
+    "industrial_engine.py",
     "offline_full_history_recalc.py",
+    "pages_build.py",
     "run_california_fantasy5_once.ps1",
+    "sanitize_public_outputs.py",
+    "system_gap_audit.py",
     "天天樂開獎後自動更新.ps1",
     "天天樂自動更新鐵律守護.ps1",
     "install_daily_auto_update.ps1",
     "system_stability_monitor.py",
+    "tiantianle_core.py",
+    "tiantianle_formula_engine.py",
+    "tiantianle_ironlaw_report.py",
+    "verify_mobile_sync.py",
     "publish_mobile_site_only.py",
     "publish_cloud_main_source.py",
 }
@@ -78,9 +88,16 @@ def allowed(path):
 
 def source_files():
     files = []
+    seen = set()
     for rel in sorted(ALLOWLIST):
         path = BASE / rel
         if not path.is_file() or not allowed(path):
+            continue
+        seen.add(rel)
+        files.append((rel, path))
+    for path in sorted(BASE.glob("*20260618*.py")):
+        rel = path.name
+        if rel in seen or not path.is_file() or not allowed(path):
             continue
         files.append((rel, path))
     return sorted(files)

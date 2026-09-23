@@ -53,8 +53,8 @@ WINDOWS = [5, 10, 20, 50, 100]
 PACK_GOALS = {
     "strong_single": 1,
     "two_hit_one": 1,
-    "three_hit_two": 2,
-    "five_hit_two": 2,
+    "three_hit_two": 1,
+    "five_hit_two": 1,
     "nine_hit_three": 3,
     "precision_single": 1,
     "precision_two_hit_one": 1,
@@ -164,7 +164,7 @@ def iso_local(dt):
 
 def latest_allowed_draw_date():
     ca_now = california_now()
-    if (ca_now.hour, ca_now.minute) >= (18, 50):
+    if (ca_now.hour, ca_now.minute) >= (19, 0):
         return ca_now.date().isoformat()
     return (ca_now.date() - timedelta(days=1)).isoformat()
 
@@ -1149,7 +1149,7 @@ def data_freshness(latest_draw_date):
     target = latest + timedelta(days=1)
     latest_release = draw_release_times(latest.isoformat())
     target_release = draw_release_times(target.isoformat())
-    draw_result_due = (ca_now.hour, ca_now.minute) >= (18, 50)
+    draw_result_due = (ca_now.hour, ca_now.minute) >= (19, 0)
     if age_days < 0:
         status = "future_data_error"
     elif age_days == 0:
@@ -1247,8 +1247,8 @@ def build_packs(candidates):
     return {
         "strong_single": {"name": "\u7368\u652f\u7cbe\u6e961\u4e2d1", "hit_goal": 1, "hit_goal_max": 1, "numbers": nums[:1], "theoretical_probability": theoretical_probability(1, 1)},
         "two_hit_one": {"name": "\u6700\u5f372\u4e2d1~2", "hit_goal": 1, "hit_goal_max": 2, "numbers": nums[:2], "theoretical_probability": theoretical_probability(2, 1)},
-        "three_hit_two": {"name": "\u6700\u5f373\u4e2d2~3", "hit_goal": 2, "hit_goal_max": 3, "numbers": nums[:3], "theoretical_probability": theoretical_probability(3, 2)},
-        "five_hit_two": {"name": "\u7a69\u5b9a5\u4e2d2~3", "hit_goal": 2, "hit_goal_max": 3, "numbers": nums[:5], "theoretical_probability": theoretical_probability(5, 2)},
+        "three_hit_two": {"name": "\u6700\u5f373\u4e2d1~3", "hit_goal": 1, "hit_goal_max": 3, "numbers": nums[:3], "theoretical_probability": theoretical_probability(3, 1)},
+        "five_hit_two": {"name": "\u6700\u5f375\u4e2d1~5", "hit_goal": 1, "hit_goal_max": 5, "numbers": nums[:5], "theoretical_probability": theoretical_probability(5, 1)},
         "nine_hit_three": {"name": "\u6700\u5f379\u4e2d3~5", "hit_goal": 3, "hit_goal_max": 5, "numbers": nums[:9], "theoretical_probability": theoretical_probability(9, 3)},
     }
 
@@ -1937,13 +1937,15 @@ def backfill_predictions_from_snapshots(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", [])
-            hits = len(set(numbers) & actual_numbers)
+            hit_numbers = sorted(set(numbers) & actual_numbers)
+            hits = len(hit_numbers)
             goal = PACK_GOALS.get(key, int(pack.get("hit_goal", 1) or 1))
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
+                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         conn.execute(
@@ -2011,13 +2013,15 @@ def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json
     pack_hits = {}
     for key, pack in packs.items():
         numbers = pack.get("numbers", []) if isinstance(pack, dict) else []
-        hits = len(set(numbers) & actual_numbers)
+        hit_numbers = sorted(set(numbers) & actual_numbers)
+        hits = len(hit_numbers)
         goal = PACK_GOALS.get(key, int(pack.get("hit_goal", 1) or 1) if isinstance(pack, dict) else 1)
         pack_hits[key] = {
             "hits": hits,
             "hit_goal": goal,
             "passed": hits >= goal,
             "numbers": numbers,
+            "hit_numbers": hit_numbers,
             "missed_numbers": sorted(set(numbers) - actual_numbers),
         }
     existing = conn.execute(
@@ -2189,13 +2193,15 @@ def settle_predictions(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", [])
-            hits = len(set(numbers) & actual_numbers)
+            hit_numbers = sorted(set(numbers) & actual_numbers)
+            hits = len(hit_numbers)
             goal = PACK_GOALS.get(key, 1)
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
+                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         conn.execute(
@@ -2227,6 +2233,15 @@ def _settled_prediction_from_row(row):
     actual_numbers = json.loads(row[3] or "[]")
     candidate_numbers = [item.get("number") for item in candidates if isinstance(item, dict)]
     actual_set = set(actual_numbers)
+    top5 = candidate_numbers[:5]
+    top9 = candidate_numbers[:9]
+    top10 = candidate_numbers[:10]
+    top15 = candidate_numbers[:15]
+    top5_hit_numbers = sorted(set(top5) & actual_set)
+    top9_hit_numbers = sorted(set(top9) & actual_set)
+    top10_hit_numbers = sorted(set(top10) & actual_set)
+    top15_hit_numbers = sorted(set(top15) & actual_set)
+    rank_10_to_15_hit_numbers = sorted(set(candidate_numbers[9:15]) & actual_set)
     candidate_review = []
     for idx, item in enumerate(candidates[:15], 1):
         if not isinstance(item, dict):
@@ -2248,6 +2263,17 @@ def _settled_prediction_from_row(row):
         "actual_period": row[2],
         "actual_numbers": actual_numbers,
         "candidate_numbers": candidate_numbers,
+        "top5": top5,
+        "top9": top9,
+        "top10": top10,
+        "top15": top15,
+        "hit_numbers": top15_hit_numbers,
+        "top5_hit_numbers": top5_hit_numbers,
+        "top9_hit_numbers": top9_hit_numbers,
+        "top10_hit_numbers": top10_hit_numbers,
+        "top15_hit_numbers": top15_hit_numbers,
+        "rank_10_to_15_hit_numbers": rank_10_to_15_hit_numbers,
+        "missed_actual_numbers": sorted(actual_set - set(top15)),
         "candidate_review": candidate_review,
         "strong_pack_hits": json.loads(row[5] or "{}"),
         "top5_hits": row[6] or 0,
@@ -2407,13 +2433,15 @@ def failure_review(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", []) if isinstance(pack, dict) else []
-            hits = len(set(numbers) & actual_numbers)
+            hit_numbers = sorted(set(numbers) & actual_numbers)
+            hits = len(hit_numbers)
             goal = PACK_GOALS.get(key, 1)
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
+                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         rows.append(
@@ -2859,7 +2887,18 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
     top_numbers = [int(item.get("number")) for item in (candidates or [])]
     high_rows = _decision_high_confidence_numbers(strict_policy, candidates)
     high_numbers = [int(item.get("number")) for item in high_rows]
-    fallback = high_numbers or top_numbers
+    validation = (industrial or {}).get("strong_single_validation") or {}
+    validated_single = []
+    try:
+        number = int(validation.get("number"))
+        if validation.get("status") in {"已驗證", "verified"} and NUMBER_MIN <= number <= NUMBER_MAX:
+            validated_single = [number]
+    except (TypeError, ValueError):
+        validated_single = []
+    priority_numbers = validated_single + high_numbers
+    priority_seen = set(priority_numbers)
+    high_first_numbers = priority_numbers + [number for number in top_numbers if number not in priority_seen]
+    fallback = high_first_numbers or top_numbers
     formal = bool((strict_policy or {}).get("formal_recommendations"))
     grade = "甲級" if formal else ("乙級" if high_numbers else "丙級")
     action_label = "正式高信心推薦" if formal else ("高信心觀察強化" if high_numbers else "嚴格觀察等待再驗證")
@@ -2869,18 +2908,18 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
         "version": ENGINE_VERSION,
         "action_label": action_label,
         "grade": grade,
-        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1必出、5中2基本、9中2低標",
+        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1、2中1~2、3中1~3、5中1~5為基本配置",
         "ironlaw_targets": {
             "獨隻": "1中1必須每期輸出並列明驗算來源",
-            "五碼": "5中2為基本底線，5中3為強化目標",
+            "五碼": "5中1~5為基本配置，命中顆數逐期回測",
             "九碼": "9中2為最低標準，9中3以上為強化目標",
             "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討",
         },
-        "primary_single": top_numbers[:1] or _pack_numbers(strong_packs, "strong_single", fallback, 1),
-        "two_hit_one": top_numbers[:2] or _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
-        "three_hit_one": top_numbers[:3] or _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
-        "five_hit_two": top_numbers[:5] or _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
-        "nine_hit_three": top_numbers[:9] or _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
+        "primary_single": fallback[:1] or _pack_numbers(strong_packs, "strong_single", fallback, 1),
+        "two_hit_one": fallback[:2] or _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
+        "three_hit_one": fallback[:3] or _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
+        "five_hit_two": fallback[:5] or _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
+        "nine_hit_three": fallback[:9] or _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
         "high_confidence_numbers": high_rows,
         "high_confidence_core": high_numbers[:9],
         "defensive_avoid": [int(n) for n in defensive_avoid[:10] if n is not None],

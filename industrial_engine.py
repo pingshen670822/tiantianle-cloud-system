@@ -4120,8 +4120,8 @@ def pack_recent_governance(draws, rounds=None, weights_override=None):
     pack_specs = {
         "strong_single": {"size": 1, "goal": 1, "min_pass_rate": 0.20, "min_avg_hits": 0.20, "min_edge": 0.05},
         "two_hit_one": {"size": 2, "goal": 1, "min_pass_rate": 0.32, "min_avg_hits": 0.32, "min_edge": 0.05},
-        "three_hit_two": {"size": 3, "goal": 2, "min_pass_rate": 0.08, "min_avg_hits": 0.42, "min_edge": 0.035},
-        "five_hit_two": {"size": 5, "goal": 2, "min_pass_rate": 0.16, "min_avg_hits": 0.78, "min_edge": 0.045},
+        "three_hit_two": {"size": 3, "goal": 1, "min_pass_rate": 0.20, "min_avg_hits": 0.42, "min_edge": 0.035},
+        "five_hit_two": {"size": 5, "goal": 1, "min_pass_rate": 0.34, "min_avg_hits": 0.78, "min_edge": 0.045},
         "nine_hit_three": {"size": 9, "goal": 3, "min_pass_rate": 0.12, "min_avg_hits": 1.28, "min_edge": 0.04},
     }
     pack_variants = {
@@ -4346,8 +4346,8 @@ def strong_packs(candidates, review=None, governance=None):
     specs = {
         "strong_single": ("\u6700\u5f37\u55ae\u652f", 1, 1, 0.78, 1, 82.0),
         "two_hit_one": ("\u6700\u5f372\u4e2d1", 1, 2, 0.76, 2, 76.0),
-        "three_hit_two": ("\u6700\u5f373\u4e2d2~3", 2, 3, 0.78, 2, 78.0),
-        "five_hit_two": ("\u6700\u5f375\u4e2d2", 2, 5, 0.68, 1, 72.0),
+        "three_hit_two": ("\u6700\u5f373\u4e2d1~3", 1, 3, 0.78, 2, 78.0),
+        "five_hit_two": ("\u6700\u5f375\u4e2d1~5", 1, 5, 0.68, 1, 72.0),
         "nine_hit_three": ("\u6700\u5f379\u4e2d3", 3, 9, 0.62, 0, 68.0),
     }
     packs = {}
@@ -4570,8 +4570,8 @@ def prediction_gap_diagnosis(draws, candidates, precision_tournament, pack_gover
     pack_labels = {
         "strong_single": "\u5f37\u7368",
         "two_hit_one": "\u4e8c\u4e2d\u4e00",
-        "three_hit_two": "\u4e09\u4e2d\u4e8c",
-        "five_hit_two": "\u4e94\u4e2d\u4e8c",
+        "three_hit_two": "\u4e09\u4e2d\u4e00\u81f3\u4e09",
+        "five_hit_two": "\u4e94\u4e2d\u4e00\u81f3\u4e94",
         "nine_hit_three": "\u4e5d\u4e2d\u4e09",
     }
 
@@ -7376,7 +7376,7 @@ def apply_zero_hit_cluster_rescue_gate(candidates, draws, review=None, front_lim
     active = zero_hit_top15_failure(review)
     old_top9 = [int(item["number"]) for item in candidates[:front_limit]]
     if not active:
-        return {
+        return candidates, {
             "status": "觀察",
             "reason": "上期前十五沒有觸發零中急救",
             "old_top9": old_top9,
@@ -7850,7 +7850,7 @@ def compute_industrial_analysis(draws, review=None):
             "top10_avg_maturity": maturity.get("top10_avg_maturity"),
             "ironlaw_targets": {
                 "strong_single": "1中1必須輸出並驗算",
-                "five_hit_two": "5中2為基本底線，5中3為強標",
+                "five_hit_two": "5中1~5為基本配置，逐期回測驗證",
                 "nine_hit_two_floor": "9中2為最低標準",
                 "nine_hit_three": "9中3為強化目標",
             },

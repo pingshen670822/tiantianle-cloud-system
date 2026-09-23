@@ -769,6 +769,37 @@ def build_signal_focus(candidates):
     )
 
 
+def build_mobile_basic_config_block(data):
+    decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
+    prediction = data.get("prediction") or {}
+    freshness = data.get("freshness") or {}
+    target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
+    target_time = data.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "-"
+    prediction_day = f"{target_date} / {taiwan_time_label(target_time)}"
+    single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
+    two = decision.get("two_hit_one") or prediction.get("top2") or []
+    three = decision.get("three_hit_one") or prediction.get("top3") or []
+    five = decision.get("five_hit_two") or prediction.get("top5") or []
+    rows = [
+        ("1", "預測日", prediction_day),
+        ("2", "最強高機率獨隻", fmt_numbers(single) or "-"),
+        ("3", "最強高機率2中1~2", fmt_numbers(two) or "-"),
+        ("4", "最強高機率3中1~3", fmt_numbers(three) or "-"),
+        ("5", "最強高機率5中1~5", fmt_numbers(five) or "-"),
+    ]
+    body = "".join(
+        f"<tr><th>{esc(idx)}</th><th>{esc(label)}</th><td>{esc(value)}</td></tr>"
+        for idx, label, value in rows
+    )
+    return (
+        "<section class=\"band signal-focus\">"
+        "<h2>戰報基本配置</h2>"
+        "<p><strong>以下五項為天天樂戰報固定基本欄位，每次重算必須出現。</strong></p>"
+        f"<table><tr><th>#</th><th>項目</th><th>內容</th></tr>{body}</table>"
+        "</section>"
+    )
+
+
 def build_mobile_avoid_rows(data, group_name):
     avoid = data.get("low_probability_avoid") or {}
     groups = avoid.get("groups") or {}
@@ -830,6 +861,10 @@ def build_mobile_ironlaw_block(data):
     high_numbers = decision.get("high_confidence_core") or [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
     avoid_numbers = decision.get("defensive_avoid") or []
     avoid_packs = decision.get("avoid_packs") or ((data.get("low_probability_avoid") or {}).get("avoid_packs") or {})
+    freshness = data.get("freshness") or {}
+    target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
+    target_time = data.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "-"
+    prediction_day = f"{target_date} / {taiwan_time_label(target_time)}"
 
     def action_row(label, numbers):
         return f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(numbers) or '-')}</td></tr>"
@@ -852,10 +887,11 @@ def build_mobile_ironlaw_block(data):
         f"<section class='band signal-focus'><h2>{u('\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848')}</h2>"
         f"<p><strong>{esc(decision.get('conclusion', decision.get('action_label', '-')))}</strong></p>"
         f"<table>"
-        f"{action_row(u('\\u660e\\u78ba\\u7368\\u96bb'), decision.get('primary_single') or [])}"
-        f"{action_row(u('\\u660e\\u78ba') + '2' + u('\\u4e2d') + '1', decision.get('two_hit_one') or [])}"
-        f"{action_row(u('\\u660e\\u78ba') + '3' + u('\\u4e2d') + '1~3', decision.get('three_hit_one') or [])}"
-        f"{action_row(u('\\u660e\\u78ba') + '5' + u('\\u4e2d') + '2', decision.get('five_hit_two') or [])}"
+        f"<tr><th>預測日</th><td>{esc(prediction_day)}</td></tr>"
+        f"{action_row('最強高機率獨隻', decision.get('primary_single') or [])}"
+        f"{action_row('最強高機率2中1~2', decision.get('two_hit_one') or [])}"
+        f"{action_row('最強高機率3中1~3', decision.get('three_hit_one') or [])}"
+        f"{action_row('最強高機率5中1~5', decision.get('five_hit_two') or [])}"
         f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '2' + u('\\u4f4e\\u6a19') + ' / 9' + u('\\u4e2d') + '3' + u('\\u5f37\\u6a19'), decision.get('nine_hit_three') or [])}"
         f"{action_row(u('\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c'), high_numbers[:9])}"
         f"{action_row(u('\\u9632\\u5b88\\u907f\\u958b'), avoid_numbers[:10])}"
@@ -967,7 +1003,7 @@ def build_home_page():
         add_pack_row(label, item.get("numbers") or [], goal, f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97')} {item.get('score', 0)} / {mobile_status(item.get('status', 'watch_only'))}")
 
     for key, label in [
-        ("five_hit_two", "5" + u("\\u4e2d") + "2~3"),
+        ("five_hit_two", "5" + u("\\u4e2d") + "1~5"),
         ("nine_hit_three", "9" + u("\\u4e2d") + "3~5"),
     ]:
         pack = packs.get(key) or {}
@@ -977,7 +1013,8 @@ def build_home_page():
         if maturity_status is None and "passed" in pack_maturity:
             maturity_status = "passed" if pack_maturity.get("passed") else "watch_only"
         maturity_text = f"{maturity_value} / {mobile_status(maturity_status or '-')}"
-        add_pack_row(label, pack.get("numbers") or [], pack.get("hit_goal"), maturity_text)
+        goal = "1~5" if key == "five_hit_two" else pack.get("hit_goal")
+        add_pack_row(label, pack.get("numbers") or [], goal, maturity_text)
     page_title = u("\\u5929\\u5929\\u6a02 \\u624b\\u6a5f\\u96f2\\u7aef\\u9996\\u9801")
     subtitle = (
         f"{u('\\u7522\\u751f')} {esc(taiwan_time_label(data.get('generated_at_taiwan')))} / "
@@ -1025,6 +1062,7 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="每月總整理.html">{u('\\u67e5\\u770b\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{u('\\u624b\\u6a5f\\u96f2\\u7aef\\u7db2\\u5740\\u5df2\\u8a2d\\u5b9a')}</p></section>
+{build_mobile_basic_config_block(data)}
 {build_mobile_recalculation_block(data)}
 {build_mobile_no_reuse_guard_block(data)}
 {build_mobile_ironlaw_block(data)}

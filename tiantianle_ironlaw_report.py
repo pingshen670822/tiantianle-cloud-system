@@ -62,7 +62,40 @@ def safe_int(value, default=0):
 def zh_text(value):
     if value is None or value == "":
         return "-"
-    return localize_plain_text(str(value))
+    text = localize_plain_text(str(value))
+    replacements = {
+        "Top10": "前十",
+        "Top9": "前九",
+        "Top15": "前十五",
+        "top10": "前十",
+        "top9": "前九",
+        "top15": "前十五",
+        "rank_leak_calibration_enforced": "九名後命中外漏校正已啟用",
+        "breakthrough_rebuild_enforced": "失準突破重排已啟用",
+        "missed_actual_recovery_promoted": "漏抓實開號回收已前移",
+        "late_hit_numbers_frontloaded": "後段命中號已前移",
+        "repeated_failed_numbers_demoted": "連續落空號已降權",
+        "deep_tournament_deferred_to_background": "深度競賽留背景複核",
+        "fast_daily_publish_then_deep_review": "快速發布後深度複核",
+        "deferred_fast_daily": "快速版保留深度複核",
+        "fast_daily_recomputed": "快速重算完成",
+        "verified_research_complete": "研究觀察通過",
+        "watch_only": "觀察候選",
+        "strict_reentry_gate_and_breakthrough_rebuild_enforced": "連莊達標守門與失準突破重排已啟用",
+        "strict_no_previous_reuse_rank_leak_and_breakthrough_rebuild_enforced": "上期防呆、錯位校正與失準突破重排已啟用",
+        "industrial_fast_daily_formula_v20260922_breakthrough_rebuild": "全歷史失準突破重排引擎",
+        "breakthrough_rebuild_v20260922": "失準突破重排版",
+        "multi_model_breakthrough_fast_v20260922": "多模型失準突破快算版",
+        "post_draw_error_correction_fast_v20260922": "開獎後錯誤修正版",
+        "passed": "通過",
+        "blocked": "擋下",
+        "watch": "觀察",
+        "hot": "熱號",
+        "cold": "冷號",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text
 
 
 def display_time(value):
@@ -1345,7 +1378,7 @@ def core_model_rows(analysis):
             u("\\u524d\\u4e5d"),
         ])
     labels = {
-        "five_hit_two": "5\\u4e2d2~3",
+        "five_hit_two": "5\\u4e2d1~5",
         "nine_hit_three": "9\\u4e2d3~5",
     }
     for key, label in labels.items():
@@ -1688,17 +1721,17 @@ def explicit_action_block(analysis):
             ["午間完整重算", "每日下午13:00完成重新回測、校正模型、重建戰報與手機版。"],
         ]
 
-    primary_single = prediction_numbers("strongest", "top1") or pack_numbers("primary_single", "strong_single", "single")
-    two_hit_one = prediction_numbers("top2") or pack_numbers("two_hit_one", "two_hit_one", "two")
-    three_hit_one = prediction_numbers("top3") or pack_numbers("three_hit_one", "three_hit_two", "three")
-    five_hit_two = prediction_numbers("top5") or pack_numbers("five_hit_two", "five_hit_two")
-    nine_hit_three = prediction_numbers("top9") or pack_numbers("nine_hit_three", "nine_hit_three")
+    primary_single = pack_numbers("primary_single", "strong_single", "single") or prediction_numbers("strongest", "top1")
+    two_hit_one = pack_numbers("two_hit_one", "two_hit_one", "two") or prediction_numbers("top2")
+    three_hit_one = pack_numbers("three_hit_one", "three_hit_two", "three") or prediction_numbers("top3")
+    five_hit_two = pack_numbers("five_hit_two", "five_hit_two") or prediction_numbers("top5")
+    nine_hit_three = pack_numbers("nine_hit_three", "nine_hit_three") or prediction_numbers("top9")
     core_numbers = nine_hit_three or decision.get("high_confidence_core") or [item.get("number") for item in high_source[:9] if item.get("number") is not None]
     cards = [
-        action_card("明確獨支", primary_single, "本期一號核心"),
-        action_card("明確2中1", two_hit_one, "本期雙核心"),
-        action_card("明確3中1", three_hit_one, "本期三號核心"),
-        action_card("明確5中2", five_hit_two, "本期五號攻擊組"),
+        action_card("最強高機率獨隻", primary_single, "本期一號核心"),
+        action_card("最強高機率2中1~2", two_hit_one, "本期雙核心"),
+        action_card("最強高機率3中1~3", three_hit_one, "本期三號核心"),
+        action_card("最強高機率5中1~5", five_hit_two, "本期五號攻擊組"),
         action_card("明確9中3", nine_hit_three, "本期九號覆蓋組"),
         action_card("防守避開", defensive_avoid, "低分與弱訊號風控"),
     ]
@@ -1793,7 +1826,7 @@ def model_backtest_focus_block(analysis):
         ("strong_single", "獨支"),
         ("two_hit_one", "2中1"),
         ("precision_three_hit_one", "3中1"),
-        ("five_hit_two", "5中2"),
+        ("five_hit_two", "5中1~5"),
         ("nine_hit_three", "9中3"),
     ]:
         pack = packs.get(key) or {}
@@ -1863,6 +1896,12 @@ def compact_status(value):
         "strict_no_previous_reuse": "禁止沿用上期",
         "strict_reentry_gate_enforced": "連莊達標守門",
         "strict_no_previous_reuse_enforced": "防沿用守門已啟用",
+        "strict_reentry_gate_and_breakthrough_rebuild_enforced": "連莊達標守門與失準突破重排已啟用",
+        "strict_no_previous_reuse_rank_leak_and_breakthrough_rebuild_enforced": "上期防呆、錯位校正與失準突破重排已啟用",
+        "breakthrough_rebuild_enforced": "失準突破重排已啟用",
+        "deferred_fast_daily": "快速版保留深度複核",
+        "verified_research_complete": "研究觀察通過",
+        "industrial_fast_daily_formula_v20260922_breakthrough_rebuild": "全歷史失準突破重排引擎",
     }
     text = str(value or "-")
     return mapping.get(text, zh_text(text))
@@ -2032,8 +2071,8 @@ def compact_pack_rows_tiantianle(analysis):
     order = [
         ("strong_single", "獨隻1中1"),
         ("two_hit_one", "2中1"),
-        ("three_hit_two", "3中1"),
-        ("five_hit_two", "5中2"),
+        ("three_hit_two", "3中1~3"),
+        ("five_hit_two", "5中1~5"),
         ("nine_hit_three", "9中3"),
     ]
     rows = []
@@ -2413,13 +2452,21 @@ def compact_review_html_tiantianle(settled):
     top10 = settled.get("top10") or candidates[:10]
     top15 = settled.get("top15") or candidates[:15]
     misses = [number for number in top15 if number not in actual]
+    top9_hits = settled.get("top9_hit_numbers") or [number for number in candidates[:9] if number in actual]
+    top10_hits = settled.get("top10_hit_numbers") or [number for number in top10 if number in actual]
+    top15_hits = settled.get("top15_hit_numbers") or [number for number in top15 if number in actual]
+    tail_hits = settled.get("rank_10_to_15_hit_numbers") or [number for number in top15[9:15] if number in actual]
     hit_summary = f"{settled.get('top5_hits')} / {settled.get('top10_hits')} / {settled.get('top15_hits')}"
     summary_rows = [
         ["實際開獎", fmt_numbers(actual)],
         ["前五 / 前十 / 前十五", hit_summary],
         ["前五預測", mark_numbers(top5, actual)],
-        ["前十命中號", mark_numbers(top10, actual)],
+        ["前九命中號", mark_numbers(top9_hits, actual) or "-"],
+        ["前十命中號", mark_numbers(top10_hits, actual) or "-"],
+        ["前十五命中號", mark_numbers(top15_hits, actual) or "-"],
+        ["第十至十五名外漏命中", mark_numbers(tail_hits, actual) or "-"],
         ["前十五未中號", fmt_numbers(misses)],
+        ["本期修正", "前九為零且後段有中時，後段命中號已進入下期急救前移驗算"],
     ]
     rows = []
     for key, value in (settled.get("strong_pack_hits") or {}).items():
@@ -2448,6 +2495,8 @@ def compact_failure_data_html_tiantianle(analysis):
     top10 = candidates[:10]
     top15 = candidates[:15]
     top9_hits = [number for number in top9 if number in actual]
+    top15_hits = [number for number in top15 if number in actual]
+    tail_hits = [number for number in top15[9:15] if number in actual]
     top9_misses = [number for number in top9 if number not in actual]
     top15_misses = [number for number in top15 if number not in actual]
     monthly = review.get("monthly_review") or {}
@@ -2492,6 +2541,8 @@ def compact_failure_data_html_tiantianle(analysis):
         ["已結算期別", f"{settled.get('based_on_date', '-')} 預測到 {settled.get('actual_date', '-')}"],
         ["實際開獎", fmt_numbers(actual) or "-"],
         ["前九命中", f"{len(top9_hits)}：{fmt_numbers(top9_hits) or '-'}"],
+        ["前十五命中", f"{len(top15_hits)}：{fmt_numbers(top15_hits) or '-'}"],
+        ["第十至十五名外漏命中", fmt_numbers(tail_hits) or "-"],
         ["前九未中", fmt_numbers(top9_misses) or "-"],
         ["前十五未中", fmt_numbers(top15_misses) or "-"],
         ["檢討嚴重度", zh_text(review.get("severity", "-"))],
@@ -3012,7 +3063,7 @@ def compact_formula_lab_html_tiantianle(analysis):
         ("strong_single", "獨隻1中1"),
         ("two_hit_one", "2中1"),
         ("three_hit_two", "3中1~3"),
-        ("five_hit_two", "5中2~3"),
+        ("five_hit_two", "5中1~5"),
         ("nine_hit_three", "9中3~5"),
     ]
     pack_rows = []
@@ -3160,7 +3211,7 @@ def compact_reality_gate_html_tiantianle(analysis):
         ["獨隻1中1", "目標95%", release_label(analysis), "未過門檻只列觀察"],
         ["2中1~2", "目標95%", maturity.get("top10_avg_maturity", "-"), "每期回測後放行"],
         ["3中1~3", "目標95%", backtest.get("top5_avg_hits", "-"), "需多模型交叉通過"],
-        ["5中2~3", "目標95%", backtest.get("top10_avg_hits", "-"), "未達標降級"],
+        ["5中1~5", "目標95%", backtest.get("top10_avg_hits", "-"), "每期回測後放行"],
         ["9中3~5", "目標95%", backtest.get("top15_avg_hits", "-"), "只用前九核心顯示"],
         ["正式發布守門", release.get("status", "-"), release.get("actual_backtest_edge", "-"), "未達標不得包裝高信心"],
     ]
@@ -3365,7 +3416,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     if not high_numbers:
         high_numbers = prediction.get("high_confidence_watch") or []
     top9 = decision.get("nine_hit_three") or prediction.get("top9") or []
-    primary_single = prediction.get("strongest") or prediction.get("top1") or decision.get("primary_single") or (analysis.get("strong_packs") or {}).get("strong_single", {}).get("numbers", [])
+    primary_single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or (analysis.get("strong_packs") or {}).get("strong_single", {}).get("numbers", [])
     latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
     latest_numbers = fmt_numbers(latest.get("numbers", []))
     target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
@@ -3376,6 +3427,24 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest_period_note = ca_date_note(latest_date)
     target_period_note = ca_date_note(target_date)
     report_time = taiwan_time_label(analysis.get("generated_at_taiwan", "-"))
+    basic_two = decision.get("two_hit_one") or prediction.get("top2") or []
+    basic_three = decision.get("three_hit_one") or prediction.get("top3") or []
+    basic_five = decision.get("five_hit_two") or prediction.get("top5") or []
+    basic_prediction_day = f"{target_date} / {target_tw_label}"
+    basic_config_rows = [
+        ["1", "預測日", basic_prediction_day],
+        ["2", "最強高機率獨隻", fmt_numbers(primary_single) or "-"],
+        ["3", "最強高機率2中1~2", fmt_numbers(basic_two) or "-"],
+        ["4", "最強高機率3中1~3", fmt_numbers(basic_three) or "-"],
+        ["5", "最強高機率5中1~5", fmt_numbers(basic_five) or "-"],
+    ]
+    basic_config_html = (
+        '<section class="band singlebox">'
+        '<h2>戰報基本配置</h2>'
+        '<p><strong>以下五項為天天樂戰報固定基本欄位，每次重算必須出現。</strong></p>'
+        f'{table(["#", "項目", "內容"], basic_config_rows)}'
+        '</section>'
+    )
     history_info = analysis.get("history_completeness") or {}
     count = analysis.get("draw_count", "-")
     status_text = compact_status(freshness.get("status", "ok"))
@@ -3488,6 +3557,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
       <div class="card"><div class="label">戰報產生台灣時間</div><div class="value">{esc(report_time)}</div></div>
     </div>
   </section>
+  {basic_config_html}
   <section id="prediction" class="panel active">
     {clear_focus_html}
     <details class="advanced">
@@ -3651,7 +3721,52 @@ def prediction_gap_diagnosis_rows(analysis):
 
 
 def strict_validation_rows(analysis):
-    strict = ((analysis.get("industrial_engine") or {}).get("strict_validation_gate") or {})
+    industrial = analysis.get("industrial_engine") or {}
+    entry = industrial.get("full_system_entry_gate") or {}
+    recent_gate = industrial.get("recent_failure_front_gate") or {}
+    correction = industrial.get("multi_model_correction") or {}
+    strict = industrial.get("strict_validation_gate") or {}
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    if entry:
+        main_numbers = entry.get("main_numbers") or []
+        blocked_numbers = entry.get("blocked_numbers") or recent_gate.get("blocked_numbers") or []
+        rows = [[
+            u("\\u653e\\u884c\\u7e3d\\u6578"),
+            entry.get("main_count", len(main_numbers)),
+            u("\\u8f38\\u5165\\u5019\\u9078"),
+            len(candidates),
+            zh_text(entry.get("status", "已執行")),
+        ]]
+        rows.append([
+            u("\\u64cb\\u4e0b\\u7e3d\\u6578"),
+            len(blocked_numbers),
+            u("\\u6700\\u4f4e\\u653e\\u884c\\u6578"),
+            entry.get("front_limit", 9),
+            zh_text(entry.get("policy", "九碼主列通過全系統守門")),
+        ])
+        rows.append([
+            u("\\u4e3b\\u5217\\u4e5d\\u78bc"),
+            fmt_numbers(main_numbers) or "-",
+            u("\\u5f8c\\u5099\\u7b2c\\u5341\\u81f3\\u5341\\u4e94"),
+            fmt_numbers(entry.get("reserve_numbers", [])) or "-",
+            zh_text(entry.get("message", "主列放行門已套用")),
+        ])
+        rows.append([
+            u("\\u5931\\u6e96\\u91cd\\u6392"),
+            fmt_numbers(correction.get("promoted_to_top9", [])) or "-",
+            u("\\u964d\\u6b0a\\u5254\\u9664"),
+            fmt_numbers(correction.get("demoted_from_top9", [])) or "-",
+            zh_text(correction.get("message", "已納入下期排序重排")),
+        ])
+        if blocked_numbers:
+            rows.append([
+                u("\\u64cb\\u4e0b\\u865f\\u78bc"),
+                fmt_numbers(blocked_numbers[:15]) or "-",
+                u("\\u539f\\u56e0"),
+                u("\\u8fd1\\u671f\\u843d\\u7a7a\\u6216\\u9023\\u838a\\u672a\\u9054\\u6a19"),
+                u("\\u4e0d\\u9032\\u5165\\u4e5d\\u78bc\\u4e3b\\u5217"),
+            ])
+        return safe_rows(rows)
     rows = [[
         u("\\u653e\\u884c\\u7e3d\\u6578"),
         strict.get("validated_count", 0),
@@ -3828,8 +3943,8 @@ def monthly_pack_rows(analysis):
     labels = {
         "strong_single": u("\\u5f37\\u73681\\u4e2d1"),
         "two_hit_one": "2" + u("\\u4e2d") + "1",
-        "three_hit_two": "3" + u("\\u4e2d") + "2~3",
-        "five_hit_two": "5" + u("\\u4e2d") + "2~3",
+        "three_hit_two": "3" + u("\\u4e2d") + "1~3",
+        "five_hit_two": "5" + u("\\u4e2d") + "1~5",
         "nine_hit_three": "9" + u("\\u4e2d") + "3~5",
         "legacy_three_hit_one": u("\\u820a\\u898f\\u683c3\\u78bc\\u7d44\\uff08\\u5df2\\u505c\\u7528\\uff09"),
     }
@@ -3933,7 +4048,10 @@ def make_markdown(analysis, settled):
     high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
     if not high_numbers:
         high_numbers = decision.get("high_confidence_core") or []
-    primary_single = prediction.get("strongest") or prediction.get("top1") or decision.get("primary_single") or []
+    primary_single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
+    two_hit_one = decision.get("two_hit_one") or prediction.get("top2") or []
+    three_hit_one = decision.get("three_hit_one") or prediction.get("top3") or []
+    five_hit_one = decision.get("five_hit_two") or prediction.get("top5") or []
     lines = [
         "# " + u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831"),
         "",
@@ -3952,10 +4070,11 @@ def make_markdown(analysis, settled):
         "",
         "## 核心決策",
         f"- 作戰結論：{decision.get('action_label', '-')} / 等級 {decision.get('grade', '-')}",
-        f"- 明確獨支：{fmt_numbers(primary_single) or '-'}",
-        f"- 明確2中1：{fmt_numbers(decision.get('two_hit_one', [])) or '-'}",
-        f"- 明確3中1：{fmt_numbers(decision.get('three_hit_one', [])) or '-'}",
-        f"- 明確5中2：{fmt_numbers(decision.get('five_hit_two', [])) or '-'}",
+        f"- 預測日：{analysis.get('target_draw_date')} / {target_tw_label}",
+        f"- 最強高機率獨隻：{fmt_numbers(primary_single) or '-'}",
+        f"- 最強高機率2中1~2：{fmt_numbers(two_hit_one) or '-'}",
+        f"- 最強高機率3中1~3：{fmt_numbers(three_hit_one) or '-'}",
+        f"- 最強高機率5中1~5：{fmt_numbers(five_hit_one) or '-'}",
         f"- 明確9中3：{fmt_numbers(decision.get('nine_hit_three', [])) or '-'}",
         f"- 高機率信心牌：{fmt_numbers(high_numbers) or '-'}",
         f"- 防守避開：{fmt_numbers((decision.get('defensive_avoid') or [])[:10]) or '-'}",

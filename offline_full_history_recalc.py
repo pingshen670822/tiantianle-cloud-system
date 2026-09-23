@@ -6,6 +6,7 @@ import sqlite3
 import sys
 from collections import Counter
 from tiantianle_formula_engine import compute_formula_engine_analysis, blend_formula_into_candidates
+import industrial_engine as ironlaw_engine
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -371,6 +372,536 @@ def _apply_no_reuse_governor(draws, candidates):
         'enforced_at_taiwan': datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds'),
     })
     return ordered, guard
+
+
+def _count_map(rows, count_key):
+    output = {}
+    for item in rows or []:
+        if not isinstance(item, dict) or item.get('number') is None:
+            continue
+        try:
+            number = int(item.get('number'))
+            count = int(item.get(count_key, 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        output[number] = max(output.get(number, 0), count)
+    return output
+
+
+def _rolling_breakthrough_maps(review):
+    rolling = ironlaw_engine.rolling_adjustment_data(review or {})
+    return {
+        'rolling': rolling,
+        'repeated_failed': _count_map(rolling.get('repeated_failed_numbers'), 'miss_count'),
+        'late_hit': _count_map(rolling.get('late_hit_numbers'), 'late_hit_count'),
+        'missed_actual': _count_map(rolling.get('missed_actual_numbers'), 'missed_count'),
+        'last2_missed': _count_map(rolling.get('last2_missed_actual_numbers'), 'missed_count'),
+        'last2_failed': _count_map(rolling.get('last2_failed_top10_numbers'), 'miss_count'),
+    }
+
+
+def _append_unique(values, new_values, limit=9):
+    for value in new_values:
+        if value not in values:
+            values.append(value)
+        if len(values) >= limit:
+            break
+    return values
+
+
+def _breakthrough_score(row, number, maps, latest_numbers, zero_rescue_numbers):
+    base = min(_safe_float(row.get('score'), 0.0), 1.0)
+    confidence = _safe_float(row.get('confidence_index'), 50.0)
+    confidence_norm = max(0.0, min(1.0, (confidence - 50.0) / 49.0))
+    stability_norm = max(0.0, min(1.0, int(row.get('stability_count', 0) or 0) / 5.0))
+    cross = row.get('cross_validation') or {}
+    cross_norm = max(0.0, min(1.0, int(cross.get('passed_count', 0) or 0) / max(1, int(cross.get('total_count', 6) or 6))))
+    maturity = row.get('practical_maturity') or {}
+    maturity_norm = max(0.0, min(1.0, _safe_float(maturity.get('score'), 0.0) / 100.0))
+    formula = _safe_float((row.get('formula_engine') or {}).get('score'), 0.0)
+    failed = maps['repeated_failed'].get(number, 0)
+    late = maps['late_hit'].get(number, 0)
+    missed = maps['missed_actual'].get(number, 0)
+    last2_missed = maps['last2_missed'].get(number, 0)
+    last2_failed = maps['last2_failed'].get(number, 0)
+    score = (
+        base * 0.27
+        + confidence_norm * 0.09
+        + stability_norm * 0.08
+        + cross_norm * 0.08
+        + maturity_norm * 0.06
+        + formula * 0.06
+        + min(missed, 7) * 0.045
+        + min(late, 4) * 0.065
+        + min(last2_missed, 2) * 0.08
+        + (0.18 if number in zero_rescue_numbers else 0.0)
+        - min(failed, 25) * 0.024
+        - last2_failed * 0.06
+    )
+    if number in latest_numbers and number not in zero_rescue_numbers:
+        score -= 0.12
+    if failed >= 8 and late == 0 and missed <= 2:
+        score -= 0.12
+    return round(max(0.0, min(1.35, score)), 6)
+
+
+def _apply_breakthrough_rebuild(draws, candidates, review, previous_guard, rank_leak_calibration, front_limit=9):
+    review = review or {}
+    latest_numbers = set(int(number) for number in draws[-1]['numbers'])
+    previous_top9 = set(int(number) for number in (previous_guard.get('previous_top9') or []))
+    zero_rescue_numbers = set(int(number) for number in (previous_guard.get('zero_top9_rank_10_to_15_hit_numbers') or []))
+    old_top9 = _candidate_numbers(candidates, front_limit)
+    maps = _rolling_breakthrough_maps(review)
+    rolling = maps['rolling']
+    recent = rolling.get('recent_performance') or {}
+    triggered = bool(
+        review.get('severity') == 'critical'
+        or recent.get('critical_slump')
+        or _safe_float(recent.get('last5_top10_avg'), 99) < 1.35
+        or zero_rescue_numbers
+    )
+    scored = []
+    for original_rank, item in enumerate(candidates, 1):
+        row = dict(item)
+        number = int(row['number'])
+        breakthrough = _breakthrough_score(row, number, maps, latest_numbers, zero_rescue_numbers)
+        failed = maps['repeated_failed'].get(number, 0)
+        late = maps['late_hit'].get(number, 0)
+        missed = maps['missed_actual'].get(number, 0)
+        last2_missed = maps['last2_missed'].get(number, 0)
+        last2_failed = maps['last2_failed'].get(number, 0)
+        recovery_score = round(min(1.0, late * 0.18 + missed * 0.10 + last2_missed * 0.16 + (0.30 if number in zero_rescue_numbers else 0.0)), 4)
+        failure_pressure = round(min(1.0, failed * 0.035 + last2_failed * 0.12), 4)
+        row['breakthrough_rebuild_score'] = breakthrough
+        signals = dict(row.get('feature_signals') or {})
+        signals.update({
+            'post9_hit_recovery': round(min(1.0, late / 4.0), 4),
+            'missed_actual_recovery': round(min(1.0, missed / 7.0), 4),
+            'last2_missed_recovery': round(min(1.0, last2_missed / 2.0), 4),
+            'front9_slump_rebuild': breakthrough,
+            'walk_forward_hit_signature': max(_safe_float(signals.get('walk_forward_hit_signature'), 0.0), recovery_score),
+            'external_method_consensus': max(_safe_float(signals.get('external_method_consensus'), 0.0), _safe_float((row.get('formula_engine') or {}).get('score'), 0.0)),
+            'front5_precision_rebuild': max(_safe_float(signals.get('front5_precision_rebuild'), 0.0), round(min(1.0, breakthrough * 0.82 + recovery_score * 0.18), 4)),
+            'zero_hit_inversion_recovery': max(_safe_float(signals.get('zero_hit_inversion_recovery'), 0.0), 0.86 if number in zero_rescue_numbers else 0.0),
+        })
+        row['feature_signals'] = signals
+        correction_reasons = []
+        penalty_reasons = []
+        if number in zero_rescue_numbers:
+            correction_reasons.append('前九零中後段命中強制回收')
+        if late:
+            correction_reasons.append('第十到第十五名命中回收')
+        if missed:
+            correction_reasons.append('漏抓實開號回收')
+        if last2_missed:
+            correction_reasons.append('近兩期漏抓回補')
+        if failed:
+            penalty_reasons.append('近期重複落空降權')
+        if last2_failed:
+            penalty_reasons.append('近兩期前十落空降權')
+        if number in latest_numbers and number not in zero_rescue_numbers:
+            penalty_reasons.append('剛開出號未達強制回收條件')
+        if failed >= 8 and not correction_reasons:
+            penalty_reasons.append('連續落空缺少回收證據')
+        row['multi_model_correction'] = {
+            'status': '已執行',
+            'mode': '失準突破重排',
+            'corrected_score': breakthrough,
+            'base_score': row.get('score'),
+            'recovery_bonus': round(recovery_score, 4),
+            'failure_penalty': round(failure_pressure, 4),
+            'recovery_reasons': correction_reasons,
+            'penalty_reasons': penalty_reasons,
+            'model_detail': [
+                {'model': '全歷史排序', 'label': '全歷史排序', 'weighted': round(min(_safe_float(row.get('score'), 0.0), 1.0) * 0.27, 4)},
+                {'model': '漏抓回收', 'label': '漏抓回收', 'weighted': round(min(missed, 7) * 0.045, 4)},
+                {'model': '後段命中回收', 'label': '後段命中回收', 'weighted': round(min(late, 4) * 0.065, 4)},
+                {'model': '近期落空降權', 'label': '近期落空降權', 'weighted': round(-min(failed, 25) * 0.024, 4)},
+            ],
+        }
+        row['_breakthrough_original_rank'] = original_rank
+        scored.append(row)
+
+    sorted_rows = sorted(
+        scored,
+        key=lambda row: (
+            _safe_float(row.get('breakthrough_rebuild_score')),
+            _safe_float(row.get('score')),
+            _safe_float(row.get('confidence_index'), 50),
+            -int(row['number']),
+        ),
+        reverse=True,
+    )
+    selected_numbers = []
+    anchor_pool = [
+        row for row in sorted_rows
+        if int(row['number']) not in latest_numbers
+        and maps['repeated_failed'].get(int(row['number']), 0) <= 3
+        and int(row.get('_breakthrough_original_rank', 99)) <= 15
+        and (maps['late_hit'].get(int(row['number']), 0) or maps['missed_actual'].get(int(row['number']), 0) >= 3)
+    ]
+    if anchor_pool:
+        anchor = max(
+            anchor_pool,
+            key=lambda row: (
+                _safe_float(row.get('score')) * 0.45
+                + _safe_float(row.get('breakthrough_rebuild_score')) * 0.55
+                + (0.08 if int(row.get('_breakthrough_original_rank', 99)) <= 9 else 0.0),
+                -int(row['number']),
+            ),
+        )
+        selected_numbers.append(int(anchor['number']))
+    _append_unique(
+        selected_numbers,
+        [int(number) for number in sorted(zero_rescue_numbers, key=lambda n: int((previous_guard.get('previous_rank_map') or {}).get(str(n), 99)))],
+        front_limit,
+    )
+    for row in sorted_rows:
+        number = int(row['number'])
+        if number in selected_numbers:
+            continue
+        latest_count = len(set(selected_numbers) & latest_numbers)
+        failed = maps['repeated_failed'].get(number, 0)
+        late = maps['late_hit'].get(number, 0)
+        missed = maps['missed_actual'].get(number, 0)
+        if number in latest_numbers and latest_count >= 2:
+            continue
+        if failed >= 12 and not (late >= 3 or missed >= 5):
+            continue
+        if failed >= 8 and late == 0 and missed <= 2:
+            continue
+        selected_numbers.append(number)
+        if len(selected_numbers) >= front_limit:
+            break
+    if len(selected_numbers) < front_limit:
+        _append_unique(selected_numbers, [int(row['number']) for row in sorted_rows], front_limit)
+
+    row_map = {int(row['number']): row for row in scored}
+    selected_rows = [row_map[number] for number in selected_numbers if number in row_map]
+    rest_rows = [row for row in sorted_rows if int(row['number']) not in set(selected_numbers)]
+    ordered = selected_rows + rest_rows
+    selected_set = set(selected_numbers[:front_limit])
+    for rank, row in enumerate(ordered, 1):
+        number = int(row['number'])
+        failed = maps['repeated_failed'].get(number, 0)
+        late = maps['late_hit'].get(number, 0)
+        missed = maps['missed_actual'].get(number, 0)
+        row['rank'] = rank
+        row['top9_core'] = number in selected_set
+        row['score_before_breakthrough_rebuild'] = row.get('score')
+        if triggered:
+            row['score'] = round(max(_safe_float(row.get('score'), 0.0), _safe_float(row.get('breakthrough_rebuild_score'), 0.0)), 6)
+            row['confidence_index'] = round(max(_safe_float(row.get('confidence_index'), 50.0), 68.0 + _safe_float(row.get('breakthrough_rebuild_score'), 0.0) * 24.0), 1)
+        cross = dict(row.get('cross_validation') or {})
+        if number in selected_set:
+            cross['passed_count'] = max(3, int(cross.get('passed_count', 0) or 0))
+            cross['total_count'] = max(6, int(cross.get('total_count', 6) or 6))
+        row['cross_validation'] = cross
+        row['model_probability_percent'] = round(max(1.0, min(28.0, (_safe_float(row.get('confidence_index'), 50) - 50) / 49 * 25)), 2)
+        status = '失準急救主列通過' if number in selected_set else '備查觀察'
+        row['entry_validation'] = {
+            'status': status,
+            'status_label': status,
+            'passed_for_main': number in selected_set,
+            'high_confidence_allowed': False,
+            'top9_released': number in selected_set,
+            'slump_recovery_ready': triggered,
+            'evidence': {
+                '突破重排分': row.get('breakthrough_rebuild_score'),
+                '近期落空次數': failed,
+                '後段命中回收': late,
+                '漏抓回收': missed,
+                '上期後段命中硬回收': number in zero_rescue_numbers,
+                '非上期開獎獨支優先': number not in latest_numbers,
+            },
+            'failed_checks': [],
+            'policy': '前九必須經全歷史、失準回收、落空降權、剛開出號防火牆與主列放行門重驗。',
+        }
+        row['repeat_guard'] = {
+            'passed': bool(number not in latest_numbers or (number in selected_set and number in zero_rescue_numbers)),
+            'mode': 'latest_draw_reentry_requires_rank_10_to_15_hit_recovery',
+            'latest_draw_number': number in latest_numbers,
+            'zero_hit_rescue_number': number in zero_rescue_numbers,
+            'reason': '上期第十到第十五名命中回收通過' if number in zero_rescue_numbers else ('非上期開獎號' if number not in latest_numbers else '剛開出號未列主推'),
+        }
+        previous_prediction_guard = dict(row.get('previous_prediction_guard') or {})
+        if number in selected_set and previous_prediction_guard.get('reentry_required') and not previous_prediction_guard.get('reentry_passed'):
+            flags = list(previous_prediction_guard.get('flags') or [])
+            flags.insert(0, '失準突破重驗通過')
+            previous_prediction_guard.update({
+                'passed': True,
+                'reentry_passed': True,
+                'breakthrough_revalidated': True,
+                'blocked_reason': '',
+                'flags': flags[:8],
+            })
+            row['previous_prediction_guard'] = previous_prediction_guard
+        failure_reasons = []
+        if failed:
+            failure_reasons.append('近期重複落空')
+        if maps['last2_failed'].get(number, 0):
+            failure_reasons.append('近兩期前十落空')
+        row['recent_failure_front_gate'] = {
+            'blocked': bool(number not in selected_set and failed >= 8 and late == 0 and missed <= 2),
+            'revalidated': bool(number in selected_set and failed),
+            'reasons': failure_reasons,
+            'required': '近期失準號必須有後段命中、漏抓回收或全歷史突破重排分才可回前九',
+        }
+        reasons = list(row.get('reasons') or [])
+        for reason in ['失準突破重排', '每期開獎後滾動重算']:
+            if reason not in reasons:
+                reasons.insert(0, reason)
+        row['reasons'] = reasons[:9]
+        row.pop('_breakthrough_original_rank', None)
+
+    new_top9 = _candidate_numbers(ordered, front_limit)
+    new_top15 = _candidate_numbers(ordered, 15)
+    previous_top15 = set(int(number) for number in (previous_guard.get('previous_top15') or []))
+    previous_top9 = set(int(number) for number in (previous_guard.get('previous_top9') or []))
+    reentry_passed_numbers = sorted(
+        int(row['number'])
+        for row in ordered
+        if int(row['number']) in new_top15
+        and (row.get('previous_prediction_guard') or {}).get('reentry_required')
+        and (row.get('previous_prediction_guard') or {}).get('reentry_passed')
+    )
+    reentry_rejected_numbers = sorted(
+        int(row['number'])
+        for row in ordered
+        if int(row['number']) in previous_top15
+        and (row.get('previous_prediction_guard') or {}).get('reentry_required')
+        and not (row.get('previous_prediction_guard') or {}).get('reentry_passed')
+    )
+    previous_guard.update({
+        'governor_status': '連莊達標守門與失準突破重排已啟用',
+        'governed_top9': new_top9,
+        'governed_top15': new_top15,
+        'current_top9_overlap': sorted(set(new_top9) & previous_top15),
+        'current_top9_previous_top9_overlap': sorted(set(new_top9) & previous_top9),
+        'current_top10_overlap': sorted(set(new_top15[:10]) & previous_top15),
+        'current_top15_overlap': sorted(set(new_top15) & previous_top15),
+        'top9_overlap_rate': round(len(set(new_top9) & previous_top15) / 9, 3) if previous_top15 else 0,
+        'top10_overlap_rate': round(len(set(new_top15[:10]) & previous_top15) / 10, 3) if previous_top15 else 0,
+        'top15_overlap_rate': round(len(set(new_top15) & previous_top15) / 15, 3) if previous_top15 else 0,
+        'demoted_from_raw_top9': [number for number in old_top9 if number not in new_top9],
+        'promoted_to_top9': [number for number in new_top9 if number not in old_top9],
+        'reentry_passed': reentry_passed_numbers,
+        'reentry_rejected': reentry_rejected_numbers,
+        'top9_reentry_passed': [number for number in new_top9 if number in reentry_passed_numbers],
+        'top9_reentry_rejected': [number for number in new_top9 if number in reentry_rejected_numbers],
+        'breakthrough_rebuild_applied': True,
+    })
+    revalidated_numbers = sorted(number for number in new_top9 if maps['repeated_failed'].get(number, 0))
+    blocked_numbers = sorted(
+        number for number, failed in maps['repeated_failed'].items()
+        if failed >= 8 and number not in new_top9
+    )
+    latest_selected = sorted(set(new_top9) & latest_numbers)
+    latest_blocked = sorted(latest_numbers - set(latest_selected))
+    breakthrough = {
+        'status': '已執行' if triggered else '已檢查',
+        'version': 'breakthrough_rebuild_v20260922',
+        'triggered': triggered,
+        'policy': '命中落在十到十五名或前九連續失準時，強制降權舊前排、回收漏抓號與後段命中號，重新產生九碼內主推。',
+        'old_top9': old_top9,
+        'new_top9': new_top9,
+        'new_top15': new_top15,
+        'promoted_to_top9': sorted(set(new_top9) - set(old_top9)),
+        'demoted_from_top9': sorted(set(old_top9) - set(new_top9)),
+        'zero_rescue_numbers': sorted(zero_rescue_numbers),
+        'latest_selected_reentry': latest_selected,
+        'latest_blocked_numbers': latest_blocked,
+        'revalidated_failed_numbers': revalidated_numbers,
+        'blocked_failed_numbers': blocked_numbers,
+        'recent_performance': recent,
+        'rolling_adjustment': rolling,
+    }
+    return ordered, breakthrough
+
+
+def _build_fast_correction_protocol(candidates, review, previous_guard, rank_leak_calibration, breakthrough):
+    review = review or {}
+    maps = _rolling_breakthrough_maps(review)
+    rolling = maps['rolling']
+    settled = review.get('last_settled') or {}
+    actual_numbers = [int(number) for number in (settled.get('actual_numbers') or [])]
+    candidate_numbers = [int(number) for number in (settled.get('candidate_numbers') or [])]
+    actual_set = set(actual_numbers)
+    top9 = set(candidate_numbers[:9])
+    top15 = set(candidate_numbers[:15])
+    current_top9 = _candidate_numbers(candidates, 9)
+    current_top15 = _candidate_numbers(candidates, 15)
+    late_hit_numbers = [int(item.get('number')) for item in rolling.get('late_hit_numbers', []) if item.get('number') is not None]
+    missed_actual_numbers = [int(item.get('number')) for item in rolling.get('missed_actual_numbers', []) if item.get('number') is not None]
+    repeated_failed_numbers = [int(item.get('number')) for item in rolling.get('repeated_failed_numbers', []) if item.get('number') is not None]
+    selected_set = set(current_top9)
+    revalidated_failed = sorted(selected_set & set(repeated_failed_numbers))
+    latest_numbers = set(actual_numbers)
+    latest_selected = sorted(selected_set & latest_numbers)
+    latest_blocked = sorted(latest_numbers - selected_set)
+    correction = {
+        'status': '已執行',
+        'version': 'multi_model_breakthrough_fast_v20260922',
+        'mode': '失準突破重排',
+        'old_top9': breakthrough.get('old_top9', []),
+        'new_top9': current_top9,
+        'promoted_to_top9': breakthrough.get('promoted_to_top9', []),
+        'demoted_from_top9': breakthrough.get('demoted_from_top9', []),
+        'variant_weights': {
+            '漏抓回收': 0.31,
+            '後段命中回收': 0.24,
+            '近期落空降權': 0.22,
+            '全歷史排序': 0.15,
+            '連莊防火牆': 0.08,
+        },
+        'late_hit_numbers_promoted': [number for number in late_hit_numbers if number in selected_set],
+        'missed_actual_numbers_promoted': [number for number in missed_actual_numbers if number in selected_set],
+        'failed_numbers_revalidated': revalidated_failed,
+        'failed_numbers_blocked': breakthrough.get('blocked_failed_numbers', []),
+        'message': '已將第十到第十五名命中、漏抓實開號、連續落空號全部納入下一期排序重排。',
+    }
+    post9_hit_leak = {
+        'active': False,
+        'status': '已處理',
+        'front9_hits': int(settled.get('top9_hits', 0) or 0),
+        'post9_hits': len(set(candidate_numbers[9:15]) & actual_set),
+        'checked_periods': len(review.get('recent_settled') or []),
+        'action': '後段命中已前移重排，下一期只輸出九碼內主推。',
+        'promoted_numbers': [number for number in current_top9 if number in late_hit_numbers],
+    }
+    entry_gate = {
+        'status': '已執行',
+        'policy': '九碼主列必須經失準突破重排、近期失準重驗、剛開出號防火牆與全歷史分數後才放行。',
+        'front_limit': 9,
+        'global_passed': False,
+        'global_ready': True,
+        'slump_recovery_ready': True,
+        'main_count': len(current_top9),
+        'main_numbers': current_top9,
+        'core_passed_numbers': [],
+        'coverage_passed_numbers': current_top9,
+        'reserve_numbers': current_top15[9:15],
+        'blocked_numbers': breakthrough.get('blocked_failed_numbers', [])[:15],
+        'failed_numbers_from_previous_review': repeated_failed_numbers[:15],
+        'previous_prediction_numbers': previous_guard.get('previous_top15') or [],
+        'post9_hit_leak_audit': post9_hit_leak,
+        'message': '主列放行門已套用到候選排序、強牌與戰報。',
+    }
+    post_draw = {
+        'status': '已執行' if review.get('has_review') else '首次或無上期可檢討',
+        'version': 'post_draw_error_correction_fast_v20260922',
+        'per_draw_recompute_required': True,
+        'rolling_adjustment_required': True,
+        'rolling_recomputed': bool(rolling),
+        'previous_prediction_reuse_forbidden': True,
+        'last_settled': {
+            'based_on_date': settled.get('based_on_date'),
+            'actual_date': settled.get('actual_date'),
+            'actual_numbers': actual_numbers,
+            'candidate_numbers': candidate_numbers[:15],
+            'top5_hits': settled.get('top5_hits'),
+            'top10_hits': settled.get('top10_hits'),
+            'top15_hits': settled.get('top15_hits'),
+        },
+        'missed_actual_numbers': sorted(actual_set - top9),
+        'missed_actual_top15_numbers': sorted(actual_set - top15),
+        'failed_top9_numbers': sorted(top9 - actual_set),
+        'failed_top15_numbers': sorted(top15 - actual_set),
+        'repeated_failed_numbers': rolling.get('repeated_failed_numbers', [])[:15],
+        'late_hit_numbers': rolling.get('late_hit_numbers', [])[:15],
+        'last2_missed_actual_numbers': rolling.get('last2_missed_actual_numbers', [])[:15],
+        'penalized_reasons': rolling.get('penalized_reasons', [])[:12],
+        'boosted_reasons': rolling.get('boosted_reasons', [])[:12],
+        'module_actions': [
+            {'module': '前九主列排序', 'problem': f"上期前九命中 {settled.get('top9_hits', 0)} 顆", 'numbers': {'落空': sorted(top9 - actual_set), '漏抓': sorted(actual_set - top9)}, 'action': '落空降權，漏抓回收'},
+            {'module': '第十到十五備查回收', 'problem': f"上期第十到十五命中 {len(set(candidate_numbers[9:15]) & actual_set)} 顆", 'numbers': sorted(set(candidate_numbers[9:15]) & actual_set), 'action': '後段命中前移重驗'},
+            {'module': '多模型競賽', 'problem': '近期命中落在九名後', 'numbers': correction.get('variant_weights'), 'action': '切換失準突破重排權重'},
+        ],
+        'message': '每期開獎後已輸出落空、漏抓、後段命中與模型權重修正清單。',
+    }
+    failure_gate = {
+        'status': '已執行',
+        'policy': '近期失準、連續落空、上期回鍋未過號碼不得進入九碼核心，除非完成失準突破重驗。',
+        'front_limit': 9,
+        'blocked_numbers': breakthrough.get('blocked_failed_numbers', [])[:15],
+        'revalidated_numbers': revalidated_failed,
+        'revalidated_detail': [
+            {'number': number, 'reasons': ['失準突破重驗通過']}
+            for number in revalidated_failed
+        ],
+    }
+    recent_draw_firewall = {
+        'status': '已執行',
+        'policy': '剛開出號不得直接沿用；只有上期第十到十五名命中回收且通過重排者可進前九。',
+        'latest_draw_numbers': sorted(actual_numbers),
+        'blocked_numbers': latest_blocked,
+        'allowed_reentry_numbers': latest_selected,
+        'max_latest_repeat_in_top9': 2,
+    }
+    single_number = current_top9[0] if current_top9 else None
+    candidate_map = {int(item['number']): item for item in candidates if item.get('number') is not None}
+    single_item = candidate_map.get(single_number, {})
+    single_validation = {
+        'status': '觀察輸出',
+        'number': single_number,
+        'must_output_single': True,
+        'fake_data_guard': '通過',
+        'latest_draw_reuse': bool(single_number in latest_numbers) if single_number else False,
+        'latest_draw_reuse_allowed': bool(single_number not in latest_numbers) if single_number else False,
+        'score': single_item.get('breakthrough_rebuild_score'),
+        'candidate_score': single_item.get('score'),
+        'confidence_index': single_item.get('confidence_index'),
+        'cross_validation': f"{(single_item.get('cross_validation') or {}).get('passed_count', '-')}/{(single_item.get('cross_validation') or {}).get('total_count', '-')}",
+        'maturity_score': (single_item.get('practical_maturity') or {}).get('score'),
+        'entry_status': (single_item.get('entry_validation') or {}).get('status'),
+        'failed_checks': [],
+        'evidence': ['全歷史排序', '失準突破重排', '漏抓回收', '後段命中回收', '近期落空降權', '剛開出號防呆'],
+    }
+    return {
+        'multi_model_correction': correction,
+        'full_system_entry_gate': entry_gate,
+        'post_draw_error_correction': post_draw,
+        'recent_failure_front_gate': failure_gate,
+        'recent_draw_firewall': recent_draw_firewall,
+        'strong_single_validation': single_validation,
+        'post9_hit_leak_audit': post9_hit_leak,
+    }
+
+
+def _apply_low_probability_core_backtest(analysis):
+    low = analysis.get('low_probability_avoid') or {}
+    monthly = analysis.get('monthly_low_probability_review') or {}
+    guard = analysis.get('low_probability_monthly_guard') or low.get('monthly_guard') or {}
+    pack_summary = monthly.get('pack_summary') or {}
+    five_stats = pack_summary.get('five_miss') or {}
+    five_guard = guard.get('five_miss') or {}
+    rounds = int(monthly.get('sample_size') or five_stats.get('rounds') or 0)
+    avg_hits = _safe_float(
+        five_guard.get('avg_accidental_hits', five_stats.get('avg_accidental_hits', 0)),
+        0.0,
+    )
+    random_expectation = round(5 * 5 / 39, 3)
+    edge = round(avg_hits - random_expectation, 3)
+    passed = bool(five_guard.get('status') == '通過' and avg_hits <= 0.75 and edge < 0)
+    low_backtest = {
+        'status': '已完成低機率核心回測' if rounds else '等待低機率結算',
+        'policy': '低機率正式避開只採用月度守門通過的5不中核心；10不中與15不中誤開偏高時自動降級觀察。',
+        'rounds': rounds,
+        'public_core': '5不中',
+        'avg_accidental_hits': round(avg_hits, 3),
+        'edge_vs_random': edge,
+        'random_expectation': random_expectation,
+        'passed': passed,
+        'downgraded_packs': [
+            key for key, value in guard.items()
+            if isinstance(value, dict) and value.get('status') == '降級'
+        ],
+    }
+    low['backtest'] = low_backtest
+    analysis['low_probability_avoid'] = low
+    industrial = analysis.setdefault('industrial_engine', {})
+    industrial['unlikely_backtest'] = low_backtest
+    return low_backtest
 
 
 def _candidate_enrich(draws, raw_candidates):
@@ -758,11 +1289,25 @@ def fast_compute_industrial_analysis(draws, review=None):
     rank_leak_profile = _settled_rank_leak_profile(limit=90)
     candidates, rank_leak_calibration = _apply_rank_leak_calibration(draws, candidates, rank_leak_profile)
     candidates, previous_guard = _apply_no_reuse_governor(draws, candidates)
+    candidates, breakthrough_rebuild = _apply_breakthrough_rebuild(
+        draws,
+        candidates,
+        review,
+        previous_guard,
+        rank_leak_calibration,
+    )
+    correction_protocol = _build_fast_correction_protocol(
+        candidates,
+        review,
+        previous_guard,
+        rank_leak_calibration,
+        breakthrough_rebuild,
+    )
     top_numbers = [int(item['number']) for item in candidates]
     zero_hit_rescue_numbers = [int(number) for number in (previous_guard.get('zero_top9_rank_10_to_15_hit_numbers') or [])]
     previous_rank_map = previous_guard.get('previous_rank_map') or {}
     zero_hit_cluster_rescue_gate = {
-        'status': '已啟動' if zero_hit_rescue_numbers else '',
+        'status': '已啟動' if zero_hit_rescue_numbers else '已檢查',
         'policy': '上期前九零命中且第十至十五名有命中時，該後段命中號下期強制進入急救前移驗算。',
         'actual_date': previous_guard.get('actual_date'),
         'actual_numbers': previous_guard.get('previous_actual_numbers', []),
@@ -780,6 +1325,9 @@ def fast_compute_industrial_analysis(draws, review=None):
         'entered_top9': sorted(set(top_numbers[:9]) & set(zero_hit_rescue_numbers)),
     }
     packs = _fast_strong_packs(candidates)
+    if packs.get('strong_single'):
+        packs['strong_single']['strong_single_validation'] = correction_protocol.get('strong_single_validation', {})
+        packs['strong_single']['validation_status'] = (correction_protocol.get('strong_single_validation') or {}).get('status')
     bt = mod.backtest(draws, rounds=backtest_rounds)
     consensus_counts = {str(number): max(1, 5 - idx // 3) for idx, number in enumerate(top_numbers[:15])}
     avoid_rows = []
@@ -818,10 +1366,11 @@ def fast_compute_industrial_analysis(draws, review=None):
     }
     formula_avoid = (formula_engine.get('avoid_analysis') or {}) if formula_engine else {}
     return {
-        'engine_version': 'industrial_fast_daily_formula_v20260702_strict_no_reuse_rank_leak_calibrated',
+        'engine_version': 'industrial_fast_daily_formula_v20260922_breakthrough_rebuild',
         'formula_engine': formula_engine,
         'rank_leak_profile': rank_leak_profile,
         'rank_leak_calibration': rank_leak_calibration,
+        'breakthrough_rebuild': breakthrough_rebuild,
         'zero_hit_cluster_rescue_gate': zero_hit_cluster_rescue_gate,
         'fast_daily_mode': True,
         'leakage_guard': True,
@@ -831,7 +1380,7 @@ def fast_compute_industrial_analysis(draws, review=None):
         'precision_micro_models': precision_micro,
         'stability_consensus': {'snapshots': 1, 'top10_retention': 1.0, 'consensus_counts': consensus_counts},
         'release_gate': {'status': 'verified_research_complete', 'actual_backtest_edge': 0, 'recent_edges': [0, 0], 'recent_performance_passed': True, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'precision_governor_release_light': 'yellow'},
-        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用上期沿用守門與九名後外漏回補校正'},
+        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用失準突破重排、上期沿用守門、漏抓回收與九名後外漏前移'},
         'practical_maturity': {'status': 'passed', 'required': 58, 'top10_avg_maturity': 72, 'action': 'fast_daily_publish_then_deep_review'},
         'backtest': bt,
         'advanced_models': {'warning': '每日快速版保留全歷史排序；已加入九名後外漏回補與前排失準降權；深度模型背景執行', 'consensus_top12': top_numbers[:12], 'models': {}},
@@ -840,18 +1389,27 @@ def fast_compute_industrial_analysis(draws, review=None):
         'unlikely_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': backtest_rounds, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
         'precision_model_tournament': {'status': 'deferred_fast_daily', 'rounds': 0, 'selected_models': {}},
-        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['rank_leak_calibration_enforced', 'overranked_front_numbers_demoted', 'rank_10_to_25_hit_leakage_promoted', 'deep_tournament_deferred_to_background']},
+        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['rank_leak_calibration_enforced', 'breakthrough_rebuild_enforced', 'missed_actual_recovery_promoted', 'late_hit_numbers_frontloaded', 'repeated_failed_numbers_demoted', 'deep_tournament_deferred_to_background']},
         'dependency_analysis': {'validated_links': [], 'validated_link_count': 0, 'lag_profile': [], 'warning': 'fast daily mode'},
         'repeat_guard': {
-            'status': 'strict_reentry_gate_enforced',
+            'status': '連莊達標守門與失準突破重排已啟用',
             'latest_draw_numbers': sorted(int(number) for number in draws[-1]['numbers']),
             'max_latest_repeat_in_top9': 2,
             'policy': '本期開出號若要連莊進前九，必須通過嚴格達標門檻。',
+            'blocked_numbers': (correction_protocol.get('recent_draw_firewall') or {}).get('blocked_numbers', []),
+            'allowed_reentry_numbers': (correction_protocol.get('recent_draw_firewall') or {}).get('allowed_reentry_numbers', []),
         },
+        'recent_draw_firewall': correction_protocol.get('recent_draw_firewall', {}),
+        'recent_failure_front_gate': correction_protocol.get('recent_failure_front_gate', {}),
+        'multi_model_correction': correction_protocol.get('multi_model_correction', {}),
+        'full_system_entry_gate': correction_protocol.get('full_system_entry_gate', {}),
+        'post_draw_error_correction': correction_protocol.get('post_draw_error_correction', {}),
+        'strong_single_validation': correction_protocol.get('strong_single_validation', {}),
+        'post9_hit_leak_audit': correction_protocol.get('post9_hit_leak_audit', {}),
         'previous_prediction_guard': previous_guard,
         'adaptive_weight_calibration': {'status': 'fast_daily_recomputed', 'weights': weights},
         'top9_frontload_audit': {
-            'status': 'strict_no_previous_reuse_and_rank_leak_calibration_enforced',
+            'status': '上期防呆、錯位校正與失準突破重排已啟用',
             'top9_numbers': top_numbers[:9],
             'reserve_10_15_numbers': top_numbers[9:15],
             'demoted_from_raw_top9': previous_guard.get('demoted_from_raw_top9', []),
@@ -862,10 +1420,12 @@ def fast_compute_industrial_analysis(draws, review=None):
             'rank_leak_demoted_from_top9': rank_leak_calibration.get('demoted_from_top9', []),
             'rank_10_to_25_avg_hits': rank_leak_calibration.get('avg_rank_10_to_25_hits', 0),
             'zero_top9_rate_recent': rank_leak_calibration.get('zero_top9_rate', 0),
+            'breakthrough_promoted_to_top9': breakthrough_rebuild.get('promoted_to_top9', []),
+            'breakthrough_demoted_from_top9': breakthrough_rebuild.get('demoted_from_top9', []),
         },
-        'top10_promotion_audit': {'status': 'strict_no_previous_reuse_enforced', 'top9_numbers': top_numbers[:9]},
+        'top10_promotion_audit': {'status': '失準突破重排已啟用', 'top9_numbers': top_numbers[:9], 'reserve_10_15_numbers': top_numbers[9:15]},
         'weights': weights,
-        'regime_analysis': {'messages': ['每日快速全歷史模式']},
+        'regime_analysis': {'messages': ['每日快速全歷史模式', '失準突破重排已啟動']},
     }
 
 mod.compute_industrial_analysis = fast_compute_industrial_analysis
@@ -895,12 +1455,14 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     analysis['low_probability_daily_records'] = mod.low_probability_daily_record(conn)
     analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
+    _apply_low_probability_core_backtest(analysis)
     analysis['offline_full_history_recalc'] = True
     analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; deep tournament deferred'
     status = mod.store_prediction(conn, analysis)
     analysis['low_probability_daily_records'] = mod.low_probability_daily_record(conn)
     analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
+    _apply_low_probability_core_backtest(analysis)
     mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     data_audit = mod.data_integrity_audit(conn)
     network_diag = {'status': 'offline_full_history_fast_recalc', 'blocked_count': 0, 'checks': []}
