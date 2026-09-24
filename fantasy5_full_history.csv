@@ -11926,4 +11926,5 @@ local_index,draw_no,draw_date,n1,n2,n3,n4,n5,source
 11925,11925,2026-09-19,1,13,19,27,37,consensus_latest:network:lotterynet+lotteryusa+lotto8+lottolyzer
 11926,11926,2026-09-20,1,8,10,19,21,official:calottery_draw_12006
 11927,11927,2026-09-21,3,5,13,20,36,consensus_latest:network:lotterynet+lotteryusa+lotto8+lottolyzer
-11928,11928,2026-09-22,4,5,25,27,36,auto_csv_import:00_root_fantasy5_full_history.csv
+11928,11928,2026-09-22,4,5,25,27,36,consensus_latest:network:lotterynet+lotteryusa+lotto8+lottolyzer
+11929,11929,2026-09-23,5,11,12,19,38,consensus_latest:network:lotterynet+lotteryusa+lotto8+lottolyzer

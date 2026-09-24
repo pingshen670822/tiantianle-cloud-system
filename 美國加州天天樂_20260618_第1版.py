@@ -47,6 +47,7 @@ IMPORT_REPORT_MD = REPORT_DIR / "csv_import_report.md"
 VALIDATION_REPORT_MD = REPORT_DIR / "source_validation_report.md"
 HEALTH_REPORT_MD = REPORT_DIR / "system_health_report.md"
 DATA_INTEGRITY_REPORT_MD = REPORT_DIR / "data_integrity_report.md"
+NUMBER_MIN = 1
 NUMBER_MAX = 39
 DRAW_SIZE = 5
 WINDOWS = [5, 10, 20, 50, 100]
