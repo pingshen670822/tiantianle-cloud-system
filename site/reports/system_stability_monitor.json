@@ -1,68 +1,68 @@
 {
-  "checked_at_taiwan": "2026-09-24T05:06:57+08:00",
+  "checked_at_taiwan": "2026-09-24T11:15:46+08:00",
   "status": "穩定",
   "stability_score": 100.0,
-  "latest_draw_date": "2026-09-22",
+  "latest_draw_date": "2026-09-23",
   "latest_numbers": [
-    4,
     5,
-    25,
-    27,
-    36
+    11,
+    12,
+    19,
+    38
   ],
-  "latest_taiwan_safe_update_time": "2026-09-23 09:50",
-  "target_draw_date": "2026-09-23",
-  "target_taiwan_safe_update_time": "2026-09-24 09:50",
+  "latest_taiwan_safe_update_time": "2026-09-24 09:50",
+  "target_draw_date": "2026-09-24",
+  "target_taiwan_safe_update_time": "2026-09-25 09:50",
   "top9": [
-    27,
+    5,
+    36,
+    4,
+    29,
+    30,
     25,
-    3,
-    13,
-    24,
-    6,
-    23,
-    34,
-    33
+    1,
+    27,
+    39
   ],
   "database": {
     "ok": true,
-    "count": 11928,
-    "latest": "2026-09-22",
-    "prediction_count": 3,
-    "prediction_latest": "2026-09-22",
-    "prediction_target": "2026-09-23",
-    "low_probability_count": 3,
-    "low_probability_latest": "2026-09-22"
+    "count": 11929,
+    "latest": "2026-09-23",
+    "prediction_count": 4,
+    "prediction_latest": "2026-09-23",
+    "prediction_target": "2026-09-24",
+    "low_probability_count": 4,
+    "low_probability_latest": "2026-09-23"
   },
   "checks": [
     {
       "name": "本機最新資料",
       "ok": true,
-      "detail": "戰報 2026-09-22 / 資料庫 2026-09-22",
+      "detail": "戰報 2026-09-23 / 資料庫 2026-09-23",
       "action": "重跑全歷史重算並重建戰報"
     },
     {
       "name": "手機同步資料",
       "ok": true,
-      "detail": "手機最新 2026-09-22 / 手機下期 2026-09-23",
+      "detail": "手機最新 2026-09-23 / 手機下期 2026-09-24",
       "action": "重建手機檔並重新發布雲端"
     },
     {
       "name": "全歷史資料庫",
       "ok": true,
-      "detail": "11928 筆",
+      "detail": "11929 筆",
       "action": "重新匯入全歷史 CSV 與快取頁面"
     },
     {
       "name": "下期預測產生",
       "ok": true,
-      "detail": "27 25 03 13 24 06 23 34 33",
+      "detail": "05 36 04 29 30 25 01 27 39",
       "action": "重新運算候選排序與九碼主推"
     },
     {
       "name": "低機率紀錄",
       "ok": true,
-      "detail": "低機率最新 2026-09-22",
+      "detail": "低機率最新 2026-09-23",
       "action": "重建低機率每日紀錄與每月檢討"
     },
     {
