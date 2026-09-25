@@ -1,15 +1,15 @@
 # 系統健康檢查
 
 - 引擎版本：美國加州天天樂_20260812_第18版_零中族群急救版
-- 產生時間：2026-09-25T14:44:22+08:00
+- 產生時間：2026-09-25T15:10:02+08:00
 - 狀態：warning
 - 最新開獎日：2026-09-23
 - 預測目標日：2026-09-24
-- 資料新鮮度：late_after_draw
+- 資料新鮮度：ok_before_draw
 - 資料新鮮度允許：False
 - 最終正式發布允許：False
 - 待結算預測：1
-- 過期待結算預測：0
+- 過期待結算預測：1
 - 正式預測紀錄：4
 - 已結算預測紀錄：3
 - 預測快照紀錄：4
@@ -22,19 +22,20 @@
 - 未來日期隔離：0
 - 衝突資料隔離：0
 - 發布關卡：研究觀察通過
-- 主系統完整度：76%
+- 主系統完整度：90%
 - 本次線上新增：0
 - 本次快取新增：0
 
 ## 警告
 - 正式_release_gate_not_promoted_but_research_完整
+- pending_predictions_older_than_california_today
 - automatic_network_update_channel_blocked
 - data_integrity_warning_review_required
 - latest_source_not_confirmed
 
 ## 主系統完整度項目
 - full_history_database：通過 / 18
-- latest_draw_freshness：未通過 / 14
+- latest_draw_freshness：通過 / 14
 - taiwan_time_rule：通過 / 8
 - prediction_record_tracking：通過 / 16
 - settlement_engine：通過 / 12
