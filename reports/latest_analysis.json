@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
-  "generated_at_taiwan": "2026-09-29T07:31:02+08:00",
-  "generated_at_california": "2026-09-28T16:31:02-07:00",
+  "generated_at_taiwan": "2026-09-29T07:39:20+08:00",
+  "generated_at_california": "2026-09-28T16:39:20-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11933,
@@ -1785,7 +1785,7 @@
   },
   "freshness": {
     "california_today": "2026-09-28",
-    "california_time": "16:31:02",
+    "california_time": "16:39:20",
     "allowed_latest_draw_date": "2026-09-27",
     "age_days": 0,
     "status": "ok",
@@ -6613,7 +6613,7 @@
       "zero_top9_rate": 0.429,
       "avg_top9_hits": 0.571,
       "avg_rank_10_to_25_hits": 2.0,
-      "enforced_at_taiwan": "2026-09-29T07:30:57+08:00"
+      "enforced_at_taiwan": "2026-09-29T07:39:15+08:00"
     },
     "breakthrough_rebuild": {
       "status": "已執行",
@@ -22691,7 +22691,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-09-29T07:30:57+08:00",
+      "enforced_at_taiwan": "2026-09-29T07:39:15+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -25285,7 +25285,7 @@
         "zero_top9_rate": 0.429,
         "avg_top9_hits": 0.571,
         "avg_rank_10_to_25_hits": 2.0,
-        "enforced_at_taiwan": "2026-09-29T07:30:57+08:00"
+        "enforced_at_taiwan": "2026-09-29T07:39:15+08:00"
       },
       "breakthrough_rebuild": {
         "status": "已執行",
@@ -41363,7 +41363,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-09-29T07:30:57+08:00",
+        "enforced_at_taiwan": "2026-09-29T07:39:15+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -71623,35 +71623,15 @@
     "status": "ok",
     "active_start": "2026-09-20",
     "checked": 7,
-    "missing_before": [
-      "2026-09-25",
-      "2026-09-26",
-      "2026-09-27"
-    ],
-    "repaired": [
-      {
-        "target_date": "2026-09-25",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-09-24"
-      },
-      {
-        "target_date": "2026-09-26",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-09-25"
-      },
-      {
-        "target_date": "2026-09-27",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-09-26"
-      }
-    ],
+    "missing_before": [],
+    "repaired": [],
     "missing_after": []
   },
   "low_probability_daily_records": [
     {
       "based_on_date": "2026-09-27",
       "target_date": "2026-09-28",
-      "created_at": "2026-09-29T07:31:02+08:00",
+      "created_at": "2026-09-29T07:39:20+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
