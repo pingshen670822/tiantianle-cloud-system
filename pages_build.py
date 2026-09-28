@@ -771,21 +771,24 @@ def build_signal_focus(candidates):
 
 def build_mobile_basic_config_block(data):
     decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
+    super_single = data.get("super_single_decision") or decision.get("super_single_decision") or (data.get("industrial_engine") or {}).get("super_single_decision") or {}
     prediction = data.get("prediction") or {}
     freshness = data.get("freshness") or {}
     target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
     target_time = data.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "-"
     prediction_day = f"{target_date} / {taiwan_time_label(target_time)}"
-    single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
+    single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
     two = decision.get("two_hit_one") or prediction.get("top2") or []
     three = decision.get("three_hit_one") or prediction.get("top3") or []
     five = decision.get("five_hit_two") or prediction.get("top5") or []
+    single_reason = "；".join((super_single.get("explanation") or [])[:3]) if super_single else "每期由全歷史資料庫重新運算"
     rows = [
         ("1", "預測日", prediction_day),
         ("2", "最強高機率獨隻", fmt_numbers(single) or "-"),
         ("3", "最強高機率2中1~2", fmt_numbers(two) or "-"),
         ("4", "最強高機率3中1~3", fmt_numbers(three) or "-"),
         ("5", "最強高機率5中1~5", fmt_numbers(five) or "-"),
+        ("6", "獨支由來", single_reason),
     ]
     body = "".join(
         f"<tr><th>{esc(idx)}</th><th>{esc(label)}</th><td>{esc(value)}</td></tr>"
@@ -858,6 +861,7 @@ def build_mobile_ironlaw_block(data):
     decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
     if not decision:
         return ""
+    super_single = data.get("super_single_decision") or decision.get("super_single_decision") or (data.get("industrial_engine") or {}).get("super_single_decision") or {}
     high_numbers = decision.get("high_confidence_core") or [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
     avoid_numbers = decision.get("defensive_avoid") or []
     avoid_packs = decision.get("avoid_packs") or ((data.get("low_probability_avoid") or {}).get("avoid_packs") or {})
@@ -868,6 +872,21 @@ def build_mobile_ironlaw_block(data):
 
     def action_row(label, numbers):
         return f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(numbers) or '-')}</td></tr>"
+
+    super_numbers = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or []
+    super_rows = []
+    if super_single:
+        score_map = super_single.get("scores") or {}
+        super_rows = [
+            f"<tr><th>{u('\\u552f\\u4e00\\u898f\\u5247')}</th><td>{esc(super_single.get('why_unique', '-'))}</td></tr>",
+            f"<tr><th>{u('\\u9078\\u865f\\u898f\\u5247')}</th><td>{esc(super_single.get('selection_rule', '-'))}</td></tr>",
+            f"<tr><th>{u('\\u4fee\\u6b63\\u7e3d\\u5206')}</th><td>{esc(score_map.get('修正總分', '-'))}</td></tr>",
+            f"<tr><th>{u('\\u4fe1\\u5fc3\\u6307\\u6a19')}</th><td>{esc(score_map.get('信心指標', '-'))}</td></tr>",
+            f"<tr><th>{u('\\u4ea4\\u53c9\\u9a57\\u7b97')}</th><td>{esc(score_map.get('交叉通過', '-'))}</td></tr>",
+        ]
+        for idx, text in enumerate((super_single.get("explanation") or [])[:6], 1):
+            super_rows.append(f"<tr><th>{u('\\u7531\\u4f86')}{idx}</th><td>{esc(text)}</td></tr>")
+    super_rows_html = "".join(super_rows) if super_rows else "<tr><td colspan='2'>本期已重算，沒有額外由來資料。</td></tr>"
 
     pack_rows = []
     for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
@@ -888,7 +907,7 @@ def build_mobile_ironlaw_block(data):
         f"<p><strong>{esc(decision.get('conclusion', decision.get('action_label', '-')))}</strong></p>"
         f"<table>"
         f"<tr><th>預測日</th><td>{esc(prediction_day)}</td></tr>"
-        f"{action_row('最強高機率獨隻', decision.get('primary_single') or [])}"
+        f"{action_row('最強高機率獨隻', super_numbers)}"
         f"{action_row('最強高機率2中1~2', decision.get('two_hit_one') or [])}"
         f"{action_row('最強高機率3中1~3', decision.get('three_hit_one') or [])}"
         f"{action_row('最強高機率5中1~5', decision.get('five_hit_two') or [])}"
@@ -896,6 +915,7 @@ def build_mobile_ironlaw_block(data):
         f"{action_row(u('\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c'), high_numbers[:9])}"
         f"{action_row(u('\\u9632\\u5b88\\u907f\\u958b'), avoid_numbers[:10])}"
         f"</table>"
+        f"<h3>{u('\\u552f\\u4e00\\u7368\\u652f\\u7531\\u4f86')}</h3><table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u5167\\u5bb9')}</th></tr>{super_rows_html}</table>"
         f"<h3>{u('\\u4f4e\\u6a5f\\u7387\\u907f\\u96aa\\u5305')}</h3><table><tr><th>{u('\\u985e\\u5225')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u4fe1\\u5fc3')}</th><th>{u('\\u6307\\u6a19')}</th></tr>{''.join(pack_rows)}</table>"
         f"<h3>{u('\\u6bcf\\u65e5\\u66f4\\u65b0\\u9435\\u5f8b\\u6642\\u9593\\u8868')}</h3><table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u5167\\u5bb9')}</th></tr>{''.join(time_rows)}</table>"
         f"</section>"

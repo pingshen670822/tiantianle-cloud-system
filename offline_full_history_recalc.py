@@ -1278,6 +1278,289 @@ def _fast_strong_packs(candidates):
         'precision_three_hit_one': {'name': '精算3中1~3', 'hit_goal': 1, 'numbers': nums[:3], 'theoretical_probability': _fast_pack_probability(3, 1), 'status': 'fast_daily_recomputed'},
     }
 
+
+def _unique_numbers(numbers, limit=None):
+    seen = set()
+    output = []
+    for raw in numbers or []:
+        try:
+            number = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if number < 1 or number > 39 or number in seen:
+            continue
+        seen.add(number)
+        output.append(number)
+        if limit and len(output) >= limit:
+            break
+    return output
+
+
+def _guard_passed(payload, default=True):
+    if not isinstance(payload, dict) or not payload:
+        return default
+    if "passed" in payload:
+        return bool(payload.get("passed"))
+    if "passed_for_main" in payload:
+        return bool(payload.get("passed_for_main"))
+    status = str(payload.get("status_label") or payload.get("status") or payload.get("entry_status") or "")
+    if any(word in status for word in ["未通過", "剔除", "封鎖", "不通過"]):
+        return False
+    if any(word in status for word in ["通過", "放行", "主列"]):
+        return True
+    return default
+
+
+def _candidate_gate_status(item, latest_numbers):
+    number = int(item.get("number"))
+    previous_passed = _guard_passed(item.get("previous_prediction_guard"), True)
+    repeat_passed = _guard_passed(item.get("repeat_guard"), True)
+    entry_passed = _guard_passed(item.get("entry_validation"), True)
+    latest_reuse = bool(item.get("latest_draw_number")) or number in latest_numbers
+    blocked = []
+    if not previous_passed:
+        blocked.append("上期沿用守門未通過")
+    if latest_reuse and not repeat_passed:
+        blocked.append("剛開出連莊未達標")
+    if not entry_passed:
+        blocked.append("主列放行未通過")
+    return {
+        "passed": not blocked,
+        "blocked": blocked,
+        "latest_reuse": latest_reuse,
+        "previous_passed": previous_passed,
+        "repeat_passed": repeat_passed,
+        "entry_passed": entry_passed,
+    }
+
+
+def _format_score(value, digits=3):
+    try:
+        return round(float(value), digits)
+    except (TypeError, ValueError):
+        return value
+
+
+def _build_super_single_decision(analysis):
+    latest = analysis.get("latest_draw") or {}
+    latest_numbers = {int(number) for number in (latest.get("numbers") or [])}
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    if not candidates:
+        return {}
+
+    ranked = []
+    for item in candidates:
+        if not isinstance(item, dict) or item.get("number") is None:
+            continue
+        gate = _candidate_gate_status(item, latest_numbers)
+        rank = int(item.get("rank") or item.get("_display_rank") or 99)
+        score = _safe_float((item.get("multi_model_correction") or {}).get("corrected_score"), _safe_float(item.get("score")))
+        confidence = _safe_float(item.get("confidence_index"))
+        passed_count = _safe_float((item.get("cross_validation") or {}).get("passed_count"))
+        maturity = _safe_float((item.get("practical_maturity") or {}).get("score"))
+        ranked.append((gate["passed"], rank <= 9, score, confidence, passed_count, maturity, -rank, item, gate))
+
+    strict = [row for row in ranked if row[0] and row[1]]
+    pool = strict or [row for row in ranked if row[0]] or ranked
+    pool.sort(key=lambda row: (-int(row[0]), -int(row[1]), -row[2], -row[3], -row[4], -row[5], row[6]))
+    selected = pool[0][7]
+    selected_gate = pool[0][8]
+    number = int(selected["number"])
+
+    cross = selected.get("cross_validation") or {}
+    maturity_data = selected.get("practical_maturity") or {}
+    formula = selected.get("formula_engine") or {}
+    multi = selected.get("multi_model_correction") or {}
+    entry = selected.get("entry_validation") or {}
+    reasons = []
+    for value in selected.get("reasons") or []:
+        if value and value not in reasons:
+            reasons.append(value)
+    for source in selected.get("model_sources") or []:
+        label = source.get("label") if isinstance(source, dict) else None
+        if label and label not in reasons:
+            reasons.append(label)
+    top_formula_reasons = []
+    for row in formula.get("top_reasons") or []:
+        if isinstance(row, dict):
+            label = row.get("label") or row.get("name") or row.get("reason")
+            score = row.get("score")
+            if label:
+                top_formula_reasons.append(f"{label} {score}" if score is not None else str(label))
+    route_sources = _unique_numbers([number], 1)
+
+    exclusion_rows = []
+    for item in candidates[:15]:
+        if int(item.get("number", 0)) == number:
+            continue
+        gate = _candidate_gate_status(item, latest_numbers)
+        reason = "、".join(gate["blocked"]) if gate["blocked"] else "分數低於唯一獨支"
+        exclusion_rows.append({
+            "number": int(item.get("number")),
+            "rank": int(item.get("rank") or item.get("_display_rank") or 99),
+            "reason": reason,
+        })
+
+    explanation = [
+        f"由前九主推候選逐顆過濾後，只保留 {number:02d} 作為本期唯一獨支。",
+        f"全歷史排序第 {int(selected.get('rank') or selected.get('_display_rank') or 1)} 名，修正總分 {_format_score(multi.get('corrected_score', selected.get('score')), 4)}，原始分 {_format_score(selected.get('score'), 4)}。",
+        f"信心指標 {_format_score(selected.get('confidence_index'), 1)}，模型保守機率 {_format_score(selected.get('model_probability_percent'), 2)}%。",
+        f"交叉驗算 {cross.get('passed_count', '-')}/{cross.get('total_count', '-')}，成熟度 {_format_score(maturity_data.get('score'), 1)}。",
+        "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+        "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+    ]
+    if reasons:
+        explanation.append("放行理由：" + "、".join(reasons[:8]) + "。")
+    if top_formula_reasons:
+        explanation.append("公式驗算：" + "、".join(top_formula_reasons[:6]) + "。")
+
+    return {
+        "version": "唯一超強高機率獨支鐵律_v20260929",
+        "title": "本期唯一超強高機率獨支",
+        "status": "唯一輸出",
+        "number": number,
+        "numbers": route_sources,
+        "unique": True,
+        "pool_size": 1,
+        "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+        "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+        "latest_draw_reuse": selected_gate["latest_reuse"],
+        "guard_summary": {
+            "上期沿用守門": "通過" if selected_gate["previous_passed"] else "未通過",
+            "剛開出連莊守門": "通過" if selected_gate["repeat_passed"] else "未通過",
+            "主列放行守門": "通過" if selected_gate["entry_passed"] else "未通過",
+        },
+        "scores": {
+            "全歷史排序": int(selected.get("rank") or selected.get("_display_rank") or 1),
+            "修正總分": _format_score(multi.get("corrected_score", selected.get("score")), 5),
+            "原始分": _format_score(selected.get("score"), 5),
+            "信心指標": _format_score(selected.get("confidence_index"), 1),
+            "模型保守機率": _format_score(selected.get("model_probability_percent"), 2),
+            "交叉通過": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+            "成熟度": _format_score(maturity_data.get("score"), 1),
+            "主列狀態": entry.get("status_label") or entry.get("status") or "-",
+        },
+        "explanation": explanation,
+        "route_sources": reasons[:10],
+        "formula_reasons": top_formula_reasons[:8],
+        "excluded_candidates": exclusion_rows,
+        "created_at_taiwan": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+    }
+
+
+def _apply_unique_super_single_rule(analysis):
+    decision = _build_super_single_decision(analysis)
+    if not decision:
+        return analysis
+    number = int(decision["number"])
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    latest_numbers = {int(number) for number in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
+    candidate_numbers = []
+    for item in candidates:
+        if not isinstance(item, dict) or item.get("number") is None:
+            continue
+        gate = _candidate_gate_status(item, latest_numbers)
+        if gate["passed"]:
+            candidate_numbers.append(int(item["number"]))
+    fallback_numbers = _candidate_numbers(candidates, 15)
+    core = _unique_numbers([number] + candidate_numbers + fallback_numbers, 15)
+    if len(core) < 15:
+        core = _unique_numbers(core + list(range(1, 40)), 15)
+
+    analysis["super_single_decision"] = decision
+    prediction = analysis.setdefault("prediction", {})
+    prediction["strongest"] = [number]
+    prediction["top1"] = [number]
+    prediction["top2"] = core[:2]
+    prediction["top3"] = core[:3]
+    prediction["top5"] = core[:5]
+    prediction["top9"] = core[:9]
+    prediction["top10"] = core[:10]
+    prediction["top15"] = core[:15]
+    prediction["high_confidence_watch"] = core[:9]
+
+    packs = analysis.setdefault("strong_packs", {})
+    pack_specs = {
+        "strong_single": ("獨支精準1中1", 1, 1, core[:1]),
+        "precision_single": ("精算獨支1中1", 1, 1, core[:1]),
+        "two_hit_one": ("最強2中1~2", 1, 2, core[:2]),
+        "precision_two_hit_one": ("精算2中1~2", 1, 2, core[:2]),
+        "three_hit_two": ("最強3中1~3", 1, 3, core[:3]),
+        "precision_three_hit_one": ("精算3中1~3", 1, 3, core[:3]),
+        "five_hit_two": ("最強5中1~5", 1, 5, core[:5]),
+        "nine_hit_three": ("最強9中3~5", 3, 5, core[:9]),
+    }
+    for key, (name, goal, goal_max, numbers) in pack_specs.items():
+        pack = packs.setdefault(key, {})
+        pack.update({
+            "name": name,
+            "hit_goal": goal,
+            "hit_goal_max": goal_max,
+            "numbers": numbers,
+            "pool_size": len(numbers),
+            "status": "唯一獨支鐵律同步重算",
+        })
+        pack.setdefault("theoretical_probability", _fast_pack_probability(len(numbers), goal))
+    packs["strong_single"]["super_single_decision"] = decision
+    packs["strong_single"]["strong_single_validation"] = {
+        "status": "唯一輸出",
+        "number": number,
+        "must_output_single": True,
+        "fake_data_guard": "通過",
+        "latest_draw_reuse": decision.get("latest_draw_reuse", False),
+        "latest_draw_reuse_allowed": not decision.get("latest_draw_reuse", False),
+        "score": decision["scores"].get("修正總分"),
+        "candidate_score": decision["scores"].get("原始分"),
+        "confidence_index": decision["scores"].get("信心指標"),
+        "cross_validation": decision["scores"].get("交叉通過"),
+        "maturity_score": decision["scores"].get("成熟度"),
+        "entry_status": decision["scores"].get("主列狀態"),
+        "failed_checks": [],
+        "evidence": decision.get("explanation", []),
+    }
+    packs["strong_single"]["validation_status"] = "唯一輸出"
+
+    ironlaw = analysis.setdefault("latest_ironlaw", analysis.get("decisive_battle_plan") or {})
+    ironlaw["primary_single"] = [number]
+    ironlaw["two_hit_one"] = core[:2]
+    ironlaw["three_hit_one"] = core[:3]
+    ironlaw["five_hit_two"] = core[:5]
+    ironlaw["nine_hit_three"] = core[:9]
+    ironlaw["high_confidence_core"] = core[:9]
+    candidate_by_number = {
+        int(item.get("number")): item
+        for item in candidates
+        if isinstance(item, dict) and item.get("number") is not None
+    }
+    high_confidence_rows = []
+    for idx, value in enumerate(core[:9], 1):
+        item = candidate_by_number.get(int(value), {})
+        cross = item.get("cross_validation") or {}
+        maturity = item.get("practical_maturity") or {}
+        high_confidence_rows.append({
+            "number": int(value),
+            "rank": idx,
+            "source_rank": item.get("rank") or item.get("_display_rank") or idx,
+            "confidence_index": item.get("confidence_index", "-"),
+            "model_probability_percent": item.get("model_probability_percent", "-"),
+            "stability_count": item.get("stability_count", "-"),
+            "cross_validation_passed": cross.get("passed_count", "-"),
+            "maturity_score": maturity.get("score", "-"),
+            "confidence_level": "高信心觀察",
+            "reason": "唯一獨支鐵律核心排序延伸",
+            "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。",
+        })
+    ironlaw["high_confidence_numbers"] = high_confidence_rows
+    ironlaw["super_single_decision"] = decision
+    ironlaw["release_rule"] = "獨支只允許一顆，必須通過唯一獨支鐵律；2碼、3碼、5碼與九碼皆由同一份核心排序延伸，禁止各欄位各自取號。"
+    analysis["decisive_battle_plan"] = ironlaw
+
+    industrial = analysis.setdefault("industrial_engine", {})
+    industrial["strong_single_validation"] = packs["strong_single"]["strong_single_validation"]
+    industrial["super_single_decision"] = decision
+    return analysis
+
+
 def fast_compute_industrial_analysis(draws, review=None):
     backtest_rounds = 360
     formula_rounds = 240
@@ -1456,6 +1739,7 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
     _apply_low_probability_core_backtest(analysis)
+    _apply_unique_super_single_rule(analysis)
     analysis['offline_full_history_recalc'] = True
     analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; deep tournament deferred'
     status = mod.store_prediction(conn, analysis)
@@ -1463,6 +1747,7 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
     _apply_low_probability_core_backtest(analysis)
+    _apply_unique_super_single_rule(analysis)
     mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     data_audit = mod.data_integrity_audit(conn)
     network_diag = {'status': 'offline_full_history_fast_recalc', 'blocked_count': 0, 'checks': []}

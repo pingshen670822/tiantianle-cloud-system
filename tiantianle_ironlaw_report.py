@@ -2134,11 +2134,12 @@ def compact_super_single_html_tiantianle(analysis):
     validation = industrial.get("strong_single_validation") or {}
     packs = analysis.get("strong_packs") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
     prediction = analysis.get("prediction") or {}
     latest = analysis.get("latest_draw") or {}
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     pack = packs.get("strong_single") or {}
-    numbers = prediction.get("strongest") or prediction.get("top1") or decision.get("primary_single") or pack.get("numbers") or []
+    numbers = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or pack.get("numbers") or []
     number = safe_int(numbers[0], 0) if numbers else 0
     if not number:
         number = safe_int(validation.get("number"), 0)
@@ -2156,10 +2157,11 @@ def compact_super_single_html_tiantianle(analysis):
             source_labels.append(label)
     if not source_labels and item:
         source_labels = [candidate_reason_text(item, 6)]
-    score = (validation.get("score") if use_validation else None) or item.get("score", pack.get("avg_score", pack.get("score_sum")))
-    confidence = (validation.get("confidence_index") if use_validation else None) or item.get("confidence_index", "-")
-    cross_text = (validation.get("cross_validation") if use_validation else None) or f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}"
-    maturity_text = (validation.get("maturity_score") if use_validation else None) or maturity.get("score", "-")
+    scores = super_single.get("scores") or {}
+    score = scores.get("修正總分") or (validation.get("score") if use_validation else None) or item.get("score", pack.get("avg_score", pack.get("score_sum")))
+    confidence = scores.get("信心指標") or (validation.get("confidence_index") if use_validation else None) or item.get("confidence_index", "-")
+    cross_text = scores.get("交叉通過") or (validation.get("cross_validation") if use_validation else None) or f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}"
+    maturity_text = scores.get("成熟度") or (validation.get("maturity_score") if use_validation else None) or maturity.get("score", "-")
     external_score = features.get("external_method_consensus", "-")
     low_recovery = features.get("low_probability_error_recovery", "-")
     zero_rebuild = features.get("zero_hit_inversion_recovery", "-")
@@ -2174,6 +2176,8 @@ def compact_super_single_html_tiantianle(analysis):
     reuse_guard = "有連莊，已重新驗證" if number in latest_numbers else "未使用上期開獎號"
     history_text = f"{analysis.get('draw_count', '-')} 筆"
     logic_rows = [
+        ["唯一獨支鐵律", super_single.get("status", "唯一輸出") if super_single else "唯一輸出", super_single.get("why_unique", "獨支只允許一顆") if super_single else "獨支只允許一顆"],
+        ["選號規則", "前九主推逐顆守門", super_single.get("selection_rule", "通過後只留第一名") if super_single else "通過後只留第一名"],
         ["全歷史資料庫", history_text, "已納入"],
         ["多模型校正", (item.get("multi_model_correction") or {}).get("status", "-"), entry_status],
         ["交叉驗算", cross_text, "通過"],
@@ -2184,20 +2188,28 @@ def compact_super_single_html_tiantianle(analysis):
         ["成熟度", compact_decimal(maturity_text, 1), maturity.get("tier", "成熟檢查")],
         ["上期防呆", reuse_guard, fake_guard],
     ]
-    if use_validation:
+    if super_single.get("explanation"):
+        evidence_items = super_single.get("explanation") or []
+    elif use_validation:
         evidence_items = validation.get("evidence") or []
     else:
         evidence_items = ["最終排序第一名，已套用今日未命中回灌、前五實戰前移重組與前十五錯位修正"]
         evidence_items.extend([f"來源模型：{label}" for label in source_labels[:6]])
+    if super_single.get("route_sources"):
+        source_labels = super_single.get("route_sources") or source_labels
     evidence_rows = [[item] for item in evidence_items]
     model_rows = [[label] for label in source_labels[:8]]
+    excluded_rows = [
+        [f"{safe_int(row.get('number')):02d}", row.get("rank", "-"), row.get("reason", "-")]
+        for row in (super_single.get("excluded_candidates") or [])[:8]
+    ]
     return f"""
     <div class="band singlebox mega-single">
       <h2>超高信心高機率強推薦：最強獨隻1中1</h2>
-      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。此號碼由全歷史資料庫、多模型校正、交叉驗算、前五實戰前移重組與上期防呆共同放行。</p>
+      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。獨支欄位全系統只允許這一顆，電腦版與手機版同步讀取同一份唯一獨支決策。</p>
       <div class="grid">
         <div class="card hot-card"><div class="label">強推號碼</div><div class="value num">{number:02d}</div></div>
-        <div class="card"><div class="label">強推判定</div><div class="value">超高信心強推薦</div></div>
+        <div class="card"><div class="label">強推判定</div><div class="value">{esc(super_single.get("status", "超高信心強推薦"))}</div></div>
         <div class="card"><div class="label">總驗算分</div><div class="value">{compact_decimal(score, 2)}</div></div>
         <div class="card"><div class="label">信心指數</div><div class="value">{compact_decimal(confidence, 1)}</div></div>
         <div class="card"><div class="label">交叉驗算</div><div class="value">{esc(cross_text)}</div></div>
@@ -2209,6 +2221,8 @@ def compact_super_single_html_tiantianle(analysis):
       {table(["證據"], evidence_rows, "目前沒有放行證據")}
       <h3>主要來源模型</h3>
       {table(["模型"], model_rows, "目前沒有來源模型")}
+      <h3>排除其他獨支候選</h3>
+      {table(["號碼", "排名", "未成為獨支原因"], excluded_rows, "沒有其他候選搶獨支")}
     </div>
     """
 
@@ -3253,8 +3267,9 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     validation = industrial.get("strong_single_validation") or {}
     prediction = analysis.get("prediction") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
-    selected = prediction.get("strongest") or prediction.get("top1") or decision.get("primary_single") or []
+    selected = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
     if not validation and not selected:
         return ""
     number = safe_int(selected[0], 0) if selected else safe_int(validation.get("number"), 0)
@@ -3271,21 +3286,23 @@ def compact_strong_single_validation_html_tiantianle(analysis):
         if use_validation and validation.get("front5_precision_rebuild") is not None
         else features.get("front5_precision_rebuild", "-")
     )
-    evidence = validation.get("evidence") if use_validation else [
+    evidence = super_single.get("explanation") or (validation.get("evidence") if use_validation else [
         "最終排序第一名，今日未命中後重新計算",
         "前五實戰前移重組已納入",
         f"前五實戰前移值 {compact_decimal(front5_value, 3)}",
         f"前十五錯位修正值 {compact_decimal(features.get('zero_hit_inversion_recovery', '-'), 3)}",
-    ]
+    ])
     latest_numbers = {safe_int(n) for n in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
     latest_reuse = number in latest_numbers
+    scores = super_single.get("scores") or {}
     rows = [
-        ["獨隻號碼", fmt_numbers([number]) if number else "-", validation.get("status", "已重新驗算") if use_validation else "最終排序第一名"],
-        ["總分", validation.get("score", item.get("score", "-")) if use_validation else item.get("score", "-"), "每期重新計算"],
-        ["主列狀態", validation.get("entry_status", entry.get("status_label", entry.get("status", "-"))) if use_validation else entry.get("status_label", entry.get("status", "-")), "必須通過主列放行"],
-        ["交叉驗算", validation.get("cross_validation", f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}") if use_validation else f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}", "多模組驗證"],
+        ["獨隻號碼", fmt_numbers([number]) if number else "-", super_single.get("status") or (validation.get("status", "已重新驗算") if use_validation else "最終排序第一名")],
+        ["唯一規則", "一顆", super_single.get("why_unique", "獨支只允許一顆")],
+        ["總分", scores.get("修正總分") or (validation.get("score", item.get("score", "-")) if use_validation else item.get("score", "-")), "每期重新計算"],
+        ["主列狀態", scores.get("主列狀態") or (validation.get("entry_status", entry.get("status_label", entry.get("status", "-"))) if use_validation else entry.get("status_label", entry.get("status", "-"))), "必須通過主列放行"],
+        ["交叉驗算", scores.get("交叉通過") or (validation.get("cross_validation", f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}") if use_validation else f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}"), "多模組驗證"],
         ["前五實戰前移", compact_decimal(front5_value, 3), "強推必要驗證"],
-        ["成熟度", validation.get("maturity_score", maturity.get("score", "-")) if use_validation else maturity.get("score", "-"), "實戰成熟檢查"],
+        ["成熟度", scores.get("成熟度") or (validation.get("maturity_score", maturity.get("score", "-")) if use_validation else maturity.get("score", "-")), "實戰成熟檢查"],
         ["上期開獎防呆", "有重複" if latest_reuse else "未使用上期開獎號", "通過" if not latest_reuse else "連莊需重驗"],
         ["假資料防呆", validation.get("fake_data_guard", "通過") if use_validation else "通過", "禁止憑空產號"],
     ]
@@ -3411,12 +3428,13 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or {}
     prediction = analysis.get("prediction") or {}
     high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or [])[:9]]
     if not high_numbers:
         high_numbers = prediction.get("high_confidence_watch") or []
     top9 = decision.get("nine_hit_three") or prediction.get("top9") or []
-    primary_single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or (analysis.get("strong_packs") or {}).get("strong_single", {}).get("numbers", [])
+    primary_single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or (analysis.get("strong_packs") or {}).get("strong_single", {}).get("numbers", [])
     latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
     latest_numbers = fmt_numbers(latest.get("numbers", []))
     target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
@@ -3437,6 +3455,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
         ["3", "最強高機率2中1~2", fmt_numbers(basic_two) or "-"],
         ["4", "最強高機率3中1~3", fmt_numbers(basic_three) or "-"],
         ["5", "最強高機率5中1~5", fmt_numbers(basic_five) or "-"],
+        ["6", "獨支由來", "；".join((super_single.get("explanation") or [])[:3]) if super_single else "每期由全歷史資料庫重新運算"],
     ]
     basic_config_html = (
         '<section class="band singlebox">'
@@ -4040,6 +4059,7 @@ def make_markdown(analysis, settled):
     maturity_summary = industrial.get("practical_maturity") or {}
     previous_guard = industrial.get("previous_prediction_guard") or {}
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
     prediction = analysis.get("prediction") or {}
     rec = ultra_precision_recommendations(analysis)
     avoid_packs = decision.get("avoid_packs") or ((analysis.get("low_probability_avoid") or {}).get("avoid_packs") or {})
@@ -4048,7 +4068,7 @@ def make_markdown(analysis, settled):
     high_numbers = [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
     if not high_numbers:
         high_numbers = decision.get("high_confidence_core") or []
-    primary_single = decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
+    primary_single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
     two_hit_one = decision.get("two_hit_one") or prediction.get("top2") or []
     three_hit_one = decision.get("three_hit_one") or prediction.get("top3") or []
     five_hit_one = decision.get("five_hit_two") or prediction.get("top5") or []
@@ -4082,10 +4102,21 @@ def make_markdown(analysis, settled):
         "",
         "## 最強獨隻1中1",
         f"- 獨隻號碼：{fmt_numbers(primary_single) or '-'}",
+        f"- 唯一規則：{super_single.get('why_unique', '獨支只允許一顆，每期重新運算')}",
+        f"- 選號規則：{super_single.get('selection_rule', '全歷史資料庫、多模型、守門與回測後只留第一名')}",
         f"- 高信心加註：{fmt_numbers(high_numbers[:3]) or '-'}",
         "",
-        "## 高機率信心牌特別強調",
+        "## 獨支由來",
     ]
+    if super_single.get("explanation"):
+        for item in (super_single.get("explanation") or [])[:10]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 本期獨支由全歷史資料庫重新排序後，通過多模型守門產生。")
+    lines.extend([
+        "",
+        "## 高機率信心牌特別強調",
+    ])
     for item in (decision.get("high_confidence_numbers") or [])[:9]:
         lines.append(
             f"- {int(item.get('number')):02d}：排名 {item.get('rank', '-')} / 保守機率 {item.get('model_probability_percent', '-')}% / "
