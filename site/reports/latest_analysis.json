@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
-  "generated_at_taiwan": "2026-09-28T07:40:01+08:00",
-  "generated_at_california": "2026-09-27T16:40:01-07:00",
+  "generated_at_taiwan": "2026-09-28T11:47:18+08:00",
+  "generated_at_california": "2026-09-27T20:47:18-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11929,
@@ -1744,9 +1744,9 @@
   },
   "freshness": {
     "california_today": "2026-09-27",
-    "california_time": "16:40:01",
-    "allowed_latest_draw_date": "2026-09-26",
-    "age_days": 3,
+    "california_time": "20:47:18",
+    "allowed_latest_draw_date": "2026-09-27",
+    "age_days": 4,
     "status": "stale",
     "latest_draw_date": "2026-09-23",
     "latest_taiwan_safe_update_time": "2026-09-24 09:50",
@@ -5609,7 +5609,7 @@
       "zero_top9_rate": 0.667,
       "avg_top9_hits": 0.333,
       "avg_rank_10_to_25_hits": 2.0,
-      "enforced_at_taiwan": "2026-09-28T07:39:51+08:00"
+      "enforced_at_taiwan": "2026-09-28T11:47:08+08:00"
     },
     "breakthrough_rebuild": {
       "status": "已執行",
@@ -21634,7 +21634,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-09-28T07:39:51+08:00",
+      "enforced_at_taiwan": "2026-09-28T11:47:08+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -24102,7 +24102,7 @@
         "zero_top9_rate": 0.667,
         "avg_top9_hits": 0.333,
         "avg_rank_10_to_25_hits": 2.0,
-        "enforced_at_taiwan": "2026-09-28T07:39:51+08:00"
+        "enforced_at_taiwan": "2026-09-28T11:47:08+08:00"
       },
       "breakthrough_rebuild": {
         "status": "已執行",
@@ -40127,7 +40127,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-09-28T07:39:51+08:00",
+        "enforced_at_taiwan": "2026-09-28T11:47:08+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -70516,7 +70516,7 @@
     {
       "based_on_date": "2026-09-23",
       "target_date": "2026-09-24",
-      "created_at": "2026-09-28T07:40:01+08:00",
+      "created_at": "2026-09-28T11:47:18+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
