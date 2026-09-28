@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-09-29T07:39:22+08:00",
+  "checked_at_taiwan": "2026-09-29T07:57:33+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-09-29T07:39:20+08:00",
+    "generated_at_taiwan": "2026-09-29T07:57:30+08:00",
     "latest_draw_date": "2026-09-27",
     "latest_numbers": [
       3,
@@ -14,26 +14,26 @@
     "target_draw_date": "2026-09-28",
     "target_taiwan_time": "2026-09-29 09:50",
     "top9": [
-      33,
-      15,
       6,
+      33,
       1,
       2,
-      31,
-      7,
-      30,
-      14
-    ],
-    "top15": [
-      33,
-      15,
-      6,
-      1,
-      2,
-      31,
       7,
       30,
       14,
+      15,
+      31
+    ],
+    "top15": [
+      6,
+      33,
+      1,
+      2,
+      7,
+      30,
+      14,
+      15,
+      31,
       3,
       24,
       35,
@@ -44,7 +44,7 @@
     "engine": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild"
   },
   "site": {
-    "generated_at_taiwan": "2026-09-29T07:39:20+08:00",
+    "generated_at_taiwan": "2026-09-29T07:57:30+08:00",
     "latest_draw_date": "2026-09-27",
     "latest_numbers": [
       3,
@@ -56,26 +56,26 @@
     "target_draw_date": "2026-09-28",
     "target_taiwan_time": "2026-09-29 09:50",
     "top9": [
-      33,
-      15,
       6,
+      33,
       1,
       2,
-      31,
-      7,
-      30,
-      14
-    ],
-    "top15": [
-      33,
-      15,
-      6,
-      1,
-      2,
-      31,
       7,
       30,
       14,
+      15,
+      31
+    ],
+    "top15": [
+      6,
+      33,
+      1,
+      2,
+      7,
+      30,
+      14,
+      15,
+      31,
       3,
       24,
       35,

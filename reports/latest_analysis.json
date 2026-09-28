@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
-  "generated_at_taiwan": "2026-09-29T07:39:20+08:00",
-  "generated_at_california": "2026-09-28T16:39:20-07:00",
+  "generated_at_taiwan": "2026-09-29T07:57:30+08:00",
+  "generated_at_california": "2026-09-28T16:57:30-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11933,
@@ -1227,90 +1227,164 @@
       "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討"
     },
     "primary_single": [
-      33
-    ],
-    "two_hit_one": [
-      33,
       6
     ],
-    "three_hit_one": [
-      33,
+    "two_hit_one": [
       6,
-      2
+      33
+    ],
+    "three_hit_one": [
+      6,
+      33,
+      1
     ],
     "five_hit_two": [
-      33,
       6,
+      33,
+      1,
       2,
-      30,
-      15
+      7
     ],
     "nine_hit_three": [
-      33,
       6,
-      2,
-      30,
-      15,
+      33,
       1,
-      31,
+      2,
       7,
-      14
+      30,
+      14,
+      15,
+      31
     ],
     "high_confidence_numbers": [
       {
-        "number": 33,
-        "rank": 1,
-        "confidence_index": 92.1,
-        "model_probability_percent": 21.48,
-        "stability_count": 2,
-        "cross_validation_passed": 4,
-        "maturity_score": 85.1,
-        "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
-      },
-      {
         "number": 6,
-        "rank": 3,
+        "rank": 1,
+        "source_rank": 3,
         "confidence_index": 96.6,
         "model_probability_percent": 23.78,
         "stability_count": 3,
         "cross_validation_passed": 5,
         "maturity_score": 87.7,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 33,
+        "rank": 2,
+        "source_rank": 1,
+        "confidence_index": 92.1,
+        "model_probability_percent": 21.48,
+        "stability_count": 2,
+        "cross_validation_passed": 4,
+        "maturity_score": 85.1,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 1,
+        "rank": 3,
+        "source_rank": 4,
+        "confidence_index": 87.2,
+        "model_probability_percent": 18.98,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 81.0,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       },
       {
         "number": 2,
-        "rank": 5,
+        "rank": 4,
+        "source_rank": 5,
         "confidence_index": 92.8,
         "model_probability_percent": 21.84,
         "stability_count": 3,
         "cross_validation_passed": 5,
-        "maturity_score": 90.0,
+        "maturity_score": 90,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 7,
+        "rank": 5,
+        "source_rank": 7,
+        "confidence_index": 78.0,
+        "model_probability_percent": 14.29,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 76.4,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       },
       {
         "number": 30,
-        "rank": 8,
+        "rank": 6,
+        "source_rank": 8,
         "confidence_index": 88.9,
         "model_probability_percent": 19.85,
         "stability_count": 1,
         "cross_validation_passed": 3,
         "maturity_score": 79.5,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 14,
+        "rank": 7,
+        "source_rank": 9,
+        "confidence_index": 81.7,
+        "model_probability_percent": 16.17,
+        "stability_count": 2,
+        "cross_validation_passed": 4,
+        "maturity_score": 82.7,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 15,
+        "rank": 8,
+        "source_rank": 2,
+        "confidence_index": 90.9,
+        "model_probability_percent": 20.87,
+        "stability_count": 2,
+        "cross_validation_passed": 5,
+        "maturity_score": 88.1,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 31,
+        "rank": 9,
+        "source_rank": 6,
+        "confidence_index": 78.5,
+        "model_probability_percent": 14.54,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 81.0,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       }
     ],
     "high_confidence_core": [
-      33,
       6,
+      33,
+      1,
       2,
-      30
+      7,
+      30,
+      14,
+      15,
+      31
     ],
     "defensive_avoid": [
       18,
@@ -1389,7 +1463,7 @@
         "monthly_guard": "未通過月度誤開守門，不得標示高避開信心"
       }
     },
-    "release_rule": "只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。",
+    "release_rule": "獨支只允許一顆，必須通過唯一獨支鐵律；2碼、3碼、5碼與九碼皆由同一份核心排序延伸，禁止各欄位各自取號。",
     "recompute_rule": "每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。",
     "engine": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
     "time_table": [
@@ -1442,6 +1516,134 @@
         "worst_accidental_hits": 4,
         "confidence_cap": 45.0
       }
+    },
+    "super_single_decision": {
+      "version": "唯一超強高機率獨支鐵律_v20260929",
+      "title": "本期唯一超強高機率獨支",
+      "status": "唯一輸出",
+      "number": 6,
+      "numbers": [
+        6
+      ],
+      "unique": true,
+      "pool_size": 1,
+      "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+      "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+      "latest_draw_reuse": false,
+      "guard_summary": {
+        "上期沿用守門": "通過",
+        "剛開出連莊守門": "通過",
+        "主列放行守門": "通過"
+      },
+      "scores": {
+        "全歷史排序": 3,
+        "修正總分": 0.68546,
+        "原始分": 0.7512,
+        "信心指標": 96.6,
+        "模型保守機率": 23.78,
+        "交叉通過": "5/6",
+        "成熟度": 87.7,
+        "主列狀態": "失準急救主列通過"
+      },
+      "explanation": [
+        "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+        "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+        "信心指標 96.6，模型保守機率 23.78%。",
+        "交叉驗算 5/6，成熟度 87.7。",
+        "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+        "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+        "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+        "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+      ],
+      "route_sources": [
+        "每期開獎後滾動重算",
+        "失準突破重排",
+        "連莊達標保留",
+        "全歷史中段復活校正",
+        "九名後外漏命中回補",
+        "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+        "綜合模型",
+        "全歷史快速重算"
+      ],
+      "formula_reasons": [
+        "多週期頻率 0.7",
+        "趨勢轉折 0.787",
+        "牌型跟隨 0.646",
+        "拖牌關聯 0.636"
+      ],
+      "excluded_candidates": [
+        {
+          "number": 33,
+          "rank": 1,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 15,
+          "rank": 2,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 1,
+          "rank": 4,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 2,
+          "rank": 5,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 31,
+          "rank": 6,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 7,
+          "rank": 7,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 30,
+          "rank": 8,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 14,
+          "rank": 9,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 3,
+          "rank": 10,
+          "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+        },
+        {
+          "number": 24,
+          "rank": 11,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 35,
+          "rank": 12,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 13,
+          "rank": 13,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 32,
+          "rank": 14,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 10,
+          "rank": 15,
+          "reason": "主列放行未通過"
+        }
+      ],
+      "created_at_taiwan": "2026-09-29T07:57:30+08:00"
     }
   },
   "decisive_battle_plan": {
@@ -1456,90 +1658,164 @@
       "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討"
     },
     "primary_single": [
-      33
-    ],
-    "two_hit_one": [
-      33,
       6
     ],
-    "three_hit_one": [
-      33,
+    "two_hit_one": [
       6,
-      2
+      33
+    ],
+    "three_hit_one": [
+      6,
+      33,
+      1
     ],
     "five_hit_two": [
-      33,
       6,
+      33,
+      1,
       2,
-      30,
-      15
+      7
     ],
     "nine_hit_three": [
-      33,
       6,
-      2,
-      30,
-      15,
+      33,
       1,
-      31,
+      2,
       7,
-      14
+      30,
+      14,
+      15,
+      31
     ],
     "high_confidence_numbers": [
       {
-        "number": 33,
-        "rank": 1,
-        "confidence_index": 92.1,
-        "model_probability_percent": 21.48,
-        "stability_count": 2,
-        "cross_validation_passed": 4,
-        "maturity_score": 85.1,
-        "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
-      },
-      {
         "number": 6,
-        "rank": 3,
+        "rank": 1,
+        "source_rank": 3,
         "confidence_index": 96.6,
         "model_probability_percent": 23.78,
         "stability_count": 3,
         "cross_validation_passed": 5,
         "maturity_score": 87.7,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 33,
+        "rank": 2,
+        "source_rank": 1,
+        "confidence_index": 92.1,
+        "model_probability_percent": 21.48,
+        "stability_count": 2,
+        "cross_validation_passed": 4,
+        "maturity_score": 85.1,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 1,
+        "rank": 3,
+        "source_rank": 4,
+        "confidence_index": 87.2,
+        "model_probability_percent": 18.98,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 81.0,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       },
       {
         "number": 2,
-        "rank": 5,
+        "rank": 4,
+        "source_rank": 5,
         "confidence_index": 92.8,
         "model_probability_percent": 21.84,
         "stability_count": 3,
         "cross_validation_passed": 5,
-        "maturity_score": 90.0,
+        "maturity_score": 90,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 7,
+        "rank": 5,
+        "source_rank": 7,
+        "confidence_index": 78.0,
+        "model_probability_percent": 14.29,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 76.4,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       },
       {
         "number": 30,
-        "rank": 8,
+        "rank": 6,
+        "source_rank": 8,
         "confidence_index": 88.9,
         "model_probability_percent": 19.85,
         "stability_count": 1,
         "cross_validation_passed": 3,
         "maturity_score": 79.5,
         "confidence_level": "高信心觀察",
-        "reason": "多模型交叉通過",
-        "note": "高機率信心牌；本期攻擊核心優先關注，仍需依風控分批使用。"
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 14,
+        "rank": 7,
+        "source_rank": 9,
+        "confidence_index": 81.7,
+        "model_probability_percent": 16.17,
+        "stability_count": 2,
+        "cross_validation_passed": 4,
+        "maturity_score": 82.7,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 15,
+        "rank": 8,
+        "source_rank": 2,
+        "confidence_index": 90.9,
+        "model_probability_percent": 20.87,
+        "stability_count": 2,
+        "cross_validation_passed": 5,
+        "maturity_score": 88.1,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
+      },
+      {
+        "number": 31,
+        "rank": 9,
+        "source_rank": 6,
+        "confidence_index": 78.5,
+        "model_probability_percent": 14.54,
+        "stability_count": 1,
+        "cross_validation_passed": 3,
+        "maturity_score": 81.0,
+        "confidence_level": "高信心觀察",
+        "reason": "唯一獨支鐵律核心排序延伸",
+        "note": "由同一份唯一獨支核心排序延伸，避免電腦版與手機版不同步。"
       }
     ],
     "high_confidence_core": [
-      33,
       6,
+      33,
+      1,
       2,
-      30
+      7,
+      30,
+      14,
+      15,
+      31
     ],
     "defensive_avoid": [
       18,
@@ -1618,7 +1894,7 @@
         "monthly_guard": "未通過月度誤開守門，不得標示高避開信心"
       }
     },
-    "release_rule": "只有通過九碼內、信心、機率、穩定、交叉驗證、成熟度守門的號碼才列入高信心牌。",
+    "release_rule": "獨支只允許一顆，必須通過唯一獨支鐵律；2碼、3碼、5碼與九碼皆由同一份核心排序延伸，禁止各欄位各自取號。",
     "recompute_rule": "每期開獎後必須匯入最新號碼、結算上期、重新運算、重新回測、重建戰報與手機版；禁止沿用上期預測。",
     "engine": "industrial_fast_daily_formula_v20260922_breakthrough_rebuild",
     "time_table": [
@@ -1671,64 +1947,192 @@
         "worst_accidental_hits": 4,
         "confidence_cap": 45.0
       }
+    },
+    "super_single_decision": {
+      "version": "唯一超強高機率獨支鐵律_v20260929",
+      "title": "本期唯一超強高機率獨支",
+      "status": "唯一輸出",
+      "number": 6,
+      "numbers": [
+        6
+      ],
+      "unique": true,
+      "pool_size": 1,
+      "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+      "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+      "latest_draw_reuse": false,
+      "guard_summary": {
+        "上期沿用守門": "通過",
+        "剛開出連莊守門": "通過",
+        "主列放行守門": "通過"
+      },
+      "scores": {
+        "全歷史排序": 3,
+        "修正總分": 0.68546,
+        "原始分": 0.7512,
+        "信心指標": 96.6,
+        "模型保守機率": 23.78,
+        "交叉通過": "5/6",
+        "成熟度": 87.7,
+        "主列狀態": "失準急救主列通過"
+      },
+      "explanation": [
+        "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+        "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+        "信心指標 96.6，模型保守機率 23.78%。",
+        "交叉驗算 5/6，成熟度 87.7。",
+        "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+        "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+        "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+        "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+      ],
+      "route_sources": [
+        "每期開獎後滾動重算",
+        "失準突破重排",
+        "連莊達標保留",
+        "全歷史中段復活校正",
+        "九名後外漏命中回補",
+        "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+        "綜合模型",
+        "全歷史快速重算"
+      ],
+      "formula_reasons": [
+        "多週期頻率 0.7",
+        "趨勢轉折 0.787",
+        "牌型跟隨 0.646",
+        "拖牌關聯 0.636"
+      ],
+      "excluded_candidates": [
+        {
+          "number": 33,
+          "rank": 1,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 15,
+          "rank": 2,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 1,
+          "rank": 4,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 2,
+          "rank": 5,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 31,
+          "rank": 6,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 7,
+          "rank": 7,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 30,
+          "rank": 8,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 14,
+          "rank": 9,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 3,
+          "rank": 10,
+          "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+        },
+        {
+          "number": 24,
+          "rank": 11,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 35,
+          "rank": 12,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 13,
+          "rank": 13,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 32,
+          "rank": 14,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 10,
+          "rank": 15,
+          "reason": "主列放行未通過"
+        }
+      ],
+      "created_at_taiwan": "2026-09-29T07:57:30+08:00"
     }
   },
   "prediction": {
     "strongest": [
-      33
-    ],
-    "top1": [
-      33
-    ],
-    "top2": [
-      33,
-      15
-    ],
-    "top3": [
-      33,
-      15,
       6
     ],
-    "top5": [
-      33,
-      15,
+    "top1": [
+      6
+    ],
+    "top2": [
       6,
+      33
+    ],
+    "top3": [
+      6,
+      33,
+      1
+    ],
+    "top5": [
+      6,
+      33,
       1,
-      2
+      2,
+      7
     ],
     "top9": [
-      33,
-      15,
       6,
+      33,
       1,
       2,
-      31,
-      7,
-      30,
-      14
-    ],
-    "top10": [
-      33,
-      15,
-      6,
-      1,
-      2,
-      31,
       7,
       30,
       14,
+      15,
+      31
+    ],
+    "top10": [
+      6,
+      33,
+      1,
+      2,
+      7,
+      30,
+      14,
+      15,
+      31,
       3
     ],
     "top15": [
-      33,
-      15,
       6,
+      33,
       1,
       2,
-      31,
       7,
       30,
       14,
+      15,
+      31,
       3,
       24,
       35,
@@ -1739,10 +2143,15 @@
     "high_confidence_note": "高機率信心牌已依最近失誤、漏抓復活、近期實開風險重新排序；未過守門者只列研究，不包裝成必中。",
     "formal_high_confidence": [],
     "high_confidence_watch": [
-      33,
       6,
+      33,
+      1,
       2,
-      30
+      7,
+      30,
+      14,
+      15,
+      31
     ],
     "low_probability_5_not_hit": [
       18,
@@ -1785,7 +2194,7 @@
   },
   "freshness": {
     "california_today": "2026-09-28",
-    "california_time": "16:39:20",
+    "california_time": "16:57:30",
     "allowed_latest_draw_date": "2026-09-27",
     "age_days": 0,
     "status": "ok",
@@ -6613,7 +7022,7 @@
       "zero_top9_rate": 0.429,
       "avg_top9_hits": 0.571,
       "avg_rank_10_to_25_hits": 2.0,
-      "enforced_at_taiwan": "2026-09-29T07:39:15+08:00"
+      "enforced_at_taiwan": "2026-09-29T07:57:20+08:00"
     },
     "breakthrough_rebuild": {
       "status": "已執行",
@@ -21159,7 +21568,7 @@
         "hit_goal": 1,
         "hit_goal_max": 1,
         "numbers": [
-          33
+          6
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21167,40 +21576,170 @@
           "probability": 0.128205,
           "odds_1_in": 7.8
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "strong_single_validation": {
-          "status": "觀察輸出",
-          "number": 33,
+          "status": "唯一輸出",
+          "number": 6,
           "must_output_single": true,
           "fake_data_guard": "通過",
           "latest_draw_reuse": false,
           "latest_draw_reuse_allowed": true,
-          "score": 0.64789,
-          "candidate_score": 0.7684,
-          "confidence_index": 92.1,
-          "cross_validation": "4/6",
-          "maturity_score": 85.1,
+          "score": 0.68546,
+          "candidate_score": 0.7512,
+          "confidence_index": 96.6,
+          "cross_validation": "5/6",
+          "maturity_score": 87.7,
           "entry_status": "失準急救主列通過",
           "failed_checks": [],
           "evidence": [
-            "全歷史排序",
-            "失準突破重排",
-            "漏抓回收",
-            "後段命中回收",
-            "近期落空降權",
-            "剛開出號防呆"
+            "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+            "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+            "信心指標 96.6，模型保守機率 23.78%。",
+            "交叉驗算 5/6，成熟度 87.7。",
+            "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+            "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+            "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+            "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
           ]
         },
-        "validation_status": "觀察輸出",
-        "pool_size": 1
+        "validation_status": "唯一輸出",
+        "pool_size": 1,
+        "super_single_decision": {
+          "version": "唯一超強高機率獨支鐵律_v20260929",
+          "title": "本期唯一超強高機率獨支",
+          "status": "唯一輸出",
+          "number": 6,
+          "numbers": [
+            6
+          ],
+          "unique": true,
+          "pool_size": 1,
+          "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+          "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+          "latest_draw_reuse": false,
+          "guard_summary": {
+            "上期沿用守門": "通過",
+            "剛開出連莊守門": "通過",
+            "主列放行守門": "通過"
+          },
+          "scores": {
+            "全歷史排序": 3,
+            "修正總分": 0.68546,
+            "原始分": 0.7512,
+            "信心指標": 96.6,
+            "模型保守機率": 23.78,
+            "交叉通過": "5/6",
+            "成熟度": 87.7,
+            "主列狀態": "失準急救主列通過"
+          },
+          "explanation": [
+            "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+            "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+            "信心指標 96.6，模型保守機率 23.78%。",
+            "交叉驗算 5/6，成熟度 87.7。",
+            "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+            "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+            "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+            "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+          ],
+          "route_sources": [
+            "每期開獎後滾動重算",
+            "失準突破重排",
+            "連莊達標保留",
+            "全歷史中段復活校正",
+            "九名後外漏命中回補",
+            "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+            "綜合模型",
+            "全歷史快速重算"
+          ],
+          "formula_reasons": [
+            "多週期頻率 0.7",
+            "趨勢轉折 0.787",
+            "牌型跟隨 0.646",
+            "拖牌關聯 0.636"
+          ],
+          "excluded_candidates": [
+            {
+              "number": 33,
+              "rank": 1,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 15,
+              "rank": 2,
+              "reason": "剛開出連莊未達標"
+            },
+            {
+              "number": 1,
+              "rank": 4,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 2,
+              "rank": 5,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 31,
+              "rank": 6,
+              "reason": "剛開出連莊未達標"
+            },
+            {
+              "number": 7,
+              "rank": 7,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 30,
+              "rank": 8,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 14,
+              "rank": 9,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 3,
+              "rank": 10,
+              "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+            },
+            {
+              "number": 24,
+              "rank": 11,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 35,
+              "rank": 12,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 13,
+              "rank": 13,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 32,
+              "rank": 14,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 10,
+              "rank": 15,
+              "reason": "主列放行未通過"
+            }
+          ],
+          "created_at_taiwan": "2026-09-29T07:57:30+08:00"
+        }
       },
       "two_hit_one": {
         "name": "最強2中1~2",
         "hit_goal": 1,
         "hit_goal_max": 2,
         "numbers": [
-          33,
-          15
+          6,
+          33
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21208,7 +21747,7 @@
           "probability": 0.242915,
           "odds_1_in": 4.12
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 2
       },
       "three_hit_two": {
@@ -21216,9 +21755,9 @@
         "hit_goal": 1,
         "hit_goal_max": 3,
         "numbers": [
+          6,
           33,
-          15,
-          6
+          1
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21226,7 +21765,7 @@
           "probability": 0.345224,
           "odds_1_in": 2.9
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 3
       },
       "five_hit_two": {
@@ -21234,11 +21773,11 @@
         "hit_goal": 1,
         "hit_goal_max": 5,
         "numbers": [
-          33,
-          15,
           6,
+          33,
           1,
-          2
+          2,
+          7
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21246,7 +21785,7 @@
           "probability": 0.516713,
           "odds_1_in": 1.94
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 5
       },
       "nine_hit_three": {
@@ -21254,15 +21793,15 @@
         "hit_goal": 3,
         "hit_goal_max": 5,
         "numbers": [
-          33,
-          15,
           6,
+          33,
           1,
           2,
-          31,
           7,
           30,
-          14
+          14,
+          15,
+          31
         ],
         "theoretical_probability": {
           "hit_goal": 3,
@@ -21270,14 +21809,14 @@
           "probability": 0.070248,
           "odds_1_in": 14.24
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 9
       },
       "precision_single": {
-        "name": "精算獨隻1中1",
+        "name": "精算獨支1中1",
         "hit_goal": 1,
         "numbers": [
-          33
+          6
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21285,15 +21824,16 @@
           "probability": 0.128205,
           "odds_1_in": 7.8
         },
-        "status": "每日快速重算完成",
-        "pool_size": 1
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 1,
+        "hit_goal_max": 1
       },
       "precision_two_hit_one": {
         "name": "精算2中1~2",
         "hit_goal": 1,
         "numbers": [
-          33,
-          15
+          6,
+          33
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21301,16 +21841,17 @@
           "probability": 0.242915,
           "odds_1_in": 4.12
         },
-        "status": "每日快速重算完成",
-        "pool_size": 2
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 2,
+        "hit_goal_max": 2
       },
       "precision_three_hit_one": {
         "name": "精算3中1~3",
         "hit_goal": 1,
         "numbers": [
+          6,
           33,
-          15,
-          6
+          1
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -21318,8 +21859,9 @@
           "probability": 0.345224,
           "odds_1_in": 2.9
         },
-        "status": "每日快速重算完成",
-        "pool_size": 3
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 3,
+        "hit_goal_max": 3
       }
     },
     "precision_micro_models": {
@@ -22468,26 +23010,28 @@
       "message": "每期開獎後已輸出落空、漏抓、後段命中與模型權重修正清單。"
     },
     "strong_single_validation": {
-      "status": "觀察輸出",
-      "number": 33,
+      "status": "唯一輸出",
+      "number": 6,
       "must_output_single": true,
       "fake_data_guard": "通過",
       "latest_draw_reuse": false,
       "latest_draw_reuse_allowed": true,
-      "score": 0.64789,
-      "candidate_score": 0.7684,
-      "confidence_index": 92.1,
-      "cross_validation": "4/6",
-      "maturity_score": 85.1,
+      "score": 0.68546,
+      "candidate_score": 0.7512,
+      "confidence_index": 96.6,
+      "cross_validation": "5/6",
+      "maturity_score": 87.7,
       "entry_status": "失準急救主列通過",
       "failed_checks": [],
       "evidence": [
-        "全歷史排序",
-        "失準突破重排",
-        "漏抓回收",
-        "後段命中回收",
-        "近期落空降權",
-        "剛開出號防呆"
+        "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+        "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+        "信心指標 96.6，模型保守機率 23.78%。",
+        "交叉驗算 5/6，成熟度 87.7。",
+        "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+        "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+        "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+        "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
       ]
     },
     "post9_hit_leak_audit": {
@@ -22691,7 +23235,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-09-29T07:39:15+08:00",
+      "enforced_at_taiwan": "2026-09-29T07:57:20+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -22849,6 +23393,134 @@
         "twin": 0.0246
       },
       "two_stage_status": "withheld_backtest_not_passed"
+    },
+    "super_single_decision": {
+      "version": "唯一超強高機率獨支鐵律_v20260929",
+      "title": "本期唯一超強高機率獨支",
+      "status": "唯一輸出",
+      "number": 6,
+      "numbers": [
+        6
+      ],
+      "unique": true,
+      "pool_size": 1,
+      "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+      "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+      "latest_draw_reuse": false,
+      "guard_summary": {
+        "上期沿用守門": "通過",
+        "剛開出連莊守門": "通過",
+        "主列放行守門": "通過"
+      },
+      "scores": {
+        "全歷史排序": 3,
+        "修正總分": 0.68546,
+        "原始分": 0.7512,
+        "信心指標": 96.6,
+        "模型保守機率": 23.78,
+        "交叉通過": "5/6",
+        "成熟度": 87.7,
+        "主列狀態": "失準急救主列通過"
+      },
+      "explanation": [
+        "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+        "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+        "信心指標 96.6，模型保守機率 23.78%。",
+        "交叉驗算 5/6，成熟度 87.7。",
+        "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+        "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+        "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+        "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+      ],
+      "route_sources": [
+        "每期開獎後滾動重算",
+        "失準突破重排",
+        "連莊達標保留",
+        "全歷史中段復活校正",
+        "九名後外漏命中回補",
+        "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+        "綜合模型",
+        "全歷史快速重算"
+      ],
+      "formula_reasons": [
+        "多週期頻率 0.7",
+        "趨勢轉折 0.787",
+        "牌型跟隨 0.646",
+        "拖牌關聯 0.636"
+      ],
+      "excluded_candidates": [
+        {
+          "number": 33,
+          "rank": 1,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 15,
+          "rank": 2,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 1,
+          "rank": 4,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 2,
+          "rank": 5,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 31,
+          "rank": 6,
+          "reason": "剛開出連莊未達標"
+        },
+        {
+          "number": 7,
+          "rank": 7,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 30,
+          "rank": 8,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 14,
+          "rank": 9,
+          "reason": "分數低於唯一獨支"
+        },
+        {
+          "number": 3,
+          "rank": 10,
+          "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+        },
+        {
+          "number": 24,
+          "rank": 11,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 35,
+          "rank": 12,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 13,
+          "rank": 13,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 32,
+          "rank": 14,
+          "reason": "主列放行未通過"
+        },
+        {
+          "number": 10,
+          "rank": 15,
+          "reason": "主列放行未通過"
+        }
+      ],
+      "created_at_taiwan": "2026-09-29T07:57:30+08:00"
     }
   },
   "primary_tiantianle_core": {
@@ -25285,7 +25957,7 @@
         "zero_top9_rate": 0.429,
         "avg_top9_hits": 0.571,
         "avg_rank_10_to_25_hits": 2.0,
-        "enforced_at_taiwan": "2026-09-29T07:39:15+08:00"
+        "enforced_at_taiwan": "2026-09-29T07:57:20+08:00"
       },
       "breakthrough_rebuild": {
         "status": "已執行",
@@ -39831,7 +40503,7 @@
           "hit_goal": 1,
           "hit_goal_max": 1,
           "numbers": [
-            33
+            6
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39839,40 +40511,170 @@
             "probability": 0.128205,
             "odds_1_in": 7.8
           },
-          "status": "每日快速重算完成",
+          "status": "唯一獨支鐵律同步重算",
           "strong_single_validation": {
-            "status": "觀察輸出",
-            "number": 33,
+            "status": "唯一輸出",
+            "number": 6,
             "must_output_single": true,
             "fake_data_guard": "通過",
             "latest_draw_reuse": false,
             "latest_draw_reuse_allowed": true,
-            "score": 0.64789,
-            "candidate_score": 0.7684,
-            "confidence_index": 92.1,
-            "cross_validation": "4/6",
-            "maturity_score": 85.1,
+            "score": 0.68546,
+            "candidate_score": 0.7512,
+            "confidence_index": 96.6,
+            "cross_validation": "5/6",
+            "maturity_score": 87.7,
             "entry_status": "失準急救主列通過",
             "failed_checks": [],
             "evidence": [
-              "全歷史排序",
-              "失準突破重排",
-              "漏抓回收",
-              "後段命中回收",
-              "近期落空降權",
-              "剛開出號防呆"
+              "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+              "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+              "信心指標 96.6，模型保守機率 23.78%。",
+              "交叉驗算 5/6，成熟度 87.7。",
+              "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+              "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+              "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+              "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
             ]
           },
-          "validation_status": "觀察輸出",
-          "pool_size": 1
+          "validation_status": "唯一輸出",
+          "pool_size": 1,
+          "super_single_decision": {
+            "version": "唯一超強高機率獨支鐵律_v20260929",
+            "title": "本期唯一超強高機率獨支",
+            "status": "唯一輸出",
+            "number": 6,
+            "numbers": [
+              6
+            ],
+            "unique": true,
+            "pool_size": 1,
+            "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+            "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+            "latest_draw_reuse": false,
+            "guard_summary": {
+              "上期沿用守門": "通過",
+              "剛開出連莊守門": "通過",
+              "主列放行守門": "通過"
+            },
+            "scores": {
+              "全歷史排序": 3,
+              "修正總分": 0.68546,
+              "原始分": 0.7512,
+              "信心指標": 96.6,
+              "模型保守機率": 23.78,
+              "交叉通過": "5/6",
+              "成熟度": 87.7,
+              "主列狀態": "失準急救主列通過"
+            },
+            "explanation": [
+              "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+              "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+              "信心指標 96.6，模型保守機率 23.78%。",
+              "交叉驗算 5/6，成熟度 87.7。",
+              "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+              "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+              "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+              "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+            ],
+            "route_sources": [
+              "每期開獎後滾動重算",
+              "失準突破重排",
+              "連莊達標保留",
+              "全歷史中段復活校正",
+              "九名後外漏命中回補",
+              "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+              "綜合模型",
+              "全歷史快速重算"
+            ],
+            "formula_reasons": [
+              "多週期頻率 0.7",
+              "趨勢轉折 0.787",
+              "牌型跟隨 0.646",
+              "拖牌關聯 0.636"
+            ],
+            "excluded_candidates": [
+              {
+                "number": 33,
+                "rank": 1,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 15,
+                "rank": 2,
+                "reason": "剛開出連莊未達標"
+              },
+              {
+                "number": 1,
+                "rank": 4,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 2,
+                "rank": 5,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 31,
+                "rank": 6,
+                "reason": "剛開出連莊未達標"
+              },
+              {
+                "number": 7,
+                "rank": 7,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 30,
+                "rank": 8,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 14,
+                "rank": 9,
+                "reason": "分數低於唯一獨支"
+              },
+              {
+                "number": 3,
+                "rank": 10,
+                "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+              },
+              {
+                "number": 24,
+                "rank": 11,
+                "reason": "主列放行未通過"
+              },
+              {
+                "number": 35,
+                "rank": 12,
+                "reason": "主列放行未通過"
+              },
+              {
+                "number": 13,
+                "rank": 13,
+                "reason": "主列放行未通過"
+              },
+              {
+                "number": 32,
+                "rank": 14,
+                "reason": "主列放行未通過"
+              },
+              {
+                "number": 10,
+                "rank": 15,
+                "reason": "主列放行未通過"
+              }
+            ],
+            "created_at_taiwan": "2026-09-29T07:57:30+08:00"
+          }
         },
         "two_hit_one": {
           "name": "最強2中1~2",
           "hit_goal": 1,
           "hit_goal_max": 2,
           "numbers": [
-            33,
-            15
+            6,
+            33
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39880,7 +40682,7 @@
             "probability": 0.242915,
             "odds_1_in": 4.12
           },
-          "status": "每日快速重算完成",
+          "status": "唯一獨支鐵律同步重算",
           "pool_size": 2
         },
         "three_hit_two": {
@@ -39888,9 +40690,9 @@
           "hit_goal": 1,
           "hit_goal_max": 3,
           "numbers": [
+            6,
             33,
-            15,
-            6
+            1
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39898,7 +40700,7 @@
             "probability": 0.345224,
             "odds_1_in": 2.9
           },
-          "status": "每日快速重算完成",
+          "status": "唯一獨支鐵律同步重算",
           "pool_size": 3
         },
         "five_hit_two": {
@@ -39906,11 +40708,11 @@
           "hit_goal": 1,
           "hit_goal_max": 5,
           "numbers": [
-            33,
-            15,
             6,
+            33,
             1,
-            2
+            2,
+            7
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39918,7 +40720,7 @@
             "probability": 0.516713,
             "odds_1_in": 1.94
           },
-          "status": "每日快速重算完成",
+          "status": "唯一獨支鐵律同步重算",
           "pool_size": 5
         },
         "nine_hit_three": {
@@ -39926,15 +40728,15 @@
           "hit_goal": 3,
           "hit_goal_max": 5,
           "numbers": [
-            33,
-            15,
             6,
+            33,
             1,
             2,
-            31,
             7,
             30,
-            14
+            14,
+            15,
+            31
           ],
           "theoretical_probability": {
             "hit_goal": 3,
@@ -39942,14 +40744,14 @@
             "probability": 0.070248,
             "odds_1_in": 14.24
           },
-          "status": "每日快速重算完成",
+          "status": "唯一獨支鐵律同步重算",
           "pool_size": 9
         },
         "precision_single": {
-          "name": "精算獨隻1中1",
+          "name": "精算獨支1中1",
           "hit_goal": 1,
           "numbers": [
-            33
+            6
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39957,15 +40759,16 @@
             "probability": 0.128205,
             "odds_1_in": 7.8
           },
-          "status": "每日快速重算完成",
-          "pool_size": 1
+          "status": "唯一獨支鐵律同步重算",
+          "pool_size": 1,
+          "hit_goal_max": 1
         },
         "precision_two_hit_one": {
           "name": "精算2中1~2",
           "hit_goal": 1,
           "numbers": [
-            33,
-            15
+            6,
+            33
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39973,16 +40776,17 @@
             "probability": 0.242915,
             "odds_1_in": 4.12
           },
-          "status": "每日快速重算完成",
-          "pool_size": 2
+          "status": "唯一獨支鐵律同步重算",
+          "pool_size": 2,
+          "hit_goal_max": 2
         },
         "precision_three_hit_one": {
           "name": "精算3中1~3",
           "hit_goal": 1,
           "numbers": [
+            6,
             33,
-            15,
-            6
+            1
           ],
           "theoretical_probability": {
             "hit_goal": 1,
@@ -39990,8 +40794,9 @@
             "probability": 0.345224,
             "odds_1_in": 2.9
           },
-          "status": "每日快速重算完成",
-          "pool_size": 3
+          "status": "唯一獨支鐵律同步重算",
+          "pool_size": 3,
+          "hit_goal_max": 3
         }
       },
       "precision_micro_models": {
@@ -41140,26 +41945,28 @@
         "message": "每期開獎後已輸出落空、漏抓、後段命中與模型權重修正清單。"
       },
       "strong_single_validation": {
-        "status": "觀察輸出",
-        "number": 33,
+        "status": "唯一輸出",
+        "number": 6,
         "must_output_single": true,
         "fake_data_guard": "通過",
         "latest_draw_reuse": false,
         "latest_draw_reuse_allowed": true,
-        "score": 0.64789,
-        "candidate_score": 0.7684,
-        "confidence_index": 92.1,
-        "cross_validation": "4/6",
-        "maturity_score": 85.1,
+        "score": 0.68546,
+        "candidate_score": 0.7512,
+        "confidence_index": 96.6,
+        "cross_validation": "5/6",
+        "maturity_score": 87.7,
         "entry_status": "失準急救主列通過",
         "failed_checks": [],
         "evidence": [
-          "全歷史排序",
-          "失準突破重排",
-          "漏抓回收",
-          "後段命中回收",
-          "近期落空降權",
-          "剛開出號防呆"
+          "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+          "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+          "信心指標 96.6，模型保守機率 23.78%。",
+          "交叉驗算 5/6，成熟度 87.7。",
+          "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+          "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+          "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+          "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
         ]
       },
       "post9_hit_leak_audit": {
@@ -41363,7 +42170,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-09-29T07:39:15+08:00",
+        "enforced_at_taiwan": "2026-09-29T07:57:20+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -41521,6 +42328,134 @@
           "twin": 0.0246
         },
         "two_stage_status": "withheld_backtest_not_passed"
+      },
+      "super_single_decision": {
+        "version": "唯一超強高機率獨支鐵律_v20260929",
+        "title": "本期唯一超強高機率獨支",
+        "status": "唯一輸出",
+        "number": 6,
+        "numbers": [
+          6
+        ],
+        "unique": true,
+        "pool_size": 1,
+        "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+        "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+        "latest_draw_reuse": false,
+        "guard_summary": {
+          "上期沿用守門": "通過",
+          "剛開出連莊守門": "通過",
+          "主列放行守門": "通過"
+        },
+        "scores": {
+          "全歷史排序": 3,
+          "修正總分": 0.68546,
+          "原始分": 0.7512,
+          "信心指標": 96.6,
+          "模型保守機率": 23.78,
+          "交叉通過": "5/6",
+          "成熟度": 87.7,
+          "主列狀態": "失準急救主列通過"
+        },
+        "explanation": [
+          "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+          "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+          "信心指標 96.6，模型保守機率 23.78%。",
+          "交叉驗算 5/6，成熟度 87.7。",
+          "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+          "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+          "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+          "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+        ],
+        "route_sources": [
+          "每期開獎後滾動重算",
+          "失準突破重排",
+          "連莊達標保留",
+          "全歷史中段復活校正",
+          "九名後外漏命中回補",
+          "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+          "綜合模型",
+          "全歷史快速重算"
+        ],
+        "formula_reasons": [
+          "多週期頻率 0.7",
+          "趨勢轉折 0.787",
+          "牌型跟隨 0.646",
+          "拖牌關聯 0.636"
+        ],
+        "excluded_candidates": [
+          {
+            "number": 33,
+            "rank": 1,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 15,
+            "rank": 2,
+            "reason": "剛開出連莊未達標"
+          },
+          {
+            "number": 1,
+            "rank": 4,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 2,
+            "rank": 5,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 31,
+            "rank": 6,
+            "reason": "剛開出連莊未達標"
+          },
+          {
+            "number": 7,
+            "rank": 7,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 30,
+            "rank": 8,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 14,
+            "rank": 9,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 3,
+            "rank": 10,
+            "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+          },
+          {
+            "number": 24,
+            "rank": 11,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 35,
+            "rank": 12,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 13,
+            "rank": 13,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 32,
+            "rank": 14,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 10,
+            "rank": 15,
+            "reason": "主列放行未通過"
+          }
+        ],
+        "created_at_taiwan": "2026-09-29T07:57:30+08:00"
       }
     },
     "aerospace_assurance": {
@@ -55635,7 +56570,7 @@
         "hit_goal": 1,
         "hit_goal_max": 1,
         "numbers": [
-          33
+          6
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55643,40 +56578,170 @@
           "probability": 0.128205,
           "odds_1_in": 7.8
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "strong_single_validation": {
-          "status": "觀察輸出",
-          "number": 33,
+          "status": "唯一輸出",
+          "number": 6,
           "must_output_single": true,
           "fake_data_guard": "通過",
           "latest_draw_reuse": false,
           "latest_draw_reuse_allowed": true,
-          "score": 0.64789,
-          "candidate_score": 0.7684,
-          "confidence_index": 92.1,
-          "cross_validation": "4/6",
-          "maturity_score": 85.1,
+          "score": 0.68546,
+          "candidate_score": 0.7512,
+          "confidence_index": 96.6,
+          "cross_validation": "5/6",
+          "maturity_score": 87.7,
           "entry_status": "失準急救主列通過",
           "failed_checks": [],
           "evidence": [
-            "全歷史排序",
-            "失準突破重排",
-            "漏抓回收",
-            "後段命中回收",
-            "近期落空降權",
-            "剛開出號防呆"
+            "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+            "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+            "信心指標 96.6，模型保守機率 23.78%。",
+            "交叉驗算 5/6，成熟度 87.7。",
+            "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+            "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+            "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+            "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
           ]
         },
-        "validation_status": "觀察輸出",
-        "pool_size": 1
+        "validation_status": "唯一輸出",
+        "pool_size": 1,
+        "super_single_decision": {
+          "version": "唯一超強高機率獨支鐵律_v20260929",
+          "title": "本期唯一超強高機率獨支",
+          "status": "唯一輸出",
+          "number": 6,
+          "numbers": [
+            6
+          ],
+          "unique": true,
+          "pool_size": 1,
+          "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+          "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+          "latest_draw_reuse": false,
+          "guard_summary": {
+            "上期沿用守門": "通過",
+            "剛開出連莊守門": "通過",
+            "主列放行守門": "通過"
+          },
+          "scores": {
+            "全歷史排序": 3,
+            "修正總分": 0.68546,
+            "原始分": 0.7512,
+            "信心指標": 96.6,
+            "模型保守機率": 23.78,
+            "交叉通過": "5/6",
+            "成熟度": 87.7,
+            "主列狀態": "失準急救主列通過"
+          },
+          "explanation": [
+            "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+            "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+            "信心指標 96.6，模型保守機率 23.78%。",
+            "交叉驗算 5/6，成熟度 87.7。",
+            "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+            "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+            "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+            "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+          ],
+          "route_sources": [
+            "每期開獎後滾動重算",
+            "失準突破重排",
+            "連莊達標保留",
+            "全歷史中段復活校正",
+            "九名後外漏命中回補",
+            "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+            "綜合模型",
+            "全歷史快速重算"
+          ],
+          "formula_reasons": [
+            "多週期頻率 0.7",
+            "趨勢轉折 0.787",
+            "牌型跟隨 0.646",
+            "拖牌關聯 0.636"
+          ],
+          "excluded_candidates": [
+            {
+              "number": 33,
+              "rank": 1,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 15,
+              "rank": 2,
+              "reason": "剛開出連莊未達標"
+            },
+            {
+              "number": 1,
+              "rank": 4,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 2,
+              "rank": 5,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 31,
+              "rank": 6,
+              "reason": "剛開出連莊未達標"
+            },
+            {
+              "number": 7,
+              "rank": 7,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 30,
+              "rank": 8,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 14,
+              "rank": 9,
+              "reason": "分數低於唯一獨支"
+            },
+            {
+              "number": 3,
+              "rank": 10,
+              "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+            },
+            {
+              "number": 24,
+              "rank": 11,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 35,
+              "rank": 12,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 13,
+              "rank": 13,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 32,
+              "rank": 14,
+              "reason": "主列放行未通過"
+            },
+            {
+              "number": 10,
+              "rank": 15,
+              "reason": "主列放行未通過"
+            }
+          ],
+          "created_at_taiwan": "2026-09-29T07:57:30+08:00"
+        }
       },
       "two_hit_one": {
         "name": "最強2中1~2",
         "hit_goal": 1,
         "hit_goal_max": 2,
         "numbers": [
-          33,
-          15
+          6,
+          33
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55684,7 +56749,7 @@
           "probability": 0.242915,
           "odds_1_in": 4.12
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 2
       },
       "three_hit_two": {
@@ -55692,9 +56757,9 @@
         "hit_goal": 1,
         "hit_goal_max": 3,
         "numbers": [
+          6,
           33,
-          15,
-          6
+          1
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55702,7 +56767,7 @@
           "probability": 0.345224,
           "odds_1_in": 2.9
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 3
       },
       "five_hit_two": {
@@ -55710,11 +56775,11 @@
         "hit_goal": 1,
         "hit_goal_max": 5,
         "numbers": [
-          33,
-          15,
           6,
+          33,
           1,
-          2
+          2,
+          7
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55722,7 +56787,7 @@
           "probability": 0.516713,
           "odds_1_in": 1.94
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 5
       },
       "nine_hit_three": {
@@ -55730,15 +56795,15 @@
         "hit_goal": 3,
         "hit_goal_max": 5,
         "numbers": [
-          33,
-          15,
           6,
+          33,
           1,
           2,
-          31,
           7,
           30,
-          14
+          14,
+          15,
+          31
         ],
         "theoretical_probability": {
           "hit_goal": 3,
@@ -55746,14 +56811,14 @@
           "probability": 0.070248,
           "odds_1_in": 14.24
         },
-        "status": "每日快速重算完成",
+        "status": "唯一獨支鐵律同步重算",
         "pool_size": 9
       },
       "precision_single": {
-        "name": "精算獨隻1中1",
+        "name": "精算獨支1中1",
         "hit_goal": 1,
         "numbers": [
-          33
+          6
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55761,15 +56826,16 @@
           "probability": 0.128205,
           "odds_1_in": 7.8
         },
-        "status": "每日快速重算完成",
-        "pool_size": 1
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 1,
+        "hit_goal_max": 1
       },
       "precision_two_hit_one": {
         "name": "精算2中1~2",
         "hit_goal": 1,
         "numbers": [
-          33,
-          15
+          6,
+          33
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55777,16 +56843,17 @@
           "probability": 0.242915,
           "odds_1_in": 4.12
         },
-        "status": "每日快速重算完成",
-        "pool_size": 2
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 2,
+        "hit_goal_max": 2
       },
       "precision_three_hit_one": {
         "name": "精算3中1~3",
         "hit_goal": 1,
         "numbers": [
+          6,
           33,
-          15,
-          6
+          1
         ],
         "theoretical_probability": {
           "hit_goal": 1,
@@ -55794,8 +56861,9 @@
           "probability": 0.345224,
           "odds_1_in": 2.9
         },
-        "status": "每日快速重算完成",
-        "pool_size": 3
+        "status": "唯一獨支鐵律同步重算",
+        "pool_size": 3,
+        "hit_goal_max": 3
       }
     },
     "precision_micro_models": {
@@ -70184,7 +71252,7 @@
       "hit_goal": 1,
       "hit_goal_max": 1,
       "numbers": [
-        33
+        6
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70192,40 +71260,170 @@
         "probability": 0.128205,
         "odds_1_in": 7.8
       },
-      "status": "每日快速重算完成",
+      "status": "唯一獨支鐵律同步重算",
       "strong_single_validation": {
-        "status": "觀察輸出",
-        "number": 33,
+        "status": "唯一輸出",
+        "number": 6,
         "must_output_single": true,
         "fake_data_guard": "通過",
         "latest_draw_reuse": false,
         "latest_draw_reuse_allowed": true,
-        "score": 0.64789,
-        "candidate_score": 0.7684,
-        "confidence_index": 92.1,
-        "cross_validation": "4/6",
-        "maturity_score": 85.1,
+        "score": 0.68546,
+        "candidate_score": 0.7512,
+        "confidence_index": 96.6,
+        "cross_validation": "5/6",
+        "maturity_score": 87.7,
         "entry_status": "失準急救主列通過",
         "failed_checks": [],
         "evidence": [
-          "全歷史排序",
-          "失準突破重排",
-          "漏抓回收",
-          "後段命中回收",
-          "近期落空降權",
-          "剛開出號防呆"
+          "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+          "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+          "信心指標 96.6，模型保守機率 23.78%。",
+          "交叉驗算 5/6，成熟度 87.7。",
+          "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+          "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+          "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+          "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
         ]
       },
-      "validation_status": "觀察輸出",
-      "pool_size": 1
+      "validation_status": "唯一輸出",
+      "pool_size": 1,
+      "super_single_decision": {
+        "version": "唯一超強高機率獨支鐵律_v20260929",
+        "title": "本期唯一超強高機率獨支",
+        "status": "唯一輸出",
+        "number": 6,
+        "numbers": [
+          6
+        ],
+        "unique": true,
+        "pool_size": 1,
+        "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+        "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+        "latest_draw_reuse": false,
+        "guard_summary": {
+          "上期沿用守門": "通過",
+          "剛開出連莊守門": "通過",
+          "主列放行守門": "通過"
+        },
+        "scores": {
+          "全歷史排序": 3,
+          "修正總分": 0.68546,
+          "原始分": 0.7512,
+          "信心指標": 96.6,
+          "模型保守機率": 23.78,
+          "交叉通過": "5/6",
+          "成熟度": 87.7,
+          "主列狀態": "失準急救主列通過"
+        },
+        "explanation": [
+          "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+          "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+          "信心指標 96.6，模型保守機率 23.78%。",
+          "交叉驗算 5/6，成熟度 87.7。",
+          "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+          "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+          "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+          "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+        ],
+        "route_sources": [
+          "每期開獎後滾動重算",
+          "失準突破重排",
+          "連莊達標保留",
+          "全歷史中段復活校正",
+          "九名後外漏命中回補",
+          "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+          "綜合模型",
+          "全歷史快速重算"
+        ],
+        "formula_reasons": [
+          "多週期頻率 0.7",
+          "趨勢轉折 0.787",
+          "牌型跟隨 0.646",
+          "拖牌關聯 0.636"
+        ],
+        "excluded_candidates": [
+          {
+            "number": 33,
+            "rank": 1,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 15,
+            "rank": 2,
+            "reason": "剛開出連莊未達標"
+          },
+          {
+            "number": 1,
+            "rank": 4,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 2,
+            "rank": 5,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 31,
+            "rank": 6,
+            "reason": "剛開出連莊未達標"
+          },
+          {
+            "number": 7,
+            "rank": 7,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 30,
+            "rank": 8,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 14,
+            "rank": 9,
+            "reason": "分數低於唯一獨支"
+          },
+          {
+            "number": 3,
+            "rank": 10,
+            "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+          },
+          {
+            "number": 24,
+            "rank": 11,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 35,
+            "rank": 12,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 13,
+            "rank": 13,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 32,
+            "rank": 14,
+            "reason": "主列放行未通過"
+          },
+          {
+            "number": 10,
+            "rank": 15,
+            "reason": "主列放行未通過"
+          }
+        ],
+        "created_at_taiwan": "2026-09-29T07:57:30+08:00"
+      }
     },
     "two_hit_one": {
       "name": "最強2中1~2",
       "hit_goal": 1,
       "hit_goal_max": 2,
       "numbers": [
-        33,
-        15
+        6,
+        33
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70233,7 +71431,7 @@
         "probability": 0.242915,
         "odds_1_in": 4.12
       },
-      "status": "每日快速重算完成",
+      "status": "唯一獨支鐵律同步重算",
       "pool_size": 2
     },
     "three_hit_two": {
@@ -70241,9 +71439,9 @@
       "hit_goal": 1,
       "hit_goal_max": 3,
       "numbers": [
+        6,
         33,
-        15,
-        6
+        1
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70251,7 +71449,7 @@
         "probability": 0.345224,
         "odds_1_in": 2.9
       },
-      "status": "每日快速重算完成",
+      "status": "唯一獨支鐵律同步重算",
       "pool_size": 3
     },
     "five_hit_two": {
@@ -70259,11 +71457,11 @@
       "hit_goal": 1,
       "hit_goal_max": 5,
       "numbers": [
-        33,
-        15,
         6,
+        33,
         1,
-        2
+        2,
+        7
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70271,7 +71469,7 @@
         "probability": 0.516713,
         "odds_1_in": 1.94
       },
-      "status": "每日快速重算完成",
+      "status": "唯一獨支鐵律同步重算",
       "pool_size": 5
     },
     "nine_hit_three": {
@@ -70279,15 +71477,15 @@
       "hit_goal": 3,
       "hit_goal_max": 5,
       "numbers": [
-        33,
-        15,
         6,
+        33,
         1,
         2,
-        31,
         7,
         30,
-        14
+        14,
+        15,
+        31
       ],
       "theoretical_probability": {
         "hit_goal": 3,
@@ -70295,14 +71493,14 @@
         "probability": 0.070248,
         "odds_1_in": 14.24
       },
-      "status": "每日快速重算完成",
+      "status": "唯一獨支鐵律同步重算",
       "pool_size": 9
     },
     "precision_single": {
-      "name": "精算獨隻1中1",
+      "name": "精算獨支1中1",
       "hit_goal": 1,
       "numbers": [
-        33
+        6
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70310,15 +71508,16 @@
         "probability": 0.128205,
         "odds_1_in": 7.8
       },
-      "status": "每日快速重算完成",
-      "pool_size": 1
+      "status": "唯一獨支鐵律同步重算",
+      "pool_size": 1,
+      "hit_goal_max": 1
     },
     "precision_two_hit_one": {
       "name": "精算2中1~2",
       "hit_goal": 1,
       "numbers": [
-        33,
-        15
+        6,
+        33
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70326,16 +71525,17 @@
         "probability": 0.242915,
         "odds_1_in": 4.12
       },
-      "status": "每日快速重算完成",
-      "pool_size": 2
+      "status": "唯一獨支鐵律同步重算",
+      "pool_size": 2,
+      "hit_goal_max": 2
     },
     "precision_three_hit_one": {
       "name": "精算3中1~3",
       "hit_goal": 1,
       "numbers": [
+        6,
         33,
-        15,
-        6
+        1
       ],
       "theoretical_probability": {
         "hit_goal": 1,
@@ -70343,8 +71543,9 @@
         "probability": 0.345224,
         "odds_1_in": 2.9
       },
-      "status": "每日快速重算完成",
-      "pool_size": 3
+      "status": "唯一獨支鐵律同步重算",
+      "pool_size": 3,
+      "hit_goal_max": 3
     }
   },
   "precision_micro_models": {
@@ -71631,7 +72832,7 @@
     {
       "based_on_date": "2026-09-27",
       "target_date": "2026-09-28",
-      "created_at": "2026-09-29T07:39:20+08:00",
+      "created_at": "2026-09-29T07:57:30+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
@@ -73515,6 +74716,134 @@
       "worst_accidental_hits": 4,
       "confidence_cap": 45.0
     }
+  },
+  "super_single_decision": {
+    "version": "唯一超強高機率獨支鐵律_v20260929",
+    "title": "本期唯一超強高機率獨支",
+    "status": "唯一輸出",
+    "number": 6,
+    "numbers": [
+      6
+    ],
+    "unique": true,
+    "pool_size": 1,
+    "selection_rule": "每期由全歷史資料庫前九主推候選逐顆通過上期沿用、連莊、主列放行、交叉驗算、成熟度與分數守門後，只留下第一名。",
+    "why_unique": "獨支只允許一顆；同分或相近分數者全部降到短包輔助，不得在戰報出現第二顆獨支。",
+    "latest_draw_reuse": false,
+    "guard_summary": {
+      "上期沿用守門": "通過",
+      "剛開出連莊守門": "通過",
+      "主列放行守門": "通過"
+    },
+    "scores": {
+      "全歷史排序": 3,
+      "修正總分": 0.68546,
+      "原始分": 0.7512,
+      "信心指標": 96.6,
+      "模型保守機率": 23.78,
+      "交叉通過": "5/6",
+      "成熟度": 87.7,
+      "主列狀態": "失準急救主列通過"
+    },
+    "explanation": [
+      "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+      "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+      "信心指標 96.6，模型保守機率 23.78%。",
+      "交叉驗算 5/6，成熟度 87.7。",
+      "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+      "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+      "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+      "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
+    ],
+    "route_sources": [
+      "每期開獎後滾動重算",
+      "失準突破重排",
+      "連莊達標保留",
+      "全歷史中段復活校正",
+      "九名後外漏命中回補",
+      "公式引擎：多週期頻率、趨勢轉折、牌型跟隨",
+      "綜合模型",
+      "全歷史快速重算"
+    ],
+    "formula_reasons": [
+      "多週期頻率 0.7",
+      "趨勢轉折 0.787",
+      "牌型跟隨 0.646",
+      "拖牌關聯 0.636"
+    ],
+    "excluded_candidates": [
+      {
+        "number": 33,
+        "rank": 1,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 15,
+        "rank": 2,
+        "reason": "剛開出連莊未達標"
+      },
+      {
+        "number": 1,
+        "rank": 4,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 2,
+        "rank": 5,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 31,
+        "rank": 6,
+        "reason": "剛開出連莊未達標"
+      },
+      {
+        "number": 7,
+        "rank": 7,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 30,
+        "rank": 8,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 14,
+        "rank": 9,
+        "reason": "分數低於唯一獨支"
+      },
+      {
+        "number": 3,
+        "rank": 10,
+        "reason": "上期沿用守門未通過、剛開出連莊未達標、主列放行未通過"
+      },
+      {
+        "number": 24,
+        "rank": 11,
+        "reason": "主列放行未通過"
+      },
+      {
+        "number": 35,
+        "rank": 12,
+        "reason": "主列放行未通過"
+      },
+      {
+        "number": 13,
+        "rank": 13,
+        "reason": "主列放行未通過"
+      },
+      {
+        "number": 32,
+        "rank": 14,
+        "reason": "主列放行未通過"
+      },
+      {
+        "number": 10,
+        "rank": 15,
+        "reason": "主列放行未通過"
+      }
+    ],
+    "created_at_taiwan": "2026-09-29T07:57:30+08:00"
   },
   "offline_full_history_recalc": true,
   "offline_full_history_recalc_note": "daily fast path; all ranking calculations used local full history database; deep tournament deferred"

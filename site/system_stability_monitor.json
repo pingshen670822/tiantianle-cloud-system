@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-09-29T07:39:23+08:00",
+  "checked_at_taiwan": "2026-09-29T07:57:33+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-09-27",
@@ -15,15 +15,15 @@
   "target_draw_date": "2026-09-28",
   "target_taiwan_safe_update_time": "2026-09-29 09:50",
   "top9": [
-    33,
-    15,
     6,
+    33,
     1,
     2,
-    31,
     7,
     30,
-    14
+    14,
+    15,
+    31
   ],
   "database": {
     "ok": true,
@@ -63,7 +63,7 @@
     {
       "name": "下期預測產生",
       "ok": true,
-      "detail": "33 15 06 01 02 31 07 30 14",
+      "detail": "06 33 01 02 07 30 14 15 31",
       "action": "重新運算候選排序與九碼主推"
     },
     {

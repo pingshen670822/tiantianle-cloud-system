@@ -1,11 +1,11 @@
 {
-  "checked_at_taiwan": "2026-09-29T07:39:22+08:00",
-  "status": "無嚴重缺漏，仍需模型補強",
-  "critical": 0,
+  "checked_at_taiwan": "2026-09-29T07:57:33+08:00",
+  "status": "需立即修正",
+  "critical": 1,
   "publish_blocking": 0,
   "needs_fix": 1,
   "needs_strengthen": 0,
-  "issue_count": 1,
+  "issue_count": 2,
   "latest_draw_date": "2026-09-27",
   "latest_numbers": [
     3,
@@ -18,26 +18,26 @@
   "target_draw_date": "2026-09-28",
   "target_taiwan_time": "2026-09-29 09:50",
   "top9": [
-    33,
-    15,
     6,
+    33,
     1,
     2,
-    31,
-    7,
-    30,
-    14
-  ],
-  "top15": [
-    33,
-    15,
-    6,
-    1,
-    2,
-    31,
     7,
     30,
     14,
+    15,
+    31
+  ],
+  "top15": [
+    6,
+    33,
+    1,
+    2,
+    7,
+    30,
+    14,
+    15,
+    31,
     3,
     24,
     35,
@@ -615,26 +615,28 @@
     ]
   },
   "strong_single_validation": {
-    "status": "觀察輸出",
-    "number": 33,
+    "status": "唯一輸出",
+    "number": 6,
     "must_output_single": true,
     "fake_data_guard": "通過",
     "latest_draw_reuse": false,
     "latest_draw_reuse_allowed": true,
-    "score": 0.64789,
-    "candidate_score": 0.7684,
-    "confidence_index": 92.1,
-    "cross_validation": "4/6",
-    "maturity_score": 85.1,
+    "score": 0.68546,
+    "candidate_score": 0.7512,
+    "confidence_index": 96.6,
+    "cross_validation": "5/6",
+    "maturity_score": 87.7,
     "entry_status": "失準急救主列通過",
     "failed_checks": [],
     "evidence": [
-      "全歷史排序",
-      "失準突破重排",
-      "漏抓回收",
-      "後段命中回收",
-      "近期落空降權",
-      "剛開出號防呆"
+      "由前九主推候選逐顆過濾後，只保留 06 作為本期唯一獨支。",
+      "全歷史排序第 3 名，修正總分 0.6855，原始分 0.7512。",
+      "信心指標 96.6，模型保守機率 23.78%。",
+      "交叉驗算 5/6，成熟度 87.7。",
+      "上期沿用守門、剛開出連莊守門、主列放行守門完成；未過關候選不准搶獨支。",
+      "獨支每期只能一顆，其他號碼只能留在2碼、3碼、5碼或九碼輔助，不得再混成第二獨支。",
+      "放行理由：每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、趨勢轉折、牌型跟隨、綜合模型、全歷史快速重算。",
+      "公式驗算：多週期頻率 0.7、趨勢轉折 0.787、牌型跟隨 0.646、拖牌關聯 0.636。"
     ]
   },
   "model_maturity": {
@@ -691,6 +693,13 @@
       "impact": "容易誤點到舊戰報，造成手機與電腦日期看起來不同步",
       "fix": "一鍵流程已加入自動清理外層 cloud_* 舊快照",
       "severity": "需修正"
+    },
+    {
+      "area": "最強獨支",
+      "problem": "獨支驗證狀態不明：唯一輸出",
+      "impact": "獨支可能未經多模組驗證",
+      "fix": "必須通過主列放行、多模型、交叉驗算、成熟度與上期開獎防呆",
+      "severity": "嚴重"
     }
   ]
 }
