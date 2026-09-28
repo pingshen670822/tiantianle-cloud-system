@@ -86,6 +86,7 @@ jobs:
           echo "mode=${TIANTIANLE_RUN_MODE}"
           for attempt in $(seq 1 4); do
             echo "post-draw update attempt ${attempt}/4"
+            python cloud_latest_cache_refresh.py || echo "cloud latest cache refresh warning; continuing with available sources"
             python offline_full_history_recalc.py
             update_exit=$?
             if [ "$update_exit" -ne 0 ]; then
@@ -110,9 +111,13 @@ jobs:
               analysis = json.load(fh)
           freshness = analysis.get("freshness") or {}
           latest = freshness.get("latest_draw_date") or (analysis.get("latest_draw") or {}).get("draw_date")
+          allowed = freshness.get("allowed_latest_draw_date") or latest
           target = analysis.get("target_draw_date")
           safe_text = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time")
           now = datetime.now(ZoneInfo("Asia/Taipei"))
+          if latest and allowed and latest < allowed:
+              print(f"stale latest draw detected: latest={latest}, allowed={allowed}; retry with refreshed sources")
+              sys.exit(1)
           if safe_text:
               safe_time = datetime.strptime(safe_text, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Taipei"))
               if now < safe_time:
@@ -142,6 +147,7 @@ jobs:
         run: |
           set +e
           python -m py_compile \
+            cloud_latest_cache_refresh.py \
             industrial_engine.py \
             tiantianle_formula_engine.py \
             tiantianle_core.py \
@@ -193,6 +199,7 @@ jobs:
               site_analysis = json.loads(site_analysis_path.read_text(encoding="utf-8-sig"))
 
           latest = (analysis.get("latest_draw") or {}).get("draw_date") or (analysis.get("freshness") or {}).get("latest_draw_date")
+          allowed = (analysis.get("freshness") or {}).get("allowed_latest_draw_date") or latest
           target = analysis.get("target_draw_date")
           site_latest = (site_analysis.get("latest_draw") or {}).get("draw_date") or (site_analysis.get("freshness") or {}).get("latest_draw_date")
           site_target = site_analysis.get("target_draw_date")
@@ -208,6 +215,8 @@ jobs:
 
           if not latest or not target:
               problems.append("\u6700\u65b0\u958b\u734e\u65e5\u671f\u6216\u4e0b\u671f\u9810\u6e2c\u65e5\u671f\u7a7a\u767d")
+          if latest and allowed and latest < allowed:
+              problems.append(f"\u96f2\u7aef\u8cc7\u6599\u843d\u5f8c\uff1a\u6700\u65b0 {latest}\uff0c\u61c9\u8ffd\u5230 {allowed}")
           if site_latest and latest and site_latest != latest:
               problems.append(f"\u624b\u6a5f\u8cc7\u6599\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {latest}\uff0c\u624b\u6a5f {site_latest}")
           if site_target and target and site_target != target:
@@ -272,6 +281,7 @@ jobs:
               problem for problem in problems
               if problem.startswith("\u7f3a\u5c11\u5fc5\u8981\u6a94\u6848")
               or "\u4e0d\u540c\u6b65" in problem
+              or "\u843d\u5f8c" in problem
               or "\u683c\u5f0f\u932f\u8aa4" in problem
               or "\u8cc7\u6599\u7b46\u6578\u4e0d\u8db3" in problem
               or "\u672a\u66f4\u65b0\u5230\u6700\u65b0\u958b\u734e" in problem

@@ -28,6 +28,7 @@ ALLOWLIST = {
     ".github/workflows/tiantianle-cloud-auto-update.yml",
     "aerospace_engine.py",
     "california_fantasy5_system.py",
+    "cloud_latest_cache_refresh.py",
     "fantasy5_full_history.csv",
     "industrial_engine.py",
     "offline_full_history_recalc.py",

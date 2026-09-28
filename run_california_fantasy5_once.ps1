@@ -68,6 +68,39 @@ function Invoke-FullHistoryFallback {
   return $false
 }
 
+function Invoke-MainSystemWithTimeout {
+  param(
+    [string[]]$Arguments,
+    [int]$Attempt,
+    [int]$TimeoutSeconds = 420
+  )
+  $MainOut = Join-Path $ReportsDir ("main_system_stdout_attempt_" + $Attempt + ".log")
+  $MainErr = Join-Path $ReportsDir ("main_system_stderr_attempt_" + $Attempt + ".log")
+  foreach ($Path in @($MainOut, $MainErr)) {
+    if (Test-Path -LiteralPath $Path) {
+      Remove-Item -LiteralPath $Path -Force
+    }
+  }
+  $ProcessArgs = @("-X", "faulthandler") + $Arguments
+  $Process = Start-Process -FilePath $PythonExe -ArgumentList $ProcessArgs -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru -RedirectStandardOutput $MainOut -RedirectStandardError $MainErr
+  if (-not $Process.WaitForExit($TimeoutSeconds * 1000)) {
+    Step ("main system timeout after " + $TimeoutSeconds + " seconds; switching to fallback")
+    try {
+      $Process.Kill($true)
+    } catch {
+      try { $Process.Kill() } catch {}
+    }
+    return 124
+  }
+  if (Test-Path -LiteralPath $MainOut) {
+    Get-Content -LiteralPath $MainOut -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 8 | ForEach-Object { Step ("main: " + $_) }
+  }
+  if (Test-Path -LiteralPath $MainErr) {
+    Get-Content -LiteralPath $MainErr -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 8 | ForEach-Object { Step ("main error: " + $_) }
+  }
+  return $Process.ExitCode
+}
+
 function Test-FastRefreshAllowed {
   if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly -or $All -or $ForceRun) {
     return $false
@@ -190,8 +223,7 @@ if ($FastRefresh) {
 } else {
   $MainExitCode = 1
   for ($Attempt = 1; $Attempt -le 2; $Attempt++) {
-    & $PythonExe "-X" "faulthandler" @RunArgs
-    $MainExitCode = $LASTEXITCODE
+    $MainExitCode = Invoke-MainSystemWithTimeout -Arguments $RunArgs -Attempt $Attempt
     if ($MainExitCode -eq 0) { break }
     Step ("main system retry " + $Attempt + "/2 after exit " + $MainExitCode)
     Start-Sleep -Seconds 3

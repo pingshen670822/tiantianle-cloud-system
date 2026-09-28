@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -11,6 +11,14 @@ SITE = ROOT / "site"
 DATA = ROOT / "data"
 DB_PATH = DATA / "california_fantasy5.sqlite"
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
+CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def expected_latest_draw_date():
+    ca_now = datetime.now(CALIFORNIA_TZ)
+    if (ca_now.hour, ca_now.minute) >= (19, 0):
+        return ca_now.date().isoformat()
+    return (ca_now.date() - timedelta(days=1)).isoformat()
 
 
 def read_json(path, default=None):
@@ -73,6 +81,7 @@ def main():
     freshness = analysis.get("freshness") or {}
     latest_tw = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time")
     target_tw = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time")
+    expected_latest = expected_latest_draw_date()
 
     site_latest = (site_analysis.get("latest_draw") or {}).get("draw_date") or (site_analysis.get("freshness") or {}).get("latest_draw_date")
     site_target = site_analysis.get("target_draw_date") or (site_analysis.get("freshness") or {}).get("target_draw_date")
@@ -83,6 +92,7 @@ def main():
         checks.append({"name": name, "ok": bool(ok), "detail": detail, "action": action})
 
     add("本機最新資料", bool(latest and latest == database.get("latest")), "重跑全歷史重算並重建戰報", f"戰報 {latest or '-'} / 資料庫 {database.get('latest') or '-'}")
+    add("目前期別時效", bool(latest and latest >= expected_latest), "雲端自救先抓最新來源，再重算並發布手機版", f"目前 {latest or '-'} / 應到 {expected_latest}")
     add("手機同步資料", bool(latest and site_latest == latest and site_target == target), "重建手機檔並重新發布雲端", f"手機最新 {site_latest or '-'} / 手機下期 {site_target or '-'}")
     add("全歷史資料庫", bool(database.get("ok")), "重新匯入全歷史 CSV 與快取頁面", f"{database.get('count', 0)} 筆")
     add("下期預測產生", bool(target and len(top9) == 9 and len(set(top9)) == 9), "重新運算候選排序與九碼主推", text_numbers(top9))
@@ -103,6 +113,7 @@ def main():
         "status": status,
         "stability_score": score,
         "latest_draw_date": latest,
+        "expected_latest_draw_date": expected_latest,
         "latest_numbers": latest_numbers,
         "latest_taiwan_safe_update_time": latest_tw,
         "target_draw_date": target,
@@ -120,6 +131,7 @@ def main():
         f"- 穩定度：{score}%",
         f"- 狀態：{status}",
         f"- 最新開獎：{latest or '-'} / {text_numbers(latest_numbers) or '-'}",
+        f"- 應更新到期別：{expected_latest}",
         f"- 最新開獎台灣可更新時間：{latest_tw or '-'}",
         f"- 下期預測：{target or '-'} / 台灣時間 {target_tw or '-'}",
         f"- 最強主推九碼：{text_numbers(top9) or '-'}",
