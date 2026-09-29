@@ -1,7 +1,7 @@
 {
-  "checked_at_taiwan": "2026-09-29T12:27:18+08:00",
-  "status": "穩定",
-  "stability_score": 100.0,
+  "checked_at_taiwan": "2026-09-29T12:59:25+08:00",
+  "status": "需觀察",
+  "stability_score": 90.0,
   "latest_draw_date": "2026-09-28",
   "expected_latest_draw_date": "2026-09-28",
   "latest_numbers": [
@@ -15,24 +15,17 @@
   "target_draw_date": "2026-09-29",
   "target_taiwan_safe_update_time": "2026-09-30 09:50",
   "top9": [
-    15,
-    11,
-    27,
-    10,
-    9,
-    12,
     39,
-    19,
-    5
+    15
   ],
   "database": {
     "ok": true,
     "count": 11934,
     "latest": "2026-09-28",
-    "prediction_count": 9,
+    "prediction_count": 111,
     "prediction_latest": "2026-09-28",
     "prediction_target": "2026-09-29",
-    "low_probability_count": 9,
+    "low_probability_count": 111,
     "low_probability_latest": "2026-09-28"
   },
   "checks": [
@@ -62,8 +55,8 @@
     },
     {
       "name": "下期預測產生",
-      "ok": true,
-      "detail": "15 11 27 10 09 12 39 19 05",
+      "ok": false,
+      "detail": "39 15",
       "action": "重新運算候選排序與九碼主推"
     },
     {
@@ -81,7 +74,7 @@
     {
       "name": "雲端發布狀態",
       "ok": true,
-      "detail": "未記錄",
+      "detail": "cloud_published",
       "action": "下一輪守護重試雲端發布"
     },
     {
@@ -93,9 +86,16 @@
     {
       "name": "守護程式狀態",
       "ok": true,
-      "detail": "未記錄",
+      "detail": "2026-09-21T11:13:12+08:00",
       "action": "守護程式下輪重新讀取並修復"
     }
   ],
-  "failed_actions": []
+  "failed_actions": [
+    {
+      "name": "下期預測產生",
+      "ok": false,
+      "detail": "39 15",
+      "action": "重新運算候選排序與九碼主推"
+    }
+  ]
 }

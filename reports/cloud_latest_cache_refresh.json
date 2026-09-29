@@ -1,16 +1,15 @@
 {
-  "checked_at_taiwan": "2026-09-29T07:30:48+08:00",
+  "checked_at_taiwan": "2026-09-29T10:13:57+08:00",
   "status": "ok",
-  "successful_sources": 4,
+  "successful_sources": 5,
   "total_sources": 7,
   "results": [
     {
       "file": "calottery_正式.html",
       "url": "https://www.calottery.com/en/draw-games/fantasy-5",
-      "ok": true,
-      "bytes": 97102,
-      "error": "",
-      "attempt": 1
+      "ok": false,
+      "bytes": 0,
+      "error": "HTTP Error 403: Forbidden"
     },
     {
       "file": "lotto8_latest.html",
@@ -24,7 +23,7 @@
       "file": "lottolyzer_latest.html",
       "url": "https://en.lottolyzer.com/history/united-states/fantasy-5-california/",
       "ok": true,
-      "bytes": 131941,
+      "bytes": 131938,
       "error": "",
       "attempt": 1
     },
@@ -46,16 +45,18 @@
     {
       "file": "lotterynet_latest.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers",
-      "ok": false,
-      "bytes": 0,
-      "error": "<urlopen error timed out>"
+      "ok": true,
+      "bytes": 71313,
+      "error": "",
+      "attempt": 1
     },
     {
       "file": "lotterynet_year.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers/2026",
-      "ok": false,
-      "bytes": 0,
-      "error": "<urlopen error timed out>"
+      "ok": true,
+      "bytes": 291604,
+      "error": "",
+      "attempt": 1
     }
   ]
 }
