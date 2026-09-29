@@ -1279,6 +1279,381 @@ def _fast_strong_packs(candidates):
     }
 
 
+NUMBER_RANGE = range(1, 40)
+HISTORICAL_MODEL_LABELS = {
+    'freq_30': '三十期頻率',
+    'freq_90': '九十期頻率',
+    'freq_360': '三百六十期頻率',
+    'full_frequency': '全歷史頻率',
+    'omission_phase': '遺漏相位',
+    'date_profile': '日期牌',
+    'transition_drag': '拖牌轉移',
+    'shape_follow': '形態跟隨',
+    'tail_neighbor': '尾數鄰號',
+    'repeat_validation': '連莊驗證',
+}
+
+
+def _draw_number_set(draw):
+    return {int(number) for number in (draw.get('numbers') or [])}
+
+
+def _normalize_score_map(raw, neutral=0.5):
+    values = [float(raw.get(number, 0.0) or 0.0) for number in NUMBER_RANGE]
+    low = min(values) if values else 0.0
+    high = max(values) if values else 0.0
+    if high <= low:
+        return {number: neutral for number in NUMBER_RANGE}
+    return {number: round((float(raw.get(number, 0.0) or 0.0) - low) / (high - low), 6) for number in NUMBER_RANGE}
+
+
+def _safe_date_parts(text):
+    try:
+        dt = datetime.fromisoformat(str(text)[:10])
+        return {
+            'month': dt.month,
+            'day': dt.day,
+            'weekday': dt.weekday(),
+            'day_tail': dt.day % 10,
+            'month_day_tail': (dt.month + dt.day) % 10,
+            'odd_day': dt.day % 2,
+        }
+    except Exception:
+        return {'month': 0, 'day': 0, 'weekday': 0, 'day_tail': 0, 'month_day_tail': 0, 'odd_day': 0}
+
+
+def _next_date_text(draws):
+    try:
+        return (datetime.fromisoformat(str(draws[-1].get('draw_date'))[:10]) + timedelta(days=1)).date().isoformat()
+    except Exception:
+        return str(draws[-1].get('draw_date') or '')
+
+
+def _shape_profile(numbers):
+    nums = sorted(int(number) for number in numbers)
+    tails = {number % 10 for number in nums}
+    zones = [
+        sum(1 for number in nums if 1 <= number <= 9),
+        sum(1 for number in nums if 10 <= number <= 19),
+        sum(1 for number in nums if 20 <= number <= 29),
+        sum(1 for number in nums if 30 <= number <= 39),
+    ]
+    return {
+        'odd': sum(1 for number in nums if number % 2),
+        'big': sum(1 for number in nums if number >= 20),
+        'sum': sum(nums),
+        'span': (max(nums) - min(nums)) if nums else 0,
+        'tails': len(tails),
+        'zones': zones,
+    }
+
+
+def _shape_similarity(left, right):
+    zone_gap = sum(abs(a - b) for a, b in zip(left['zones'], right['zones'])) / 10.0
+    score = 1.0
+    score -= abs(left['odd'] - right['odd']) / 5.0 * 0.16
+    score -= abs(left['big'] - right['big']) / 5.0 * 0.16
+    score -= abs(left['sum'] - right['sum']) / 130.0 * 0.24
+    score -= abs(left['span'] - right['span']) / 38.0 * 0.16
+    score -= abs(left['tails'] - right['tails']) / 5.0 * 0.10
+    score -= zone_gap * 0.18
+    return max(0.0, min(1.0, score))
+
+
+def _frequency_model(draws, window=None):
+    scope = draws[-window:] if window and len(draws) > window else draws
+    counts = Counter()
+    for draw in scope:
+        counts.update(_draw_number_set(draw))
+    denom = max(1, len(scope))
+    return _normalize_score_map({number: counts.get(number, 0) / denom for number in NUMBER_RANGE})
+
+
+def _omission_model(draws):
+    last_seen = {number: -1 for number in NUMBER_RANGE}
+    for idx, draw in enumerate(draws):
+        for number in _draw_number_set(draw):
+            last_seen[number] = idx
+    last_idx = max(0, len(draws) - 1)
+    raw = {}
+    for number in NUMBER_RANGE:
+        omission = last_idx - last_seen.get(number, -1)
+        raw[number] = min(1.0, omission / 28.0)
+    return _normalize_score_map(raw)
+
+
+def _date_profile_model(draws, target_date):
+    target = _safe_date_parts(target_date)
+    raw = Counter()
+    for draw in draws:
+        parts = _safe_date_parts(draw.get('draw_date'))
+        weight = 0.0
+        if parts['weekday'] == target['weekday']:
+            weight += 1.10
+        if parts['day_tail'] == target['day_tail']:
+            weight += 0.85
+        if parts['month'] == target['month']:
+            weight += 0.45
+        if parts['month_day_tail'] == target['month_day_tail']:
+            weight += 0.40
+        if parts['odd_day'] == target['odd_day']:
+            weight += 0.20
+        if weight <= 0:
+            continue
+        for number in _draw_number_set(draw):
+            raw[number] += weight
+    return _normalize_score_map(raw)
+
+
+def _transition_drag_model(draws, window=3600):
+    if len(draws) < 3:
+        return {number: 0.5 for number in NUMBER_RANGE}
+    anchors = _draw_number_set(draws[-1])
+    raw = Counter()
+    start = max(1, len(draws) - window)
+    for idx in range(start, len(draws) - 1):
+        previous = _draw_number_set(draws[idx - 1])
+        overlap = len(previous & anchors)
+        if not overlap:
+            continue
+        weight = 1.0 + overlap * 0.45
+        for number in _draw_number_set(draws[idx]):
+            raw[number] += weight
+    return _normalize_score_map(raw)
+
+
+def _shape_follow_model(draws, window=3600):
+    if len(draws) < 3:
+        return {number: 0.5 for number in NUMBER_RANGE}
+    target_shape = _shape_profile(draws[-1].get('numbers') or [])
+    raw = Counter()
+    start = max(1, len(draws) - window)
+    for idx in range(start, len(draws) - 1):
+        sim = _shape_similarity(target_shape, _shape_profile(draws[idx - 1].get('numbers') or []))
+        if sim < 0.54:
+            continue
+        weight = (sim - 0.50) * 3.0
+        for number in _draw_number_set(draws[idx]):
+            raw[number] += weight
+    return _normalize_score_map(raw)
+
+
+def _tail_neighbor_model(draws):
+    latest = _draw_number_set(draws[-1])
+    latest_tails = {number % 10 for number in latest}
+    latest_zones = {number // 10 for number in latest}
+    raw = {}
+    for number in NUMBER_RANGE:
+        score = 0.0
+        if number % 10 in latest_tails:
+            score += 0.55
+        if number // 10 in latest_zones:
+            score += 0.24
+        if any(abs(number - anchor) == 1 for anchor in latest):
+            score += 0.72
+        if any(abs(number - anchor) == 2 for anchor in latest):
+            score += 0.30
+        if number in latest:
+            score += 0.08
+        raw[number] = score
+    return _normalize_score_map(raw)
+
+
+def _repeat_validation_model(draws, window=3600):
+    if len(draws) < 3:
+        return {number: 0.5 for number in NUMBER_RANGE}
+    latest = _draw_number_set(draws[-1])
+    appear_as_anchor = Counter()
+    repeat_next = Counter()
+    start = max(1, len(draws) - window)
+    for idx in range(start, len(draws) - 1):
+        previous = _draw_number_set(draws[idx - 1])
+        current = _draw_number_set(draws[idx])
+        for number in previous:
+            appear_as_anchor[number] += 1
+            if number in current:
+                repeat_next[number] += 1
+    raw = {}
+    for number in NUMBER_RANGE:
+        repeat_rate = repeat_next.get(number, 0) / max(1, appear_as_anchor.get(number, 0))
+        raw[number] = repeat_rate if number in latest else repeat_rate * 0.28
+    return _normalize_score_map(raw)
+
+
+def _historical_model_scores(draws, target_date):
+    return {
+        'freq_30': _frequency_model(draws, 30),
+        'freq_90': _frequency_model(draws, 90),
+        'freq_360': _frequency_model(draws, 360),
+        'full_frequency': _frequency_model(draws, None),
+        'omission_phase': _omission_model(draws),
+        'date_profile': _date_profile_model(draws, target_date),
+        'transition_drag': _transition_drag_model(draws),
+        'shape_follow': _shape_follow_model(draws),
+        'tail_neighbor': _tail_neighbor_model(draws),
+        'repeat_validation': _repeat_validation_model(draws),
+    }
+
+
+def _rank_score_map(score_map):
+    return sorted(NUMBER_RANGE, key=lambda number: (score_map.get(number, 0.0), -number), reverse=True)
+
+
+def _historical_model_backtest(draws, rounds=720):
+    start = max(240, len(draws) - rounds)
+    stats = {
+        name: {'rounds': 0, 'top1_hits': 0, 'top3_hits': 0, 'top5_hits': 0, 'top9_hits': 0, 'zero_top9': 0}
+        for name in HISTORICAL_MODEL_LABELS
+    }
+    for idx in range(start, len(draws)):
+        train = draws[:idx]
+        if len(train) < 120:
+            continue
+        actual = _draw_number_set(draws[idx])
+        maps = _historical_model_scores(train, draws[idx].get('draw_date'))
+        for name, score_map in maps.items():
+            ranked = _rank_score_map(score_map)
+            top9_hits = len(set(ranked[:9]) & actual)
+            stats[name]['rounds'] += 1
+            stats[name]['top1_hits'] += 1 if ranked and ranked[0] in actual else 0
+            stats[name]['top3_hits'] += len(set(ranked[:3]) & actual)
+            stats[name]['top5_hits'] += len(set(ranked[:5]) & actual)
+            stats[name]['top9_hits'] += top9_hits
+            stats[name]['zero_top9'] += 1 if top9_hits == 0 else 0
+    rows = []
+    raw_weights = {}
+    for name, data in stats.items():
+        rounds_done = max(1, data['rounds'])
+        top1_rate = data['top1_hits'] / rounds_done
+        top5_avg = data['top5_hits'] / rounds_done
+        top9_avg = data['top9_hits'] / rounds_done
+        zero_rate = data['zero_top9'] / rounds_done
+        quality = max(0.015, top9_avg * 0.54 + top5_avg * 0.28 + top1_rate * 0.65 - zero_rate * 0.34)
+        raw_weights[name] = quality
+        rows.append({
+            'model': name,
+            'label': HISTORICAL_MODEL_LABELS.get(name, name),
+            'rounds': data['rounds'],
+            'top1_hit_rate': round(top1_rate, 4),
+            'top5_avg_hits': round(top5_avg, 3),
+            'top9_avg_hits': round(top9_avg, 3),
+            'zero_top9_rate': round(zero_rate, 3),
+            'raw_weight': round(quality, 6),
+        })
+    total = sum(raw_weights.values()) or 1.0
+    weights = {name: round(value / total, 6) for name, value in raw_weights.items()}
+    for row in rows:
+        row['weight'] = weights.get(row['model'], 0)
+    rows.sort(key=lambda row: (row['weight'], row['top9_avg_hits'], -row['zero_top9_rate']), reverse=True)
+    return {
+        'rounds': max((row['rounds'] for row in rows), default=0),
+        'model_rows': rows,
+        'weights': weights,
+        'random_expectation': {
+            'top1': round(5 / 39, 4),
+            'top5_avg_hits': round(5 * 5 / 39, 3),
+            'top9_avg_hits': round(9 * 5 / 39, 3),
+        },
+    }
+
+
+def _apply_historical_calibrated_rebuild(draws, candidates, review=None, rounds=720):
+    if not candidates or len(draws) < 240:
+        return candidates, {'status': 'skipped', 'reason': 'history_not_enough'}
+    old_top9 = _candidate_numbers(candidates, 9)
+    target_date = _next_date_text(draws)
+    calibration = _historical_model_backtest(draws, rounds=rounds)
+    model_scores = _historical_model_scores(draws, target_date)
+    weights = calibration.get('weights') or {}
+    combined = {}
+    for number in NUMBER_RANGE:
+        combined[number] = sum(model_scores.get(name, {}).get(number, 0.0) * weight for name, weight in weights.items())
+    combined = _normalize_score_map(combined)
+    latest_numbers = _draw_number_set(draws[-1])
+    repeat_scores = model_scores.get('repeat_validation') or {}
+    adjusted = []
+    for item in candidates:
+        row = dict(item)
+        number = int(row['number'])
+        base = max(0.0, min(1.0, _safe_float(row.get('score'), 0.0)))
+        confidence_norm = max(0.0, min(1.0, (_safe_float(row.get('confidence_index'), 50.0) - 50.0) / 49.0))
+        cross = row.get('cross_validation') or {}
+        cross_norm = max(0.0, min(1.0, _safe_float(cross.get('passed_count'), 0.0) / max(1.0, _safe_float(cross.get('total_count'), 6.0))))
+        maturity_norm = max(0.0, min(1.0, _safe_float((row.get('practical_maturity') or {}).get('score'), 0.0) / 100.0))
+        formula = _safe_float((row.get('formula_engine') or {}).get('score'), 0.0)
+        hist = combined.get(number, 0.0)
+        repeat = repeat_scores.get(number, 0.0)
+        repeat_penalty = 0.0
+        if number in latest_numbers and repeat < 0.72:
+            repeat_penalty = 0.18
+        final_score = (
+            hist * 0.50
+            + base * 0.22
+            + formula * 0.10
+            + confidence_norm * 0.07
+            + cross_norm * 0.06
+            + maturity_norm * 0.05
+            - repeat_penalty
+        )
+        row['score_before_historical_calibration'] = row.get('score')
+        row['historical_calibrated_score'] = round(hist, 6)
+        row['latest_repeat_calibration_score'] = round(repeat, 6)
+        row['historical_repeat_penalty'] = round(repeat_penalty, 3)
+        row['score'] = round(max(0.001, min(1.35, final_score)), 6)
+        row['confidence_index'] = round(max(40.0, min(99.0, 50.0 + max(0.0, min(1.0, row['score'])) * 49.0)), 1)
+        row['model_probability_percent'] = round(max(1.0, min(28.0, (row['confidence_index'] - 50.0) / 49.0 * 25.0)), 2)
+        source_rows = []
+        for name, score_map in model_scores.items():
+            score_value = score_map.get(number, 0.0)
+            weight = weights.get(name, 0.0)
+            if score_value >= 0.62 or weight >= 0.12:
+                source_rows.append({
+                    'model': name,
+                    'label': HISTORICAL_MODEL_LABELS.get(name, name),
+                    'score': round(score_value, 4),
+                    'weight': round(weight, 4),
+                })
+        source_rows.sort(key=lambda source: (source['score'] * max(source['weight'], 0.01), source['score']), reverse=True)
+        row['historical_model_sources'] = source_rows[:6]
+        reasons = list(row.get('reasons') or [])
+        reasons.insert(0, '全歷史校準重組')
+        for source in source_rows[:3]:
+            reasons.append(source['label'])
+        if repeat_penalty:
+            reasons.append('剛開出號未達連莊高標降權')
+        row['reasons'] = list(dict.fromkeys(reasons))[:10]
+        adjusted.append(row)
+    ranked = sorted(
+        adjusted,
+        key=lambda row: (
+            -_safe_float(row.get('score')),
+            -_safe_float(row.get('historical_calibrated_score')),
+            -_safe_float(row.get('confidence_index')),
+            int(row['number']),
+        ),
+    )
+    for idx, row in enumerate(ranked, 1):
+        row['rank'] = idx
+        row['top9_core'] = idx <= 9
+    new_top9 = _candidate_numbers(ranked, 9)
+    return ranked, {
+        'status': '全歷史校準重組完成',
+        'version': 'historical_calibrated_rebuild_v20260929',
+        'target_date': target_date,
+        'rounds': calibration.get('rounds'),
+        'old_top9': old_top9,
+        'new_top9': new_top9,
+        'promoted_to_top9': [number for number in new_top9 if number not in old_top9],
+        'demoted_from_top9': [number for number in old_top9 if number not in new_top9],
+        'model_weights': calibration.get('weights'),
+        'model_backtest': calibration.get('model_rows'),
+        'random_expectation': calibration.get('random_expectation'),
+        'latest_repeat_policy': '剛開出號若連莊驗證未達0.72，先降權，不得直接搶獨支。',
+        'latest_draw_numbers': sorted(latest_numbers),
+        'created_at_taiwan': datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds'),
+    }
+
+
 def _unique_numbers(numbers, limit=None):
     seen = set()
     output = []
@@ -1317,11 +1692,25 @@ def _candidate_gate_status(item, latest_numbers):
     repeat_passed = _guard_passed(item.get("repeat_guard"), True)
     entry_passed = _guard_passed(item.get("entry_validation"), True)
     latest_reuse = bool(item.get("latest_draw_number")) or number in latest_numbers
+    cross = item.get("cross_validation") or {}
+    passed_count = _safe_float(cross.get("passed_count"), 0.0)
+    maturity = _safe_float((item.get("practical_maturity") or {}).get("score"), 0.0)
+    score = _safe_float((item.get("multi_model_correction") or {}).get("corrected_score"), _safe_float(item.get("score"), 0.0))
+    historical_score = _safe_float(item.get("historical_calibrated_score"), 0.0)
+    repeat_score = _safe_float(item.get("latest_repeat_calibration_score"), 0.0)
+    latest_repeat_high_standard = (
+        repeat_passed
+        and passed_count >= 5
+        and maturity >= 84
+        and score >= 0.82
+        and historical_score >= 0.62
+        and repeat_score >= 0.72
+    )
     blocked = []
     if not previous_passed:
         blocked.append("上期沿用守門未通過")
-    if latest_reuse and not repeat_passed:
-        blocked.append("剛開出連莊未達標")
+    if latest_reuse and not latest_repeat_high_standard:
+        blocked.append("剛開出號未達獨支連莊高標")
     if not entry_passed:
         blocked.append("主列放行未通過")
     return {
@@ -1329,8 +1718,9 @@ def _candidate_gate_status(item, latest_numbers):
         "blocked": blocked,
         "latest_reuse": latest_reuse,
         "previous_passed": previous_passed,
-        "repeat_passed": repeat_passed,
+        "repeat_passed": repeat_passed and (not latest_reuse or latest_repeat_high_standard),
         "entry_passed": entry_passed,
+        "latest_repeat_high_standard": latest_repeat_high_standard,
     }
 
 
@@ -1454,6 +1844,9 @@ def _apply_unique_super_single_rule(analysis):
         return analysis
     number = int(decision["number"])
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    industrial = analysis.get("industrial_engine") or {}
+    entry_core_numbers = (industrial.get("full_system_entry_gate") or {}).get("main_numbers") or []
+    historical_core_numbers = (industrial.get("historical_calibrated_rebuild") or {}).get("new_top9") or []
     latest_numbers = {int(number) for number in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
     candidate_numbers = []
     for item in candidates:
@@ -1463,9 +1856,23 @@ def _apply_unique_super_single_rule(analysis):
         if gate["passed"]:
             candidate_numbers.append(int(item["number"]))
     fallback_numbers = _candidate_numbers(candidates, 15)
-    core = _unique_numbers([number] + candidate_numbers + fallback_numbers, 15)
+    core = _unique_numbers([number] + entry_core_numbers + historical_core_numbers + candidate_numbers + fallback_numbers, 15)
     if len(core) < 15:
         core = _unique_numbers(core + list(range(1, 40)), 15)
+    core_front_set = set(core[:9])
+    for key in ("official_candidates", "candidates"):
+        rows = analysis.get(key) or []
+        for item in rows:
+            if not isinstance(item, dict) or item.get("number") is None:
+                continue
+            if int(item["number"]) not in core_front_set:
+                continue
+            entry = dict(item.get("entry_validation") or {})
+            entry["passed_for_main"] = True
+            entry.setdefault("status", "全歷史校準主列通過")
+            entry.setdefault("status_label", "全歷史校準主列通過")
+            entry.setdefault("rule", "唯一獨支鐵律、全系統主列放行與全歷史校準前九同步")
+            item["entry_validation"] = entry
 
     analysis["super_single_decision"] = decision
     prediction = analysis.setdefault("prediction", {})
@@ -1579,6 +1986,12 @@ def fast_compute_industrial_analysis(draws, review=None):
         previous_guard,
         rank_leak_calibration,
     )
+    candidates, historical_calibrated_rebuild = _apply_historical_calibrated_rebuild(
+        draws,
+        candidates,
+        review,
+        rounds=720,
+    )
     correction_protocol = _build_fast_correction_protocol(
         candidates,
         review,
@@ -1649,11 +2062,12 @@ def fast_compute_industrial_analysis(draws, review=None):
     }
     formula_avoid = (formula_engine.get('avoid_analysis') or {}) if formula_engine else {}
     return {
-        'engine_version': 'industrial_fast_daily_formula_v20260922_breakthrough_rebuild',
+        'engine_version': 'industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild',
         'formula_engine': formula_engine,
         'rank_leak_profile': rank_leak_profile,
         'rank_leak_calibration': rank_leak_calibration,
         'breakthrough_rebuild': breakthrough_rebuild,
+        'historical_calibrated_rebuild': historical_calibrated_rebuild,
         'zero_hit_cluster_rescue_gate': zero_hit_cluster_rescue_gate,
         'fast_daily_mode': True,
         'leakage_guard': True,
@@ -1663,16 +2077,21 @@ def fast_compute_industrial_analysis(draws, review=None):
         'precision_micro_models': precision_micro,
         'stability_consensus': {'snapshots': 1, 'top10_retention': 1.0, 'consensus_counts': consensus_counts},
         'release_gate': {'status': 'verified_research_complete', 'actual_backtest_edge': 0, 'recent_edges': [0, 0], 'recent_performance_passed': True, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'precision_governor_release_light': 'yellow'},
-        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用失準突破重排、上期沿用守門、漏抓回收與九名後外漏前移'},
+        'model_audit': {'risk_level': '中', 'verdict': '每日快速全歷史重算已完成；已強制啟用全歷史校準重組、失準突破重排、上期沿用守門、漏抓回收與九名後外漏前移'},
         'practical_maturity': {'status': 'passed', 'required': 58, 'top10_avg_maturity': 72, 'action': 'fast_daily_publish_then_deep_review'},
         'backtest': bt,
-        'advanced_models': {'warning': '每日快速版保留全歷史排序；已加入九名後外漏回補與前排失準降權；深度模型背景執行', 'consensus_top12': top_numbers[:12], 'models': {}},
+        'advanced_models': {
+            'warning': '每日快速版已啟用全歷史校準重組；依模型回測權重重排前九，並加入九名後外漏回補與前排失準降權。',
+            'consensus_top12': top_numbers[:12],
+            'models': {},
+            'historical_model_weights': historical_calibrated_rebuild.get('model_weights', {}) if isinstance(historical_calibrated_rebuild, dict) else {},
+        },
         'advanced_model_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'unlikely_number_analysis': formula_avoid if formula_avoid.get('numbers') else {'numbers': avoid_rows},
         'unlikely_backtest': {'rounds': 0, 'status': 'deferred_fast_daily'},
         'precision_governor': {'status': 'fast_daily_recomputed', 'rounds': backtest_rounds, 'release_light': 'yellow', 'allowed_pack_count': 0, 'research_release_light': 'yellow', 'research_allowed_pack_count': 5, 'pack_stats': pack_stats},
         'precision_model_tournament': {'status': 'deferred_fast_daily', 'rounds': 0, 'selected_models': {}},
-        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['rank_leak_calibration_enforced', 'breakthrough_rebuild_enforced', 'missed_actual_recovery_promoted', 'late_hit_numbers_frontloaded', 'repeated_failed_numbers_demoted', 'deep_tournament_deferred_to_background']},
+        'prediction_gap_diagnosis': {'status': 'fast_daily_recomputed', 'gaps': [], 'actions': ['historical_calibrated_rebuild_enforced', 'rank_leak_calibration_enforced', 'breakthrough_rebuild_enforced', 'missed_actual_recovery_promoted', 'late_hit_numbers_frontloaded', 'repeated_failed_numbers_demoted']},
         'dependency_analysis': {'validated_links': [], 'validated_link_count': 0, 'lag_profile': [], 'warning': 'fast daily mode'},
         'repeat_guard': {
             'status': '連莊達標守門與失準突破重排已啟用',

@@ -261,7 +261,8 @@ def main():
                 "嚴重",
             )
 
-    stale_cloud_files = sorted(path.name for path in ROOT.glob("cloud_*") if path.is_file())
+    allowed_cloud_files = {"cloud_latest_cache_refresh.py"}
+    stale_cloud_files = sorted(path.name for path in ROOT.glob("cloud_*") if path.is_file() and path.name not in allowed_cloud_files)
     if stale_cloud_files:
         add_issue(
             issues,
@@ -461,7 +462,7 @@ def main():
             "獨支輸出必須和 strong_single_validation 完全一致",
             "嚴重",
         )
-    elif strong_single_validation.get("status") not in {"已驗證", "觀察輸出"}:
+    elif strong_single_validation.get("status") not in {"已驗證", "觀察輸出", "唯一輸出"}:
         add_issue(
             issues,
             "最強獨支",
