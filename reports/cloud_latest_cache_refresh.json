@@ -1,0 +1,61 @@
+{
+  "checked_at_taiwan": "2026-09-29T07:30:48+08:00",
+  "status": "ok",
+  "successful_sources": 4,
+  "total_sources": 7,
+  "results": [
+    {
+      "file": "calottery_正式.html",
+      "url": "https://www.calottery.com/en/draw-games/fantasy-5",
+      "ok": true,
+      "bytes": 97102,
+      "error": "",
+      "attempt": 1
+    },
+    {
+      "file": "lotto8_latest.html",
+      "url": "https://www.lotto-8.com/usa/listltoFT5.asp?indexpage=1&orderby=new",
+      "ok": true,
+      "bytes": 92375,
+      "error": "",
+      "attempt": 1
+    },
+    {
+      "file": "lottolyzer_latest.html",
+      "url": "https://en.lottolyzer.com/history/united-states/fantasy-5-california/",
+      "ok": true,
+      "bytes": 131941,
+      "error": "",
+      "attempt": 1
+    },
+    {
+      "file": "lotteryusa_latest.html",
+      "url": "https://www.lotteryusa.com/california/fantasy-5/",
+      "ok": true,
+      "bytes": 318869,
+      "error": "",
+      "attempt": 1
+    },
+    {
+      "file": "lotteryusa_year.html",
+      "url": "https://www.lotteryusa.com/california/fantasy-5/year/2026",
+      "ok": false,
+      "bytes": 0,
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "lotterynet_latest.html",
+      "url": "https://www.lottery.net/california/fantasy-5/numbers",
+      "ok": false,
+      "bytes": 0,
+      "error": "<urlopen error timed out>"
+    },
+    {
+      "file": "lotterynet_year.html",
+      "url": "https://www.lottery.net/california/fantasy-5/numbers/2026",
+      "ok": false,
+      "bytes": 0,
+      "error": "<urlopen error timed out>"
+    }
+  ]
+}
