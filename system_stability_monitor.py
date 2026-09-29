@@ -78,6 +78,14 @@ def main():
     latest_numbers = (analysis.get("latest_draw") or {}).get("numbers") or []
     target = analysis.get("target_draw_date") or (analysis.get("freshness") or {}).get("target_draw_date")
     top9 = (analysis.get("prediction") or {}).get("top9") or []
+    strict_gate = analysis.get("strict_prediction_gate") or (analysis.get("industrial_engine") or {}).get("strict_prediction_gate") or {}
+    strict_no_padding = bool(strict_gate.get("no_padding"))
+    strict_numbers = set()
+    for value in strict_gate.get("qualified_numbers") or []:
+        try:
+            strict_numbers.add(int(value))
+        except (TypeError, ValueError):
+            continue
     freshness = analysis.get("freshness") or {}
     latest_tw = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time")
     target_tw = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time")
@@ -95,7 +103,24 @@ def main():
     add("目前期別時效", bool(latest and latest >= expected_latest), "雲端自救先抓最新來源，再重算並發布手機版", f"目前 {latest or '-'} / 應到 {expected_latest}")
     add("手機同步資料", bool(latest and site_latest == latest and site_target == target), "重建手機檔並重新發布雲端", f"手機最新 {site_latest or '-'} / 手機下期 {site_target or '-'}")
     add("全歷史資料庫", bool(database.get("ok")), "重新匯入全歷史 CSV 與快取頁面", f"{database.get('count', 0)} 筆")
-    add("下期預測產生", bool(target and len(top9) == 9 and len(set(top9)) == 9), "重新運算候選排序與九碼主推", text_numbers(top9))
+    top9_ints = []
+    for value in top9:
+        try:
+            top9_ints.append(int(value))
+        except (TypeError, ValueError):
+            pass
+    no_duplicate_prediction = len(top9_ints) == len(set(top9_ints))
+    strict_prediction_ok = (
+        bool(target and top9_ints and no_duplicate_prediction)
+        and (
+            (strict_no_padding and (not strict_numbers or set(top9_ints).issubset(strict_numbers)))
+            or (not strict_no_padding and len(top9_ints) == 9)
+        )
+    )
+    prediction_detail = text_numbers(top9)
+    if strict_no_padding and len(top9_ints) < 9:
+        prediction_detail += "（嚴格通過不足不補）"
+    add("下期預測產生", strict_prediction_ok, "重新運算候選排序與九碼主推", prediction_detail)
     add("低機率紀錄", bool(database.get("low_probability_count", 0) > 0 and database.get("low_probability_latest") == latest), "重建低機率每日紀錄與每月檢討", f"低機率最新 {database.get('low_probability_latest') or '-'}")
     add("手機同步檢測", sync.get("status") in {"同步", "synced", "ok"} or not sync.get("mismatches"), "執行手機同步驗證與本機重建", sync.get("status") or "未記錄")
     local_sync_ok = bool(latest and site_latest == latest and site_target == target)
@@ -119,6 +144,7 @@ def main():
         "target_draw_date": target,
         "target_taiwan_safe_update_time": target_tw,
         "top9": top9,
+        "strict_prediction_gate": strict_gate,
         "database": database,
         "checks": checks,
         "failed_actions": failed,

@@ -1724,6 +1724,63 @@ def _candidate_gate_status(item, latest_numbers):
     }
 
 
+def _strict_prediction_gate_status(item, latest_numbers):
+    number = int(item.get("number"))
+    base_gate = _candidate_gate_status(item, latest_numbers)
+    failed_checks = list(base_gate.get("blocked") or [])
+    cross = item.get("cross_validation") or {}
+    maturity_data = item.get("practical_maturity") or {}
+    rank = int(item.get("rank") or item.get("_display_rank") or 99)
+    passed_count = _safe_float(cross.get("passed_count"), 0.0)
+    total_count = _safe_float(cross.get("total_count"), 0.0)
+    maturity = _safe_float(maturity_data.get("score"), 0.0)
+    confidence = _safe_float(item.get("confidence_index"), 0.0)
+    probability = _safe_float(item.get("model_probability_percent"), 0.0)
+    historical_score = _safe_float(item.get("historical_calibrated_score"), 0.0)
+    raw_score = _safe_float(item.get("score"), 0.0)
+    entry = item.get("entry_validation") or {}
+    entry_passed = _guard_passed(entry, False)
+
+    if not entry_passed:
+        failed_checks.append("主列放行未通過")
+    if passed_count < 3:
+        failed_checks.append("交叉驗算少於3項")
+    if maturity < 78:
+        failed_checks.append("成熟度低於78")
+    if confidence < 80:
+        failed_checks.append("信心指標低於80")
+    if probability < 15:
+        failed_checks.append("模型保守機率低於15")
+    if historical_score < 0.40:
+        failed_checks.append("全歷史校準分數低於0.40")
+    if raw_score < 0.60:
+        failed_checks.append("原始總分低於0.60")
+
+    # Do not let a far-back reserve number become a prediction unless the
+    # upstream entry gate explicitly allowed it and it still passes every score gate.
+    if rank > 15:
+        failed_checks.append("排序超出前十五嚴格觀察區")
+
+    failed_checks = list(dict.fromkeys(failed_checks))
+    passed = len(failed_checks) == 0
+    return {
+        **base_gate,
+        "passed": passed,
+        "failed_checks": failed_checks,
+        "number": number,
+        "rank": rank,
+        "metrics": {
+            "交叉通過": f"{int(passed_count)}/{int(total_count) if total_count else '-'}",
+            "成熟度": _format_score(maturity, 1),
+            "信心指標": _format_score(confidence, 1),
+            "模型保守機率": _format_score(probability, 2),
+            "全歷史校準分數": _format_score(historical_score, 3),
+            "原始總分": _format_score(raw_score, 4),
+            "主列放行": "通過" if entry_passed else "未通過",
+        },
+    }
+
+
 def _format_score(value, digits=3):
     try:
         return round(float(value), digits)
@@ -1742,7 +1799,7 @@ def _build_super_single_decision(analysis):
     for item in candidates:
         if not isinstance(item, dict) or item.get("number") is None:
             continue
-        gate = _candidate_gate_status(item, latest_numbers)
+        gate = _strict_prediction_gate_status(item, latest_numbers)
         rank = int(item.get("rank") or item.get("_display_rank") or 99)
         score = _safe_float((item.get("multi_model_correction") or {}).get("corrected_score"), _safe_float(item.get("score")))
         confidence = _safe_float(item.get("confidence_index"))
@@ -1751,7 +1808,43 @@ def _build_super_single_decision(analysis):
         ranked.append((gate["passed"], rank <= 9, score, confidence, passed_count, maturity, -rank, item, gate))
 
     strict = [row for row in ranked if row[0] and row[1]]
-    pool = strict or [row for row in ranked if row[0]] or ranked
+    pool = strict or [row for row in ranked if row[0]]
+    if not pool:
+        rejected = []
+        for row in ranked[:15]:
+            item = row[7]
+            gate = row[8]
+            rejected.append({
+                "number": int(item.get("number")),
+                "rank": int(item.get("rank") or item.get("_display_rank") or 99),
+                "failed_checks": gate.get("failed_checks") or gate.get("blocked") or ["嚴格門未通過"],
+                "metrics": gate.get("metrics", {}),
+            })
+        return {
+            "version": "唯一超強高機率獨支鐵律_v20260929_strict_no_padding",
+            "title": "本期唯一超強高機率獨支",
+            "status": "未達嚴格條件不輸出",
+            "number": None,
+            "numbers": [],
+            "unique": True,
+            "pool_size": 0,
+            "selection_rule": "只允許通過上期沿用、連莊、主列放行、交叉驗算、成熟度、信心、機率、全歷史分數與原始總分的候選輸出。",
+            "why_unique": "未達嚴格條件時不可用備查號、流水號或上一期號碼補位。",
+            "latest_draw_reuse": False,
+            "guard_summary": {
+                "嚴格輸出門": "未通過",
+                "補位規則": "禁止補位",
+            },
+            "scores": {},
+            "explanation": [
+                "本期沒有候選同時通過全部嚴格條件，因此獨支欄位不輸出號碼。",
+                "系統禁止把備查號、候選號或流水號拿來湊滿推薦欄位。",
+            ],
+            "route_sources": [],
+            "formula_reasons": [],
+            "excluded_candidates": rejected,
+            "created_at_taiwan": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+        }
     pool.sort(key=lambda row: (-int(row[0]), -int(row[1]), -row[2], -row[3], -row[4], -row[5], row[6]))
     selected = pool[0][7]
     selected_gate = pool[0][8]
@@ -1783,12 +1876,14 @@ def _build_super_single_decision(analysis):
     for item in candidates[:15]:
         if int(item.get("number", 0)) == number:
             continue
-        gate = _candidate_gate_status(item, latest_numbers)
-        reason = "、".join(gate["blocked"]) if gate["blocked"] else "分數低於唯一獨支"
+        gate = _strict_prediction_gate_status(item, latest_numbers)
+        failed = gate.get("failed_checks") or gate.get("blocked") or []
+        reason = "、".join(failed) if failed else "嚴格通過但分數低於唯一獨支"
         exclusion_rows.append({
             "number": int(item.get("number")),
             "rank": int(item.get("rank") or item.get("_display_rank") or 99),
             "reason": reason,
+            "metrics": gate.get("metrics", {}),
         })
 
     explanation = [
@@ -1805,7 +1900,7 @@ def _build_super_single_decision(analysis):
         explanation.append("公式驗算：" + "、".join(top_formula_reasons[:6]) + "。")
 
     return {
-        "version": "唯一超強高機率獨支鐵律_v20260929",
+        "version": "唯一超強高機率獨支鐵律_v20260929_strict_no_padding",
         "title": "本期唯一超強高機率獨支",
         "status": "唯一輸出",
         "number": number,
@@ -1842,24 +1937,62 @@ def _apply_unique_super_single_rule(analysis):
     decision = _build_super_single_decision(analysis)
     if not decision:
         return analysis
-    number = int(decision["number"])
+    selected_number = decision.get("number")
+    number = int(selected_number) if selected_number is not None else None
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     industrial = analysis.get("industrial_engine") or {}
     entry_core_numbers = (industrial.get("full_system_entry_gate") or {}).get("main_numbers") or []
     historical_core_numbers = (industrial.get("historical_calibrated_rebuild") or {}).get("new_top9") or []
-    latest_numbers = {int(number) for number in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
-    candidate_numbers = []
+    latest_numbers = {int(value) for value in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
+    candidate_by_number = {}
+    strict_candidate_numbers = []
+    rejected_numbers = []
     for item in candidates:
         if not isinstance(item, dict) or item.get("number") is None:
             continue
-        gate = _candidate_gate_status(item, latest_numbers)
+        candidate_number = int(item["number"])
+        candidate_by_number[candidate_number] = item
+        gate = _strict_prediction_gate_status(item, latest_numbers)
+        item["strict_prediction_gate"] = gate
         if gate["passed"]:
-            candidate_numbers.append(int(item["number"]))
-    fallback_numbers = _candidate_numbers(candidates, 15)
-    core = _unique_numbers([number] + entry_core_numbers + historical_core_numbers + candidate_numbers + fallback_numbers, 15)
-    if len(core) < 15:
-        core = _unique_numbers(core + list(range(1, 40)), 15)
+            strict_candidate_numbers.append(candidate_number)
+        else:
+            rejected_numbers.append({
+                "number": candidate_number,
+                "rank": int(item.get("rank") or item.get("_display_rank") or 99),
+                "failed_checks": gate.get("failed_checks") or gate.get("blocked") or ["嚴格門未通過"],
+                "metrics": gate.get("metrics", {}),
+            })
+
+    core_source = []
+    if number is not None:
+        core_source.append(number)
+    for source_numbers in (entry_core_numbers, historical_core_numbers, strict_candidate_numbers):
+        for value in source_numbers:
+            try:
+                value_int = int(value)
+            except (TypeError, ValueError):
+                continue
+            item = candidate_by_number.get(value_int)
+            gate = (item or {}).get("strict_prediction_gate") if item else None
+            if gate and gate.get("passed"):
+                core_source.append(value_int)
+    core = _unique_numbers(core_source, 15)
     core_front_set = set(core[:9])
+    gate_payload = {
+        "version": "嚴格推薦輸出門_v20260929_no_padding",
+        "status": "嚴格通過" if core else "未達嚴格條件不輸出",
+        "policy": "所有預測號碼必須通過主列放行、上期沿用防呆、剛開出連莊高標、交叉驗算、成熟度、信心、機率、全歷史分數與原始總分；不足不補位。",
+        "no_padding": True,
+        "padding_banned": True,
+        "qualified_numbers": core,
+        "qualified_count": len(core),
+        "top9_count": len(core[:9]),
+        "top15_count": len(core[:15]),
+        "rejected_numbers": rejected_numbers[:24],
+        "created_at_taiwan": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+    }
+    analysis["strict_prediction_gate"] = gate_payload
     for key in ("official_candidates", "candidates"):
         rows = analysis.get(key) or []
         for item in rows:
@@ -1876,8 +2009,8 @@ def _apply_unique_super_single_rule(analysis):
 
     analysis["super_single_decision"] = decision
     prediction = analysis.setdefault("prediction", {})
-    prediction["strongest"] = [number]
-    prediction["top1"] = [number]
+    prediction["strongest"] = core[:1]
+    prediction["top1"] = core[:1]
     prediction["top2"] = core[:2]
     prediction["top3"] = core[:3]
     prediction["top5"] = core[:5]
@@ -1897,38 +2030,59 @@ def _apply_unique_super_single_rule(analysis):
         "five_hit_two": ("最強5中1~5", 1, 5, core[:5]),
         "nine_hit_three": ("最強9中3~5", 3, 5, core[:9]),
     }
+    expected_pool_sizes = {
+        "strong_single": 1,
+        "precision_single": 1,
+        "two_hit_one": 2,
+        "precision_two_hit_one": 2,
+        "three_hit_two": 3,
+        "precision_three_hit_one": 3,
+        "five_hit_two": 5,
+        "nine_hit_three": 9,
+    }
     for key, (name, goal, goal_max, numbers) in pack_specs.items():
         pack = packs.setdefault(key, {})
+        expected_pool_size = expected_pool_sizes.get(key, goal_max)
+        if not numbers:
+            pack_status = "嚴格不足不補"
+        elif len(numbers) < expected_pool_size:
+            pack_status = "嚴格通過不足不補"
+        else:
+            pack_status = "嚴格通過"
         pack.update({
             "name": name,
             "hit_goal": goal,
             "hit_goal_max": goal_max,
             "numbers": numbers,
             "pool_size": len(numbers),
-            "status": "唯一獨支鐵律同步重算",
+            "expected_pool_size": expected_pool_size,
+            "status": pack_status,
+            "strict_no_padding": True,
         })
         pack.setdefault("theoretical_probability", _fast_pack_probability(len(numbers), goal))
     packs["strong_single"]["super_single_decision"] = decision
+    decision_scores = decision.get("scores") or {}
     packs["strong_single"]["strong_single_validation"] = {
-        "status": "唯一輸出",
+        "status": decision.get("status") or ("唯一輸出" if core[:1] else "未達嚴格條件不輸出"),
         "number": number,
-        "must_output_single": True,
+        "must_output_single": bool(core[:1]),
         "fake_data_guard": "通過",
         "latest_draw_reuse": decision.get("latest_draw_reuse", False),
-        "latest_draw_reuse_allowed": not decision.get("latest_draw_reuse", False),
-        "score": decision["scores"].get("修正總分"),
-        "candidate_score": decision["scores"].get("原始分"),
-        "confidence_index": decision["scores"].get("信心指標"),
-        "cross_validation": decision["scores"].get("交叉通過"),
-        "maturity_score": decision["scores"].get("成熟度"),
-        "entry_status": decision["scores"].get("主列狀態"),
-        "failed_checks": [],
+        "latest_draw_reuse_allowed": bool(core[:1]) and not decision.get("latest_draw_reuse", False),
+        "score": decision_scores.get("修正總分"),
+        "candidate_score": decision_scores.get("原始分"),
+        "confidence_index": decision_scores.get("信心指標"),
+        "cross_validation": decision_scores.get("交叉通過"),
+        "maturity_score": decision_scores.get("成熟度"),
+        "entry_status": decision_scores.get("主列狀態"),
+        "failed_checks": [] if core[:1] else ["未達嚴格輸出門"],
         "evidence": decision.get("explanation", []),
+        "strict_no_padding": True,
     }
-    packs["strong_single"]["validation_status"] = "唯一輸出"
+    packs["strong_single"]["validation_status"] = packs["strong_single"]["strong_single_validation"]["status"]
 
     ironlaw = analysis.setdefault("latest_ironlaw", analysis.get("decisive_battle_plan") or {})
-    ironlaw["primary_single"] = [number]
+    ironlaw["primary_single"] = core[:1]
     ironlaw["two_hit_one"] = core[:2]
     ironlaw["three_hit_one"] = core[:3]
     ironlaw["five_hit_two"] = core[:5]
@@ -1959,12 +2113,24 @@ def _apply_unique_super_single_rule(analysis):
         })
     ironlaw["high_confidence_numbers"] = high_confidence_rows
     ironlaw["super_single_decision"] = decision
-    ironlaw["release_rule"] = "獨支只允許一顆，必須通過唯一獨支鐵律；2碼、3碼、5碼與九碼皆由同一份核心排序延伸，禁止各欄位各自取號。"
+    ironlaw["release_rule"] = "獨支只允許一顆，必須通過唯一獨支鐵律；2碼、3碼、5碼與九碼皆由同一份嚴格合格名單延伸，禁止補位、禁止各欄位各自取號。"
     analysis["decisive_battle_plan"] = ironlaw
+    strict_policy = analysis.setdefault("strict_recommendation_policy", {})
+    strict_policy.update({
+        "mode": "嚴格過門輸出",
+        "message": "本期只輸出通過嚴格條件的號碼；未達條件時寧可少顆，不用備查號補滿。",
+        "visible_rule": "所有推薦號碼必須完成主列放行、上期沿用防呆、連莊高標、交叉驗算、成熟度、信心、機率、全歷史分數與原始總分檢查。",
+        "release_gate_status": gate_payload["status"],
+        "official_release_allowed": bool(core),
+        "formal_recommendations": high_confidence_rows,
+        "high_confidence_watch": high_confidence_rows,
+        "no_padding": True,
+    })
 
     industrial = analysis.setdefault("industrial_engine", {})
     industrial["strong_single_validation"] = packs["strong_single"]["strong_single_validation"]
     industrial["super_single_decision"] = decision
+    industrial["strict_prediction_gate"] = gate_payload
     return analysis
 
 

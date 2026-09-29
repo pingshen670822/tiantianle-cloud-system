@@ -225,6 +225,14 @@ def main():
     latest_tw = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or ""
     top9 = prediction.get("top9") or [item.get("number") for item in (analysis.get("candidates") or [])[:9]]
     top15 = prediction.get("top15") or [item.get("number") for item in (analysis.get("candidates") or [])[:15]]
+    strict_gate = analysis.get("strict_prediction_gate") or industrial.get("strict_prediction_gate") or {}
+    strict_no_padding = bool(strict_gate.get("no_padding"))
+    strict_qualified = set()
+    for value in strict_gate.get("qualified_numbers") or []:
+        try:
+            strict_qualified.add(int(value))
+        except (TypeError, ValueError):
+            continue
     strong_packs = analysis.get("strong_packs") or analysis.get("strong_prediction_packs") or {}
     strong_single = ((strong_packs.get("strong_single") or {}).get("numbers") or prediction.get("strongest") or prediction.get("top1") or [])
 
@@ -317,10 +325,34 @@ def main():
             "嚴重",
         )
 
-    if len(top9) != 9 or len(set(top9)) != 9:
+    if not top9:
+        add_issue(issues, "預測結構", "前九名沒有任何嚴格通過號碼", "戰報沒有可檢討的主推核心", "模型必須重新校正到至少有一顆通過嚴格門", "嚴重")
+    elif len(set(top9)) != len(top9):
+        add_issue(issues, "預測結構", f"前九名有重複：{numbers_text(top9)}", "重複號碼會造成命中檢討失真", "前九名不得重複", "嚴重")
+    elif len(top9) != 9 and not strict_no_padding:
         add_issue(issues, "預測結構", f"前九名格式錯誤：{numbers_text(top9)}", "九碼核心無法穩定檢討", "前九名必須固定九顆且不得重複", "嚴重")
-    if len(top15) < 15 or len(set(top15[:15])) < 15:
-        add_issue(issues, "預測結構", "前十五名不足或重複", "第十到第十五名備查會失真", "補齊前十五名排序與重複檢查", "嚴重")
+    if len(set(top15[:15])) != len(top15[:15]):
+        add_issue(issues, "預測結構", "前十五名有重複", "第十到第十五名備查會失真", "移除重複號碼並重新排序", "嚴重")
+    elif len(top15) < 15 and not strict_no_padding:
+        add_issue(issues, "預測結構", "前十五名不足", "第十到第十五名備查會失真", "補齊前十五名排序與重複檢查", "嚴重")
+    if strict_no_padding:
+        unqualified_output = []
+        for number in list(top15[:15]) + list(strong_single):
+            try:
+                number_int = int(number)
+            except (TypeError, ValueError):
+                continue
+            if strict_qualified and number_int not in strict_qualified:
+                unqualified_output.append(number_int)
+        if unqualified_output:
+            add_issue(
+                issues,
+                "嚴格輸出門",
+                f"輸出含未通過嚴格門號碼：{numbers_text(sorted(set(unqualified_output)))}",
+                "會把備查號或未驗證號碼包裝成推薦",
+                "所有預測欄位必須只吃 strict_prediction_gate.qualified_numbers",
+                "嚴重",
+            )
 
     latest_overlap = sorted(set(int(n) for n in latest_numbers) & set(int(n) for n in top9))
     firewall = industrial.get("recent_draw_firewall") or {}
@@ -381,8 +413,16 @@ def main():
             number_int = int(number)
         except (TypeError, ValueError):
             continue
-        validation = (candidate_map.get(number_int) or {}).get("entry_validation") or {}
-        if not validation.get("passed_for_main"):
+        candidate = candidate_map.get(number_int) or {}
+        strict_status = candidate.get("strict_prediction_gate") or {}
+        validation = candidate.get("entry_validation") or {}
+        if strict_status:
+            passed_for_output = bool(strict_status.get("passed"))
+        elif strict_no_padding and strict_qualified:
+            passed_for_output = number_int in strict_qualified
+        else:
+            passed_for_output = bool(validation.get("passed_for_main"))
+        if not passed_for_output:
             top9_gate_failed.append(number_int)
     if entry_gate.get("status") != "已執行":
         add_issue(
@@ -393,7 +433,7 @@ def main():
             "每期必須先跑全歷史回測、多模型校正、強牌治理、精算小牌競賽，再放行主列",
             "嚴重",
         )
-    if int(entry_gate.get("main_count", 0) or 0) < 9:
+    if int(entry_gate.get("main_count", 0) or 0) < 9 and not strict_no_padding:
         add_issue(
             issues,
             "全系統主列放行",
@@ -563,6 +603,7 @@ def main():
         "target_taiwan_time": target_tw,
         "top9": top9,
         "top15": top15[:15],
+        "strict_prediction_gate": strict_gate,
         "draw_count": analysis.get("draw_count"),
         "database": db,
         "review_storage": review_storage,
