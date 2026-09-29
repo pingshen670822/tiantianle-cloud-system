@@ -11932,3 +11932,4 @@ local_index,draw_no,draw_date,n1,n2,n3,n4,n5,source
 11931,11931,2026-09-25,6,15,22,33,36,consensus_latest:cache:lotteryusa+lotto8+lottolyzer
 11932,11932,2026-09-26,1,6,7,11,26,consensus_latest:cache:lotteryusa+lotto8+lottolyzer
 11933,11933,2026-09-27,3,15,20,31,39,official:calottery_cache
+11934,11934,2026-09-28,8,10,12,14,24,official:calottery_cache
