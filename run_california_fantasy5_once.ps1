@@ -398,9 +398,28 @@ if ($HistoryOnly -or $NetworkOnly -or $ValidateOnly) {
 $SyncExitCode = $LASTEXITCODE
 if ($SyncExitCode -ne 0) {
   Step ("mobile sync verify warning: " + $SyncExitCode + "; rebuilding local mobile files once")
+  $CloudAdoptScript = Join-Path $ScriptDir "sync_local_from_cloud.py"
+  if ((-not $HistoryOnly) -and (-not $NetworkOnly) -and (-not $ValidateOnly) -and (Test-Path -LiteralPath $CloudAdoptScript)) {
+    Step "mobile sync repair: adopting latest cloud payload into computer report"
+    & $PythonExe $CloudAdoptScript
+    if ($LASTEXITCODE -eq 0) {
+      if ($CloudPublishSucceeded) {
+        & $PythonExe $SyncVerifyScript "--remote" "--retries" "8" "--sleep" "6"
+      } else {
+        & $PythonExe $SyncVerifyScript "--local-only"
+      }
+      $SyncExitCode = $LASTEXITCODE
+    } else {
+      Step ("cloud adopt repair failed: " + $LASTEXITCODE)
+    }
+  }
   & $PythonExe ".\pages_build.py"
   if ($LASTEXITCODE -eq 0) {
-    & $PythonExe $SyncVerifyScript "--local-only"
+    if ($CloudPublishSucceeded) {
+      & $PythonExe $SyncVerifyScript "--remote" "--retries" "8" "--sleep" "6"
+    } else {
+      & $PythonExe $SyncVerifyScript "--local-only"
+    }
     $SyncExitCode = $LASTEXITCODE
   }
   if ($SyncExitCode -ne 0) {
