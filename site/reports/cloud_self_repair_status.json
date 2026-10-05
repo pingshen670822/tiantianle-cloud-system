@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-10-05T18:00:55+08:00",
+  "checked_at_taiwan": "2026-10-05T18:14:40+08:00",
   "status": "已修復",
   "before": {
-    "generated_at_taiwan": "2026-10-05T17:51:30+08:00",
+    "generated_at_taiwan": "2026-10-05T18:09:05+08:00",
     "draw_count": 11940,
     "latest_draw_date": "2026-10-04",
     "allowed_latest_draw_date": "2026-10-04",
@@ -42,7 +42,7 @@
     "site_target_draw_date": "2026-10-05",
     "site_data_latest_draw_date": "2026-10-04",
     "site_data_target_draw_date": "2026-10-05",
-    "site_generated_at_taiwan": "2026-10-05T17:51:30+08:00",
+    "site_generated_at_taiwan": "2026-10-05T18:09:05+08:00",
     "site_top1": [
       13
     ],
@@ -56,7 +56,7 @@
     "site_strong_single_numbers": [
       13
     ],
-    "site_data_generated_at_taiwan": "2026-10-05T17:51:30+08:00",
+    "site_data_generated_at_taiwan": "2026-10-05T18:09:05+08:00",
     "site_data_top1": [
       13
     ],
@@ -75,7 +75,7 @@
     "is_synced": true
   },
   "after": {
-    "generated_at_taiwan": "2026-10-05T17:59:07+08:00",
+    "generated_at_taiwan": "2026-10-05T18:12:52+08:00",
     "draw_count": 11940,
     "latest_draw_date": "2026-10-04",
     "allowed_latest_draw_date": "2026-10-04",
@@ -115,7 +115,7 @@
     "site_target_draw_date": "2026-10-05",
     "site_data_latest_draw_date": "2026-10-04",
     "site_data_target_draw_date": "2026-10-05",
-    "site_generated_at_taiwan": "2026-10-05T17:59:07+08:00",
+    "site_generated_at_taiwan": "2026-10-05T18:12:52+08:00",
     "site_top1": [
       13
     ],
@@ -129,7 +129,7 @@
     "site_strong_single_numbers": [
       13
     ],
-    "site_data_generated_at_taiwan": "2026-10-05T17:59:07+08:00",
+    "site_data_generated_at_taiwan": "2026-10-05T18:12:52+08:00",
     "site_data_top1": [
       13
     ],
@@ -151,16 +151,16 @@
     {
       "name": "來源快取自救 1",
       "command": "/opt/hostedtoolcache/Python/3.12.14/x64/bin/python cloud_latest_cache_refresh.py",
-      "ok": false,
-      "seconds": 240.1,
-      "returncode": "timeout",
-      "tail": "timeout"
+      "ok": true,
+      "seconds": 16.0,
+      "returncode": 0,
+      "tail": "{\"status\": \"ok\", \"successful_sources\": 6}"
     },
     {
       "name": "全歷史重算 1",
       "command": "/opt/hostedtoolcache/Python/3.12.14/x64/bin/python offline_full_history_recalc.py",
       "ok": true,
-      "seconds": 210.9,
+      "seconds": 210.7,
       "returncode": 0,
       "tail": "    \"skipped\": 15\n  },\n  \"period_audit\": {\n    \"status\": \"ok\",\n    \"active_start\": \"2026-09-20\",\n    \"checked\": 14,\n    \"missing_before\": [],\n    \"repaired\": [],\n    \"missing_after\": []\n  },\n  \"settled_count\": 0,\n  \"low_probability_backfill\": {\n    \"inserted\": 0,\n    \"skipped\": 15\n  },\n  \"low_probability_settled_count\": 0,\n  \"prediction_status\": \"recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated\",\n  \"health_status\": \"ok\",\n  \"system_completeness\": 100\n}"
     },
