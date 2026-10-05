@@ -502,7 +502,7 @@ def main():
             "獨支輸出必須和 strong_single_validation 完全一致",
             "嚴重",
         )
-    elif strong_single_validation.get("status") not in {"已驗證", "觀察輸出", "唯一輸出"}:
+    elif strong_single_validation.get("status") not in {"已驗證", "觀察輸出", "唯一輸出", "超級獨支唯一輸出"}:
         add_issue(
             issues,
             "最強獨支",

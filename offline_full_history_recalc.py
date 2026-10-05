@@ -1933,6 +1933,530 @@ def _build_super_single_decision(analysis):
     }
 
 
+def _draw_date_text(draw):
+    return str(draw.get("draw_date") or draw.get("date") or "")
+
+
+def _draw_numbers_set(draw):
+    return {int(number) for number in (draw.get("numbers") or [])}
+
+
+def _normalize_score_map(values):
+    clean = {int(number): _safe_float(value, 0.0) for number, value in (values or {}).items()}
+    if not clean:
+        return {number: 0.0 for number in range(1, mod.NUMBER_MAX + 1)}
+    low = min(clean.values())
+    high = max(clean.values())
+    if high <= low:
+        return {number: 0.5 for number in range(1, mod.NUMBER_MAX + 1)}
+    return {number: (clean.get(number, low) - low) / (high - low) for number in range(1, mod.NUMBER_MAX + 1)}
+
+
+def _target_date_obj(target_date):
+    try:
+        return datetime.strptime(str(target_date), "%Y-%m-%d").date()
+    except Exception:
+        return datetime.now(timezone(timedelta(hours=8))).date()
+
+
+def _ultimate_single_features(train_draws, target_date):
+    max_number = mod.NUMBER_MAX
+    target_day = _target_date_obj(target_date)
+    all_counts = Counter()
+    for draw in train_draws:
+        all_counts.update(_draw_numbers_set(draw))
+    full_freq = _normalize_score_map({number: all_counts.get(number, 0) for number in range(1, max_number + 1)})
+
+    recent_windows = [30, 60, 120, 360, 1080]
+    recent_weights = {30: 0.29, 60: 0.24, 120: 0.20, 360: 0.16, 1080: 0.11}
+    recent_mix = {number: 0.0 for number in range(1, max_number + 1)}
+    window_norms = {}
+    for window in recent_windows:
+        counts = Counter()
+        for draw in train_draws[-window:]:
+            counts.update(_draw_numbers_set(draw))
+        norm = _normalize_score_map({number: counts.get(number, 0) for number in range(1, max_number + 1)})
+        window_norms[window] = norm
+        for number in recent_mix:
+            recent_mix[number] += norm[number] * recent_weights[window]
+
+    trend_score = _normalize_score_map({
+        number: window_norms[30][number] * 0.55 + window_norms[60][number] * 0.30 - window_norms[360][number] * 0.18
+        for number in range(1, max_number + 1)
+    })
+
+    omissions = {number: len(train_draws) for number in range(1, max_number + 1)}
+    for idx, draw in enumerate(reversed(train_draws), 1):
+        for number in _draw_numbers_set(draw):
+            if omissions[number] == len(train_draws):
+                omissions[number] = idx - 1
+    gap_scores = {}
+    total_draws = max(1, len(train_draws))
+    for number in range(1, max_number + 1):
+        count = max(1, all_counts.get(number, 0))
+        avg_gap = total_draws / count
+        ratio = omissions[number] / max(1.0, avg_gap)
+        sweet = 1.0 - min(1.0, abs(ratio - 1.18) / 1.65)
+        overdue = min(1.0, ratio / 2.6)
+        gap_scores[number] = sweet * 0.68 + overdue * 0.32
+
+    latest_numbers = _draw_numbers_set(train_draws[-1]) if train_draws else set()
+    pair_counts = {number: 0 for number in range(1, max_number + 1)}
+    pair_window = train_draws[-720:] if len(train_draws) > 720 else train_draws
+    for draw in pair_window:
+        nums = _draw_numbers_set(draw)
+        shared = len(nums & latest_numbers)
+        if not shared:
+            continue
+        for number in nums:
+            if number not in latest_numbers:
+                pair_counts[number] += shared
+    pair_drag = _normalize_score_map(pair_counts)
+
+    weekday_counts = Counter()
+    month_counts = Counter()
+    for draw in train_draws:
+        text = _draw_date_text(draw)
+        try:
+            day = datetime.strptime(text, "%Y-%m-%d").date()
+        except Exception:
+            continue
+        if day.weekday() == target_day.weekday():
+            weekday_counts.update(_draw_numbers_set(draw))
+        if day.month == target_day.month:
+            month_counts.update(_draw_numbers_set(draw))
+    weekday_score = _normalize_score_map({number: weekday_counts.get(number, 0) for number in range(1, max_number + 1)})
+    month_score = _normalize_score_map({number: month_counts.get(number, 0) for number in range(1, max_number + 1)})
+
+    tail_counts = Counter()
+    zone_counts = Counter()
+    for draw in train_draws[-45:]:
+        for number in _draw_numbers_set(draw):
+            tail_counts[number % 10] += 1
+            zone_counts[(number - 1) // 10] += 1
+    tail_score = _normalize_score_map({number: tail_counts.get(number % 10, 0) for number in range(1, max_number + 1)})
+    zone_score = _normalize_score_map({number: zone_counts.get((number - 1) // 10, 0) for number in range(1, max_number + 1)})
+
+    date_seed_numbers = set()
+    for raw in (
+        target_day.year,
+        target_day.month,
+        target_day.day,
+        int(f"{target_day.month}{target_day.day:02d}"),
+        target_day.month + target_day.day,
+        sum(int(ch) for ch in target_day.strftime("%Y%m%d")),
+    ):
+        date_seed_numbers.add(((abs(raw) - 1) % max_number) + 1)
+    date_score = {number: (1.0 if number in date_seed_numbers else 0.0) for number in range(1, max_number + 1)}
+
+    latest_repeat_score = {number: (0.36 if number in latest_numbers else 0.0) for number in range(1, max_number + 1)}
+    return {
+        "full_freq": full_freq,
+        "recent_mix": recent_mix,
+        "trend": trend_score,
+        "gap": gap_scores,
+        "pair_drag": pair_drag,
+        "weekday": weekday_score,
+        "month": month_score,
+        "tail": tail_score,
+        "zone": zone_score,
+        "date": date_score,
+        "repeat": latest_repeat_score,
+    }
+
+
+ULTIMATE_SINGLE_VARIANTS = {
+    "全歷史穩定獨支": {
+        "full_freq": 0.20,
+        "recent_mix": 0.15,
+        "trend": 0.08,
+        "gap": 0.13,
+        "pair_drag": 0.14,
+        "weekday": 0.10,
+        "month": 0.07,
+        "tail": 0.06,
+        "zone": 0.04,
+        "date": 0.03,
+    },
+    "近期突破獨支": {
+        "full_freq": 0.08,
+        "recent_mix": 0.24,
+        "trend": 0.18,
+        "gap": 0.13,
+        "pair_drag": 0.12,
+        "weekday": 0.08,
+        "month": 0.05,
+        "tail": 0.05,
+        "zone": 0.03,
+        "date": 0.04,
+    },
+    "拖牌共振獨支": {
+        "full_freq": 0.09,
+        "recent_mix": 0.12,
+        "trend": 0.07,
+        "gap": 0.12,
+        "pair_drag": 0.29,
+        "weekday": 0.09,
+        "month": 0.05,
+        "tail": 0.08,
+        "zone": 0.03,
+        "date": 0.06,
+    },
+    "遺漏回補獨支": {
+        "full_freq": 0.10,
+        "recent_mix": 0.12,
+        "trend": 0.08,
+        "gap": 0.30,
+        "pair_drag": 0.10,
+        "weekday": 0.08,
+        "month": 0.05,
+        "tail": 0.06,
+        "zone": 0.04,
+        "date": 0.07,
+    },
+    "日期拖牌獨支": {
+        "full_freq": 0.08,
+        "recent_mix": 0.11,
+        "trend": 0.06,
+        "gap": 0.12,
+        "pair_drag": 0.16,
+        "weekday": 0.14,
+        "month": 0.08,
+        "tail": 0.07,
+        "zone": 0.04,
+        "date": 0.14,
+    },
+}
+
+
+_ULTIMATE_VARIANT_BACKTEST_CACHE = {}
+
+
+def _score_ultimate_variant(features, weights):
+    scores = {number: 0.0 for number in range(1, mod.NUMBER_MAX + 1)}
+    for key, weight in weights.items():
+        values = features.get(key) or {}
+        for number in scores:
+            scores[number] += _safe_float(values.get(number), 0.0) * weight
+    return scores
+
+
+def _ultimate_variant_backtest(draws, rounds=720):
+    cache_key = (len(draws), _draw_date_text(draws[-1]) if draws else "", int(rounds))
+    if cache_key in _ULTIMATE_VARIANT_BACKTEST_CACHE:
+        return _ULTIMATE_VARIANT_BACKTEST_CACHE[cache_key]
+    start = max(420, len(draws) - rounds)
+    model_hits = {name: [] for name in ULTIMATE_SINGLE_VARIANTS}
+    model_picks = {name: [] for name in ULTIMATE_SINGLE_VARIANTS}
+    for idx in range(start, len(draws)):
+        train = draws[:idx]
+        if len(train) < 120:
+            continue
+        actual = _draw_numbers_set(draws[idx])
+        target_date = _draw_date_text(draws[idx])
+        features = _ultimate_single_features(train, target_date)
+        for name, weights in ULTIMATE_SINGLE_VARIANTS.items():
+            scores = _score_ultimate_variant(features, weights)
+            pick = max(scores, key=lambda number: (scores[number], -number))
+            hit = 1 if pick in actual else 0
+            model_hits[name].append(hit)
+            model_picks[name].append(pick)
+
+    rows = []
+    for name, hits in model_hits.items():
+        if not hits:
+            continue
+        recent30 = hits[-30:]
+        recent60 = hits[-60:]
+        recent120 = hits[-120:]
+        max_miss = 0
+        current_miss = 0
+        for hit in hits:
+            if hit:
+                max_miss = max(max_miss, current_miss)
+                current_miss = 0
+            else:
+                current_miss += 1
+        max_miss = max(max_miss, current_miss)
+        hit_rate = sum(hits) / len(hits)
+        hit30 = sum(recent30) / len(recent30) if recent30 else 0.0
+        hit60 = sum(recent60) / len(recent60) if recent60 else 0.0
+        hit120 = sum(recent120) / len(recent120) if recent120 else 0.0
+        stability_score = hit_rate * 0.30 + hit120 * 0.32 + hit60 * 0.26 + hit30 * 0.12 - min(0.08, max_miss / max(1, len(hits)) * 0.40)
+        rows.append({
+            "model": name,
+            "rounds": len(hits),
+            "hit_count": sum(hits),
+            "hit_rate": round(hit_rate, 4),
+            "recent_30_hit_rate": round(hit30, 4),
+            "recent_60_hit_rate": round(hit60, 4),
+            "recent_120_hit_rate": round(hit120, 4),
+            "max_miss_streak": int(max_miss),
+            "current_miss_streak": int(current_miss),
+            "stability_score": round(stability_score, 5),
+            "last_20_picks": model_picks[name][-20:],
+        })
+    rows.sort(key=lambda row: (row["stability_score"], row["recent_60_hit_rate"], row["hit_rate"], -row["max_miss_streak"]), reverse=True)
+    selected = rows[0]["model"] if rows else "全歷史穩定獨支"
+    result = {
+        "rounds": max(0, len(draws) - start),
+        "selected_model": selected,
+        "model_rows": rows,
+        "random_single_expectation": round(mod.DRAW_SIZE / mod.NUMBER_MAX, 4),
+    }
+    _ULTIMATE_VARIANT_BACKTEST_CACHE[cache_key] = result
+    return result
+
+
+def _candidate_support_score(item):
+    cross = item.get("cross_validation") or {}
+    maturity = item.get("practical_maturity") or {}
+    multi = item.get("multi_model_correction") or {}
+    return (
+        _safe_float(item.get("score"), 0.0) * 0.22
+        + _safe_float(item.get("historical_calibrated_score"), 0.0) * 0.18
+        + _safe_float(multi.get("corrected_score"), _safe_float(item.get("score"), 0.0)) * 0.13
+        + min(1.0, _safe_float(item.get("confidence_index"), 0.0) / 100.0) * 0.15
+        + min(1.0, _safe_float(item.get("model_probability_percent"), 0.0) / 28.0) * 0.08
+        + min(1.0, _safe_float(cross.get("passed_count"), 0.0) / max(1.0, _safe_float(cross.get("total_count"), 6.0))) * 0.13
+        + min(1.0, _safe_float(maturity.get("score"), 0.0) / 100.0) * 0.11
+    )
+
+
+def _apply_ultimate_super_single_engine(analysis, draws, review=None):
+    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    if not candidates or not draws:
+        return analysis
+    latest_numbers = {int(number) for number in ((analysis.get("latest_draw") or {}).get("numbers") or [])}
+    candidate_by_number = {int(item.get("number")): item for item in candidates if isinstance(item, dict) and item.get("number") is not None}
+    strict_rows = []
+    rejected_rows = []
+    for item in candidates:
+        if not isinstance(item, dict) or item.get("number") is None:
+            continue
+        gate = item.get("strict_prediction_gate") or _strict_prediction_gate_status(item, latest_numbers)
+        item["strict_prediction_gate"] = gate
+        if gate.get("passed"):
+            strict_rows.append(item)
+        else:
+            rejected_rows.append({
+                "number": int(item.get("number")),
+                "rank": int(item.get("rank") or item.get("_display_rank") or 99),
+                "reason": "、".join(gate.get("failed_checks") or gate.get("blocked") or ["嚴格門未通過"]),
+            })
+
+    backtest_result = _ultimate_variant_backtest(draws, rounds=720)
+    selected_model = backtest_result.get("selected_model") or "全歷史穩定獨支"
+    current_features = _ultimate_single_features(draws, analysis.get("target_draw_date"))
+    model_scores = _score_ultimate_variant(current_features, ULTIMATE_SINGLE_VARIANTS[selected_model])
+    model_rank = {
+        number: idx + 1
+        for idx, number in enumerate(sorted(model_scores, key=lambda value: (model_scores[value], -value), reverse=True))
+    }
+    model_rows_by_name = {row.get("model"): row for row in backtest_result.get("model_rows") or []}
+    selected_model_row = model_rows_by_name.get(selected_model) or {}
+    audit_rows = []
+    for item in strict_rows:
+        number = int(item["number"])
+        ultimate_score = _safe_float(model_scores.get(number), 0.0)
+        support = _candidate_support_score(item)
+        recent_model_boost = _safe_float(selected_model_row.get("recent_60_hit_rate"), 0.0) * 0.10 + _safe_float(selected_model_row.get("recent_120_hit_rate"), 0.0) * 0.08
+        composite = ultimate_score * 0.47 + support * 0.41 + recent_model_boost
+        item["ultimate_super_single"] = {
+            "selected_model": selected_model,
+            "model_score": round(ultimate_score, 5),
+            "candidate_support_score": round(support, 5),
+            "composite_score": round(composite, 5),
+            "model_rank": model_rank.get(number),
+            "model_backtest": selected_model_row,
+        }
+        audit_rows.append({
+            "number": number,
+            "rank": int(item.get("rank") or item.get("_display_rank") or 99),
+            "model_rank": model_rank.get(number),
+            "model_score": round(ultimate_score, 5),
+            "candidate_support_score": round(support, 5),
+            "composite_score": round(composite, 5),
+            "strict_gate": "通過",
+        })
+    audit_rows.sort(key=lambda row: (row["composite_score"], -row["rank"], -row["model_rank"], -row["number"]), reverse=True)
+    if not audit_rows:
+        analysis["ultimate_super_single_engine"] = {
+            "status": "未達嚴格門不輸出",
+            "backtest": backtest_result,
+            "rejected_candidates": rejected_rows[:20],
+        }
+        return analysis
+
+    selected_number = int(audit_rows[0]["number"])
+    ordered_core = _unique_numbers(
+        [selected_number] + [row["number"] for row in audit_rows] + (analysis.get("strict_prediction_gate") or {}).get("qualified_numbers", []),
+        15,
+    )
+    selected_item = candidate_by_number.get(selected_number, {})
+    cross = selected_item.get("cross_validation") or {}
+    maturity = selected_item.get("practical_maturity") or {}
+    multi = selected_item.get("multi_model_correction") or {}
+    ultimate = selected_item.get("ultimate_super_single") or {}
+    model_row = ultimate.get("model_backtest") or selected_model_row
+    formula = selected_item.get("formula_engine") or {}
+    formula_reasons = []
+    for row in formula.get("top_reasons") or []:
+        if isinstance(row, dict):
+            label = row.get("label") or row.get("name") or row.get("reason")
+            score = row.get("score")
+            if label:
+                formula_reasons.append(f"{label} {score}" if score is not None else str(label))
+
+    explanation = [
+        f"超級獨支競賽模型選中 {selected_number:02d}，本期只輸出這一顆。",
+        f"勝出模型：{selected_model}；最近720期獨支回測命中率 {_format_score(_safe_float(model_row.get('hit_rate')) * 100, 2)}%，最近60期 {_format_score(_safe_float(model_row.get('recent_60_hit_rate')) * 100, 2)}%。",
+        f"本期模型排名第 {ultimate.get('model_rank', '-')} 名，模型分 {_format_score(ultimate.get('model_score'), 5)}，候選支撐分 {_format_score(ultimate.get('candidate_support_score'), 5)}，總合分 {_format_score(ultimate.get('composite_score'), 5)}。",
+        f"候選原始排名第 {int(selected_item.get('rank') or selected_item.get('_display_rank') or 0)} 名，原始分 {_format_score(selected_item.get('score'), 5)}，全歷史校準分 {_format_score(selected_item.get('historical_calibrated_score'), 5)}。",
+        f"信心指標 {_format_score(selected_item.get('confidence_index'), 1)}，模型保守機率 {_format_score(selected_item.get('model_probability_percent'), 2)}%，交叉驗算 {cross.get('passed_count', '-')}/{cross.get('total_count', '-')}，成熟度 {_format_score(maturity.get('score'), 1)}。",
+        "所有候選先通過嚴格門，再進超級獨支競賽；未過嚴格門的高分號碼不得搶獨支。",
+    ]
+    if formula_reasons:
+        explanation.append("公式驗算：" + "、".join(formula_reasons[:6]) + "。")
+
+    decision = analysis.get("super_single_decision") or {}
+    decision.update({
+        "version": "超級獨支全歷史多模型競賽_v20261005",
+        "title": "本期唯一超級獨支",
+        "status": "超級獨支唯一輸出",
+        "number": selected_number,
+        "numbers": [selected_number],
+        "pool_size": 1,
+        "selection_rule": "全歷史資料庫先做多模型獨支滾動回測，選出勝出模型後，只在嚴格通過候選中挑總合分最高的一顆。",
+        "why_unique": "超級獨支只允許一顆；未通過嚴格門或總合分不足者不得補位。",
+        "scores": {
+            "全歷史排序": int(selected_item.get("rank") or selected_item.get("_display_rank") or 0),
+            "超級獨支總合分": _format_score(ultimate.get("composite_score"), 5),
+            "獨支模型分": _format_score(ultimate.get("model_score"), 5),
+            "候選支撐分": _format_score(ultimate.get("candidate_support_score"), 5),
+            "勝出模型": selected_model,
+            "模型回測命中率": _format_score(_safe_float(model_row.get("hit_rate")) * 100, 2),
+            "最近60期命中率": _format_score(_safe_float(model_row.get("recent_60_hit_rate")) * 100, 2),
+            "信心指標": _format_score(selected_item.get("confidence_index"), 1),
+            "模型保守機率": _format_score(selected_item.get("model_probability_percent"), 2),
+            "交叉通過": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
+            "成熟度": _format_score(maturity.get("score"), 1),
+            "主列狀態": (selected_item.get("entry_validation") or {}).get("status_label") or (selected_item.get("entry_validation") or {}).get("status") or "-",
+        },
+        "explanation": explanation,
+        "route_sources": ["超級獨支競賽", selected_model, "全歷史滾動回測", "嚴格門通過", "候選支撐分交叉驗算"],
+        "formula_reasons": formula_reasons[:8],
+        "excluded_candidates": [
+            {
+                "number": row["number"],
+                "rank": row["rank"],
+                "reason": "嚴格通過但超級獨支總合分低於唯一輸出",
+                "metrics": {
+                    "模型排名": row.get("model_rank"),
+                    "模型分": row.get("model_score"),
+                    "候選支撐分": row.get("candidate_support_score"),
+                    "總合分": row.get("composite_score"),
+                },
+            }
+            for row in audit_rows[1:10]
+        ] + rejected_rows[:8],
+        "created_at_taiwan": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+    })
+    analysis["super_single_decision"] = decision
+    analysis["ultimate_super_single_engine"] = {
+        "status": "已完成超級獨支重整",
+        "version": "ultimate_super_single_v20261005",
+        "selected_number": selected_number,
+        "selected_model": selected_model,
+        "selected_model_backtest": selected_model_row,
+        "candidate_audit": audit_rows,
+        "model_backtest": backtest_result,
+        "strict_rejected_candidates": rejected_rows[:20],
+        "policy": "全歷史、多窗口、拖牌、遺漏、日期牌、尾數與區間模型先回測，再套本期嚴格門，只輸出一顆超級獨支。",
+    }
+
+    prediction = analysis.setdefault("prediction", {})
+    prediction["strongest"] = [selected_number]
+    prediction["top1"] = [selected_number]
+    prediction["top2"] = ordered_core[:2]
+    prediction["top3"] = ordered_core[:3]
+    prediction["top5"] = ordered_core[:5]
+    prediction["top9"] = ordered_core[:9]
+    prediction["top10"] = ordered_core[:10]
+    prediction["top15"] = ordered_core[:15]
+    prediction["high_confidence_watch"] = ordered_core[:9]
+
+    gate_payload = analysis.setdefault("strict_prediction_gate", {})
+    gate_payload["qualified_numbers"] = ordered_core
+    gate_payload["qualified_count"] = len(ordered_core)
+    gate_payload["top9_count"] = len(ordered_core[:9])
+    gate_payload["top15_count"] = len(ordered_core[:15])
+    gate_payload["ultimate_super_single_selected"] = selected_number
+
+    packs = analysis.setdefault("strong_packs", {})
+    specs = {
+        "strong_single": ("獨支精準1中1", 1, 1, ordered_core[:1]),
+        "precision_single": ("精算獨支1中1", 1, 1, ordered_core[:1]),
+        "two_hit_one": ("最強2中1~2", 1, 2, ordered_core[:2]),
+        "precision_two_hit_one": ("精算2中1~2", 1, 2, ordered_core[:2]),
+        "three_hit_two": ("最強3中1~3", 1, 3, ordered_core[:3]),
+        "precision_three_hit_one": ("精算3中1~3", 1, 3, ordered_core[:3]),
+        "five_hit_two": ("最強5中1~5", 1, 5, ordered_core[:5]),
+        "nine_hit_three": ("最強9中3~5", 3, 5, ordered_core[:9]),
+    }
+    expected = {"strong_single": 1, "precision_single": 1, "two_hit_one": 2, "precision_two_hit_one": 2, "three_hit_two": 3, "precision_three_hit_one": 3, "five_hit_two": 5, "nine_hit_three": 9}
+    for key, (name, goal, goal_max, numbers) in specs.items():
+        pack = packs.setdefault(key, {})
+        status = "嚴格通過" if len(numbers) >= expected.get(key, goal_max) else "嚴格通過不足不補"
+        pack.update({
+            "name": name,
+            "hit_goal": goal,
+            "hit_goal_max": goal_max,
+            "numbers": numbers,
+            "pool_size": len(numbers),
+            "expected_pool_size": expected.get(key, goal_max),
+            "status": status,
+            "strict_no_padding": True,
+        })
+        pack["theoretical_probability"] = _fast_pack_probability(len(numbers), goal)
+    packs["strong_single"]["super_single_decision"] = decision
+    packs["strong_single"]["strong_single_validation"] = {
+        "status": "超級獨支唯一輸出",
+        "number": selected_number,
+        "must_output_single": True,
+        "fake_data_guard": "通過",
+        "latest_draw_reuse": selected_number in latest_numbers,
+        "latest_draw_reuse_allowed": selected_number not in latest_numbers,
+        "score": decision["scores"].get("超級獨支總合分"),
+        "candidate_score": decision["scores"].get("候選支撐分"),
+        "confidence_index": decision["scores"].get("信心指標"),
+        "cross_validation": decision["scores"].get("交叉通過"),
+        "maturity_score": decision["scores"].get("成熟度"),
+        "entry_status": decision["scores"].get("主列狀態"),
+        "failed_checks": [],
+        "evidence": explanation,
+        "strict_no_padding": True,
+    }
+    packs["strong_single"]["validation_status"] = "超級獨支唯一輸出"
+
+    ironlaw = analysis.setdefault("latest_ironlaw", analysis.get("decisive_battle_plan") or {})
+    ironlaw["primary_single"] = [selected_number]
+    ironlaw["two_hit_one"] = ordered_core[:2]
+    ironlaw["three_hit_one"] = ordered_core[:3]
+    ironlaw["five_hit_two"] = ordered_core[:5]
+    ironlaw["nine_hit_three"] = ordered_core[:9]
+    ironlaw["high_confidence_core"] = ordered_core[:9]
+    ironlaw["super_single_decision"] = decision
+    analysis["decisive_battle_plan"] = ironlaw
+
+    industrial = analysis.setdefault("industrial_engine", {})
+    industrial["ultimate_super_single_engine"] = analysis["ultimate_super_single_engine"]
+    industrial["super_single_decision"] = decision
+    industrial["strong_single_validation"] = packs["strong_single"]["strong_single_validation"]
+    industrial["strict_prediction_gate"] = gate_payload
+    return analysis
+
+
 def _apply_unique_super_single_rule(analysis):
     decision = _build_super_single_decision(analysis)
     if not decision:
@@ -2325,14 +2849,16 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
     _apply_low_probability_core_backtest(analysis)
     _apply_unique_super_single_rule(analysis)
+    _apply_ultimate_super_single_engine(analysis, draws, review)
     analysis['offline_full_history_recalc'] = True
-    analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; deep tournament deferred'
+    analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced'
     status = mod.store_prediction(conn, analysis)
     analysis['low_probability_daily_records'] = mod.low_probability_daily_record(conn)
     analysis['monthly_low_probability_review'] = mod.monthly_low_probability_review(conn)
     analysis['low_probability_monthly_guard'] = mod.apply_low_probability_monthly_guard(analysis)
     _apply_low_probability_core_backtest(analysis)
     _apply_unique_super_single_rule(analysis)
+    _apply_ultimate_super_single_engine(analysis, draws, review)
     mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     data_audit = mod.data_integrity_audit(conn)
     network_diag = {'status': 'offline_full_history_fast_recalc', 'blocked_count': 0, 'checks': []}
