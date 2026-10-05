@@ -47,14 +47,14 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261005074748">
+    <link rel="manifest" href="manifest.webmanifest?v=20261005080449">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head><body><header>
   <h1>天天樂 下期預測</h1>
-  <p>產生：台灣時間 2026-10-05 15:46 / 全歷史資料 完整 / 共 11940 筆</p>
+  <p>產生：台灣時間 2026-10-05 16:03 / 全歷史資料 完整 / 共 11940 筆</p>
   <p>最新開獎可確認：台灣時間 2026-10-05 09:50 / 最新號碼：16 17 19 31 37 / 下期開獎：台灣時間 2026-10-06 09:50</p>
   <p class="small">最新開獎期別 2026-10-04 / 下期開獎期別 2026-10-05</p>
 </header><main>
@@ -62,9 +62,9 @@
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="force-sync-20261005074748.html?v=20261005074748">手機不一樣點這裡強制同步</a>
+      <a class="cloud-update-link" href="force-sync-20261005080449.html?v=20261005080449">手機不一樣點這裡強制同步</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261005074748</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261005080449</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
@@ -74,13 +74,13 @@
       <h2>本期最強主推</h2>
       <p><strong>只看這一組：</strong>本頁只顯示本期最強主推；上期命中與失準檢討全部放在命中檢討分頁。</p>
       <div class="grid">
-        <div class="card hot-card"><div class="label">最強獨隻</div><div class="value num">06</div></div>
-        <div class="card hot-card"><div class="label">最強主推</div><div class="value">06 10 13 02</div></div>
+        <div class="card hot-card"><div class="label">最強獨隻</div><div class="value num">13</div></div>
+        <div class="card hot-card"><div class="label">最強主推</div><div class="value">13 10 06 02</div></div>
         <div class="card"><div class="label">下期開獎台灣時間</div><div class="value">台灣時間 2026-10-06 09:50</div></div>
         <div class="card"><div class="label">模式</div><div class="value">高信心觀察</div></div>
       </div>
       <p><strong>判讀：</strong>本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。</p>
-      <table><thead><tr><th>類型</th><th>號碼</th><th>判讀</th></tr></thead><tbody><tr><td>最強主推</td><td>06 10 13 02</td><td>本期只看這一組，不超過九顆</td></tr><tr><td>最強獨隻</td><td>06</td><td>本期唯一獨隻</td></tr></tbody></table>
+      <table><thead><tr><th>類型</th><th>號碼</th><th>判讀</th></tr></thead><tbody><tr><td>最強主推</td><td>13 10 06 02</td><td>本期只看這一組，不超過九顆</td></tr><tr><td>最強獨隻</td><td>13</td><td>本期唯一獨隻</td></tr></tbody></table>
     </div>
     
     <details class="advanced">
@@ -93,7 +93,7 @@
     </details>
   </main>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261005074748';
+    window.TIANTIANLE_BUILD_VERSION = '20261005080449';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -121,7 +121,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261005074748&force=' + Date.now());
+      location.replace('首頁.html?v=20261005080449&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -138,7 +138,7 @@
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261005074748', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261005080449', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
@@ -167,8 +167,8 @@
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261005074748') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261005074748';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261005080449') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261005080449';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;

@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-10-05T15:47:50+08:00",
+  "checked_at_taiwan": "2026-10-05T16:04:50+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-10-05T15:46:48+08:00",
+    "generated_at_taiwan": "2026-10-05T16:03:29+08:00",
     "draw_count": 11940,
     "latest_draw_date": "2026-10-04",
     "latest_numbers": [
@@ -15,31 +15,31 @@
     "target_draw_date": "2026-10-05",
     "target_taiwan_time": "2026-10-06 09:50",
     "top1": [
-      6
+      13
     ],
     "top9": [
-      6,
-      10,
       13,
+      10,
+      6,
       2
     ],
     "top15": [
-      6,
-      10,
       13,
+      10,
+      6,
       2
     ],
-    "ultimate_single": 6,
-    "ultimate_model": "近期突破獨支",
-    "super_single_number": 6,
+    "ultimate_single": 13,
+    "ultimate_model": "全球融合零容忍獨支",
+    "super_single_number": 13,
     "super_single_status": "超級獨支唯一輸出",
     "strong_single_numbers": [
-      6
+      13
     ],
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "site": {
-    "generated_at_taiwan": "2026-10-05T15:46:48+08:00",
+    "generated_at_taiwan": "2026-10-05T16:03:29+08:00",
     "draw_count": 11940,
     "latest_draw_date": "2026-10-04",
     "latest_numbers": [
@@ -52,32 +52,70 @@
     "target_draw_date": "2026-10-05",
     "target_taiwan_time": "2026-10-06 09:50",
     "top1": [
-      6
+      13
     ],
     "top9": [
-      6,
-      10,
       13,
+      10,
+      6,
       2
     ],
     "top15": [
-      6,
-      10,
       13,
+      10,
+      6,
       2
     ],
-    "ultimate_single": 6,
-    "ultimate_model": "近期突破獨支",
-    "super_single_number": 6,
+    "ultimate_single": 13,
+    "ultimate_model": "全球融合零容忍獨支",
+    "super_single_number": 13,
     "super_single_status": "超級獨支唯一輸出",
     "strong_single_numbers": [
-      6
+      13
+    ],
+    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+  },
+  "site_data": {
+    "generated_at_taiwan": "2026-10-05T16:03:29+08:00",
+    "draw_count": 11940,
+    "latest_draw_date": "2026-10-04",
+    "latest_numbers": [
+      16,
+      17,
+      19,
+      31,
+      37
+    ],
+    "target_draw_date": "2026-10-05",
+    "target_taiwan_time": "2026-10-06 09:50",
+    "top1": [
+      13
+    ],
+    "top9": [
+      13,
+      10,
+      6,
+      2
+    ],
+    "top15": [
+      13,
+      10,
+      6,
+      2
+    ],
+    "ultimate_single": 13,
+    "ultimate_model": "全球融合零容忍獨支",
+    "super_single_number": 13,
+    "super_single_status": "超級獨支唯一輸出",
+    "strong_single_numbers": [
+      13
     ],
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "remote": {},
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
   "remote_report_url": "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json",
+  "remote_data_url": "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json",
   "remote_error": "",
   "mismatches": []
 }

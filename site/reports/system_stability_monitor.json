@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-05T15:47:48+08:00",
+  "checked_at_taiwan": "2026-10-05T16:04:49+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-04",
@@ -15,9 +15,9 @@
   "target_draw_date": "2026-10-05",
   "target_taiwan_safe_update_time": "2026-10-06 09:50",
   "top9": [
-    6,
-    10,
     13,
+    10,
+    6,
     2
   ],
   "strict_prediction_gate": {
@@ -27,9 +27,9 @@
     "no_padding": true,
     "padding_banned": true,
     "qualified_numbers": [
-      6,
-      10,
       13,
+      10,
+      6,
       2
     ],
     "qualified_count": 4,
@@ -510,8 +510,8 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-05T15:47:46+08:00",
-    "ultimate_super_single_selected": 6
+    "created_at_taiwan": "2026-10-05T16:04:47+08:00",
+    "ultimate_super_single_selected": 13
   },
   "database": {
     "ok": true,
@@ -551,7 +551,7 @@
     {
       "name": "下期預測產生",
       "ok": true,
-      "detail": "06 10 13 02（嚴格通過不足不補）",
+      "detail": "13 10 06 02（嚴格通過不足不補）",
       "action": "重新運算候選排序與九碼主推"
     },
     {
