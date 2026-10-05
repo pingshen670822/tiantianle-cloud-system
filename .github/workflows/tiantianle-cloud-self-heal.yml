@@ -1,0 +1,247 @@
+name: tiantianle-cloud-self-heal
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["tiantianle-cloud-auto-update"]
+    types: [completed]
+  schedule:
+    # 每小時獨立自我修復巡檢：主流程故障時仍可由本流程補跑。
+    - cron: "17 * * * *"
+    # 台灣夏令開獎後備援補跑：10:00 內啟動，10:00-10:50 一小時內密集追更新。
+    - cron: "0 2 * * *"
+    - cron: "5 2 * * *"
+    - cron: "10 2 * * *"
+    - cron: "15 2 * * *"
+    - cron: "20 2 * * *"
+    - cron: "30 2 * * *"
+    - cron: "40 2 * * *"
+    - cron: "50 2 * * *"
+    # 台灣冬令開獎後備援補跑：11:00 內啟動，11:00-11:50 一小時內密集追更新。
+    - cron: "0 3 * * *"
+    - cron: "5 3 * * *"
+    - cron: "10 3 * * *"
+    - cron: "15 3 * * *"
+    - cron: "20 3 * * *"
+    - cron: "30 3 * * *"
+    - cron: "40 3 * * *"
+    - cron: "50 3 * * *"
+    # 開獎後兩小時強制自修：夏令台灣 11:50 已含於上方，冬令台灣 12:50 另行補跑。
+    - cron: "50 4 * * *"
+    # 台灣 13:10 備援完整重算。
+    - cron: "10 5 * * *"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: tiantianle-cloud-self-heal
+  cancel-in-progress: false
+
+jobs:
+  self-heal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set self-heal runtime
+        shell: bash
+        run: |
+          echo "TIANTIANLE_RUN_MODE=self_heal" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_CORE_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_PACK_GOVERNANCE_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_ADVANCED_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_FORMULA_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_GROUP_BACKTEST_SHORT=30" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_GROUP_BACKTEST_MID=60" >> "$GITHUB_ENV"
+          echo "TIANTIANLE_GROUP_BACKTEST_LONG=120" >> "$GITHUB_ENV"
+      - name: Compile cloud repair programs
+        shell: bash
+        run: |
+          python -m py_compile \
+            cloud_latest_cache_refresh.py \
+            cloud_self_repair.py \
+            offline_full_history_recalc.py \
+            pages_build.py \
+            sanitize_public_outputs.py \
+            system_gap_audit.py \
+            system_stability_monitor.py \
+            verify_mobile_sync.py \
+            tiantianle_ironlaw_report.py \
+            "美國加州天天樂_20260618_第1版.py"
+      - name: Run independent cloud self-repair
+        shell: bash
+        run: |
+          set +e
+          python cloud_self_repair.py --retries 3
+          repair_exit=$?
+          if [ "$repair_exit" -ne 0 ]; then
+            echo "first self-heal pass failed; running emergency fallback"
+            python "美國加州天天樂_20260618_第1版.py" || true
+            python cloud_self_repair.py --retries 2
+            repair_exit=$?
+          fi
+          exit "$repair_exit"
+      - name: Verify local repair result
+        shell: bash
+        run: |
+          python system_gap_audit.py --fail-on-publish-blocking --local-only
+          python verify_mobile_sync.py --local-only
+          python system_stability_monitor.py
+      - name: Refuse stale overwrite
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import ssl
+          import sys
+          import time
+          import urllib.request
+
+          def load(path):
+              return json.loads(pathlib.Path(path).read_text(encoding="utf-8-sig"))
+
+          def core(data):
+              latest = data.get("latest_draw") or {}
+              freshness = data.get("freshness") or {}
+              prediction = data.get("prediction") or {}
+              ultimate = data.get("ultimate_super_single_engine") or {}
+              return {
+                  "generated": data.get("generated_at_taiwan") or "",
+                  "latest": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
+                  "target": data.get("target_draw_date") or freshness.get("target_draw_date") or "",
+                  "top1": prediction.get("top1") or [],
+                  "top9": prediction.get("top9") or [],
+                  "ultimate": ultimate.get("selected_number") or 0,
+              }
+
+          local = core(load("reports/latest_analysis.json"))
+          remote = {}
+          try:
+              url = "https://raw.githubusercontent.com/pingshen670822/tiantianle-cloud-system/gh-pages/latest_analysis.json?cb=" + str(int(time.time()))
+              remote = core(json.loads(urllib.request.urlopen(url, timeout=60, context=ssl._create_unverified_context()).read().decode("utf-8-sig")))
+          except Exception as exc:
+              print(f"remote comparison warning: {exc}")
+          if remote.get("latest") and local.get("latest") and local["latest"] < remote["latest"]:
+              print(f"stale self-heal publish refused: local {local} remote {remote}")
+              sys.exit(2)
+          if remote.get("target") and local.get("target") and local["latest"] == remote.get("latest") and local["target"] < remote["target"]:
+              print(f"target regression refused: local {local} remote {remote}")
+              sys.exit(2)
+          print(f"self-heal publish guard passed: local={local}, remote={remote}")
+          PY
+      - name: Commit repaired generated data to main
+        shell: bash
+        run: |
+          git config user.name "tiantianle self-heal"
+          git config user.email "actions@users.noreply.github.com"
+          git add data reports site
+          if git diff --cached --quiet; then
+            echo "No repaired generated data changes to commit"
+            exit 0
+          fi
+          git commit -m "Self-heal Tiantianle generated data" || true
+          git push origin HEAD:main || echo "main push skipped because remote changed; gh-pages publish continues"
+      - name: Build public mobile package
+        shell: bash
+        run: |
+          set -e
+          rm -rf public_site
+          mkdir -p public_site/data public_site/reports
+          cp -a site/. public_site/
+          cp -a data/. public_site/data/
+          while IFS= read -r -d '' src; do
+            rel="${src#reports/}"
+            dest="public_site/reports/${rel}"
+            if [ -e "$dest" ]; then
+              continue
+            fi
+            mkdir -p "$(dirname "$dest")"
+            cp "$src" "$dest"
+          done < <(find reports -type f -print0)
+          cp reports/latest_analysis.json public_site/latest_analysis.json
+          cp reports/latest_battle_report.html public_site/latest_battle_report.html
+          cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
+          cp reports/complete_report.html public_site/complete_report.html
+          cp reports/complete_report.html public_site/reports/complete_report.html
+          test -s public_site/index.html
+          test -s public_site/latest_analysis.json
+          test -s public_site/reports/latest_battle_report.html
+          touch public_site/.nojekyll
+      - name: Publish repaired mobile site
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          publish_dir="$(mktemp -d)"
+          cp -a public_site/. "$publish_dir/"
+          cd "$publish_dir"
+          git init
+          git checkout -B gh-pages
+          git config user.name "tiantianle self-heal"
+          git config user.email "actions@users.noreply.github.com"
+          git add .
+          git commit -m "Self-heal Tiantianle mobile site"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin gh-pages
+          curl -sS -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
+            -d '{"source":{"branch":"gh-pages","path":"/"}}' || true
+      - name: Verify deployed mobile site and emergency retry
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          python verify_mobile_sync.py --remote --retries 18 --sleep 10
+          verify_exit=$?
+          if [ "$verify_exit" -eq 0 ]; then
+            exit 0
+          fi
+          echo "remote mobile sync failed after publish; emergency self-heal republish"
+          python cloud_self_repair.py --retries 1
+          python verify_mobile_sync.py --local-only
+          rm -rf public_site
+          mkdir -p public_site/data public_site/reports
+          cp -a site/. public_site/
+          cp -a data/. public_site/data/
+          while IFS= read -r -d '' src; do
+            rel="${src#reports/}"
+            dest="public_site/reports/${rel}"
+            if [ -e "$dest" ]; then
+              continue
+            fi
+            mkdir -p "$(dirname "$dest")"
+            cp "$src" "$dest"
+          done < <(find reports -type f -print0)
+          cp reports/latest_analysis.json public_site/latest_analysis.json
+          cp reports/latest_battle_report.html public_site/latest_battle_report.html
+          cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
+          cp reports/complete_report.html public_site/complete_report.html
+          cp reports/complete_report.html public_site/reports/complete_report.html
+          touch public_site/.nojekyll
+          publish_dir="$(mktemp -d)"
+          cp -a public_site/. "$publish_dir/"
+          cd "$publish_dir"
+          git init
+          git checkout -B gh-pages
+          git config user.name "tiantianle self-heal"
+          git config user.email "actions@users.noreply.github.com"
+          git add .
+          git commit -m "Emergency republish Tiantianle mobile site"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin gh-pages
+          python "$GITHUB_WORKSPACE/verify_mobile_sync.py" --remote --retries 24 --sleep 10

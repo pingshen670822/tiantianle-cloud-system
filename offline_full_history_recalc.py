@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import math
 import os
 import shutil
 import sqlite3
@@ -2013,6 +2014,83 @@ def _ultimate_single_features(train_draws, target_date):
                 pair_counts[number] += shared
     pair_drag = _normalize_score_map(pair_counts)
 
+    base_probability = mod.DRAW_SIZE / max(1, max_number)
+    bayes_raw = {}
+    variance = max(0.0001, total_draws * base_probability * (1.0 - base_probability))
+    prior_strength = 39.0
+    for number in range(1, max_number + 1):
+        count = all_counts.get(number, 0)
+        posterior = (count + prior_strength * base_probability) / (total_draws + prior_strength)
+        z_score = (count - total_draws * base_probability) / math.sqrt(variance)
+        bayes_raw[number] = (posterior / base_probability) + max(-1.8, min(1.8, z_score)) * 0.10
+    bayes_shrink = _normalize_score_map(bayes_raw)
+
+    ema_raw = {number: 0.0 for number in range(1, max_number + 1)}
+    for half_life, blend_weight in ((18, 0.42), (45, 0.33), (120, 0.25)):
+        half_raw = {number: 0.0 for number in range(1, max_number + 1)}
+        for age, draw in enumerate(reversed(train_draws[-720:]), 1):
+            weight = math.pow(0.5, age / half_life)
+            for number in _draw_numbers_set(draw):
+                half_raw[number] += weight
+        half_norm = _normalize_score_map(half_raw)
+        for number in ema_raw:
+            ema_raw[number] += half_norm[number] * blend_weight
+    ema_decay = _normalize_score_map(ema_raw)
+
+    transition_raw = Counter()
+    transition_start = max(1, len(train_draws) - 2400)
+    for idx in range(transition_start, len(train_draws) - 1):
+        previous_numbers = _draw_numbers_set(train_draws[idx - 1])
+        current_numbers = _draw_numbers_set(train_draws[idx])
+        shared = len(previous_numbers & latest_numbers)
+        if not shared:
+            continue
+        weight = 1.0 + shared * 0.55
+        for number in current_numbers:
+            transition_raw[number] += weight
+    markov_transition = _normalize_score_map(transition_raw)
+
+    pmi_window = train_draws[-3600:] if len(train_draws) > 3600 else train_draws
+    number_presence = Counter()
+    anchor_presence = Counter()
+    pair_presence = Counter()
+    for draw in pmi_window:
+        nums = _draw_numbers_set(draw)
+        for number in nums:
+            number_presence[number] += 1
+        anchors = nums & latest_numbers
+        for anchor in anchors:
+            anchor_presence[anchor] += 1
+        if anchors:
+            for number in nums:
+                if number not in latest_numbers:
+                    pair_presence[number] += len(anchors)
+    pmi_total = max(1, len(pmi_window))
+    anchor_total = max(1, sum(anchor_presence.values()))
+    pmi_raw = {}
+    for number in range(1, max_number + 1):
+        observed = pair_presence.get(number, 0) + 0.5
+        expected = ((number_presence.get(number, 0) + 0.5) * anchor_total) / pmi_total
+        pmi_raw[number] = max(0.0, math.log(observed / max(0.0001, expected) + 1.0))
+    pmi_drag = _normalize_score_map(pmi_raw)
+
+    cycle_raw = {}
+    positions = {number: [] for number in range(1, max_number + 1)}
+    for idx, draw in enumerate(train_draws):
+        for number in _draw_numbers_set(draw):
+            positions[number].append(idx)
+    for number in range(1, max_number + 1):
+        pos = positions[number]
+        if len(pos) < 4:
+            cycle_raw[number] = 0.35
+            continue
+        gaps = [right - left for left, right in zip(pos, pos[1:])]
+        gaps_sorted = sorted(gaps)
+        median_gap = gaps_sorted[len(gaps_sorted) // 2]
+        current_gap = omissions[number]
+        cycle_raw[number] = 1.0 - min(1.0, abs(current_gap - median_gap) / max(1.0, median_gap * 1.75))
+    cycle_phase = _normalize_score_map(cycle_raw)
+
     weekday_counts = Counter()
     month_counts = Counter()
     for draw in train_draws:
@@ -2056,6 +2134,11 @@ def _ultimate_single_features(train_draws, target_date):
         "trend": trend_score,
         "gap": gap_scores,
         "pair_drag": pair_drag,
+        "bayes_shrink": bayes_shrink,
+        "ema_decay": ema_decay,
+        "markov_transition": markov_transition,
+        "pmi_drag": pmi_drag,
+        "cycle_phase": cycle_phase,
         "weekday": weekday_score,
         "month": month_score,
         "tail": tail_score,
@@ -2066,12 +2149,52 @@ def _ultimate_single_features(train_draws, target_date):
 
 
 ULTIMATE_SINGLE_VARIANTS = {
+    "全球融合零容忍獨支": {
+        "full_freq": 0.07,
+        "recent_mix": 0.10,
+        "trend": 0.08,
+        "gap": 0.08,
+        "pair_drag": 0.08,
+        "bayes_shrink": 0.12,
+        "ema_decay": 0.13,
+        "markov_transition": 0.12,
+        "pmi_drag": 0.09,
+        "cycle_phase": 0.06,
+        "weekday": 0.03,
+        "month": 0.02,
+        "tail": 0.01,
+        "zone": 0.01,
+    },
+    "貝氏馬可夫獨支": {
+        "bayes_shrink": 0.21,
+        "markov_transition": 0.20,
+        "pmi_drag": 0.16,
+        "ema_decay": 0.12,
+        "pair_drag": 0.10,
+        "recent_mix": 0.08,
+        "gap": 0.06,
+        "cycle_phase": 0.04,
+        "weekday": 0.03,
+    },
+    "近期衰減穩定獨支": {
+        "ema_decay": 0.26,
+        "recent_mix": 0.20,
+        "trend": 0.15,
+        "bayes_shrink": 0.10,
+        "gap": 0.08,
+        "cycle_phase": 0.07,
+        "markov_transition": 0.06,
+        "pmi_drag": 0.04,
+        "weekday": 0.04,
+    },
     "全歷史穩定獨支": {
         "full_freq": 0.20,
         "recent_mix": 0.15,
         "trend": 0.08,
         "gap": 0.13,
         "pair_drag": 0.14,
+        "bayes_shrink": 0.08,
+        "ema_decay": 0.07,
         "weekday": 0.10,
         "month": 0.07,
         "tail": 0.06,
@@ -2084,6 +2207,8 @@ ULTIMATE_SINGLE_VARIANTS = {
         "trend": 0.18,
         "gap": 0.13,
         "pair_drag": 0.12,
+        "ema_decay": 0.10,
+        "bayes_shrink": 0.06,
         "weekday": 0.08,
         "month": 0.05,
         "tail": 0.05,
@@ -2096,6 +2221,8 @@ ULTIMATE_SINGLE_VARIANTS = {
         "trend": 0.07,
         "gap": 0.12,
         "pair_drag": 0.29,
+        "markov_transition": 0.12,
+        "pmi_drag": 0.08,
         "weekday": 0.09,
         "month": 0.05,
         "tail": 0.08,
@@ -2108,6 +2235,8 @@ ULTIMATE_SINGLE_VARIANTS = {
         "trend": 0.08,
         "gap": 0.30,
         "pair_drag": 0.10,
+        "cycle_phase": 0.11,
+        "bayes_shrink": 0.06,
         "weekday": 0.08,
         "month": 0.05,
         "tail": 0.06,
@@ -2134,10 +2263,12 @@ _ULTIMATE_VARIANT_BACKTEST_CACHE = {}
 
 def _score_ultimate_variant(features, weights):
     scores = {number: 0.0 for number in range(1, mod.NUMBER_MAX + 1)}
+    total_weight = sum(max(0.0, _safe_float(weight, 0.0)) for weight in weights.values()) or 1.0
     for key, weight in weights.items():
+        normalized_weight = max(0.0, _safe_float(weight, 0.0)) / total_weight
         values = features.get(key) or {}
         for number in scores:
-            scores[number] += _safe_float(values.get(number), 0.0) * weight
+            scores[number] += _safe_float(values.get(number), 0.0) * normalized_weight
     return scores
 
 
@@ -2248,7 +2379,26 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
     backtest_result = _ultimate_variant_backtest(draws, rounds=720)
     selected_model = backtest_result.get("selected_model") or "全歷史穩定獨支"
     current_features = _ultimate_single_features(draws, analysis.get("target_draw_date"))
-    model_scores = _score_ultimate_variant(current_features, ULTIMATE_SINGLE_VARIANTS[selected_model])
+    selected_weights = ULTIMATE_SINGLE_VARIANTS[selected_model]
+    model_scores = _score_ultimate_variant(current_features, selected_weights)
+    feature_labels = {
+        "full_freq": "全歷史頻率",
+        "recent_mix": "多窗口近期頻率",
+        "trend": "趨勢突破",
+        "gap": "遺漏週期",
+        "pair_drag": "拖牌共振",
+        "bayes_shrink": "貝氏收縮",
+        "ema_decay": "指數近期衰減",
+        "markov_transition": "馬可夫轉移",
+        "pmi_drag": "共現關聯",
+        "cycle_phase": "週期回補",
+        "weekday": "星期牌",
+        "month": "月份牌",
+        "tail": "尾數區間",
+        "zone": "區間平衡",
+        "date": "日期牌",
+        "repeat": "連莊觀察",
+    }
     model_rank = {
         number: idx + 1
         for idx, number in enumerate(sorted(model_scores, key=lambda value: (model_scores[value], -value), reverse=True))
@@ -2262,6 +2412,21 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
         support = _candidate_support_score(item)
         recent_model_boost = _safe_float(selected_model_row.get("recent_60_hit_rate"), 0.0) * 0.10 + _safe_float(selected_model_row.get("recent_120_hit_rate"), 0.0) * 0.08
         composite = ultimate_score * 0.47 + support * 0.41 + recent_model_boost
+        total_weight = sum(max(0.0, _safe_float(value, 0.0)) for value in selected_weights.values()) or 1.0
+        feature_breakdown = sorted(
+            [
+                {
+                    "module": feature_labels.get(key, key),
+                    "score": round(_safe_float((current_features.get(key) or {}).get(number), 0.0), 5),
+                    "weight": round(max(0.0, _safe_float(weight, 0.0)) / total_weight, 5),
+                    "weighted_score": round(_safe_float((current_features.get(key) or {}).get(number), 0.0) * max(0.0, _safe_float(weight, 0.0)) / total_weight, 5),
+                }
+                for key, weight in selected_weights.items()
+                if key in current_features
+            ],
+            key=lambda row: (row["weighted_score"], row["score"]),
+            reverse=True,
+        )
         item["ultimate_super_single"] = {
             "selected_model": selected_model,
             "model_score": round(ultimate_score, 5),
@@ -2269,6 +2434,7 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
             "composite_score": round(composite, 5),
             "model_rank": model_rank.get(number),
             "model_backtest": selected_model_row,
+            "feature_breakdown": feature_breakdown[:10],
         }
         audit_rows.append({
             "number": number,
@@ -2316,6 +2482,15 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
         f"信心指標 {_format_score(selected_item.get('confidence_index'), 1)}，模型保守機率 {_format_score(selected_item.get('model_probability_percent'), 2)}%，交叉驗算 {cross.get('passed_count', '-')}/{cross.get('total_count', '-')}，成熟度 {_format_score(maturity.get('score'), 1)}。",
         "所有候選先通過嚴格門，再進超級獨支競賽；未過嚴格門的高分號碼不得搶獨支。",
     ]
+    if ultimate.get("feature_breakdown"):
+        explanation.append(
+            "全球融合驗算："
+            + "、".join(
+                f"{row.get('module')} {row.get('weighted_score')}"
+                for row in (ultimate.get("feature_breakdown") or [])[:8]
+            )
+            + "。"
+        )
     if formula_reasons:
         explanation.append("公式驗算：" + "、".join(formula_reasons[:6]) + "。")
 
@@ -2337,6 +2512,7 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
             "勝出模型": selected_model,
             "模型回測命中率": _format_score(_safe_float(model_row.get("hit_rate")) * 100, 2),
             "最近60期命中率": _format_score(_safe_float(model_row.get("recent_60_hit_rate")) * 100, 2),
+            "全球融合模組數": len(ultimate.get("feature_breakdown") or []),
             "信心指標": _format_score(selected_item.get("confidence_index"), 1),
             "模型保守機率": _format_score(selected_item.get("model_probability_percent"), 2),
             "交叉通過": f"{cross.get('passed_count', '-')}/{cross.get('total_count', '-')}",
@@ -2345,6 +2521,7 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
         },
         "explanation": explanation,
         "route_sources": ["超級獨支競賽", selected_model, "全歷史滾動回測", "嚴格門通過", "候選支撐分交叉驗算"],
+        "global_fusion_modules": ultimate.get("feature_breakdown") or [],
         "formula_reasons": formula_reasons[:8],
         "excluded_candidates": [
             {
@@ -2370,6 +2547,7 @@ def _apply_ultimate_super_single_engine(analysis, draws, review=None):
         "selected_model": selected_model,
         "selected_model_backtest": selected_model_row,
         "candidate_audit": audit_rows,
+        "selected_feature_breakdown": ultimate.get("feature_breakdown") or [],
         "model_backtest": backtest_result,
         "strict_rejected_candidates": rejected_rows[:20],
         "policy": "全歷史、多窗口、拖牌、遺漏、日期牌、尾數與區間模型先回測，再套本期嚴格門，只輸出一顆超級獨支。",

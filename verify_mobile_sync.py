@@ -14,6 +14,7 @@ REPORT_DIR = ROOT / "reports"
 SITE_DIR = ROOT / "site"
 REMOTE_ANALYSIS_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json"
 REMOTE_REPORT_ANALYSIS_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json"
+REMOTE_DATA_ANALYSIS_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json"
 TAIWAN = ZoneInfo("Asia/Taipei")
 
 
@@ -160,7 +161,9 @@ def main():
 
     local = core_payload(read_json(REPORT_DIR / "latest_analysis.json"))
     site = core_payload(read_json(SITE_DIR / "latest_analysis.json"))
+    site_data = core_payload(read_json(SITE_DIR / "data" / "latest_analysis.json"))
     mismatches = ["本機與手機資料夾:" + field for field in compare(local, site)]
+    mismatches.extend(["本機與手機資料夾data:" + field for field in compare(local, site_data)])
     remote_payload = {}
     remote_error = ""
 
@@ -185,6 +188,18 @@ def main():
                 remote_error = report_remote_error
         else:
             remote_payload = report_remote_payload or remote_payload
+        data_remote_payload, data_remote_mismatches, data_remote_error = fetch_remote_until_synced(
+            REMOTE_DATA_ANALYSIS_URL,
+            local,
+            args.retries,
+            args.sleep,
+        )
+        if data_remote_mismatches:
+            mismatches.extend(["data雲端:" + item.replace("本機與雲端:", "") for item in data_remote_mismatches])
+            if data_remote_error and not remote_error:
+                remote_error = data_remote_error
+        else:
+            remote_payload = data_remote_payload or remote_payload
 
     status = "同步" if not mismatches else "不同步"
     payload = {
@@ -192,9 +207,11 @@ def main():
         "status": status,
         "local": local,
         "site": site,
+        "site_data": site_data,
         "remote": remote_payload,
         "remote_url": REMOTE_ANALYSIS_URL,
         "remote_report_url": REMOTE_REPORT_ANALYSIS_URL,
+        "remote_data_url": REMOTE_DATA_ANALYSIS_URL,
         "remote_error": remote_error,
         "mismatches": mismatches,
     }

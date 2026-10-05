@@ -26,6 +26,7 @@ BLOCKED_NAMES = {".env", ".env.local", ".env.production", ".gitconfig-gh"}
 BLOCKED_PARTS = ("token", "secret", "credential", "password", "github_device_login")
 ALLOWLIST = {
     ".github/workflows/tiantianle-cloud-auto-update.yml",
+    ".github/workflows/tiantianle-cloud-self-heal.yml",
     "aerospace_engine.py",
     "california_fantasy5_system.py",
     "cloud_latest_cache_refresh.py",

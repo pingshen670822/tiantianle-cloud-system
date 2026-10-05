@@ -322,6 +322,49 @@ def ultra_precision_candidate_score(item):
 
 
 def ultra_precision_recommendations(analysis):
+    super_single = (
+        analysis.get("super_single_decision")
+        or ((analysis.get("industrial_engine") or {}).get("super_single_decision"))
+        or {}
+    )
+    prediction = analysis.get("prediction") or {}
+    strong_packs = analysis.get("strong_packs") or {}
+    two_pack = strong_packs.get("two_hit_one") or {}
+    three_pack = strong_packs.get("three_hit_two") or strong_packs.get("precision_three_hit_one") or {}
+    selected_single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or prediction.get("top1") or []
+    if selected_single:
+        top2 = prediction.get("top2") or two_pack.get("numbers") or selected_single[:1]
+        top3 = prediction.get("top3") or three_pack.get("numbers") or top2
+        scores = super_single.get("scores") or {}
+        score = scores.get("超級獨支總合分") or scores.get("修正總分") or scores.get("信心指標") or 0
+        selected_model = scores.get("勝出模型") or scores.get("採用模型") or (super_single.get("route_sources") or ["全球融合精算"])[0]
+        recent_60 = scores.get("最近60期命中率") or "-"
+        status = super_single.get("status") or "超級獨支唯一輸出"
+        return {
+            "single": {
+                "numbers": selected_single[:1],
+                "score": score,
+                "status": status,
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "two": {
+                "numbers": top2[:2],
+                "score": score,
+                "status": "同源嚴格組合",
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "three": {
+                "numbers": top3[:3],
+                "score": score,
+                "status": "同源嚴格組合",
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "ranked": [],
+            "policy": "短包強推直接採用本期唯一超級獨支與同源嚴格組合，禁止讀取舊微模型快取。",
+        }
     engine_precision = (
         analysis.get("precision_micro_models")
         or ((analysis.get("industrial_engine") or {}).get("precision_micro_models"))
@@ -3745,45 +3788,60 @@ def strict_validation_rows(analysis):
     recent_gate = industrial.get("recent_failure_front_gate") or {}
     correction = industrial.get("multi_model_correction") or {}
     strict = industrial.get("strict_validation_gate") or {}
+    strict_prediction = analysis.get("strict_prediction_gate") or {}
+    prediction = analysis.get("prediction") or {}
+    latest_ironlaw = analysis.get("latest_ironlaw") or {}
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     if entry:
-        main_numbers = entry.get("main_numbers") or []
+        official_numbers = (
+            strict_prediction.get("qualified_numbers")
+            or prediction.get("top9")
+            or latest_ironlaw.get("nine_hit_three")
+            or entry.get("main_numbers")
+            or []
+        )
         blocked_numbers = entry.get("blocked_numbers") or recent_gate.get("blocked_numbers") or []
+        rejected_numbers = []
+        for item in strict_prediction.get("rejected_numbers") or []:
+            try:
+                rejected_numbers.append(int(item.get("number")))
+            except (TypeError, ValueError, AttributeError):
+                continue
         rows = [[
-            u("\\u653e\\u884c\\u7e3d\\u6578"),
-            entry.get("main_count", len(main_numbers)),
+            u("\\u6b63\\u5f0f\\u653e\\u884c\\u7e3d\\u6578"),
+            len(official_numbers),
             u("\\u8f38\\u5165\\u5019\\u9078"),
             len(candidates),
-            zh_text(entry.get("status", "已執行")),
+            u("\\u53ea\\u5217\\u56b4\\u683c\\u901a\\u904e\\u865f\\u78bc\\uff0c\\u4e0d\\u7528\\u820a\\u5019\\u9078\\u5192\\u5145\\u4e3b\\u9078"),
         ]]
         rows.append([
             u("\\u64cb\\u4e0b\\u7e3d\\u6578"),
-            len(blocked_numbers),
-            u("\\u6700\\u4f4e\\u653e\\u884c\\u6578"),
+            len(rejected_numbers or blocked_numbers),
+            u("\\u4e5d\\u78bc\\u4e0a\\u9650"),
             entry.get("front_limit", 9),
-            zh_text(entry.get("policy", "九碼主列通過全系統守門")),
+            zh_text(strict_prediction.get("policy") or entry.get("policy") or "九碼以內只放行嚴格通過號碼，不足不補位"),
         ])
         rows.append([
-            u("\\u4e3b\\u5217\\u4e5d\\u78bc"),
-            fmt_numbers(main_numbers) or "-",
-            u("\\u5f8c\\u5099\\u7b2c\\u5341\\u81f3\\u5341\\u4e94"),
-            fmt_numbers(entry.get("reserve_numbers", [])) or "-",
-            zh_text(entry.get("message", "主列放行門已套用")),
+            u("\\u672c\\u671f\\u6b63\\u5f0f\\u4e3b\\u9078"),
+            fmt_numbers(official_numbers) or "-",
+            u("\\u4e0d\\u8db3\\u4e0d\\u88dc"),
+            u("\\u56b4\\u683c\\u901a\\u904e"),
+            u("\\u96fb\\u8166\\u7248\\u8207\\u624b\\u6a5f\\u7248\\u53ea\\u4ee5\\u6b64\\u6e05\\u55ae\\u70ba\\u6e96"),
         ])
         rows.append([
-            u("\\u5931\\u6e96\\u91cd\\u6392"),
+            u("\\u5931\\u6e96\\u91cd\\u6392\\u6aa2\\u8a0e"),
             fmt_numbers(correction.get("promoted_to_top9", [])) or "-",
             u("\\u964d\\u6b0a\\u5254\\u9664"),
             fmt_numbers(correction.get("demoted_from_top9", [])) or "-",
             zh_text(correction.get("message", "已納入下期排序重排")),
         ])
-        if blocked_numbers:
+        if rejected_numbers or blocked_numbers:
             rows.append([
-                u("\\u64cb\\u4e0b\\u865f\\u78bc"),
-                fmt_numbers(blocked_numbers[:15]) or "-",
+                u("\\u672a\\u901a\\u904e\\u865f\\u78bc"),
+                fmt_numbers((rejected_numbers or blocked_numbers)[:15]) or "-",
                 u("\\u539f\\u56e0"),
-                u("\\u8fd1\\u671f\\u843d\\u7a7a\\u6216\\u9023\\u838a\\u672a\\u9054\\u6a19"),
-                u("\\u4e0d\\u9032\\u5165\\u4e5d\\u78bc\\u4e3b\\u5217"),
+                u("\\u672a\\u901a\\u904e\\u56b4\\u683c\\u9580\\u6216\\u9023\\u838a\\u5b88\\u9580"),
+                u("\\u4e0d\\u9032\\u5165\\u672c\\u671f\\u6b63\\u5f0f\\u4e3b\\u9078"),
             ])
         return safe_rows(rows)
     rows = [[

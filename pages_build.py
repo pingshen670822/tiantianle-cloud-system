@@ -635,6 +635,48 @@ def ultra_precision_candidate_score(item):
 
 def ultra_precision_recommendations(candidates, analysis=None):
     analysis = analysis or {}
+    super_single = (
+        analysis.get("super_single_decision")
+        or ((analysis.get("industrial_engine") or {}).get("super_single_decision"))
+        or {}
+    )
+    prediction = analysis.get("prediction") or {}
+    strong_packs = analysis.get("strong_packs") or {}
+    two_pack = strong_packs.get("two_hit_one") or {}
+    three_pack = strong_packs.get("three_hit_two") or strong_packs.get("precision_three_hit_one") or {}
+    selected_single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or prediction.get("top1") or []
+    if selected_single:
+        top2 = prediction.get("top2") or two_pack.get("numbers") or selected_single[:1]
+        top3 = prediction.get("top3") or three_pack.get("numbers") or top2
+        scores = super_single.get("scores") or {}
+        score = scores.get("超級獨支總合分") or scores.get("修正總分") or scores.get("信心指標") or 0
+        selected_model = scores.get("勝出模型") or scores.get("採用模型") or (super_single.get("route_sources") or ["全球融合精算"])[0]
+        recent_60 = scores.get("最近60期命中率") or "-"
+        status = super_single.get("status") or "超級獨支唯一輸出"
+        return {
+            "single": {
+                "numbers": selected_single[:1],
+                "score": score,
+                "status": status,
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "two": {
+                "numbers": top2[:2],
+                "score": score,
+                "status": "同源嚴格組合",
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "three": {
+                "numbers": top3[:3],
+                "score": score,
+                "status": "同源嚴格組合",
+                "selected_model_label": selected_model,
+                "recent_60": {"pass_rate": recent_60},
+            },
+            "ranked": [],
+        }
     engine_precision = (
         analysis.get("precision_micro_models")
         or ((analysis.get("industrial_engine") or {}).get("precision_micro_models"))
@@ -988,9 +1030,23 @@ def build_home_page():
     release = industrial.get("release_gate") or {}
     packs = data.get("strong_packs") or {}
     candidates = data.get("candidates") or []
-    top9 = fmt_numbers([item.get("number") for item in candidates[:9]])
-    confidence_rows = build_confidence_rows(candidates)
-    signal_focus = build_signal_focus(candidates)
+    prediction = data.get("prediction") or {}
+    official_top9_numbers = prediction.get("top9") or [item.get("number") for item in candidates[:9]]
+    official_top9_set = {safe_int(number) for number in official_top9_numbers}
+    official_top9_set.discard(0)
+    official_candidates = [
+        item for item in candidates
+        if safe_int(item.get("number")) in official_top9_set
+    ]
+    official_candidates.sort(
+        key=lambda item: (
+            official_top9_numbers.index(safe_int(item.get("number")))
+            if safe_int(item.get("number")) in official_top9_numbers else 99
+        )
+    )
+    top9 = fmt_numbers(official_top9_numbers)
+    confidence_rows = build_confidence_rows(official_candidates)
+    signal_focus = build_signal_focus(official_candidates)
     ultra_precision_block = build_ultra_precision_block(candidates, data)
     ultra = ultra_precision_recommendations(candidates, data)
     gap_diagnosis = industrial.get("prediction_gap_diagnosis") or {}
@@ -1361,6 +1417,8 @@ def main():
         (SITE_DIR / "prediction-history.html").write_text(history_html, encoding="utf-8")
         (SITE_DIR / "預測歷史對比.html").write_text(history_html, encoding="utf-8")
     copy_text(REPORT_DIR / "latest_analysis.json", SITE_DIR / "latest_analysis.json")
+    (SITE_DIR / "data").mkdir(parents=True, exist_ok=True)
+    copy_text(REPORT_DIR / "latest_analysis.json", SITE_DIR / "data" / "latest_analysis.json")
     write_alias(SITE_DIR / "latest_analysis.json", "最新分析資料.json")
     copy_text(REPORT_DIR / "system_health_report.md", SITE_DIR / "system_health_report.md")
     write_alias(SITE_DIR / "system_health_report.md", "系統健康報告.md")
