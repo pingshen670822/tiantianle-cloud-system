@@ -1,8 +1,8 @@
 {
   "engine_version": "美國加州天天樂_20260812_第18版_零中族群急救版",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild",
-  "generated_at_taiwan": "2026-10-05T12:15:47+08:00",
-  "generated_at_california": "2026-10-04T21:15:47-07:00",
+  "generated_at_taiwan": "2026-10-05T15:46:48+08:00",
+  "generated_at_california": "2026-10-05T00:46:48-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11940,
@@ -1619,7 +1619,7 @@
           "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
         }
       ],
-      "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+      "created_at_taiwan": "2026-10-05T15:47:46+08:00"
     }
   },
   "decisive_battle_plan": {
@@ -1975,7 +1975,7 @@
           "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
         }
       ],
-      "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+      "created_at_taiwan": "2026-10-05T15:47:46+08:00"
     }
   },
   "prediction": {
@@ -2068,8 +2068,8 @@
     "recommendation_message": "本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。"
   },
   "freshness": {
-    "california_today": "2026-10-04",
-    "california_time": "21:15:47",
+    "california_today": "2026-10-05",
+    "california_time": "00:46:48",
     "allowed_latest_draw_date": "2026-10-04",
     "age_days": 0,
     "status": "ok",
@@ -6741,7 +6741,7 @@
       "zero_top9_rate": 0.214,
       "avg_top9_hits": 1.0,
       "avg_rank_10_to_25_hits": 1.929,
-      "enforced_at_taiwan": "2026-10-05T12:14:25+08:00"
+      "enforced_at_taiwan": "2026-10-05T15:45:41+08:00"
     },
     "breakthrough_rebuild": {
       "status": "已執行",
@@ -7440,7 +7440,7 @@
         31,
         37
       ],
-      "created_at_taiwan": "2026-10-05T12:15:37+08:00"
+      "created_at_taiwan": "2026-10-05T15:46:40+08:00"
     },
     "zero_hit_cluster_rescue_gate": {
       "status": "已檢查",
@@ -25637,7 +25637,7 @@
               "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
             }
           ],
-          "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+          "created_at_taiwan": "2026-10-05T15:47:46+08:00"
         }
       },
       "two_hit_one": {
@@ -27111,7 +27111,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-10-05T12:14:25+08:00",
+      "enforced_at_taiwan": "2026-10-05T15:45:41+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -27395,7 +27395,7 @@
           "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
         }
       ],
-      "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+      "created_at_taiwan": "2026-10-05T15:47:46+08:00"
     },
     "strict_prediction_gate": {
       "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -27887,7 +27887,7 @@
           }
         }
       ],
-      "created_at_taiwan": "2026-10-05T12:16:56+08:00",
+      "created_at_taiwan": "2026-10-05T15:47:46+08:00",
       "ultimate_super_single_selected": 6
     },
     "ultimate_super_single_engine": {
@@ -30699,7 +30699,7 @@
         "zero_top9_rate": 0.214,
         "avg_top9_hits": 1.0,
         "avg_rank_10_to_25_hits": 1.929,
-        "enforced_at_taiwan": "2026-10-05T12:14:25+08:00"
+        "enforced_at_taiwan": "2026-10-05T15:45:41+08:00"
       },
       "breakthrough_rebuild": {
         "status": "已執行",
@@ -31398,7 +31398,7 @@
           31,
           37
         ],
-        "created_at_taiwan": "2026-10-05T12:15:37+08:00"
+        "created_at_taiwan": "2026-10-05T15:46:40+08:00"
       },
       "zero_hit_cluster_rescue_gate": {
         "status": "已檢查",
@@ -49595,7 +49595,7 @@
                 "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
               }
             ],
-            "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+            "created_at_taiwan": "2026-10-05T15:47:46+08:00"
           }
         },
         "two_hit_one": {
@@ -51069,7 +51069,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-10-05T12:14:25+08:00",
+        "enforced_at_taiwan": "2026-10-05T15:45:41+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -51353,7 +51353,7 @@
             "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
           }
         ],
-        "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+        "created_at_taiwan": "2026-10-05T15:47:46+08:00"
       },
       "strict_prediction_gate": {
         "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -51845,7 +51845,7 @@
             }
           }
         ],
-        "created_at_taiwan": "2026-10-05T12:16:56+08:00",
+        "created_at_taiwan": "2026-10-05T15:47:46+08:00",
         "ultimate_super_single_selected": 6
       },
       "ultimate_super_single_engine": {
@@ -70570,7 +70570,7 @@
               "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
             }
           ],
-          "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+          "created_at_taiwan": "2026-10-05T15:47:46+08:00"
         }
       },
       "two_hit_one": {
@@ -89282,7 +89282,7 @@
             "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
           }
         ],
-        "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+        "created_at_taiwan": "2026-10-05T15:47:46+08:00"
       }
     },
     "two_hit_one": {
@@ -90642,7 +90642,7 @@
     {
       "based_on_date": "2026-10-04",
       "target_date": "2026-10-05",
-      "created_at": "2026-10-05T12:16:56+08:00",
+      "created_at": "2026-10-05T15:47:46+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
@@ -93468,7 +93468,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-05T12:16:56+08:00",
+    "created_at_taiwan": "2026-10-05T15:47:46+08:00",
     "ultimate_super_single_selected": 6
   },
   "super_single_decision": {
@@ -93598,7 +93598,7 @@
         "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80"
       }
     ],
-    "created_at_taiwan": "2026-10-05T12:16:57+08:00"
+    "created_at_taiwan": "2026-10-05T15:47:46+08:00"
   },
   "ultimate_super_single_engine": {
     "status": "已完成超級獨支重整",
