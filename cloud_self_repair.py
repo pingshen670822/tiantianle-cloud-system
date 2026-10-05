@@ -3,7 +3,7 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -12,6 +12,26 @@ ROOT = Path(__file__).resolve().parent
 REPORTS = ROOT / "reports"
 SITE = ROOT / "site"
 TAIWAN = ZoneInfo("Asia/Taipei")
+CALIFORNIA = ZoneInfo("America/Los_Angeles")
+
+
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def expected_latest_draw_date():
+    ca_now = datetime.now(CALIFORNIA)
+    if (ca_now.hour, ca_now.minute) >= (19, 0):
+        return ca_now.date().isoformat()
+    return (ca_now.date() - timedelta(days=1)).isoformat()
+
+
+def later_date(*values):
+    cleaned = [str(value) for value in values if value]
+    return max(cleaned) if cleaned else ""
 
 
 def load_json(path, default=None):
@@ -43,7 +63,8 @@ def snapshot():
     site_freshness = site_analysis.get("freshness") or {}
     site_data_freshness = site_data_analysis.get("freshness") or {}
     latest = (analysis.get("latest_draw") or {}).get("draw_date") or freshness.get("latest_draw_date") or ""
-    allowed = freshness.get("allowed_latest_draw_date") or latest
+    expected_latest = expected_latest_draw_date()
+    allowed = later_date(freshness.get("allowed_latest_draw_date"), expected_latest, latest)
     target = analysis.get("target_draw_date") or freshness.get("target_draw_date") or ""
     site_latest = (site_analysis.get("latest_draw") or {}).get("draw_date") or (site_analysis.get("freshness") or {}).get("latest_draw_date") or ""
     site_target = site_analysis.get("target_draw_date") or (site_analysis.get("freshness") or {}).get("target_draw_date") or ""
@@ -71,7 +92,7 @@ def snapshot():
         "top1": [int(n) for n in (prediction.get("top1") or [])[:1]],
         "top9": [int(n) for n in (prediction.get("top9") or [])],
         "top15": [int(n) for n in (prediction.get("top15") or [])],
-        "ultimate_single": int(ultimate.get("selected_number") or 0),
+        "ultimate_single": safe_int(ultimate.get("selected_number")),
         "ultimate_model": ultimate.get("selected_model") or "",
         "strong_single_numbers": [int(n) for n in (strong_single.get("numbers") or [])],
     }
@@ -84,7 +105,7 @@ def snapshot():
         "top1": [int(n) for n in (site_prediction.get("top1") or [])[:1]],
         "top9": [int(n) for n in (site_prediction.get("top9") or [])],
         "top15": [int(n) for n in (site_prediction.get("top15") or [])],
-        "ultimate_single": int(site_ultimate.get("selected_number") or 0),
+        "ultimate_single": safe_int(site_ultimate.get("selected_number")),
         "ultimate_model": site_ultimate.get("selected_model") or "",
         "strong_single_numbers": [int(n) for n in (site_strong_single.get("numbers") or [])],
     }
@@ -97,7 +118,7 @@ def snapshot():
         "top1": [int(n) for n in (site_data_prediction.get("top1") or [])[:1]],
         "top9": [int(n) for n in (site_data_prediction.get("top9") or [])],
         "top15": [int(n) for n in (site_data_prediction.get("top15") or [])],
-        "ultimate_single": int(site_data_ultimate.get("selected_number") or 0),
+        "ultimate_single": safe_int(site_data_ultimate.get("selected_number")),
         "ultimate_model": site_data_ultimate.get("selected_model") or "",
         "strong_single_numbers": [int(n) for n in (site_data_strong_single.get("numbers") or [])],
     }
@@ -120,6 +141,7 @@ def snapshot():
         "generated_at_taiwan": local_core["generated_at_taiwan"],
         "draw_count": local_core["draw_count"],
         "latest_draw_date": latest,
+        "expected_latest_draw_date": expected_latest,
         "allowed_latest_draw_date": allowed,
         "target_draw_date": target,
         "target_taiwan_time": local_core["target_taiwan_time"],
@@ -148,6 +170,11 @@ def snapshot():
         "site_data_ultimate_single": site_data_core["ultimate_single"],
         "site_data_strong_single_numbers": site_data_core["strong_single_numbers"],
         "sync_mismatches": sync_mismatches,
+        "has_unique_super_single": bool(
+            len(local_core["top1"]) == 1
+            and local_core["top1"][0] > 0
+            and local_core["ultimate_single"] == local_core["top1"][0]
+        ),
         "is_stale": bool(latest and allowed and latest < allowed),
         "is_synced": bool(latest and target and not sync_mismatches),
     }
@@ -208,8 +235,10 @@ def write_status(payload):
         f"- 檢查時間：{payload['checked_at_taiwan']} 台灣時間",
         f"- 狀態：{payload['status']}",
         f"- 最新開獎：{after.get('latest_draw_date') or '-'} / {numbers_text(after.get('latest_numbers')) or '-'}",
+        f"- 應更新到期別：{after.get('expected_latest_draw_date') or '-'}",
         f"- 允許最新開獎：{after.get('allowed_latest_draw_date') or '-'}",
         f"- 下期預測：{after.get('target_draw_date') or '-'} / 台灣時間 {after.get('target_taiwan_time') or '-'}",
+        f"- 最強獨隻：{numbers_text(after.get('top1')) or '-'} / {'完整' if after.get('has_unique_super_single') else '缺失'}",
         f"- 嚴格門：{after.get('strict_status') or '-'} / 合格 {after.get('qualified_count', 0)} 顆 / 不足不補 {after.get('strict_no_padding')}",
         f"- 手機同步：{'同步' if after.get('is_synced') else '未同步'}",
         "",
@@ -257,9 +286,9 @@ def main():
         steps.append(run_step(f"手機本機同步 {attempt}", [sys.executable, "verify_mobile_sync.py", "--local-only"], 180, required=True))
         steps.append(run_step(f"穩定度監測 {attempt}", [sys.executable, "system_stability_monitor.py"], 180, required=True))
         after_try = snapshot()
-        if not after_try["is_stale"] and after_try["is_synced"]:
+        if not after_try["is_stale"] and after_try["is_synced"] and after_try.get("has_unique_super_single"):
             break
-        time.sleep(10)
+        time.sleep(60 if after_try["is_stale"] else 10)
 
     if args.remote:
         steps.append(run_step("手機雲端遠端同步", [sys.executable, "verify_mobile_sync.py", "--remote", "--retries", "12", "--sleep", "10"], 240, required=True))
@@ -271,6 +300,8 @@ def main():
     if not after["is_synced"]:
         mismatch_text = "、".join(after.get("sync_mismatches") or ["未知欄位"])
         issues.append(f"手機資料不同步：本機 {after['latest_draw_date']} / {after['target_draw_date']}，手機 {after['site_latest_draw_date']} / {after['site_target_draw_date']}；欄位 {mismatch_text}")
+    if not after.get("has_unique_super_single"):
+        issues.append("最強獨隻缺失或與超級獨隻引擎不一致")
     for step in steps:
         if step.get("required_failed"):
             required_failed = True

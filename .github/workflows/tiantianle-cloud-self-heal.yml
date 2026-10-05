@@ -80,12 +80,12 @@ jobs:
         shell: bash
         run: |
           set +e
-          python cloud_self_repair.py --retries 3
+          python cloud_self_repair.py --retries 6
           repair_exit=$?
           if [ "$repair_exit" -ne 0 ]; then
             echo "first self-heal pass failed; running emergency fallback"
             python "美國加州天天樂_20260618_第1版.py" || true
-            python cloud_self_repair.py --retries 2
+            python cloud_self_repair.py --retries 3
             repair_exit=$?
           fi
           exit "$repair_exit"
@@ -124,6 +124,15 @@ jobs:
                   "ultimate": ultimate.get("selected_number") or 0,
               }
 
+          def skip_publish(message):
+              print(message)
+              env_file = os.environ.get("GITHUB_ENV")
+              if env_file:
+                  with open(env_file, "a", encoding="utf-8") as handle:
+                      handle.write("TIANTIANLE_SKIP_PUBLISH=true\n")
+                      handle.write("TIANTIANLE_SKIP_REASON=" + message.replace("\n", " ") + "\n")
+              sys.exit(0)
+
           local = core(load("reports/latest_analysis.json"))
           remote = {}
           try:
@@ -132,14 +141,21 @@ jobs:
           except Exception as exc:
               print(f"remote comparison warning: {exc}")
           if remote.get("latest") and local.get("latest") and local["latest"] < remote["latest"]:
-              print(f"stale self-heal publish refused: local {local} remote {remote}")
-              sys.exit(2)
+              skip_publish(f"stale self-heal publish skipped: local latest {local['latest']} < cloud latest {remote['latest']}")
           if remote.get("target") and local.get("target") and local["latest"] == remote.get("latest") and local["target"] < remote["target"]:
-              print(f"target regression refused: local {local} remote {remote}")
-              sys.exit(2)
+              skip_publish(f"target regression skipped: local target {local['target']} < cloud target {remote['target']}")
+          if (
+              remote.get("generated")
+              and local.get("generated")
+              and local.get("latest") == remote.get("latest")
+              and local.get("target") == remote.get("target")
+              and local["generated"] < remote["generated"]
+          ):
+              skip_publish(f"generated regression skipped: local generated {local['generated']} < cloud generated {remote['generated']}")
           print(f"self-heal publish guard passed: local={local}, remote={remote}")
           PY
       - name: Commit repaired generated data to main
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         run: |
           git config user.name "tiantianle self-heal"
@@ -152,6 +168,7 @@ jobs:
           git commit -m "Self-heal Tiantianle generated data" || true
           git push origin HEAD:main || echo "main push skipped because remote changed; gh-pages publish continues"
       - name: Build public mobile package
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         run: |
           set -e
@@ -178,6 +195,7 @@ jobs:
           test -s public_site/reports/latest_battle_report.html
           touch public_site/.nojekyll
       - name: Publish repaired mobile site
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -201,6 +219,7 @@ jobs:
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
             -d '{"source":{"branch":"gh-pages","path":"/"}}' || true
       - name: Verify deployed mobile site and emergency retry
+        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -245,3 +264,8 @@ jobs:
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin gh-pages
           python "$GITHUB_WORKSPACE/verify_mobile_sync.py" --remote --retries 24 --sleep 10
+      - name: Confirm publish skipped because cloud is newer
+        if: env.TIANTIANLE_SKIP_PUBLISH == 'true'
+        shell: bash
+        run: |
+          echo "Self-heal publish skipped safely: ${TIANTIANLE_SKIP_REASON}"

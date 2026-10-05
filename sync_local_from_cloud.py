@@ -1,6 +1,8 @@
 import json
 import pathlib
 import ssl
+import subprocess
+import sys
 import time
 import urllib.request
 
@@ -10,6 +12,7 @@ REPORT_DIR = ROOT / "reports"
 SITE_DIR = ROOT / "site"
 REMOTE_URLS = [
     "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
+    "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json",
     "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json",
 ]
 
@@ -57,11 +60,13 @@ def choose_remote_payload():
 def write_json_aliases(data):
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     SITE_DIR.mkdir(parents=True, exist_ok=True)
+    (SITE_DIR / "data").mkdir(parents=True, exist_ok=True)
     (SITE_DIR / "reports").mkdir(parents=True, exist_ok=True)
     text = json.dumps(data, ensure_ascii=True, indent=2)
     targets = [
         REPORT_DIR / "latest_analysis.json",
         SITE_DIR / "latest_analysis.json",
+        SITE_DIR / "data" / "latest_analysis.json",
         SITE_DIR / "reports" / "latest_analysis.json",
         SITE_DIR / "最新分析資料.json",
         SITE_DIR / "reports" / "最新分析資料.json",
@@ -81,6 +86,12 @@ def main():
     pages_build.main()
 
     import sanitize_public_outputs  # noqa: F401
+    subprocess.run(
+        [sys.executable, "verify_mobile_sync.py", "--local-only"],
+        cwd=ROOT,
+        check=False,
+    )
+
     import system_stability_monitor
     system_stability_monitor.main()
 

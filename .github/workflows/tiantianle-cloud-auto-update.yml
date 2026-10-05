@@ -393,6 +393,14 @@ jobs:
               and local_core["target"] < remote_core["target"]
           ):
               skip_publish(f"target regression skipped: local target {local_core['target']} < cloud target {remote_core['target']}")
+          if (
+              remote_core.get("generated")
+              and local_core.get("generated")
+              and local_core.get("latest") == remote_core.get("latest")
+              and local_core.get("target") == remote_core.get("target")
+              and local_core["generated"] < remote_core["generated"]
+          ):
+              skip_publish(f"generated regression skipped: local generated {local_core['generated']} < cloud generated {remote_core['generated']}")
           print(f"regression guard passed: local={local_core}, cloud={remote_core}")
           PY
       - name: Commit updated data
@@ -505,7 +513,7 @@ jobs:
             exit 0
           fi
           echo "remote mobile sync failed; running emergency cloud self-repair and republish"
-          python cloud_self_repair.py --retries 1
+          python cloud_self_repair.py --retries 2
           python verify_mobile_sync.py --local-only
           rm -rf public_site
           mkdir -p public_site/data public_site/reports

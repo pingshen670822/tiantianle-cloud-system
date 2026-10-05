@@ -68,6 +68,8 @@ def main():
 
     analysis = read_json(REPORTS / "latest_analysis.json")
     site_analysis = read_json(SITE / "latest_analysis.json")
+    site_data_analysis = read_json(SITE / "data" / "latest_analysis.json")
+    site_report_analysis = read_json(SITE / "reports" / "latest_analysis.json")
     sync = read_json(REPORTS / "mobile_sync_status.json")
     cloud = read_json(REPORTS / "cloud_publish_status.json")
     after_draw = read_json(REPORTS / "after_draw_auto_update_status.json")
@@ -77,7 +79,11 @@ def main():
     latest = (analysis.get("latest_draw") or {}).get("draw_date") or (analysis.get("freshness") or {}).get("latest_draw_date")
     latest_numbers = (analysis.get("latest_draw") or {}).get("numbers") or []
     target = analysis.get("target_draw_date") or (analysis.get("freshness") or {}).get("target_draw_date")
+    prediction = analysis.get("prediction") or {}
     top9 = (analysis.get("prediction") or {}).get("top9") or []
+    top1 = prediction.get("top1") or prediction.get("strongest") or []
+    super_single = analysis.get("super_single_decision") or {}
+    ultimate_single = analysis.get("ultimate_super_single_engine") or {}
     strict_gate = analysis.get("strict_prediction_gate") or (analysis.get("industrial_engine") or {}).get("strict_prediction_gate") or {}
     strict_no_padding = bool(strict_gate.get("no_padding"))
     strict_numbers = set()
@@ -93,6 +99,10 @@ def main():
 
     site_latest = (site_analysis.get("latest_draw") or {}).get("draw_date") or (site_analysis.get("freshness") or {}).get("latest_draw_date")
     site_target = site_analysis.get("target_draw_date") or (site_analysis.get("freshness") or {}).get("target_draw_date")
+    site_data_latest = (site_data_analysis.get("latest_draw") or {}).get("draw_date") or (site_data_analysis.get("freshness") or {}).get("latest_draw_date")
+    site_data_target = site_data_analysis.get("target_draw_date") or (site_data_analysis.get("freshness") or {}).get("target_draw_date")
+    site_report_latest = (site_report_analysis.get("latest_draw") or {}).get("draw_date") or (site_report_analysis.get("freshness") or {}).get("latest_draw_date")
+    site_report_target = site_report_analysis.get("target_draw_date") or (site_report_analysis.get("freshness") or {}).get("target_draw_date")
 
     checks = []
 
@@ -101,7 +111,21 @@ def main():
 
     add("本機最新資料", bool(latest and latest == database.get("latest")), "重跑全歷史重算並重建戰報", f"戰報 {latest or '-'} / 資料庫 {database.get('latest') or '-'}")
     add("目前期別時效", bool(latest and latest >= expected_latest), "雲端自救先抓最新來源，再重算並發布手機版", f"目前 {latest or '-'} / 應到 {expected_latest}")
-    add("手機同步資料", bool(latest and site_latest == latest and site_target == target), "重建手機檔並重新發布雲端", f"手機最新 {site_latest or '-'} / 手機下期 {site_target or '-'}")
+    local_mobile_sync_ok = bool(
+        latest
+        and site_latest == latest
+        and site_target == target
+        and site_data_latest == latest
+        and site_data_target == target
+        and site_report_latest == latest
+        and site_report_target == target
+    )
+    add(
+        "手機同步資料",
+        local_mobile_sync_ok,
+        "重建手機根目錄、data與reports檔案並重新發布雲端",
+        f"根 {site_latest or '-'} / data {site_data_latest or '-'} / reports {site_report_latest or '-'} / 下期 {site_target or '-'}",
+    )
     add("全歷史資料庫", bool(database.get("ok")), "重新匯入全歷史 CSV 與快取頁面", f"{database.get('count', 0)} 筆")
     top9_ints = []
     for value in top9:
@@ -121,9 +145,33 @@ def main():
     if strict_no_padding and len(top9_ints) < 9:
         prediction_detail += "（嚴格通過不足不補）"
     add("下期預測產生", strict_prediction_ok, "重新運算候選排序與九碼主推", prediction_detail)
+    single_numbers = []
+    for value in top1[:1]:
+        try:
+            single_numbers.append(int(value))
+        except (TypeError, ValueError):
+            pass
+    super_number = super_single.get("number") or (super_single.get("numbers") or [None])[0]
+    ultimate_number = ultimate_single.get("selected_number")
+    single_ok = bool(
+        len(single_numbers) == 1
+        and int(super_number or 0) == single_numbers[0]
+        and int(ultimate_number or 0) == single_numbers[0]
+    )
+    add(
+        "最強獨隻唯一輸出",
+        single_ok,
+        "重新執行超級獨隻全歷史多模型競賽；缺獨隻即視為故障",
+        text_numbers(single_numbers) or "-",
+    )
     add("低機率紀錄", bool(database.get("low_probability_count", 0) > 0 and database.get("low_probability_latest") == latest), "重建低機率每日紀錄與每月檢討", f"低機率最新 {database.get('low_probability_latest') or '-'}")
-    add("手機同步檢測", sync.get("status") in {"同步", "synced", "ok"} or not sync.get("mismatches"), "執行手機同步驗證與本機重建", sync.get("status") or "未記錄")
-    local_sync_ok = bool(latest and site_latest == latest and site_target == target)
+    add(
+        "手機同步檢測",
+        local_mobile_sync_ok and (sync.get("status") in {"同步", "synced", "ok"} or not sync.get("mismatches")),
+        "執行手機同步驗證與本機重建",
+        sync.get("status") or ("同步" if local_mobile_sync_ok else "未記錄"),
+    )
+    local_sync_ok = local_mobile_sync_ok
     add("雲端發布狀態", cloud.get("status") in {"cloud_published", "ok", "published"} or (cloud == {} and local_sync_ok), "下一輪守護重試雲端發布", cloud.get("status") or "未記錄")
     add("開獎後自救", after_draw.get("complete") is not False or local_sync_ok, "開獎後腳本會重試並交由守護程式續修", str(after_draw.get("complete", "未記錄")))
     add("守護程式狀態", not watchdog.get("_read_error"), "守護程式下輪重新讀取並修復", watchdog.get("checked_at_taiwan") or "未記錄")
@@ -144,6 +192,9 @@ def main():
         "target_draw_date": target,
         "target_taiwan_safe_update_time": target_tw,
         "top9": top9,
+        "top1": top1,
+        "super_single_decision": super_single,
+        "ultimate_super_single_engine": ultimate_single,
         "strict_prediction_gate": strict_gate,
         "database": database,
         "checks": checks,
