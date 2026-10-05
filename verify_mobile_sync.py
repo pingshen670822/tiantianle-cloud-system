@@ -68,20 +68,48 @@ def core_payload(data):
     latest = data.get("latest_draw") or {}
     freshness = data.get("freshness") or {}
     prediction = data.get("prediction") or {}
+    ultimate = data.get("ultimate_super_single_engine") or {}
+    super_single = data.get("super_single_decision") or {}
+    strong_single = (data.get("strong_packs") or {}).get("single") or {}
+    top1 = prediction.get("top1") or []
+    if not top1 and ultimate.get("selected_number"):
+        top1 = [ultimate.get("selected_number")]
+    if not top1 and strong_single.get("numbers"):
+        top1 = strong_single.get("numbers")[:1]
     return {
         "generated_at_taiwan": data.get("generated_at_taiwan", ""),
         "latest_draw_date": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
         "latest_numbers": [int(n) for n in latest.get("numbers") or []],
         "target_draw_date": data.get("target_draw_date") or "",
         "target_taiwan_time": freshness.get("target_taiwan_safe_update_time") or data.get("prediction_draw_taiwan_time") or "",
+        "top1": [int(n) for n in top1[:1]],
         "top9": [int(n) for n in (prediction.get("top9") or [item.get("number") for item in (data.get("candidates") or [])[:9]])],
         "top15": [int(n) for n in (prediction.get("top15") or [item.get("number") for item in (data.get("candidates") or [])[:15]])[:15]],
+        "ultimate_single": int(ultimate.get("selected_number") or 0),
+        "ultimate_model": ultimate.get("selected_model") or "",
+        "super_single_number": int(super_single.get("number") or 0),
+        "super_single_status": super_single.get("status") or "",
+        "strong_single_numbers": [int(n) for n in strong_single.get("numbers") or []],
         "engine": data.get("industrial_engine_version") or ((data.get("industrial_engine") or {}).get("engine_version")) or "",
     }
 
 
 def compare(left, right):
-    fields = ["latest_draw_date", "latest_numbers", "target_draw_date", "target_taiwan_time", "top9", "top15", "engine"]
+    fields = [
+        "latest_draw_date",
+        "latest_numbers",
+        "target_draw_date",
+        "target_taiwan_time",
+        "top1",
+        "top9",
+        "top15",
+        "ultimate_single",
+        "ultimate_model",
+        "super_single_number",
+        "super_single_status",
+        "strong_single_numbers",
+        "engine",
+    ]
     return [field for field in fields if left.get(field) != right.get(field)]
 
 
