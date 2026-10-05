@@ -70,7 +70,8 @@ def core_payload(data):
     prediction = data.get("prediction") or {}
     ultimate = data.get("ultimate_super_single_engine") or {}
     super_single = data.get("super_single_decision") or {}
-    strong_single = (data.get("strong_packs") or {}).get("single") or {}
+    strong_packs = data.get("strong_packs") or {}
+    strong_single = strong_packs.get("single") or strong_packs.get("strong_single") or {}
     top1 = prediction.get("top1") or []
     if not top1 and ultimate.get("selected_number"):
         top1 = [ultimate.get("selected_number")]
