@@ -47,8 +47,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: tiantianle-cloud-auto-update-main
-  cancel-in-progress: false
+  group: tiantianle-cloud-publisher
+  cancel-in-progress: true
 
 jobs:
   update:

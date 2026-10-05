@@ -37,8 +37,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: tiantianle-cloud-self-heal
-  cancel-in-progress: false
+  group: tiantianle-cloud-publisher
+  cancel-in-progress: true
 
 jobs:
   self-heal:
