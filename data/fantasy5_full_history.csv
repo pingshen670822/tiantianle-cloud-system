@@ -11933,3 +11933,9 @@ local_index,draw_no,draw_date,n1,n2,n3,n4,n5,source
 11932,11932,2026-09-26,1,6,7,11,26,consensus_latest:cache:lotteryusa+lotto8+lottolyzer
 11933,11933,2026-09-27,3,15,20,31,39,official:calottery_cache
 11934,11934,2026-09-28,8,10,12,14,24,official:calottery_cache
+11935,11935,2026-09-29,11,24,30,33,39,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11936,11936,2026-09-30,1,2,22,37,39,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11937,11937,2026-10-01,13,19,23,28,31,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11938,11938,2026-10-02,17,25,26,28,39,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11939,11939,2026-10-03,6,10,15,18,33,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11940,11940,2026-10-04,16,17,19,31,37,official:calottery_cache
