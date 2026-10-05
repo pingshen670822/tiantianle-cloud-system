@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-05T19:12:04+08:00",
+  "checked_at_taiwan": "2026-10-05T19:59:32+08:00",
   "status": "無嚴重缺漏，仍需模型補強",
   "critical": 0,
   "publish_blocking": 0,
@@ -519,7 +519,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-05T19:12:00+08:00",
+    "created_at_taiwan": "2026-10-05T19:59:28+08:00",
     "ultimate_super_single_selected": 13
   },
   "draw_count": 11940,
