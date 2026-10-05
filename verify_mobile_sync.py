@@ -78,6 +78,7 @@ def core_payload(data):
         top1 = strong_single.get("numbers")[:1]
     return {
         "generated_at_taiwan": data.get("generated_at_taiwan", ""),
+        "draw_count": int(data.get("draw_count") or 0),
         "latest_draw_date": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
         "latest_numbers": [int(n) for n in latest.get("numbers") or []],
         "target_draw_date": data.get("target_draw_date") or "",
@@ -96,6 +97,8 @@ def core_payload(data):
 
 def compare(left, right):
     fields = [
+        "generated_at_taiwan",
+        "draw_count",
         "latest_draw_date",
         "latest_numbers",
         "target_draw_date",
