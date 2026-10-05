@@ -29,6 +29,7 @@ ALLOWLIST = {
     "aerospace_engine.py",
     "california_fantasy5_system.py",
     "cloud_latest_cache_refresh.py",
+    "cloud_self_repair.py",
     "fantasy5_full_history.csv",
     "industrial_engine.py",
     "offline_full_history_recalc.py",

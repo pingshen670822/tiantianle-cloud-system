@@ -142,12 +142,23 @@ jobs:
             fi
             sleep 30
           done
+      - name: Cloud self-repair guard
+        shell: bash
+        run: |
+          set +e
+          python cloud_self_repair.py --retries 2
+          repair_exit=$?
+          if [ "$repair_exit" -ne 0 ]; then
+            echo "cloud self-repair still found issues; one more fast retry"
+            python cloud_self_repair.py --retries 1 || true
+          fi
       - name: Full system audit before publish
         shell: bash
         run: |
           set +e
           python -m py_compile \
             cloud_latest_cache_refresh.py \
+            cloud_self_repair.py \
             industrial_engine.py \
             tiantianle_formula_engine.py \
             tiantianle_core.py \
@@ -206,6 +217,14 @@ jobs:
           engine = (analysis.get("industrial_engine") or {}).get("engine_version", "")
           top9 = [int(x) for x in (analysis.get("prediction") or {}).get("top9", [])]
           latest_nums = [int(x) for x in (analysis.get("latest_draw") or {}).get("numbers", [])]
+          strict_gate = analysis.get("strict_prediction_gate") or (analysis.get("industrial_engine") or {}).get("strict_prediction_gate") or {}
+          strict_no_padding = bool(strict_gate.get("no_padding"))
+          strict_numbers = set()
+          for value in strict_gate.get("qualified_numbers") or []:
+              try:
+                  strict_numbers.add(int(value))
+              except Exception:
+                  pass
           candidate_map = {
               int(item.get("number")): item
               for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])
@@ -223,7 +242,16 @@ jobs:
               problems.append(f"\u624b\u6a5f\u9810\u6e2c\u671f\u5225\u8207\u4e3b\u8cc7\u6599\u4e0d\u540c\u6b65\uff1a\u4e3b\u8cc7\u6599 {target}\uff0c\u624b\u6a5f {site_target}")
           if not any(version in engine for version in ("industrial_fast_daily_formula", "industrial_v34", "industrial_v33", "industrial_v32", "industrial_v31", "industrial_v30", "industrial_v29", "industrial_v28", "industrial_v27", "industrial_v26", "industrial_v25", "industrial_v24", "industrial_v23", "industrial_v22", "industrial_v21", "industrial_v20", "industrial_v19", "industrial_v18", "industrial_v17", "industrial_v16", "industrial_v15")):
               problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u9435\u5f8b\u5f15\u64ce\uff1a{engine}")
-          if len(top9) != 9 or len(set(top9)) != 9 or any(n < 1 or n > 39 for n in top9):
+          top9_has_valid_shape = (
+              bool(top9)
+              and len(set(top9)) == len(top9)
+              and all(1 <= n <= 39 for n in top9)
+              and (
+                  (strict_no_padding and (not strict_numbers or set(top9).issubset(strict_numbers)))
+                  or (not strict_no_padding and len(top9) == 9)
+              )
+          )
+          if not top9_has_valid_shape:
               problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
           repeated = sorted(set(top9) & set(latest_nums))
           if repeated and workflow_mode.lower() == "realtime":
@@ -263,6 +291,7 @@ jobs:
               f"- \u4e0b\u671f\u9810\u6e2c\u65e5\u671f\uff1a{target or label_missing}",
               f"- \u6700\u65b0\u5f15\u64ce\uff1a{engine or label_missing}",
               f"- \u524d\u4e5d\u9810\u6e2c\uff1a{' '.join(f'{n:02d}' for n in top9) if top9 else label_not_generated}",
+              f"- \u56b4\u683c\u4e0d\u8db3\u4e0d\u88dc\uff1a{strict_no_padding}",
               f"- \u624b\u6a5f\u540c\u6b65\uff1a{label_pass if not any(phone_word in p for p in problems) else label_fail}",
               f"- \u5168\u7cfb\u7d71\u6aa2\u67e5\uff1a{label_pass if not problems else label_fail}",
           ]

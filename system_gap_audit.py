@@ -269,7 +269,7 @@ def main():
                 "嚴重",
             )
 
-    allowed_cloud_files = {"cloud_latest_cache_refresh.py"}
+    allowed_cloud_files = {"cloud_latest_cache_refresh.py", "cloud_self_repair.py"}
     stale_cloud_files = sorted(path.name for path in ROOT.glob("cloud_*") if path.is_file() and path.name not in allowed_cloud_files)
     if stale_cloud_files:
         add_issue(
