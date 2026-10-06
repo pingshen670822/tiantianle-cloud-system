@@ -367,10 +367,14 @@ def generate(number: int | None = None) -> dict[str, Any]:
     html_names = [
         "最新終極獨隻深度驗證.html",
         f"終極獨隻{fmt_number(number)}深度驗證.html",
+        "latest_super_single_validation.html",
+        f"super_single_{fmt_number(number)}_validation.html",
     ]
     md_names = [
         "最新終極獨隻深度驗證.md",
         f"終極獨隻{fmt_number(number)}深度驗證.md",
+        "latest_super_single_validation.md",
+        f"super_single_{fmt_number(number)}_validation.md",
     ]
     written = []
     for name in html_names:
@@ -385,6 +389,8 @@ def generate(number: int | None = None) -> dict[str, Any]:
             written.append(str(path.relative_to(ROOT)))
     (SITE_ROOT / "最新終極獨隻深度驗證.html").write_text(body, encoding="utf-8")
     written.append("site/最新終極獨隻深度驗證.html")
+    (SITE_ROOT / "latest_super_single_validation.html").write_text(body, encoding="utf-8")
+    written.append("site/latest_super_single_validation.html")
 
     return {
         "number": number,
