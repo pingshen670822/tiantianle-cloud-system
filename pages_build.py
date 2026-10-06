@@ -68,6 +68,11 @@ def cloud_links():
     return repo, workflow_url, page_url
 
 
+def cloud_self_heal_url(repo=None):
+    repo = repo or cloud_links()[0]
+    return f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-self-heal.yml"
+
+
 def build_version():
     return SITE_BUILD_VERSION
     analysis_path = REPORT_DIR / "latest_analysis.json"
@@ -85,6 +90,7 @@ def build_version():
 
 def inject_mobile_panel(html):
     repo, workflow_url, page_url = cloud_links()
+    self_heal_url = cloud_self_heal_url(repo)
     version = build_version()
     local_note = ""
     if repo == "OWNER/REPOSITORY":
@@ -93,6 +99,7 @@ def inject_mobile_panel(html):
     <section class="band launch-panel">
       <h2>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u96f2\\u7aef\\u7368\\u7acb\\u7248')}</h2>
       <a class="mobile-action" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0\\u6700\\u65b0\\u958b\\u734e')}</a>
+      <a class="mobile-action repair-action" href="{self_heal_url}">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">{u('\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\u6700\\u65b0\\u9801')}</button>
       <a class="cloud-update-link" href="force-sync-{version}.html?v={version}">{u('\\u624b\\u6a5f\\u4e0d\\u4e00\\u6a23\\u9ede\\u9019\\u88e1\\u5f37\\u5236\\u540c\\u6b65')}</a>
       <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{u('\\u5df2\\u8a2d\\u5b9a\\uff0c\\u624b\\u6a5f\\u53ef\\u76f4\\u63a5\\u6536\\u85cf\\u672c\\u9801')}</span></p>
@@ -105,6 +112,7 @@ def inject_mobile_panel(html):
     <style>
       .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
       .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
+      .repair-action{margin-top:10px;background:#991b1b}
       .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
       .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
       .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
@@ -198,6 +206,78 @@ def inject_mobile_panel(html):
     html = html.replace("</head>", style + "</head>")
     html = html.replace("</body>", script + "</body>")
     return html.replace("<main>", "<main>" + panel, 1)
+
+
+def inject_cloud_action_controls(html):
+    if "tiantianleCloudControls" in html:
+        return html
+    repo, workflow_url, _ = cloud_links()
+    self_heal_url = cloud_self_heal_url(repo)
+    version = build_version()
+    panel = f"""
+    <section id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="{u('\\u96f2\\u7aef\\u64cd\\u4f5c')}">
+      <div class="tiantianle-cloud-title">{u('\\u96f2\\u7aef\\u5feb\\u901f\\u64cd\\u4f5c')}</div>
+      <a class="tiantianle-cloud-button manual" href="{workflow_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}')">{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}</a>
+      <a class="tiantianle-cloud-button repair" href="{self_heal_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}')">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">{u('\\u6309\\u9215\\u6703\\u958b\\u555f\\u96f2\\u7aef\\u5de5\\u4f5c\\u6d41\\uff0c\\u540c\\u6642\\u624b\\u6a5f\\u6703\\u91cd\\u6293\\u6700\\u65b0\\u8cc7\\u6599')}</div>
+    </section>
+    """
+    style = f"""
+    <style>
+      .tiantianle-cloud-controls{{position:sticky;top:0;z-index:9998;display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr);gap:8px;align-items:center;padding:10px 12px;background:#fff7ed;border-bottom:3px solid #f97316;box-shadow:0 6px 18px rgba(15,23,42,.12);font-family:"Microsoft JhengHei",Arial,sans-serif}}
+      .tiantianle-cloud-title{{font-weight:900;color:#7c2d12;white-space:nowrap}}
+      .tiantianle-cloud-button{{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2}}
+      .tiantianle-cloud-button.manual{{background:#166534}}
+      .tiantianle-cloud-button.repair{{background:#991b1b}}
+      .tiantianle-cloud-status{{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}}
+      @media(max-width:680px){{.tiantianle-cloud-controls{{grid-template-columns:1fr 1fr}}.tiantianle-cloud-title,.tiantianle-cloud-status{{grid-column:1/-1}}.tiantianle-cloud-button{{font-size:16px;padding:14px 8px}}}}
+    </style>
+    """
+    script = f"""
+    <script>
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "{version}";
+    async function tiantianleClearVisibleCaches() {{
+      try {{
+        if ('serviceWorker' in navigator) {{
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {{
+            try {{
+              if (reg.active) reg.active.postMessage({{ type: 'CLEAR_CACHE' }});
+              await reg.update();
+            }} catch (err) {{}}
+          }}));
+        }}
+        if ('caches' in window) {{
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) {{ return caches.delete(key); }}));
+        }}
+      }} catch (err) {{}}
+    }}
+    async function tiantianlePrepareCloudAction(label) {{
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = label + '：已清理手機快取，請在開啟的 GitHub 頁面按 Run workflow。';
+      await tiantianleClearVisibleCaches();
+      try {{
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), {{ cache: 'no-store' }});
+        await fetch(prefix + 'version.json?manual=' + Date.now(), {{ cache: 'no-store' }});
+      }} catch (err) {{}}
+    }}
+    </script>
+    """
+    if "</head>" in html:
+        html = html.replace("</head>", style + "</head>", 1)
+    else:
+        html = style + html
+    if "</body>" in html:
+        html = html.replace("</body>", script + "</body>", 1)
+    else:
+        html = html + script
+    if "<body>" in html:
+        return html.replace("<body>", "<body>" + panel, 1)
+    if "<main>" in html:
+        return html.replace("<main>", "<main>" + panel, 1)
+    return panel + html
 
 
 def mobile_open_sync_script(version):
@@ -312,7 +392,7 @@ def apply_mobile_open_sync_to_site_html():
         if path.name in skip_names:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        updated = inject_mobile_open_sync(text)
+        updated = inject_mobile_open_sync(inject_cloud_action_controls(text))
         if updated != text:
             path.write_text(updated, encoding="utf-8")
 
