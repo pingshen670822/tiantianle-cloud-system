@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-06T17:47:10+08:00",
+  "checked_at_taiwan": "2026-10-06T17:59:04+08:00",
   "status": "需立即修正",
   "critical": 1,
   "publish_blocking": 0,
@@ -500,7 +500,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-06T17:47:05+08:00",
+    "created_at_taiwan": "2026-10-06T17:58:56+08:00",
     "ultimate_super_single_selected": 27
   },
   "draw_count": 11941,
