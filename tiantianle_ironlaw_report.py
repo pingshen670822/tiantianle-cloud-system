@@ -4,6 +4,7 @@ import html
 import json
 import re
 import sqlite3
+import time
 from collections import Counter
 from datetime import datetime
 from itertools import combinations
@@ -1041,7 +1042,7 @@ def monthly_summary_html_tiantianle(analysis, snapshots):
         f"<div class=\"band month-summary\"><h2>{month_label(month_text)}總檢討結論</h2>"
         f"{table(['項目', '內容一', '內容二', '修正'], monthly_conclusion_rows(items, analysis))}"
         "</div>"
-        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}每期明細表</h2>"
+        f"<div class=\"band month-summary\"><h2>{month_label(month_text)}每一天實戰檢討表（實際開獎、命中、低機率誤中）</h2>"
         f"{table(['開獎日', '預測依據', '預測前九', '實際開獎', '前九命中號', '前五/前九/前十/前十五', '結論', '前十五命中號'], monthly_detail_rows(items), '本月尚未完成可結算期數')}"
         "</div>"
     )
@@ -3640,7 +3641,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     </div>
     {post_draw_correction_html}
     <div class="band warn">
-      <h2>第10到15名補中檢討</h2>
+      <h3>第10到15名補中檢討</h3>
       {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "目前沒有已結算的第10到15名統計")}
       {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "目前沒有第10到15名補中明細")}
     </div>
@@ -4529,86 +4530,290 @@ def apply_tiantianle_ironlaw_interface_mode(report_html):
 def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtitle, md):
     latest = analysis.get("latest_draw") or {}
     freshness = analysis.get("freshness") or {}
+    prediction = analysis.get("prediction") or {}
+    decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
+    strong_packs = analysis.get("strong_packs") or {}
     industrial = analysis.get("industrial_engine") or {}
     release = industrial.get("release_gate") or {}
-    stability = industrial.get("stability_consensus") or {}
-    audit = industrial.get("model_audit") or {}
-    regime = industrial.get("regime_analysis") or {}
-    backtest = industrial_backtest(analysis)
+    history_info = analysis.get("history_completeness") or {}
+    super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
+    primary_single = (
+        super_single.get("numbers")
+        or ([super_single.get("number")] if super_single.get("number") else [])
+        or decision.get("primary_single")
+        or prediction.get("strongest")
+        or prediction.get("top1")
+        or (strong_packs.get("strong_single") or {}).get("numbers")
+        or []
+    )
+    top9 = decision.get("nine_hit_three") or prediction.get("top9") or []
+    top5 = decision.get("five_hit_two") or prediction.get("top5") or top9[:5]
+    top3 = decision.get("three_hit_one") or decision.get("three_hit_two") or prediction.get("top3") or top9[:3]
+    top2 = decision.get("two_hit_one") or prediction.get("top2") or top9[:2]
     release_text = release_label(analysis)
-    fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
+    fresh_text = compact_status(freshness.get("status", "ok"))
     latest_tw_time = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or "-"
     target_tw_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
-
-    conclusion = f"""
-    <section class="band notice">
-      <h2>{u('\\u672c\\u671f\\u767c\\u5e03\\u7d50\\u8ad6')}</h2>
-      <p><span class="status fresh">{esc(fresh_text)}</span><span class="status blocked">{esc(release_text)}</span></p>
-      <p><strong>{u('\\u904b\\u7b97\\u5f15\\u64ce')}:{esc(industrial.get('engine_version'))}</strong></p>
-      <p>{u('\\u6700\\u65b0\\u8cc7\\u6599')}:{esc(freshness.get('latest_draw_date'))} / {u('\\u61c9\\u7528\\u76ee\\u6a19')}:{esc(analysis.get('target_draw_date'))} / {u('\\u7e3d\\u7b46\\u6578')}:{esc(analysis.get('draw_count'))}</p>
-      <p>{u('\\u767c\\u5e03\\u5224\\u5b9a')}: {u('\\u524d\\u5341')} {u('\\u7a69\\u5b9a\\u5171\\u8b58')} {esc(stability.get('top10_retention'))} / {u('\\u512a\\u52e2')} {esc(release.get('actual_backtest_edge'))} / {esc(release.get('status'))}</p>
-      <p>{u('\\u63d0\\u9192\\uff1a\\u672c\\u6230\\u5831\\u70ba\\u6b77\\u53f2\\u7d71\\u8a08\\u5206\\u6790\\uff0c\\u4e0d\\u4fdd\\u8b49\\u958b\\u51fa\\u3002')}</p>
-    </section>"""
-
-    date_table = table(
-        [u("\\u9805\\u76ee"), u("\\u5167\\u5bb9")],
-        [
-            [u("\\u5831\\u8868\\u7522\\u751f\\u6642\\u9593"), esc(analysis.get("generated_at_taiwan"))],
-            [u("\\u5929\\u5929\\u6a02\\u8cc7\\u6599\\u6700\\u65b0\\u65e5"), esc(freshness.get("latest_draw_date"))],
-            [u("\\u6700\\u65b0\\u671f / \\u65e5"), f"{esc(latest.get('period'))} / {esc(latest.get('draw_date'))}"],
-            [u("\\u6700\\u65b0\\u958b\\u734e\\u865f"), mark_numbers(latest.get("numbers"), latest.get("numbers"))],
-            [u("\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593"), esc(latest_tw_time)],
-            [u("\\u672c\\u6b21\\u9810\\u6e2c\\u76ee\\u6a19\\u65e5"), esc(analysis.get("target_draw_date"))],
-            [u("\\u4e0b\\u671f\\u53f0\\u7063\\u958b\\u734e\\u6642\\u9593"), esc(target_tw_time)],
-            [u("\\u6700\\u8fd1\\u547d\\u4e2d\\u6aa2\\u8a0e\\u5c0d\\u61c9"), f"{esc(settled.get('based_on_date'))} -> {esc(settled.get('actual_date'))}" if settled else "-"],
-        ],
+    latest_date = latest.get("draw_date") or freshness.get("latest_draw_date") or "-"
+    target_date = analysis.get("target_draw_date") or freshness.get("target_draw_date") or "-"
+    latest_period = latest.get("period") or latest_date
+    target_period = analysis.get("target_period") or target_date
+    latest_numbers = fmt_numbers(latest.get("numbers", []))
+    latest_tw_label = taiwan_time_label(latest_tw_time)
+    target_tw_label = taiwan_time_label(target_tw_time)
+    report_time = taiwan_time_label(analysis.get("generated_at_taiwan", "-"))
+    date_basis = f"資料依據日 {latest_date} / 預測目標日 {target_date}"
+    review_basis = (
+        f"{settled.get('based_on_date', '-')} 預測 / {settled.get('actual_date', '-')} 開獎"
+        if settled else "等待結算"
     )
+    month_text = analysis_month_text(analysis)
+    month_name = month_label(month_text)
+    count = analysis.get("draw_count", "-")
+    date_range = zh_text(history_info.get("date_range") or history_info.get("range") or history_info.get("status") or "完整")
+    candidate_rows_9 = compact_candidate_rows_tiantianle(analysis, 9)
+    verification_rows = compact_number_verification_rows_tiantianle(analysis, 9)
+    backup_rows = compact_backup_rank_rows_tiantianle(analysis)
+    backup_hit_rows = compact_backup_hit_rows_tiantianle(snapshots or [])
+    backup_summary_rows = compact_backup_summary_rows_tiantianle(snapshots or [])
+    low_rows = compact_low_summary_rows_tiantianle(analysis)
+    low_daily_rows = low_probability_daily_rows_tiantianle(analysis)
+    low_monthly_rows = monthly_low_probability_summary_rows_tiantianle(analysis)
+    backtest = industrial_backtest(analysis)
 
-    settled_block = ""
-    if settled:
-        settled_block = f"""
-        <section class="band notice">
-          <h2>{u('\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u6458\\u8981')}</h2>
-          <p>{u('\\u9810\\u6e2c\\u4f9d\\u64da')}:{esc(settled.get('based_on_date'))} -> {u('\\u5be6\\u969b\\u958b\\u734e')}:{esc(settled.get('actual_date'))}</p>
-          <p>{u('\\u5be6\\u969b\\u958b\\u734e')}:{mark_numbers(settled.get('actual_numbers'), settled.get('actual_numbers'))} / {u('\\u524d\\u4e94')} {settled.get('top5_hits')} / {u('\\u524d\\u5341')} {settled.get('top10_hits')} / {u('\\u524d\\u5341\\u4e94')} {settled.get('top15_hits')}</p>
-        </section>"""
+    def card(label, value, extra=""):
+        return f'<div class="card {extra}"><div class="label">{esc(label)}</div><div class="value">{value}</div></div>'
 
-    kpi_rows = [
-        [u("\\u524d\\u5341"), backtest.get("rounds", ""), backtest.get("top10_avg_hits", ""), backtest.get("random_top10_expectation", ""), round((backtest.get("top10_avg_hits", 0) or 0) - (backtest.get("random_top10_expectation", 0) or 0), 4)],
-        [u("\\u524d\\u5341\\u4e94"), backtest.get("rounds", ""), backtest.get("top15_avg_hits", ""), "-", "-"],
+    def demote_h2(fragment):
+        return re.sub(r"<h2([^>]*)>", r"<h3\1>", str(fragment)).replace("</h2>", "</h3>")
+
+    core_cards = (
+        card("資料狀態", esc(fresh_text))
+        + card("檢查", esc("通過" if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else fresh_text))
+        + card("待結算目標期", esc(target_period))
+        + card("獨隻", esc(fmt_numbers(primary_single) or "-"), "hot-card")
+        + card("9碼核心", esc(fmt_numbers(top9) or "-"))
+    )
+    single_rows = [
+        ["獨隻號碼", fmt_numbers(primary_single) or "-", "本期唯一輸出"],
+        ["判定", zh_text(super_single.get("status") or release_text), "每期開獎後重算"],
+        ["獨隻總分", zh_text((super_single.get("scores") or {}).get("修正總分") or (super_single.get("scores") or {}).get("超級獨支總合分") or "-"), "全歷史交叉驗算"],
+        ["模型機率", zh_text((super_single.get("scores") or {}).get("模型機率") or (super_single.get("scores") or {}).get("信心指標") or "-"), "只作排序依據"],
+        ["來源說明", "；".join(zh_text(item) for item in (super_single.get("explanation") or [])[:5]) or "全歷史資料庫、多模型交叉、滾動檢討後產生", "禁止憑空產號"],
     ]
+    basic_pack_rows = [
+        ["最強高機率獨隻1中1", fmt_numbers(primary_single) or "-", "唯一獨隻"],
+        ["最強高機率2中1~2", fmt_numbers(top2) or "-", "前九內二碼精算"],
+        ["最強高機率3中1~3", fmt_numbers(top3) or "-", "前九內三碼精算"],
+        ["最強高機率5中1~5", fmt_numbers(top5) or "-", "前九內五碼精算"],
+        ["最強高機率9中2以上", fmt_numbers(top9) or "-", "不超過九顆"],
+    ]
+    model_effect_time = display_time(analysis.get("generated_at_taiwan", "-"))
+    low_alert_rows = low_probability_error_recovery_rows(analysis)
 
-    content = conclusion
-    content += f'<section class="band"><h2>{u("\\u65e5\\u671f\\u57fa\\u6e96\\u7e3d\\u8868")}</h2>{date_table}</section>'
-    content += settled_block
-    content += f'<section class="band notice"><h2>{u("\\u7814\\u7a76\\u547d\\u4e2d KPI \\u8207\\u7981\\u6b62\\u865b\\u5831\\u9580\\u6abb")}</h2><p>{u("\\u9019\\u4e9b\\u662f\\u7814\\u7a76\\u76ee\\u6a19\\uff0c\\u4e0d\\u662f\\u6a02\\u900f\\u5fc5\\u4e2d\\u4fdd\\u8b49\\u3002")}</p>{table(["KPI", u("\\u6a23\\u672c"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96a8\\u6a5f\\u57fa\\u6e96"), u("\\u5dee\\u503c")], kpi_rows)}</section>'
-    content += '<div class="grid">'
-    content += f'<section class="card"><h2>{u("\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6")}</h2><div class="value">{esc(fresh_text)}</div><p class="sub">{esc(freshness.get("latest_draw_date"))}</p></section>'
-    content += f'<section class="card"><h2>{u("\\u767c\\u5e03\\u7b49\\u7d1a")}</h2><div class="value">{esc(release_text)}</div><p class="sub">{esc(release.get("status"))}</p></section>'
-    content += f'<section class="card"><h2>{u("\\u524d\\u5341")} {u("\\u7a69\\u5b9a\\u5171\\u8b58")}</h2><div class="value">{esc(stability.get("top10_retention"))}</div><p class="sub">{u("\\u64fe\\u52d5\\u5feb\\u7167")} {esc(stability.get("snapshots"))}</p></section>'
-    content += f'<section class="card"><h2>{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}</h2><div class="value">{esc(audit.get("risk_level"))}</div><p class="sub">{esc(audit.get("verdict"))}</p></section>'
-    content += "</div>"
-    content += f'<section class="band"><h2>{u("\\u8fd1\\u671f\\u7a69\\u5b9a\\u5ea6\\u56de\\u6e2c")}</h2>{table([u("\\u671f\\u6578"), u("\\u6a23\\u672c"), u("\\u524d\\u5341"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u9580\\u6abb")], rolling_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u7a69\\u5b9a\\u5171\\u8b58\\u7368\\u7acb\\u6846\\u67b6")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u5feb\\u7167\\u5171\\u8b58"), u("\\u5feb\\u7167\\u7387"), u("\\u8499\\u5730\\u5361\\u7f85\\u7559\\u5b58\\u7387"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7d9c\\u5408\\u6307\\u6578")], stable_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u5168\\u90e8\\u9810\\u6e2c\\u6b77\\u53f2\\u5c0d\\u6bd4")}</h2><p><a href="tiantianle_prediction_history.html">{u("\\u958b\\u555f\\u6bcf\\u671f\\u9810\\u6e2c\\u5c0d\\u6bd4")}</a></p>{table([u("\\u76ee\\u6a19\\u65e5"), u("\\u72c0\\u614b"), u("\\u4f9d\\u64da\\u65e5"), u("\\u5be6\\u969b\\u65e5"), u("\\u524d\\u5341"), u("\\u5be6\\u969b\\u865f"), u("\\u547d\\u4e2d\\u865f"), u("\\u524d\\u4e94"), u("\\u524d\\u5341"), u("\\u524d\\u5341\\u4e94"), u("\\u5efa\\u7acb")], history_table(snapshots)[:12])}</section>'
-    content += f'<section class="band"><h2>{u("\\u822a\\u592a\\u7d1a\\u904b\\u7b97\\u4fdd\\u8b49\\u5be9\\u6838")}</h2>{aerospace_block(analysis)}</section>'
-
-    adv = industrial.get("advanced_models") or {}
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u9032\\u968e\\u9810\\u6e2c\\u6a21\\u578b")}</h2><p>{esc(adv.get("warning"))}</p><p>{u("\\u9032\\u968e\\u6a21\\u578b\\u5171\\u8b58")} {u("\\u524d\\u5341\\u4e8c")}:{fmt_numbers(adv.get("consensus_top12", []))}</p>{table([u("\\u6a21\\u578b"), u("\\u524d\\u5341"), u("\\u524d\\u5341 \\u56de\\u6e2c"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u65b9\\u6cd5")], advanced_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u89c0\\u5bdf\\u5019\\u9078\\uff08\\u4e0d\\u5217\\u6b63\\u5f0f\\u4e3b\\u63a8\\uff09")}</h2><p>{esc(release_text)}</p></section><div class="grid">{pack_cards(analysis)}</div>'
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u5de5\\u696d\\u7d1a\\u6a21\\u578b\\u5be9\\u8a08")}</h2><p><span class="risk">{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}:{esc(audit.get("risk_level"))}</span></p><p>{esc(audit.get("verdict"))}</p><p>{u("\\u958b\\u734e\\u578b\\u614b")}:{esc(u("\\u3001").join(regime.get("messages", [])))}</p></section>'
-    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u865f\\u78bc")}</h2>{table(["#", u("\\u865f\\u78bc"), u("\\u66ab\\u907f\\u6307\\u6578"), u("\\u4fe1\\u5fc3\\u7b49\\u7d1a"), u("\\u51fa\\u73fe\\u8a55\\u5206"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u7a69\\u5b9a\\u6b21\\u6578"), u("\\u66ab\\u907f\\u539f\\u56e0")], unlikely_rows(analysis))}</section>'
-
-    if settled:
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u5c08\\u5340")}</h2><p>{u("\\u9810\\u6e2c\\u4f9d\\u64da")} {esc(settled.get("based_on_date"))} -> {u("\\u5be6\\u969b\\u958b\\u734e")} {esc(settled.get("actual_date"))}</p>{table([u("\\u865f\\u78bc"), u("\\u72c0\\u614b"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u547d\\u4e2d\\u4f86\\u6e90\\u95dc\\u806f\\u89e3\\u6790")], actual_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u6b63\\u5f0f\\u9810\\u6e2c\\u9010\\u865f\\u6aa2\\u8a0e")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u7d50\\u679c"), u("\\u4fe1\\u5fc3"), u("\\u907a\\u6f0f"), u("\\u539f\\u59cb\\u4f86\\u6e90"), u("\\u6aa2\\u8a0e\\u52d5\\u4f5c")], candidate_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u5f37\\u724c\\u7d44\\u6210\\u6557\\u6aa2\\u8a0e")}</h2>{table([u("\\u5f37\\u724c"), u("\\u539f\\u9810\\u6e2c"), u("\\u76ee\\u6a19"), u("\\u5be6\\u969b"), u("\\u7d50\\u679c"), u("\\u547d\\u4e2d\\u865f"), u("\\u672a\\u547d\\u4e2d\\u865f")], pack_review_rows(settled))}</section>'
-        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u9810\\u6e2c\\u4f86\\u6e90\\u7406\\u7531\\u6210\\u6557\\u7d71\\u8a08")}</h2>{table([u("\\u4f86\\u6e90\\u7406\\u7531"), u("\\u547d\\u4e2d"), u("\\u672a\\u547d\\u4e2d"), u("\\u6d89\\u53ca\\u865f\\u78bc"), u("\\u4fee\\u6b63\\u65b9\\u5411")], candidate_reason_stats(settled))}</section>'
-
-    content += f'<section class="band"><h2>{u("\\u4e5d\\u4e2d\\u4e09 \\u8f2a\\u7d44\\u8986\\u84cb")}</h2>{table(["#", u("\\u7d44\\u5408")], wheel_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u5019\\u9078\\u524d\\u5341\\u4e94")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u907a\\u6f0f"), u("\\u7406\\u7531")], candidate_rows(analysis))}</section>'
-    content += f'<section class="band"><h2>{u("\\u539f\\u59cb\\u6230\\u5831")}</h2><pre>{html.escape(md)}</pre></section>'
-    return page(title, subtitle, content), md, build_history_html(snapshots)
+    style = """
+    body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
+    header{background:#111827;color:white;padding:22px 24px;}
+    main{max-width:1180px;margin:0 auto;padding:18px;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}
+    .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
+    .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .band{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+    .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
+    .hot-card{border-color:#fecaca;background:#fff1f2;}
+    .singlebox{border-color:#fecaca;background:#fffafa;}
+    .warn{background:#fff7ed;border-color:#fed7aa;}
+    .date-ribbon{background:#ecfeff;border-color:#67e8f9;}
+    .update-box{background:#ecfdf5;border-color:#86efac;}
+    .update-button{display:inline-block;margin:4px 8px 4px 0;padding:10px 14px;border-radius:7px;background:#0f766e;color:white!important;text-decoration:none;font-weight:900;}
+    .update-button.mobile{background:#1d4ed8;}
+    .label{font-size:13px;color:#64748b;font-weight:700;}
+    .value{font-size:22px;font-weight:900;margin-top:6px;}
+    table{width:100%;border-collapse:collapse;min-width:760px;}
+    th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
+    th{background:#f1f5f9;}
+    .num{font-size:20px;font-weight:900;color:#b91c1c;}
+    .small{font-size:13px;line-height:1.5;}
+    .verify-table{min-width:1840px;}
+    .month-chart{display:grid;gap:8px;min-width:760px;}
+    .chart-row{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}
+    .chart-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
+    .chart-track span{display:block;height:100%;background:#0f766e;border-radius:999px;}
+    a{color:#0f766e;font-weight:800;}
+    pre{white-space:pre-wrap;background:#0b1020;color:#dbeafe;border-radius:8px;padding:16px;overflow:auto;}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}.chart-row{grid-template-columns:1fr;gap:4px}}
+    """
+    script = """
+    <script>
+      document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      }));
+    </script>
+    """
+    html_report = f"""<!doctype html>
+<html lang="zh-Hant" data-ironlaw-interface="true" data-report-style="ironlaw539">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>{esc(title)}</title>
+  <style>{style}</style>
+</head>
+<body>
+<header>
+  <h1>{esc(title)}</h1>
+  <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(date_range)} / 共 {esc(count)} 筆</p>
+  <p>最新開獎 {esc(latest_period)} / {esc(latest_date)} / {esc(latest_numbers)}　預測目標 {esc(target_date)} / {esc(target_tw_label)}</p>
+</header>
+<main>
+  <nav class="tabs">
+    <button class="active" data-tab="prediction">下期預測</button>
+    <button data-tab="review">命中檢討</button>
+    <button data-tab="monthly">每月總整理</button>
+    <button data-tab="avoid">低機率</button>
+    <button data-tab="models">模型回測</button>
+    <button data-tab="system">其他稽核</button>
+  </nav>
+  <section class="band update-box">
+    <h2>立刻更新到最新</h2>
+    <p class="update-note">電腦版使用主程式最外層一鍵啟動；手機雲端版使用頁面上的手動更新與當機立即修復按鈕，更新後會顯示最新更新時間。</p>
+    <p>
+      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立刻更新</a>
+      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/?v={int(time.time())}">手機雲端同步</a>
+    </p>
+  </section>
+  <section class="band date-ribbon">
+    <h2>本報表日期對照</h2>
+    <div class="grid">
+      {card("全歷史資料範圍", esc(date_range))}
+      {card("資料依據最新開獎日", esc(latest_date))}
+      {card("最新開獎期別", esc(latest_period))}
+      {card("最新開獎台灣時間", esc(latest_tw_label))}
+      {card("最新開獎號碼", esc(latest_numbers))}
+      {card("下期預測目標日", esc(target_date))}
+      {card("下期台灣開獎時間", esc(target_tw_label))}
+      {card("戰報產生台灣時間", esc(report_time))}
+    </div>
+  </section>
+  <section id="prediction" class="panel active">
+    <div class="band">
+      <h2>核心決策（{esc(date_basis)}）</h2>
+      <div class="grid">{core_cards}</div>
+      <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
+      {table(["類型", "號碼", "判讀"], basic_pack_rows)}
+    </div>
+    <div class="band singlebox">
+      <h2>最強獨隻1中1</h2>
+      <div class="grid">
+        {card("獨隻號碼", esc(fmt_numbers(primary_single) or "-"), "hot-card")}
+        {card("判定", esc(zh_text(super_single.get("status") or release_text)))}
+        {card("下期台灣時間", esc(target_tw_label))}
+        {card("發布等級", esc(release_text))}
+      </div>
+      <p><strong>強烈標註：</strong>本期唯一最強獨隻為 {esc(fmt_numbers(primary_single) or "-")}，由全歷史資料庫、交叉驗算、上期錯誤回灌與九碼集中檢查後產生。</p>
+      {table(["項目", "數值", "判定"], single_rows)}
+      {table(["驗算", "資料一", "資料二", "說明", "處理"], single_precision_rows(analysis))}
+    </div>
+    <div class="band">
+      <h2>下期研究候選前9名（{esc(date_basis)}）</h2>
+      {table(["排名", "號碼", "分數", "信心", "遺漏", "理由"], candidate_rows_9)}
+    </div>
+    <div class="band">
+      <h2>生成號碼逐號驗算（{esc(date_basis)}）</h2>
+      <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
+      {table(["號碼", "排名", "版路分類", "來源證據", "交叉驗算", "穩定與遺漏", "守門驗證", "結論"], verification_rows)}
+    </div>
+    <div class="band">
+      <h2>強牌組精算（{esc(date_basis)}）</h2>
+      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+    </div>
+  </section>
+  <section id="review" class="panel">
+    <div class="band">
+      <h2>上期命中檢討（{esc(review_basis)}）</h2>
+      {demote_h2(compact_hits_html_tiantianle(settled, snapshots or []))}
+      {demote_h2(compact_review_html_tiantianle(settled))}
+    </div>
+    {demote_h2(compact_zero_hit_rescue_html_tiantianle(analysis))}
+    {demote_h2(compact_post_draw_correction_html_tiantianle(analysis))}
+    <div class="band warn">
+      <h3>第10到15名補中檢討</h3>
+      {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "等待已結算資料寫入")}
+      {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "等待第10到15名補中明細寫入")}
+    </div>
+    {demote_h2(compact_failure_data_html_tiantianle(analysis))}
+  </section>
+  <section id="monthly" class="panel">
+    {monthly_summary_html_tiantianle(analysis, snapshots or [])}
+  </section>
+  <section id="avoid" class="panel">
+    <div class="band">
+      <h2>低機率達標檢討（{esc(review_basis)}）</h2>
+      {compact_low_review_html_tiantianle(analysis, settled)}
+    </div>
+    <div class="band warn">
+      <h2>低機率反向命中警訊</h2>
+      {table(["號碼", "累計誤開", "近期期數", "誤開來源", "最近誤開", "下期處理"], low_alert_rows, "等待低機率誤開回收資料寫入")}
+    </div>
+    <div class="band">
+      <h2>低機率每日檢討紀錄</h2>
+      {table(["目標日", "暫避包", "預測號", "開獎日", "實際開獎", "誤中", "誤中號", "結果"], low_daily_rows, "等待低機率每日紀錄寫入")}
+    </div>
+    <div class="band">
+      <h2>低機率（{esc(date_basis)}）</h2>
+      <p>本區顯示新一期低機率暫避預測；上期誤開檢討放在本分頁前半段，不混在一起。</p>
+      {table(["暫避包", "號碼", "信心指標", "平均暫避分", "明細"], low_rows)}
+      {table(["暫避包", "結算期數", "達標期數", "達標率", "平均誤中", "最差日期", "最常誤中"], low_monthly_rows, "等待低機率每月結算資料寫入")}
+    </div>
+  </section>
+  <section id="models" class="panel">
+    {compact_formula_lab_html_tiantianle(analysis)}
+    {compact_prediction_rebuild_html_tiantianle(analysis)}
+    {compact_dual_track_html_tiantianle(analysis, settled, snapshots)}
+    <div class="band">
+      <h2>模型成效（資料截至 {esc(latest_date)} / 回測產生 {esc(model_effect_time)}）</h2>
+      {table(["模型", "回測期", "前五平均", "前十平均", "前十五平均", "前十優勢"], compact_model_rows_tiantianle(analysis))}
+    </div>
+    <div class="band">
+      <h2>強牌實戰統計</h2>
+      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+    </div>
+    <div class="band">
+      <h2>模型滾動調整</h2>
+      {table(["模型", "動作", "近期優勢", "長期優勢", "原因"], compact_lifecycle_rows_tiantianle(analysis))}
+    </div>
+    <div class="band">
+      <h2>近期預測相似度稽核（{esc(date_basis)}）</h2>
+      {demote_h2(compact_prediction_similarity_audit_html_tiantianle(analysis, latest_tw_label, target_tw_label))}
+    </div>
+  </section>
+  <section id="system" class="panel">
+    {compact_hard_iron_html_tiantianle(analysis)}
+    {compact_stability_governor_html_tiantianle(analysis)}
+    {compact_reality_gate_html_tiantianle(analysis)}
+    {compact_monthly_breakthrough_html_tiantianle(analysis)}
+    <div class="band">
+      <h3>候選前十五</h3>
+      {table(["排名", "號碼", "指數", "信心", "遺漏", "理由"], candidate_rows(analysis))}
+    </div>
+    <details class="band">
+      <summary><strong>原始戰報</strong></summary>
+      <pre>{html.escape(md)}</pre>
+    </details>
+  </section>
+</main>
+{script}
+</body>
+</html>"""
+    return html_report, md, build_history_html(snapshots)
 
 
 def build_report():
