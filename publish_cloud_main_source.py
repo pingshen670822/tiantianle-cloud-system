@@ -50,6 +50,7 @@ ALLOWLIST = {
     "verify_mobile_sync.py",
     "publish_mobile_site_only.py",
     "publish_cloud_main_source.py",
+    "repair_no_empty_prediction.py",
 }
 
 
