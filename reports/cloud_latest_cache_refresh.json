@@ -1,16 +1,15 @@
 {
-  "checked_at_taiwan": "2026-10-06T13:02:14+08:00",
+  "checked_at_taiwan": "2026-10-06T13:06:13+08:00",
   "status": "ok",
-  "successful_sources": 6,
+  "successful_sources": 5,
   "total_sources": 7,
   "results": [
     {
       "file": "calottery_正式.html",
       "url": "https://www.calottery.com/en/draw-games/fantasy-5",
-      "ok": true,
-      "bytes": 98831,
-      "error": "",
-      "attempt": 1
+      "ok": false,
+      "bytes": 0,
+      "error": "HTTP Error 403: Forbidden"
     },
     {
       "file": "lotto8_latest.html",
@@ -32,7 +31,7 @@
       "file": "lotteryusa_latest.html",
       "url": "https://www.lotteryusa.com/california/fantasy-5/",
       "ok": true,
-      "bytes": 318894,
+      "bytes": 318882,
       "error": "",
       "attempt": 1
     },
@@ -55,7 +54,7 @@
       "file": "lotterynet_year.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers/2026",
       "ok": true,
-      "bytes": 298720,
+      "bytes": 298710,
       "error": "",
       "attempt": 1
     }
