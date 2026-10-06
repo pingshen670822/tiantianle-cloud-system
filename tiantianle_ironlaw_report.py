@@ -4526,6 +4526,91 @@ def apply_tiantianle_ironlaw_interface_mode(report_html):
     return updated
 
 
+def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtitle, md):
+    latest = analysis.get("latest_draw") or {}
+    freshness = analysis.get("freshness") or {}
+    industrial = analysis.get("industrial_engine") or {}
+    release = industrial.get("release_gate") or {}
+    stability = industrial.get("stability_consensus") or {}
+    audit = industrial.get("model_audit") or {}
+    regime = industrial.get("regime_analysis") or {}
+    backtest = industrial_backtest(analysis)
+    release_text = release_label(analysis)
+    fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
+    latest_tw_time = freshness.get("latest_taiwan_safe_update_time") or analysis.get("latest_draw_taiwan_update_time") or "-"
+    target_tw_time = freshness.get("target_taiwan_safe_update_time") or analysis.get("prediction_draw_taiwan_time") or "-"
+
+    conclusion = f"""
+    <section class="band notice">
+      <h2>{u('\\u672c\\u671f\\u767c\\u5e03\\u7d50\\u8ad6')}</h2>
+      <p><span class="status fresh">{esc(fresh_text)}</span><span class="status blocked">{esc(release_text)}</span></p>
+      <p><strong>{u('\\u904b\\u7b97\\u5f15\\u64ce')}:{esc(industrial.get('engine_version'))}</strong></p>
+      <p>{u('\\u6700\\u65b0\\u8cc7\\u6599')}:{esc(freshness.get('latest_draw_date'))} / {u('\\u61c9\\u7528\\u76ee\\u6a19')}:{esc(analysis.get('target_draw_date'))} / {u('\\u7e3d\\u7b46\\u6578')}:{esc(analysis.get('draw_count'))}</p>
+      <p>{u('\\u767c\\u5e03\\u5224\\u5b9a')}: {u('\\u524d\\u5341')} {u('\\u7a69\\u5b9a\\u5171\\u8b58')} {esc(stability.get('top10_retention'))} / {u('\\u512a\\u52e2')} {esc(release.get('actual_backtest_edge'))} / {esc(release.get('status'))}</p>
+      <p>{u('\\u63d0\\u9192\\uff1a\\u672c\\u6230\\u5831\\u70ba\\u6b77\\u53f2\\u7d71\\u8a08\\u5206\\u6790\\uff0c\\u4e0d\\u4fdd\\u8b49\\u958b\\u51fa\\u3002')}</p>
+    </section>"""
+
+    date_table = table(
+        [u("\\u9805\\u76ee"), u("\\u5167\\u5bb9")],
+        [
+            [u("\\u5831\\u8868\\u7522\\u751f\\u6642\\u9593"), esc(analysis.get("generated_at_taiwan"))],
+            [u("\\u5929\\u5929\\u6a02\\u8cc7\\u6599\\u6700\\u65b0\\u65e5"), esc(freshness.get("latest_draw_date"))],
+            [u("\\u6700\\u65b0\\u671f / \\u65e5"), f"{esc(latest.get('period'))} / {esc(latest.get('draw_date'))}"],
+            [u("\\u6700\\u65b0\\u958b\\u734e\\u865f"), mark_numbers(latest.get("numbers"), latest.get("numbers"))],
+            [u("\\u53f0\\u7063\\u53ef\\u66f4\\u65b0\\u6642\\u9593"), esc(latest_tw_time)],
+            [u("\\u672c\\u6b21\\u9810\\u6e2c\\u76ee\\u6a19\\u65e5"), esc(analysis.get("target_draw_date"))],
+            [u("\\u4e0b\\u671f\\u53f0\\u7063\\u958b\\u734e\\u6642\\u9593"), esc(target_tw_time)],
+            [u("\\u6700\\u8fd1\\u547d\\u4e2d\\u6aa2\\u8a0e\\u5c0d\\u61c9"), f"{esc(settled.get('based_on_date'))} -> {esc(settled.get('actual_date'))}" if settled else "-"],
+        ],
+    )
+
+    settled_block = ""
+    if settled:
+        settled_block = f"""
+        <section class="band notice">
+          <h2>{u('\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u6458\\u8981')}</h2>
+          <p>{u('\\u9810\\u6e2c\\u4f9d\\u64da')}:{esc(settled.get('based_on_date'))} -> {u('\\u5be6\\u969b\\u958b\\u734e')}:{esc(settled.get('actual_date'))}</p>
+          <p>{u('\\u5be6\\u969b\\u958b\\u734e')}:{mark_numbers(settled.get('actual_numbers'), settled.get('actual_numbers'))} / {u('\\u524d\\u4e94')} {settled.get('top5_hits')} / {u('\\u524d\\u5341')} {settled.get('top10_hits')} / {u('\\u524d\\u5341\\u4e94')} {settled.get('top15_hits')}</p>
+        </section>"""
+
+    kpi_rows = [
+        [u("\\u524d\\u5341"), backtest.get("rounds", ""), backtest.get("top10_avg_hits", ""), backtest.get("random_top10_expectation", ""), round((backtest.get("top10_avg_hits", 0) or 0) - (backtest.get("random_top10_expectation", 0) or 0), 4)],
+        [u("\\u524d\\u5341\\u4e94"), backtest.get("rounds", ""), backtest.get("top15_avg_hits", ""), "-", "-"],
+    ]
+
+    content = conclusion
+    content += f'<section class="band"><h2>{u("\\u65e5\\u671f\\u57fa\\u6e96\\u7e3d\\u8868")}</h2>{date_table}</section>'
+    content += settled_block
+    content += f'<section class="band notice"><h2>{u("\\u7814\\u7a76\\u547d\\u4e2d KPI \\u8207\\u7981\\u6b62\\u865b\\u5831\\u9580\\u6abb")}</h2><p>{u("\\u9019\\u4e9b\\u662f\\u7814\\u7a76\\u76ee\\u6a19\\uff0c\\u4e0d\\u662f\\u6a02\\u900f\\u5fc5\\u4e2d\\u4fdd\\u8b49\\u3002")}</p>{table(["KPI", u("\\u6a23\\u672c"), u("\\u5e73\\u5747\\u547d\\u4e2d"), u("\\u96a8\\u6a5f\\u57fa\\u6e96"), u("\\u5dee\\u503c")], kpi_rows)}</section>'
+    content += '<div class="grid">'
+    content += f'<section class="card"><h2>{u("\\u8cc7\\u6599\\u65b0\\u9bae\\u5ea6")}</h2><div class="value">{esc(fresh_text)}</div><p class="sub">{esc(freshness.get("latest_draw_date"))}</p></section>'
+    content += f'<section class="card"><h2>{u("\\u767c\\u5e03\\u7b49\\u7d1a")}</h2><div class="value">{esc(release_text)}</div><p class="sub">{esc(release.get("status"))}</p></section>'
+    content += f'<section class="card"><h2>{u("\\u524d\\u5341")} {u("\\u7a69\\u5b9a\\u5171\\u8b58")}</h2><div class="value">{esc(stability.get("top10_retention"))}</div><p class="sub">{u("\\u64fe\\u52d5\\u5feb\\u7167")} {esc(stability.get("snapshots"))}</p></section>'
+    content += f'<section class="card"><h2>{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}</h2><div class="value">{esc(audit.get("risk_level"))}</div><p class="sub">{esc(audit.get("verdict"))}</p></section>'
+    content += "</div>"
+    content += f'<section class="band"><h2>{u("\\u8fd1\\u671f\\u7a69\\u5b9a\\u5ea6\\u56de\\u6e2c")}</h2>{table([u("\\u671f\\u6578"), u("\\u6a23\\u672c"), u("\\u524d\\u5341"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u9580\\u6abb")], rolling_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u7a69\\u5b9a\\u5171\\u8b58\\u7368\\u7acb\\u6846\\u67b6")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u5feb\\u7167\\u5171\\u8b58"), u("\\u5feb\\u7167\\u7387"), u("\\u8499\\u5730\\u5361\\u7f85\\u7559\\u5b58\\u7387"), u("\\u7a69\\u5b9a\\u6578"), u("\\u7d9c\\u5408\\u6307\\u6578")], stable_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u5168\\u90e8\\u9810\\u6e2c\\u6b77\\u53f2\\u5c0d\\u6bd4")}</h2><p><a href="tiantianle_prediction_history.html">{u("\\u958b\\u555f\\u6bcf\\u671f\\u9810\\u6e2c\\u5c0d\\u6bd4")}</a></p>{table([u("\\u76ee\\u6a19\\u65e5"), u("\\u72c0\\u614b"), u("\\u4f9d\\u64da\\u65e5"), u("\\u5be6\\u969b\\u65e5"), u("\\u524d\\u5341"), u("\\u5be6\\u969b\\u865f"), u("\\u547d\\u4e2d\\u865f"), u("\\u524d\\u4e94"), u("\\u524d\\u5341"), u("\\u524d\\u5341\\u4e94"), u("\\u5efa\\u7acb")], history_table(snapshots)[:12])}</section>'
+    content += f'<section class="band"><h2>{u("\\u822a\\u592a\\u7d1a\\u904b\\u7b97\\u4fdd\\u8b49\\u5be9\\u6838")}</h2>{aerospace_block(analysis)}</section>'
+
+    adv = industrial.get("advanced_models") or {}
+    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u9032\\u968e\\u9810\\u6e2c\\u6a21\\u578b")}</h2><p>{esc(adv.get("warning"))}</p><p>{u("\\u9032\\u968e\\u6a21\\u578b\\u5171\\u8b58")} {u("\\u524d\\u5341\\u4e8c")}:{fmt_numbers(adv.get("consensus_top12", []))}</p>{table([u("\\u6a21\\u578b"), u("\\u524d\\u5341"), u("\\u524d\\u5341 \\u56de\\u6e2c"), u("\\u5c0d\\u96a8\\u6a5f\\u5dee\\u503c"), u("\\u65b9\\u6cd5")], advanced_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u89c0\\u5bdf\\u5019\\u9078\\uff08\\u4e0d\\u5217\\u6b63\\u5f0f\\u4e3b\\u63a8\\uff09")}</h2><p>{esc(release_text)}</p></section><div class="grid">{pack_cards(analysis)}</div>'
+    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u5de5\\u696d\\u7d1a\\u6a21\\u578b\\u5be9\\u8a08")}</h2><p><span class="risk">{u("\\u98a8\\u96aa\\u7b49\\u7d1a")}:{esc(audit.get("risk_level"))}</span></p><p>{esc(audit.get("verdict"))}</p><p>{u("\\u958b\\u734e\\u578b\\u614b")}:{esc(u("\\u3001").join(regime.get("messages", [])))}</p></section>'
+    content += f'<section class="band"><h2>{u("\\u4e0b\\u671f\\u9810\\u6e2c\\u5c08\\u5340\\uff1a\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u865f\\u78bc")}</h2>{table(["#", u("\\u865f\\u78bc"), u("\\u66ab\\u907f\\u6307\\u6578"), u("\\u4fe1\\u5fc3\\u7b49\\u7d1a"), u("\\u51fa\\u73fe\\u8a55\\u5206"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u7a69\\u5b9a\\u6b21\\u6578"), u("\\u66ab\\u907f\\u539f\\u56e0")], unlikely_rows(analysis))}</section>'
+
+    if settled:
+        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u547d\\u4e2d\\u6aa2\\u8a0e\\u5c08\\u5340")}</h2><p>{u("\\u9810\\u6e2c\\u4f9d\\u64da")} {esc(settled.get("based_on_date"))} -> {u("\\u5be6\\u969b\\u958b\\u734e")} {esc(settled.get("actual_date"))}</p>{table([u("\\u865f\\u78bc"), u("\\u72c0\\u614b"), u("\\u5019\\u9078\\u6392\\u540d"), u("\\u547d\\u4e2d\\u4f86\\u6e90\\u95dc\\u806f\\u89e3\\u6790")], actual_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u6b63\\u5f0f\\u9810\\u6e2c\\u9010\\u865f\\u6aa2\\u8a0e")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u7d50\\u679c"), u("\\u4fe1\\u5fc3"), u("\\u907a\\u6f0f"), u("\\u539f\\u59cb\\u4f86\\u6e90"), u("\\u6aa2\\u8a0e\\u52d5\\u4f5c")], candidate_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u5f37\\u724c\\u7d44\\u6210\\u6557\\u6aa2\\u8a0e")}</h2>{table([u("\\u5f37\\u724c"), u("\\u539f\\u9810\\u6e2c"), u("\\u76ee\\u6a19"), u("\\u5be6\\u969b"), u("\\u7d50\\u679c"), u("\\u547d\\u4e2d\\u865f"), u("\\u672a\\u547d\\u4e2d\\u865f")], pack_review_rows(settled))}</section>'
+        content += f'<section class="band"><h2>{u("\\u4e0a\\u671f\\u9810\\u6e2c\\u4f86\\u6e90\\u7406\\u7531\\u6210\\u6557\\u7d71\\u8a08")}</h2>{table([u("\\u4f86\\u6e90\\u7406\\u7531"), u("\\u547d\\u4e2d"), u("\\u672a\\u547d\\u4e2d"), u("\\u6d89\\u53ca\\u865f\\u78bc"), u("\\u4fee\\u6b63\\u65b9\\u5411")], candidate_reason_stats(settled))}</section>'
+
+    content += f'<section class="band"><h2>{u("\\u4e5d\\u4e2d\\u4e09 \\u8f2a\\u7d44\\u8986\\u84cb")}</h2>{table(["#", u("\\u7d44\\u5408")], wheel_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u5019\\u9078\\u524d\\u5341\\u4e94")}</h2>{table([u("\\u6392\\u540d"), u("\\u865f\\u78bc"), u("\\u6307\\u6578"), u("\\u4fe1\\u5fc3"), u("\\u907a\\u6f0f"), u("\\u7406\\u7531")], candidate_rows(analysis))}</section>'
+    content += f'<section class="band"><h2>{u("\\u539f\\u59cb\\u6230\\u5831")}</h2><pre>{html.escape(md)}</pre></section>'
+    return page(title, subtitle, content), md, build_history_html(snapshots)
+
+
 def build_report():
     analysis = load_json(ANALYSIS_JSON)
     if not analysis:
@@ -4554,6 +4639,7 @@ def build_report():
     release_text = release_label(analysis)
     fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
     md = make_markdown(analysis, settled)
+    return build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtitle, md)
     conclusion = f"""
     <section class="band notice">
       <h2>{u('\\u672c\\u671f\\u767c\\u5e03\\u7d50\\u8ad6')}</h2>
