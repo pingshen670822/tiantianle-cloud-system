@@ -25,6 +25,10 @@ def u(text):
     return text.encode("ascii").decode("unicode_escape")
 
 
+def escape_html(value):
+    return html.escape("" if value is None else str(value))
+
+
 def repo_from_git_remote():
     try:
         remote = subprocess.check_output(
@@ -71,6 +75,31 @@ def cloud_links():
 def cloud_self_heal_url(repo=None):
     repo = repo or cloud_links()[0]
     return f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-self-heal.yml"
+
+
+def latest_update_snapshot():
+    analysis_path = REPORT_DIR / "latest_analysis.json"
+    snapshot = {
+        "generated": "-",
+        "latest_draw": "-",
+        "latest_numbers": "-",
+        "target_draw": "-",
+        "target_taiwan_time": "-",
+    }
+    if not analysis_path.exists():
+        return snapshot
+    try:
+        data = json.loads(analysis_path.read_text(encoding="utf-8"))
+    except Exception:
+        return snapshot
+    latest = data.get("latest_draw") or {}
+    numbers = latest.get("numbers") or []
+    snapshot["generated"] = str(data.get("generated_at_taiwan") or data.get("generated_at") or "-")
+    snapshot["latest_draw"] = str(latest.get("draw_date") or "-")
+    snapshot["latest_numbers"] = " ".join(f"{int(number):02d}" for number in numbers) if numbers else "-"
+    snapshot["target_draw"] = str(data.get("target_draw_date") or "-")
+    snapshot["target_taiwan_time"] = str(data.get("prediction_draw_taiwan_time") or "-")
+    return snapshot
 
 
 def build_version():
@@ -214,11 +243,14 @@ def inject_cloud_action_controls(html):
     repo, workflow_url, _ = cloud_links()
     self_heal_url = cloud_self_heal_url(repo)
     version = build_version()
+    snapshot = latest_update_snapshot()
     panel = f"""
     <section id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="{u('\\u96f2\\u7aef\\u64cd\\u4f5c')}">
       <div class="tiantianle-cloud-title">{u('\\u96f2\\u7aef\\u5feb\\u901f\\u64cd\\u4f5c')}</div>
       <a class="tiantianle-cloud-button manual" href="{workflow_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}')">{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}</a>
       <a class="tiantianle-cloud-button repair" href="{self_heal_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}')">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：{escape_html(snapshot['generated'])}</div>
+      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：{escape_html(snapshot['latest_draw'])}　{escape_html(snapshot['latest_numbers'])} / 下期：{escape_html(snapshot['target_draw'])}　{escape_html(snapshot['target_taiwan_time'])}</div>
       <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">{u('\\u6309\\u9215\\u6703\\u958b\\u555f\\u96f2\\u7aef\\u5de5\\u4f5c\\u6d41\\uff0c\\u540c\\u6642\\u624b\\u6a5f\\u6703\\u91cd\\u6293\\u6700\\u65b0\\u8cc7\\u6599')}</div>
     </section>
     """
@@ -230,12 +262,15 @@ def inject_cloud_action_controls(html):
       .tiantianle-cloud-button.manual{{background:#166534}}
       .tiantianle-cloud-button.repair{{background:#991b1b}}
       .tiantianle-cloud-status{{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}}
+      .tiantianle-cloud-status.primary-time{{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}}
       @media(max-width:680px){{.tiantianle-cloud-controls{{grid-template-columns:1fr 1fr}}.tiantianle-cloud-title,.tiantianle-cloud-status{{grid-column:1/-1}}.tiantianle-cloud-button{{font-size:16px;padding:14px 8px}}}}
     </style>
     """
     script = f"""
     <script>
     window.TIANTIANLE_CLOUD_ACTION_VERSION = "{version}";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "{escape_html(snapshot['generated'])}";
+    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {{
       try {{
         if ('serviceWorker' in navigator) {{
@@ -253,16 +288,77 @@ def inject_cloud_action_controls(html):
         }}
       }} catch (err) {{}}
     }}
+    function tiantianleFormatCloudNumbers(numbers) {{
+      if (!Array.isArray(numbers)) return '-';
+      return numbers.map(function(number) {{
+        var value = parseInt(number, 10);
+        if (!Number.isFinite(value)) return '';
+        return String(value).padStart(2, '0');
+      }}).filter(Boolean).join(' ') || '-';
+    }}
+    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {{
+      if (!data) return;
+      var latest = data.latest_draw || {{}};
+      var generated = data.generated_at_taiwan || data.generated_at || '-';
+      var latestDate = latest.draw_date || '-';
+      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
+      var targetDate = data.target_draw_date || '-';
+      var targetTime = data.prediction_draw_taiwan_time || '-';
+      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
+      var drawEl = document.getElementById('tiantianleLatestDrawLine');
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
+      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
+      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {{
+        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
+        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
+      }}
+    }}
+    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {{
+      try {{
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {{
+          cache: 'no-store',
+          headers: {{ 'Cache-Control': 'no-cache' }}
+        }});
+        if (!res.ok) throw new Error('latest_analysis not ready');
+        var data = await res.json();
+        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
+        return data;
+      }} catch (err) {{
+        var status = document.getElementById('tiantianleCloudActionStatus');
+        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
+        return null;
+      }}
+    }}
+    function tiantianleStartUpdatePolling(label) {{
+      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+      tiantianleRefreshLatestUpdateDisplay(label);
+      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {{
+        tiantianleRefreshLatestUpdateDisplay(label);
+      }}, 15000);
+      setTimeout(function() {{
+        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {{
+          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
+        }}
+      }}, 30 * 60 * 1000);
+    }}
     async function tiantianlePrepareCloudAction(label) {{
       var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = label + '：已清理手機快取，請在開啟的 GitHub 頁面按 Run workflow。';
+      if (status) status.textContent = label + '：已清理手機快取，請在開啟的 GitHub 頁面按 Run workflow；本頁會自動顯示更新後時間。';
       await tiantianleClearVisibleCaches();
       try {{
         var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
         await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), {{ cache: 'no-store' }});
         await fetch(prefix + 'version.json?manual=' + Date.now(), {{ cache: 'no-store' }});
       }} catch (err) {{}}
+      tiantianleStartUpdatePolling(label);
     }}
+    window.addEventListener('pageshow', function() {{ tiantianleRefreshLatestUpdateDisplay('頁面開啟'); }});
+    document.addEventListener('visibilitychange', function() {{
+      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
+    }});
     </script>
     """
     if "</head>" in html:

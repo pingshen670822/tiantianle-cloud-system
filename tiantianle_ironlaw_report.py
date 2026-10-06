@@ -4443,6 +4443,95 @@ def apply_latest_battle_tabs(report_html):
     return report_html.replace("<main>", nav, 1).replace("</main>", "</main>" + script, 1)
 
 
+def apply_tiantianle_ironlaw_interface_mode(report_html):
+    if 'data-ironlaw-interface="true"' in report_html:
+        return report_html
+    style = """
+  <style id="tiantianle-ironlaw-interface">
+    html[data-ironlaw-interface="true"] body { background:#f6f7fb; color:#20242a; }
+    html[data-ironlaw-interface="true"] header { background:#0f172a; color:#fff; padding:22px 28px; }
+    html[data-ironlaw-interface="true"] header h1 { margin:0 0 8px; font-size:28px; }
+    html[data-ironlaw-interface="true"] header p { margin:4px 0 0; color:#cbd5e1; }
+    html[data-ironlaw-interface="true"] main { max-width:1180px; margin:0 auto; padding:22px; }
+    html[data-ironlaw-interface="true"] .tabs { display:none !important; }
+    html[data-ironlaw-interface="true"] .panel,
+    html[data-ironlaw-interface="true"] .panel.active { display:block !important; margin:0 0 16px; }
+    html[data-ironlaw-interface="true"] .panel::before {
+      display:block; margin:16px 0 10px; padding:12px 16px; border-radius:8px;
+      background:#0f172a; color:#fff; font-size:20px; font-weight:900;
+    }
+    html[data-ironlaw-interface="true"] #prediction::before { content:"下期預測"; }
+    html[data-ironlaw-interface="true"] #review::before { content:"上期檢討"; }
+    html[data-ironlaw-interface="true"] #monthly::before { content:"每月總整理"; }
+    html[data-ironlaw-interface="true"] #avoid::before { content:"低機率分析"; }
+    html[data-ironlaw-interface="true"] #models::before { content:"模型回測"; }
+    html[data-ironlaw-interface="true"] #system::before { content:"系統稽核"; }
+    html[data-ironlaw-interface="true"] .band {
+      background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+      margin-top:16px; margin-bottom:0; padding:18px; overflow-x:auto;
+    }
+    html[data-ironlaw-interface="true"] .band h2 { margin:0 0 12px; font-size:20px; color:#111827; }
+    html[data-ironlaw-interface="true"] .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+    html[data-ironlaw-interface="true"] .card {
+      background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px;
+    }
+    html[data-ironlaw-interface="true"] .card h2 { margin:0 0 10px; font-size:16px; color:#475569; }
+    html[data-ironlaw-interface="true"] .value { font-size:24px; font-weight:900; letter-spacing:0; }
+    html[data-ironlaw-interface="true"] table { width:100%; border-collapse:collapse; min-width:760px; background:#fff; }
+    html[data-ironlaw-interface="true"] th,
+    html[data-ironlaw-interface="true"] td { border-bottom:1px solid #e5e7eb; padding:9px; text-align:left; vertical-align:top; }
+    html[data-ironlaw-interface="true"] th { background:#f1f5f9; color:#334155; }
+    html[data-ironlaw-interface="true"] details.advanced {
+      margin-top:16px; border:1px solid #cbd5e1; border-radius:8px;
+      background:#fff; padding:12px;
+    }
+    html[data-ironlaw-interface="true"] details.advanced > summary {
+      cursor:pointer; font-weight:900; color:#0f172a;
+    }
+    html[data-ironlaw-interface="true"] .tiantianle-interface-summary {
+      border-left:5px solid #0f172a; background:#f8fafc;
+    }
+    html[data-ironlaw-interface="true"] .tiantianle-interface-summary .card {
+      background:#fbfdff;
+    }
+    @media (max-width:640px) {
+      html[data-ironlaw-interface="true"] header { padding:16px; }
+      html[data-ironlaw-interface="true"] header h1 { font-size:22px; }
+      html[data-ironlaw-interface="true"] main { padding:10px; }
+      html[data-ironlaw-interface="true"] .grid { grid-template-columns:1fr; }
+      html[data-ironlaw-interface="true"] .band { padding:12px; }
+      html[data-ironlaw-interface="true"] th,
+      html[data-ironlaw-interface="true"] td { font-size:13px; }
+      html[data-ironlaw-interface="true"] .value { font-size:20px; }
+      html[data-ironlaw-interface="true"] .panel::before { font-size:18px; padding:11px 12px; }
+    }
+  </style>
+"""
+    summary = """
+  <section class="band tiantianle-interface-summary">
+    <h2>戰報分區總覽</h2>
+    <div class="grid">
+      <div class="card"><h2>下期預測</h2><div class="value">主推號碼與逐號驗算</div></div>
+      <div class="card"><h2>上期檢討</h2><div class="value">命中、未命中、修正</div></div>
+      <div class="card"><h2>低機率分析</h2><div class="value">暫避與誤開檢討</div></div>
+      <div class="card"><h2>模型回測</h2><div class="value">回測、權重、穩定度</div></div>
+    </div>
+  </section>
+"""
+    updated = report_html
+    updated = updated.replace('<html lang="zh-Hant" data-compact-report="true">', '<html lang="zh-Hant" data-compact-report="true" data-ironlaw-interface="true">', 1)
+    updated = updated.replace('<html lang="zh-Hant">', '<html lang="zh-Hant" data-ironlaw-interface="true">', 1)
+    if 'data-ironlaw-interface="true"' not in updated:
+        updated = updated.replace("<html", '<html data-ironlaw-interface="true"', 1)
+    if "</head>" in updated:
+        updated = updated.replace("</head>", style + "</head>", 1)
+    else:
+        updated = style + updated
+    if '<section class="band tiantianle-interface-summary">' not in updated and "<main>" in updated:
+        updated = updated.replace("<main>", "<main>" + summary, 1)
+    return updated
+
+
 def build_report():
     analysis = load_json(ANALYSIS_JSON)
     if not analysis:
@@ -4657,7 +4746,8 @@ def save_reports():
         settled = latest_settled_prediction_for_actual_date(conn, latest) or latest_settled_snapshot(snapshots, latest)
     low_probability_html = localize_visible_html(build_low_probability_compact_report(analysis, settled))
     monthly_html = localize_visible_html(build_monthly_report_page(analysis, snapshots))
-    tabbed_report_html = localize_visible_html(report_html if 'data-compact-report="true"' in report_html else apply_latest_battle_tabs(report_html))
+    complete_report_html = report_html if 'data-compact-report="true"' in report_html else apply_latest_battle_tabs(report_html)
+    tabbed_report_html = apply_tiantianle_ironlaw_interface_mode(localize_visible_html(complete_report_html))
     prediction_html, review_html = split_prediction_review(report_html)
     prediction_html = localize_visible_html(prediction_html)
     review_html = localize_visible_html(review_html)

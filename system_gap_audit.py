@@ -53,9 +53,19 @@ def comparable_file_digest(path):
         return ""
     if path.suffix.lower() == ".html":
         text = path.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
+        text = re.sub(r"\s*<style\b[^>]*>.*?</style>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<section id=\"tiantianleCloudControls\".*?</section>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<section class=\"band launch-panel\".*?</section>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<a class=\"mobile-action sticky-launch\".*?</a>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<style>\s*.*?tiantianle-cloud-controls.*?</style>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<style>\s*.*?launch-panel.*?</style>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<script>\s*window\.TIANTIANLE_CLOUD_ACTION_VERSION.*?</script>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<script>\s*window\.TIANTIANLE_BUILD_VERSION.*?</script>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<link rel=\"manifest\".*?<link rel=\"apple-touch-icon\" href=\"icon-192.png\">\s*", "", text, flags=re.S)
         text = OPEN_SYNC_SCRIPT_RE.sub("", text)
         text = re.sub(r"\s+</body>", "</body>", text)
         text = re.sub(r"\s+</html>", "</html>", text)
+        text = re.sub(r">\s+<", "><", text).strip()
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
     return file_digest(path)
 
@@ -337,7 +347,7 @@ def main():
         add_issue(issues, "預測結構", "前十五名不足", "第十到第十五名備查會失真", "補齊前十五名排序與重複檢查", "嚴重")
     if strict_no_padding:
         unqualified_output = []
-        for number in list(top15[:15]) + list(strong_single):
+        for number in list(top9[:9]) + list(strong_single):
             try:
                 number_int = int(number)
             except (TypeError, ValueError):

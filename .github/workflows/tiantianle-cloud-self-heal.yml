@@ -95,6 +95,28 @@ jobs:
           python system_gap_audit.py --fail-on-publish-blocking --local-only
           python verify_mobile_sync.py --local-only
           python system_stability_monitor.py
+          python - <<'PY'
+          import pathlib
+
+          root = pathlib.Path(".")
+          checks = [
+              ("reports/latest_battle_report.html", "data-ironlaw-interface", "完整戰報介面未切換為鐵律規格"),
+              ("site/reports/latest_battle_report.html", "tiantianleCloudControls", "手機雲端操作按鈕缺失"),
+              ("site/reports/latest_battle_report.html", "目前最新更新時間", "手機雲端最新更新時間顯示缺失"),
+          ]
+          problems = []
+          for file_name, marker, message in checks:
+              path = root / file_name
+              if not path.exists():
+                  problems.append(f"缺少必要檔案：{file_name}")
+                  continue
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              if marker not in text:
+                  problems.append(f"{message}：{file_name}")
+          if problems:
+              raise SystemExit("\n".join(problems))
+          print("self-heal report interface and cloud controls verified")
+          PY
       - name: Refuse stale overwrite
         shell: bash
         run: |

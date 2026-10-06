@@ -212,6 +212,32 @@ jobs:
               if not (root / item).exists():
                   problems.append(f"\u7f3a\u5c11\u8f14\u52a9\u6a94\u6848\uff1a{item}")
 
+          interface_files = [
+              "reports/latest_battle_report.html",
+              "reports/tiantianle_ironlaw_battle_report.html",
+          ]
+          for item in interface_files:
+              path = root / item
+              if path.exists():
+                  text = path.read_text(encoding="utf-8", errors="ignore")
+                  if "data-ironlaw-interface" not in text:
+                      problems.append(f"完整戰報介面未切換為鐵律規格：{item}")
+                  if 'class="tabs"' in text and "data-ironlaw-interface" not in text:
+                      problems.append(f"完整戰報仍殘留舊式頁籤介面：{item}")
+
+          cloud_control_files = [
+              "site/index.html",
+              "site/reports/latest_battle_report.html",
+          ]
+          for item in cloud_control_files:
+              path = root / item
+              if path.exists():
+                  text = path.read_text(encoding="utf-8", errors="ignore")
+                  if "tiantianleCloudControls" not in text:
+                      problems.append(f"手機雲端操作按鈕缺失：{item}")
+                  if "目前最新更新時間" not in text:
+                      problems.append(f"手機雲端最新更新時間顯示缺失：{item}")
+
           analysis_path = root / "reports/latest_analysis.json"
           site_analysis_path = root / "site/latest_analysis.json"
           analysis = {}
