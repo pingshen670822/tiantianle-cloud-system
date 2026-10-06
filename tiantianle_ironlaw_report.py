@@ -4276,7 +4276,7 @@ def build_monthly_report_page(analysis, snapshots):
 
 def page(title, subtitle, content):
     return f"""<!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-ironlaw-interface="true" data-report-style="ironlaw">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -4331,12 +4331,6 @@ def page(title, subtitle, content):
     .signal-detail {{ color:#7f1d1d; font-weight:900; }}
     .mobile-action {{ display:block; text-align:center; padding:14px; background:#166534; color:#fff!important; text-decoration:none; border-radius:6px; font-weight:800; }}
     .mobile-action.secondary {{ background:#1d4ed8; }}
-    .tabbar {{ position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; background:#f6f7fb; padding:10px 0 14px; }}
-    .tabbar button {{ border:1px solid #cbd5e1; background:white; color:#0f172a; border-radius:8px; padding:10px 14px; font-weight:800; cursor:pointer; }}
-    .tabbar button.active {{ background:#0f172a; color:white; border-color:#0f172a; }}
-    .tab-panel {{ display:none; }}
-    .tab-panel.active {{ display:block; }}
-    .tab-panel > .band:first-child {{ margin-top:0; }}
     details.advanced {{ margin-top:16px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; padding:12px; }}
     details.advanced > summary {{ cursor:pointer; font-weight:900; color:#0f172a; }}
     details.advanced .band {{ margin-top:12px; }}
@@ -4560,9 +4554,6 @@ def build_report():
     release_text = release_label(analysis)
     fresh_text = u("\\u8cc7\\u6599\\u5df2\\u66f4\\u65b0") if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else freshness.get("status", "")
     md = make_markdown(analysis, settled)
-    compact_html = build_compact_tiantianle_report(analysis, settled, snapshots)
-    return compact_html, md, build_history_html(snapshots)
-
     conclusion = f"""
     <section class="band notice">
       <h2>{u('\\u672c\\u671f\\u767c\\u5e03\\u7d50\\u8ad6')}</h2>
@@ -4746,8 +4737,8 @@ def save_reports():
         settled = latest_settled_prediction_for_actual_date(conn, latest) or latest_settled_snapshot(snapshots, latest)
     low_probability_html = localize_visible_html(build_low_probability_compact_report(analysis, settled))
     monthly_html = localize_visible_html(build_monthly_report_page(analysis, snapshots))
-    complete_report_html = report_html if 'data-compact-report="true"' in report_html else apply_latest_battle_tabs(report_html)
-    tabbed_report_html = apply_tiantianle_ironlaw_interface_mode(localize_visible_html(complete_report_html))
+    complete_report_html = report_html
+    tabbed_report_html = localize_visible_html(complete_report_html)
     prediction_html, review_html = split_prediction_review(report_html)
     prediction_html = localize_visible_html(prediction_html)
     review_html = localize_visible_html(review_html)
