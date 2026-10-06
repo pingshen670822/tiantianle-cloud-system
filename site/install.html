@@ -35,7 +35,7 @@ body{padding-bottom:82px}
       <div class="tiantianle-cloud-title">雲端快速操作</div>
       <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
       <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-06T16:47:53+08:00</div>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-06T17:00:58+08:00</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-05　03 16 18 27 28 / 下期：2026-10-06　2026-10-07 09:50</div>
       <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">按鈕會開啟雲端工作流，同時手機會重抓最新資料</div>
     </section>
@@ -70,8 +70,8 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worke
 </script>
 
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261006084942";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-06T16:47:53+08:00";
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261006090246";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-06T17:00:58+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
       try {
@@ -165,8 +165,8 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worke
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261006084942') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261006084942';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261006090246') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261006090246';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
