@@ -1,8 +1,8 @@
 {
-  "checked_at_taiwan": "2026-10-06T17:21:43+08:00",
+  "checked_at_taiwan": "2026-10-06T17:32:15+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-10-06T17:19:50+08:00",
+    "generated_at_taiwan": "2026-10-06T17:30:24+08:00",
     "draw_count": 11941,
     "latest_draw_date": "2026-10-05",
     "latest_numbers": [
@@ -33,7 +33,7 @@
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "site": {
-    "generated_at_taiwan": "2026-10-06T17:19:50+08:00",
+    "generated_at_taiwan": "2026-10-06T17:30:24+08:00",
     "draw_count": 11941,
     "latest_draw_date": "2026-10-05",
     "latest_numbers": [
@@ -64,7 +64,7 @@
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "site_data": {
-    "generated_at_taiwan": "2026-10-06T17:19:50+08:00",
+    "generated_at_taiwan": "2026-10-06T17:30:24+08:00",
     "draw_count": 11941,
     "latest_draw_date": "2026-10-05",
     "latest_numbers": [
