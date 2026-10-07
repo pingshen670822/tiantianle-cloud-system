@@ -34,43 +34,45 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261007004131">
+    <link rel="manifest" href="manifest.webmanifest?v=20261007011040">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     
     <style>
-      .tiantianle-cloud-controls{position:sticky;top:0;z-index:9998;display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr);gap:8px;align-items:center;padding:10px 12px;background:#fff7ed;border-bottom:3px solid #f97316;box-shadow:0 6px 18px rgba(15,23,42,.12);font-family:"Microsoft JhengHei",Arial,sans-serif}
+      .tiantianle-cloud-controls{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}
       .tiantianle-cloud-title{font-weight:900;color:#7c2d12;white-space:nowrap}
-      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2}
+      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}
       .tiantianle-cloud-button.manual{background:#166534}
       .tiantianle-cloud-button.repair{background:#991b1b}
+      .tiantianle-cloud-button.refresh{background:#1d4ed8}
       .tiantianle-cloud-status{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}
       .tiantianle-cloud-status.primary-time{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}
-      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr 1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
+      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
     </style>
     </head>
-<body>
-    <section id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
+<body><section class="band update-box"><h2>立刻更新到最新</h2>
+    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
       <div class="tiantianle-cloud-title">雲端快速操作</div>
       <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
       <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-07T08:39:46+08:00</div>
+      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-07T09:08:53+08:00</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-05　03 16 18 27 28 / 下期：2026-10-06　2026-10-07 09:50</div>
-      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">按鈕會開啟雲端工作流，同時手機會重抓最新資料</div>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
+    </div>
     </section>
-    
-<header><h1>天天樂 手機雲端首頁</h1><p>產生 台灣時間 2026-10-07 08:39 / 最新開獎 台灣時間 2026-10-06 09:50 / 下期開獎 台灣時間 2026-10-07 09:50</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>產生 台灣時間 2026-10-07 09:08 / 最新開獎 台灣時間 2026-10-06 09:50 / 下期開獎 台灣時間 2026-10-07 09:50</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
       <a class="mobile-action repair-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml">當機立即修復</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="force-sync-20261007004131.html?v=20261007004131">手機不一樣點這裡強制同步</a>
+      <a class="cloud-update-link" href="force-sync-20261007011040.html?v=20261007011040">手機不一樣點這裡強制同步</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261007004131</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261007011040</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
@@ -110,7 +112,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261007004131';
+    window.TIANTIANLE_BUILD_VERSION = '20261007011040';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -138,7 +140,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261007004131&force=' + Date.now());
+      location.replace('首頁.html?v=20261007011040&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -155,7 +157,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261007004131', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261007011040', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
@@ -183,8 +185,8 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     </script>
     
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261007004131";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-07T08:39:46+08:00";
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261007011040";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-07T09:08:53+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
       try {
@@ -259,9 +261,15 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
         }
       }, 30 * 60 * 1000);
     }
+    async function tiantianleForceReadLatestNow() {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = '正在重讀雲端最新更新時間';
+      await tiantianleClearVisibleCaches();
+      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
+    }
     async function tiantianlePrepareCloudAction(label) {
       var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = label + '：已清理手機快取，請在開啟的 GitHub 頁面按 Run workflow；本頁會自動顯示更新後時間。';
+      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
       await tiantianleClearVisibleCaches();
       try {
         var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
@@ -278,8 +286,8 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261007004131') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261007004131';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261007011040') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261007011040';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
