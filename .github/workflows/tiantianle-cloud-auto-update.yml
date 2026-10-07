@@ -111,6 +111,7 @@ jobs:
             fi
             echo "update_exit=${update_exit}"
             python repair_no_empty_prediction.py || echo "no-empty prediction repair warning"
+            python super_single_pattern_miner.py || echo "super single pattern miner warning"
             python ultimate_single_deep_validation.py || echo "ultimate single validation warning"
             python pages_build.py || echo "pages_build warning"
             python sanitize_public_outputs.py || echo "sanitize warning"
@@ -180,6 +181,7 @@ jobs:
             system_gap_audit.py \
             verify_mobile_sync.py \
             system_stability_monitor.py \
+            super_single_pattern_miner.py \
             ultimate_single_deep_validation.py \
             repair_no_empty_prediction.py \
             tiantianle_ironlaw_report.py \

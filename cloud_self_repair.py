@@ -281,6 +281,7 @@ def main():
         steps.append(run_step(f"來源快取自救 {attempt}", [sys.executable, "cloud_latest_cache_refresh.py"], 240, required=False))
         steps.append(run_step(f"全歷史重算 {attempt}", [sys.executable, "offline_full_history_recalc.py"], 900, required=True))
         steps.append(run_step(f"前九防空修復 {attempt}", [sys.executable, "repair_no_empty_prediction.py"], 180, required=True))
+        steps.append(run_step(f"獨隻軌跡稽核 {attempt}", [sys.executable, "super_single_pattern_miner.py"], 180, required=True))
         steps.append(run_step(f"終極獨隻驗證 {attempt}", [sys.executable, "ultimate_single_deep_validation.py"], 180, required=False))
         steps.append(run_step(f"戰報重建 {attempt}", [sys.executable, "pages_build.py"], 240, required=True))
         steps.append(run_step(f"公開檔清理 {attempt}", [sys.executable, "sanitize_public_outputs.py"], 120, required=True))

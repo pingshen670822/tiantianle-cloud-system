@@ -131,6 +131,42 @@ def month_rate(draws: list[tuple[str, list[int]]], number: int, target_draw_date
     }
 
 
+def previous_prediction_info(target_draw_date: str, number: int) -> dict[str, Any]:
+    if not DB_PATH.exists() or not target_draw_date:
+        return {}
+    try:
+        with sqlite3.connect(DB_PATH) as con:
+            con.row_factory = sqlite3.Row
+            row_data = con.execute(
+                """
+                SELECT based_on_date,target_date,candidates_json,status
+                FROM predictions
+                WHERE target_date < ?
+                ORDER BY target_date DESC,id DESC
+                LIMIT 1
+                """,
+                (target_draw_date,),
+            ).fetchone()
+    except Exception:
+        return {}
+    if not row_data:
+        return {}
+    try:
+        candidates = json.loads(row_data["candidates_json"] or "[]")
+    except Exception:
+        candidates = []
+    numbers = [as_int(item.get("number")) for item in candidates if isinstance(item, dict)]
+    return {
+        "previous_target_date": row_data["target_date"],
+        "previous_based_on_date": row_data["based_on_date"],
+        "previous_status": row_data["status"],
+        "previous_top1": numbers[:1],
+        "previous_top9": numbers[:9],
+        "previous_rank": numbers.index(number) + 1 if number in numbers else None,
+        "same_as_previous_top1": bool(numbers[:1] and numbers[0] == number),
+    }
+
+
 def row(label: str, value: str, status: str = "") -> str:
     return (
         "<tr>"
@@ -189,6 +225,11 @@ def generate(number: int | None = None) -> dict[str, Any]:
     cross = candidate.get("cross_validation", {})
     maturity = candidate.get("practical_maturity", {})
     model_backtest = ultimate.get("model_backtest") or engine.get("selected_model_backtest", {})
+    pattern_mining = analysis.get("super_single_pattern_mining") or {}
+    same_single_validation = pattern_mining.get("same_single_reuse_validation") or {}
+    previous_info = pattern_mining.get("previous_prediction") or previous_prediction_info(target_date, number)
+    repeated_prediction = bool(previous_info.get("same_as_previous_top1"))
+    repeated_prediction_passed = bool(same_single_validation.get("passed")) if same_single_validation else not repeated_prediction
 
     selected_consistency = [
         as_int((prediction.get("top1") or [None])[0]),
@@ -205,7 +246,15 @@ def generate(number: int | None = None) -> dict[str, Any]:
     validation_checks = [
         ("唯一獨隻一致", unique_consistent, f"主預測、獨隻決策、終極引擎皆為 {fmt_number(number)}"),
         ("嚴格門檻", strict_passed and not rejected, "已通過，且不在剔除名單"),
-        ("上期預測沿用防呆", previous_passed and not bool(previous_guard.get("previous_single")) and not bool(previous_guard.get("previous_top15")), "非上期獨隻、非上期前十五硬搬"),
+        (
+            "上期預測沿用防呆",
+            repeated_prediction_passed,
+            (
+                f"上一期也為獨隻，已用本期最新資料重算後仍為第一；上期目標 {previous_info.get('previous_target_date')}"
+                if repeated_prediction
+                else "不是上期獨隻硬搬"
+            ),
+        ),
         ("最新開獎重複防呆", repeat_passed and not latest_reuse, f"最新開獎 {fmt_numbers(latest_numbers)} 未含 {fmt_number(number)}"),
         ("全歷史庫接入", history_count >= 10000, f"目前全歷史 {history_count} 期"),
         ("候選勝出", selected_audit and as_int(selected_audit.get("number")) == number and margin >= 0, f"勝過第二名 {fmt_number(runner_up.get('number')) if runner_up else '無'}，差距 {margin:.5f}"),
@@ -271,6 +320,26 @@ def generate(number: int | None = None) -> dict[str, Any]:
             )
         )
 
+    pattern_rows = []
+    for item in (pattern_mining.get("top_signals") or [])[:12]:
+        pattern_rows.append(
+            row(
+                str(item.get("kind", "軌跡")),
+                f"{item.get('name', '-')} / {item.get('hits', 0)}/{item.get('samples', 0)} / {pct(item.get('rate'))}",
+                f"優勢 {item.get('lift', 0)} 倍 / {'通過' if item.get('passed') else '未達'}",
+            )
+        )
+    truth = pattern_mining.get("truth_guard") or {}
+    if truth:
+        pattern_rows.insert(
+            0,
+            row(
+                "真實90%守門",
+                f"回測 {truth.get('model_backtest_hits', '無')}/{truth.get('model_backtest_rounds', '無')} / {pct(truth.get('model_backtest_rate'))}",
+                "已達90%" if truth.get("meets_90") else "未達90%，禁止偽裝",
+            ),
+        )
+
     audit_rows = []
     for idx, item in enumerate(audit_sorted[:6], start=1):
         audit_rows.append(
@@ -323,11 +392,12 @@ def generate(number: int | None = None) -> dict[str, Any]:
     {card(f"三、{fmt_number(number)} 的核心分數驗證", make_table(score_rows))}
     {card("四、全歷史資料庫驗證", make_table(history_rows))}
     {card("五、走步回測驗證", make_table(backtest_rows))}
-    {card("六、多模組加權來源", make_table(feature_rows or [row("模組資料", "無", "需複核")]))}
-    {card("七、候選競爭排名", make_table(audit_rows or [row("候選排名", "無", "需複核")]))}
-    {card("八、最終檢查清單", make_table(check_rows))}
+    {card("六、軌跡規律與拖牌稽核", make_table(pattern_rows or [row("軌跡稽核", "尚未產生", "需先執行軌跡稽核")]))}
+    {card("七、多模組加權來源", make_table(feature_rows or [row("模組資料", "無", "需複核")]))}
+    {card("八、候選競爭排名", make_table(audit_rows or [row("候選排名", "無", "需複核")]))}
+    {card("九、最終檢查清單", make_table(check_rows))}
     <section class="panel">
-      <h2>九、結論</h2>
+      <h2>十、結論</h2>
       <p><strong class="ok">目前系統驗證後的本期終極獨隻為 {fmt_number(number)}。</strong></p>
       <p>它通過唯一獨隻一致、嚴格門檻、上期沿用防呆、最新開獎重複防呆、全歷史資料庫接入與候選勝出檢查。第二名差距很小，開獎後必須立刻回寫命中檢討，若未命中要進入下一期滾動修正。</p>
       <p class="note">提醒：樂透開獎仍屬隨機事件，本報告是系統驗證與排序依據，不等同保證命中。</p>

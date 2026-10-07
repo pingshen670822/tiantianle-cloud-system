@@ -42,6 +42,7 @@ ALLOWLIST = {
     "天天樂自動更新鐵律守護.ps1",
     "install_daily_auto_update.ps1",
     "system_stability_monitor.py",
+    "super_single_pattern_miner.py",
     "sync_local_from_cloud.py",
     "tiantianle_core.py",
     "tiantianle_formula_engine.py",
