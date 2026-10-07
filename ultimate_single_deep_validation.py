@@ -240,7 +240,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
         row("歷史校準分", num(candidate.get("historical_calibrated_score"), 5), "全歷史校準"),
         row("終極綜合分", num(ultimate.get("composite_score"), 5), "獨隻勝出分"),
         row("終極模型排名", str(ultimate.get("model_rank", "無")), "越前越佳"),
-        row("第二名差距", f"{margin:.5f}", "13 勝出" if margin >= 0 else "需複核"),
+        row("第二名差距", f"{margin:.5f}", f"{fmt_number(number)} 勝出" if margin >= 0 else "需複核"),
     ]
 
     history_rows = [
@@ -320,7 +320,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
   <main>
     {card("一、期別與資料來源", make_table(summary_rows))}
     {card("二、獨隻唯一性與防呆", make_table(gate_rows))}
-    {card("三、13 的核心分數驗證", make_table(score_rows))}
+    {card(f"三、{fmt_number(number)} 的核心分數驗證", make_table(score_rows))}
     {card("四、全歷史資料庫驗證", make_table(history_rows))}
     {card("五、走步回測驗證", make_table(backtest_rows))}
     {card("六、多模組加權來源", make_table(feature_rows or [row("模組資料", "無", "需複核")]))}
