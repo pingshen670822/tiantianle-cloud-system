@@ -280,6 +280,8 @@ def main():
     for attempt in range(1, max(1, args.retries) + 1):
         steps.append(run_step(f"來源快取自救 {attempt}", [sys.executable, "cloud_latest_cache_refresh.py"], 240, required=False))
         steps.append(run_step(f"全歷史重算 {attempt}", [sys.executable, "offline_full_history_recalc.py"], 900, required=True))
+        steps.append(run_step(f"前九防空修復 {attempt}", [sys.executable, "repair_no_empty_prediction.py"], 180, required=True))
+        steps.append(run_step(f"終極獨隻驗證 {attempt}", [sys.executable, "ultimate_single_deep_validation.py"], 180, required=False))
         steps.append(run_step(f"戰報重建 {attempt}", [sys.executable, "pages_build.py"], 240, required=True))
         steps.append(run_step(f"公開檔清理 {attempt}", [sys.executable, "sanitize_public_outputs.py"], 120, required=True))
         steps.append(run_step(f"缺口檢測 {attempt}", [sys.executable, "system_gap_audit.py", "--fail-on-publish-blocking", "--local-only"], 240, required=True))

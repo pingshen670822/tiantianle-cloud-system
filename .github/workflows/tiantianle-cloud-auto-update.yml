@@ -110,6 +110,7 @@ jobs:
               update_exit=$?
             fi
             echo "update_exit=${update_exit}"
+            python repair_no_empty_prediction.py || echo "no-empty prediction repair warning"
             python ultimate_single_deep_validation.py || echo "ultimate single validation warning"
             python pages_build.py || echo "pages_build warning"
             python sanitize_public_outputs.py || echo "sanitize warning"
@@ -180,6 +181,7 @@ jobs:
             verify_mobile_sync.py \
             system_stability_monitor.py \
             ultimate_single_deep_validation.py \
+            repair_no_empty_prediction.py \
             tiantianle_ironlaw_report.py \
             "美國加州天天樂_20260618_第1版.py" || echo "py_compile warning"
           python - <<'PY'
@@ -284,12 +286,9 @@ jobs:
               problems.append(f"\u96f2\u7aef\u4e3b\u7a0b\u5f0f\u4e0d\u662f\u6700\u65b0\u7248\u9435\u5f8b\u5f15\u64ce\uff1a{engine}")
           top9_has_valid_shape = (
               bool(top9)
+              and len(top9) == 9
               and len(set(top9)) == len(top9)
               and all(1 <= n <= 39 for n in top9)
-              and (
-                  (strict_no_padding and (not strict_numbers or set(top9).issubset(strict_numbers)))
-                  or (not strict_no_padding and len(top9) == 9)
-              )
           )
           if not top9_has_valid_shape:
               problems.append(f"\u524d\u4e5d\u9810\u6e2c\u683c\u5f0f\u932f\u8aa4\uff1a{top9}")
@@ -352,6 +351,8 @@ jobs:
               or "\u4e0d\u540c\u6b65" in problem
               or "\u843d\u5f8c" in problem
               or "\u683c\u5f0f\u932f\u8aa4" in problem
+              or "\u64cd\u4f5c\u6309\u9215\u7f3a\u5931" in problem
+              or "\u6700\u65b0\u66f4\u65b0\u6642\u9593\u986f\u793a\u7f3a\u5931" in problem
               or "\u8cc7\u6599\u7b46\u6578\u4e0d\u8db3" in problem
               or "\u672a\u66f4\u65b0\u5230\u6700\u65b0\u958b\u734e" in problem
           ]
@@ -479,10 +480,13 @@ jobs:
             done < <(find reports -type f -print0)
           fi
           [ -s reports/latest_analysis.json ] && cp reports/latest_analysis.json public_site/latest_analysis.json
-          [ -s reports/latest_battle_report.html ] && cp reports/latest_battle_report.html public_site/latest_battle_report.html
-          [ -s reports/latest_battle_report.html ] && cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
-          [ -s reports/complete_report.html ] && cp reports/complete_report.html public_site/complete_report.html
-          [ -s reports/complete_report.html ] && cp reports/complete_report.html public_site/reports/complete_report.html
+          test -s public_site/reports/latest_battle_report.html
+          test -s public_site/reports/complete_report.html
+          cp public_site/reports/latest_battle_report.html public_site/latest_battle_report.html
+          cp public_site/reports/complete_report.html public_site/complete_report.html
+          grep -q "tiantianleCloudControls" public_site/reports/latest_battle_report.html
+          grep -q "手動更新最新" public_site/reports/latest_battle_report.html
+          grep -q "目前最新更新時間" public_site/reports/latest_battle_report.html
           test -s public_site/index.html
           test -s public_site/latest_analysis.json
           test -s public_site/reports/latest_battle_report.html
@@ -542,6 +546,9 @@ jobs:
           fi
           echo "remote mobile sync failed; running emergency cloud self-repair and republish"
           python cloud_self_repair.py --retries 2
+          python repair_no_empty_prediction.py
+          python pages_build.py
+          python sanitize_public_outputs.py
           python verify_mobile_sync.py --local-only
           rm -rf public_site
           mkdir -p public_site/data public_site/reports
@@ -557,10 +564,13 @@ jobs:
             cp "$src" "$dest"
           done < <(find reports -type f -print0)
           cp reports/latest_analysis.json public_site/latest_analysis.json
-          cp reports/latest_battle_report.html public_site/latest_battle_report.html
-          cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
-          cp reports/complete_report.html public_site/complete_report.html
-          cp reports/complete_report.html public_site/reports/complete_report.html
+          test -s public_site/reports/latest_battle_report.html
+          test -s public_site/reports/complete_report.html
+          cp public_site/reports/latest_battle_report.html public_site/latest_battle_report.html
+          cp public_site/reports/complete_report.html public_site/complete_report.html
+          grep -q "tiantianleCloudControls" public_site/reports/latest_battle_report.html
+          grep -q "手動更新最新" public_site/reports/latest_battle_report.html
+          grep -q "目前最新更新時間" public_site/reports/latest_battle_report.html
           touch public_site/.nojekyll
           publish_dir="$(mktemp -d)"
           cp -a public_site/. "$publish_dir/"

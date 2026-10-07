@@ -506,6 +506,25 @@ def apply_mobile_open_sync_to_site_html():
         updated = inject_mobile_open_sync(inject_cloud_action_controls(text))
         if updated != text:
             path.write_text(updated, encoding="utf-8")
+    required = [
+        SITE_DIR / "index.html",
+        SITE_DIR / "reports" / "latest_battle_report.html",
+        SITE_DIR / "reports" / "complete_report.html",
+    ]
+    missing = []
+    for path in required:
+        if not path.exists():
+            missing.append(str(path))
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "tiantianleCloudControls" not in text or "手動更新最新" not in text or "目前最新更新時間" not in text:
+            fixed = inject_mobile_open_sync(inject_cloud_action_controls(text))
+            path.write_text(fixed, encoding="utf-8")
+            text = fixed
+        if "tiantianleCloudControls" not in text or "手動更新最新" not in text or "目前最新更新時間" not in text:
+            missing.append(str(path))
+    if missing:
+        raise RuntimeError("手機雲端操作按鈕或最新時間欄位缺失：" + "；".join(missing))
 
 
 def copy_text(src, dst):
