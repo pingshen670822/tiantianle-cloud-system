@@ -1,6 +1,6 @@
 # 天天樂雲端自我修復狀態
 
-- 檢查時間：2026-10-07T15:54:22+08:00 台灣時間
+- 檢查時間：2026-10-07T16:24:33+08:00 台灣時間
 - 狀態：已修復
 - 最新開獎：2026-10-06 / 09 10 14 29 32
 - 應更新到期別：2026-10-06
@@ -13,8 +13,8 @@
 ## 修復步驟
 | 步驟 | 結果 | 秒數 | 說明 |
 | --- | --- | ---: | --- |
-| 來源快取自救 1 | 通過 | 16.8 | {"status": "ok", "successful_sources": 6} |
-| 全歷史重算 1 | 通過 | 213.4 | : 17 /   }, /   "low_probability_settled_count": 0, /   "prediction_status": "recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated", /   "health_status": "ok", /   "system_completeness": 100 / } |
+| 來源快取自救 1 | 失敗 | 240.1 | timeout |
+| 全歷史重算 1 | 通過 | 210.2 | : 17 /   }, /   "low_probability_settled_count": 0, /   "prediction_status": "recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated", /   "health_status": "ok", /   "system_completeness": 100 / } |
 | 前九防空修復 1 | 通過 | 0.2 | "target_draw_date": "2026-10-07", /   "target_taiwan_time": "2026-10-08 09:50", /   "top1": [ /     39 /   ], /   "top9": [ /     39, /     11, /     19, /     15, /     30, /     33, /     6, /     2, /     13 /   ] / } |
 | 終極獨隻驗證 1 | 通過 | 0.1 | est_super_single_validation.md", /     "reports/super_single_39_validation.md", /     "site/reports/super_single_39_validation.md", /     "site/最新終極獨隻深度驗證.html", /     "site/latest_super_single_validation.html" /   ] / } |
 | 戰報重建 1 | 通過 | 2.2 | /home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/site/index.html |
