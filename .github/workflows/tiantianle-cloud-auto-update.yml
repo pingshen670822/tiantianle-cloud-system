@@ -110,6 +110,7 @@ jobs:
               update_exit=$?
             fi
             echo "update_exit=${update_exit}"
+            python ultimate_single_deep_validation.py || echo "ultimate single validation warning"
             python pages_build.py || echo "pages_build warning"
             python sanitize_public_outputs.py || echo "sanitize warning"
             python system_gap_audit.py --fail-on-publish-blocking --local-only || python system_gap_audit.py --local-only || echo "system_gap_audit warning"
@@ -178,6 +179,7 @@ jobs:
             system_gap_audit.py \
             verify_mobile_sync.py \
             system_stability_monitor.py \
+            ultimate_single_deep_validation.py \
             tiantianle_ironlaw_report.py \
             "美國加州天天樂_20260618_第1版.py" || echo "py_compile warning"
           python - <<'PY'

@@ -245,25 +245,27 @@ def inject_cloud_action_controls(html):
     version = build_version()
     snapshot = latest_update_snapshot()
     panel = f"""
-    <section id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="{u('\\u96f2\\u7aef\\u64cd\\u4f5c')}">
+    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="{u('\\u96f2\\u7aef\\u64cd\\u4f5c')}">
       <div class="tiantianle-cloud-title">{u('\\u96f2\\u7aef\\u5feb\\u901f\\u64cd\\u4f5c')}</div>
       <a class="tiantianle-cloud-button manual" href="{workflow_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}')">{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}</a>
       <a class="tiantianle-cloud-button repair" href="{self_heal_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}')">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
+      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">{u('\\u91cd\\u8b80\\u6700\\u65b0\\u6642\\u9593')}</button>
       <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：{escape_html(snapshot['generated'])}</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：{escape_html(snapshot['latest_draw'])}　{escape_html(snapshot['latest_numbers'])} / 下期：{escape_html(snapshot['target_draw'])}　{escape_html(snapshot['target_taiwan_time'])}</div>
-      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">{u('\\u6309\\u9215\\u6703\\u958b\\u555f\\u96f2\\u7aef\\u5de5\\u4f5c\\u6d41\\uff0c\\u540c\\u6642\\u624b\\u6a5f\\u6703\\u91cd\\u6293\\u6700\\u65b0\\u8cc7\\u6599')}</div>
-    </section>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">{u('\\u624b\\u6a5f\\u6309\\u9215\\u6703\\u958b\\u555f\\u96f2\\u7aef\\u5de5\\u4f5c\\u6d41\\uff0c\\u672c\\u9801\\u6703\\u6bcf15\\u79d2\\u91cd\\u8b80\\u6700\\u65b0\\u6642\\u9593')}</div>
+    </div>
     """
     style = f"""
     <style>
-      .tiantianle-cloud-controls{{position:sticky;top:0;z-index:9998;display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr);gap:8px;align-items:center;padding:10px 12px;background:#fff7ed;border-bottom:3px solid #f97316;box-shadow:0 6px 18px rgba(15,23,42,.12);font-family:"Microsoft JhengHei",Arial,sans-serif}}
+      .tiantianle-cloud-controls{{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}}
       .tiantianle-cloud-title{{font-weight:900;color:#7c2d12;white-space:nowrap}}
-      .tiantianle-cloud-button{{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2}}
+      .tiantianle-cloud-button{{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}}
       .tiantianle-cloud-button.manual{{background:#166534}}
       .tiantianle-cloud-button.repair{{background:#991b1b}}
+      .tiantianle-cloud-button.refresh{{background:#1d4ed8}}
       .tiantianle-cloud-status{{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}}
       .tiantianle-cloud-status.primary-time{{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}}
-      @media(max-width:680px){{.tiantianle-cloud-controls{{grid-template-columns:1fr 1fr}}.tiantianle-cloud-title,.tiantianle-cloud-status{{grid-column:1/-1}}.tiantianle-cloud-button{{font-size:16px;padding:14px 8px}}}}
+      @media(max-width:680px){{.tiantianle-cloud-controls{{grid-template-columns:1fr}}.tiantianle-cloud-title,.tiantianle-cloud-status{{grid-column:1/-1}}.tiantianle-cloud-button{{font-size:16px;padding:14px 8px}}}}
     </style>
     """
     script = f"""
@@ -344,9 +346,15 @@ def inject_cloud_action_controls(html):
         }}
       }}, 30 * 60 * 1000);
     }}
+    async function tiantianleForceReadLatestNow() {{
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = '正在重讀雲端最新更新時間';
+      await tiantianleClearVisibleCaches();
+      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
+    }}
     async function tiantianlePrepareCloudAction(label) {{
       var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = label + '：已清理手機快取，請在開啟的 GitHub 頁面按 Run workflow；本頁會自動顯示更新後時間。';
+      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
       await tiantianleClearVisibleCaches();
       try {{
         var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
@@ -369,8 +377,15 @@ def inject_cloud_action_controls(html):
         html = html.replace("</body>", script + "</body>", 1)
     else:
         html = html + script
+    if "update-box" in html and "</section>" in html:
+        marker = '<section class="band update-box">'
+        start = html.find(marker)
+        if start >= 0:
+            end = html.find("</section>", start)
+            if end >= 0:
+                return html[:end] + panel + html[end:]
     if "<body>" in html:
-        return html.replace("<body>", "<body>" + panel, 1)
+        return html.replace("<body>", "<body><section class=\"band update-box\"><h2>立刻更新到最新</h2>" + panel + "</section>", 1)
     if "<main>" in html:
         return html.replace("<main>", "<main>" + panel, 1)
     return panel + html

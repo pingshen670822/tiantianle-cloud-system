@@ -55,6 +55,14 @@ def comparable_file_digest(path):
         text = path.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
         text = re.sub(r"\s*<style\b[^>]*>.*?</style>\s*", "", text, flags=re.S)
         text = re.sub(r"\s*<section id=\"tiantianleCloudControls\".*?</section>\s*", "", text, flags=re.S)
+        text = re.sub(
+            r"\s*<div id=\"tiantianleCloudControls\".*?<div id=\"tiantianleCloudActionStatus\".*?</div>\s*</div>\s*",
+            "",
+            text,
+            flags=re.S,
+        )
+        text = re.sub(r"\s*<div id=\"tiantianleCloudControls\".*?</div>\s*", "", text, flags=re.S)
+        text = re.sub(r"\s*<section class=\"band update-box\">\s*<h2>立刻更新到最新</h2>\s*</section>\s*", "", text, flags=re.S)
         text = re.sub(r"\s*<section class=\"band launch-panel\".*?</section>\s*", "", text, flags=re.S)
         text = re.sub(r"\s*<a class=\"mobile-action sticky-launch\".*?</a>\s*", "", text, flags=re.S)
         text = re.sub(r"\s*<style>\s*.*?tiantianle-cloud-controls.*?</style>\s*", "", text, flags=re.S)
