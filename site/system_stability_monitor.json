@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-07T17:12:10+08:00",
+  "checked_at_taiwan": "2026-10-07T17:39:50+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-06",
@@ -46,7 +46,88 @@
       "信心指標": 93.3,
       "模型機率": 22.09
     },
-    "created_at_taiwan": "2026-10-07T17:12:06+08:00"
+    "created_at_taiwan": "2026-10-07T17:39:45+08:00",
+    "pattern_mining": {
+      "passed_signal_count": 25,
+      "same_single_reuse_validation": {
+        "same_as_previous_top1": false,
+        "passed": true,
+        "rule": "若與上期獨隻相同，必須最新開獎未含該號、當期重算仍為第一、至少三項軌跡訊號通過。"
+      },
+      "truth_guard": {
+        "model_backtest_rounds": 0,
+        "model_backtest_hits": 0,
+        "model_backtest_rate": 0.0,
+        "baseline_rate": 0.128205,
+        "backtest_lift": 0.0,
+        "meets_90": false,
+        "policy": "每日必算一顆獨隻；未有真實回測90%以上，不准標示90%以上準確。"
+      },
+      "top_signals": [
+        {
+          "name": "近 60 期",
+          "kind": "近期軌跡",
+          "hits": 14,
+          "samples": 60,
+          "rate": 0.233333,
+          "lift": 1.82,
+          "passed": true,
+          "min_samples": 30,
+          "detail": "39 的近期出現率；少於30期只列觀察不列通過"
+        },
+        {
+          "name": "近 30 期",
+          "kind": "近期軌跡",
+          "hits": 6,
+          "samples": 30,
+          "rate": 0.2,
+          "lift": 1.56,
+          "passed": true,
+          "min_samples": 30,
+          "detail": "39 的近期出現率；少於30期只列觀察不列通過"
+        },
+        {
+          "name": "近 120 期",
+          "kind": "近期軌跡",
+          "hits": 21,
+          "samples": 120,
+          "rate": 0.175,
+          "lift": 1.365,
+          "passed": true,
+          "min_samples": 30,
+          "detail": "39 的近期出現率；少於30期只列觀察不列通過"
+        },
+        {
+          "name": "29-32 拖 39",
+          "kind": "雙號拖牌",
+          "hits": 28,
+          "samples": 170,
+          "rate": 0.164706,
+          "lift": 1.2847,
+          "passed": true,
+          "min_samples": 25,
+          "detail": "前一期同含 29、32，下一期開 39"
+        },
+        {
+          "name": "10-29 拖 39",
+          "kind": "雙號拖牌",
+          "hits": 26,
+          "samples": 158,
+          "rate": 0.164557,
+          "lift": 1.2835,
+          "passed": true,
+          "min_samples": 25,
+          "detail": "前一期同含 10、29，下一期開 39"
+        }
+      ]
+    },
+    "explanation": [
+      "近期軌跡：近 60 期，命中率 23.33%，優勢 1.82 倍",
+      "近期軌跡：近 30 期，命中率 20.00%，優勢 1.56 倍",
+      "近期軌跡：近 120 期，命中率 17.50%，優勢 1.365 倍",
+      "雙號拖牌：29-32 拖 39，命中率 16.47%，優勢 1.2847 倍",
+      "雙號拖牌：10-29 拖 39，命中率 16.46%，優勢 1.2835 倍"
+    ]
   },
   "ultimate_super_single_engine": {
     "status": "全歷史備援唯一輸出",
@@ -516,7 +597,7 @@
         "strict_gate": "備援觀察"
       }
     ],
-    "created_at_taiwan": "2026-10-07T17:12:06+08:00"
+    "created_at_taiwan": "2026-10-07T17:39:45+08:00"
   },
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -539,7 +620,7 @@
     "top9_count": 9,
     "top15_count": 15,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-07T17:12:06+08:00",
+    "created_at_taiwan": "2026-10-07T17:39:45+08:00",
     "no_empty_backup": true
   },
   "database": {
