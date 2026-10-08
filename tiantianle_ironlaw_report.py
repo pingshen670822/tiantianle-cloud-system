@@ -3192,6 +3192,10 @@ def compact_prediction_rebuild_html_tiantianle(analysis):
 def compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, target_date):
     prev = ((analysis.get("industrial_engine") or {}).get("previous_prediction_guard") or {})
     current = (analysis.get("latest_ironlaw") or {}).get("nine_hit_three") or (analysis.get("prediction") or {}).get("top9") or []
+    if "台灣" in str(latest_date) or "台灣" in str(target_date):
+        title_suffix = ""
+    else:
+        title_suffix = f"（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）"
     rows = [
         ["上期前九", fmt_numbers(prev.get("previous_top9", [])) or "-", "比對基準", "禁止直接沿用"],
         ["本期前九", fmt_numbers(current) or "-", "本期輸出", "每期重算"],
@@ -3201,7 +3205,7 @@ def compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, t
     ]
     return (
         '<div class="band">'
-        f'<h2>近期預測相似度稽核</h2>'
+        f'<h2>近期預測相似度稽核{title_suffix}</h2>'
         f'{table(["項目", "號碼", "數據", "判定"], rows)}'
         '</div>'
     )
@@ -4595,6 +4599,28 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     def demote_h2(fragment):
         return re.sub(r"<h2([^>]*)>", r"<h3\1>", str(fragment)).replace("</h2>", "</h3>")
 
+    def flatten_h2_h3(fragment):
+        def repl(match):
+            body = match.group(2).strip()
+            return f"<p><strong>{body}</strong></p>" if body else ""
+
+        return re.sub(r"<h([23])[^>]*>(.*?)</h\1>", repl, str(fragment), flags=re.S)
+
+    def monthly_539_headings(fragment):
+        h3_seen = 0
+
+        def repl(match):
+            nonlocal h3_seen
+            level = match.group(1)
+            body = match.group(2).strip()
+            if level == "3":
+                h3_seen += 1
+                if h3_seen > 2:
+                    return f"<p><strong>{body}</strong></p>" if body else ""
+            return match.group(0)
+
+        return re.sub(r"<h([23])[^>]*>(.*?)</h\1>", repl, str(fragment), flags=re.S)
+
     core_cards = (
         card("資料狀態", esc(fresh_text))
         + card("檢查", esc("通過" if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else fresh_text))
@@ -4710,24 +4736,21 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     <button data-tab="system">其他稽核</button>
   </nav>
   <section class="band update-box">
-    <h2>立即更新最新</h2>
-    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持539規格，不混入雲端控制面板。</p>
+    <h2>立刻更新到最新</h2>
+    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持同版型規格，不混入雲端控制面板。</p>
     <p>
-      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立即更新</a>
-      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/">手機立即更新最新</a>
+      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立刻更新</a>
+      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/">手機立刻更新到最新</a>
     </p>
   </section>
   <section class="band date-ribbon">
     <h2>本報表日期對照</h2>
     <div class="grid">
       {card("全歷史資料範圍", esc(date_range))}
-      {card("資料依據最新開獎日", esc(latest_date))}
+      {card("資料依據最新開獎日", esc(f"{latest_date} / 台灣時間 {latest_tw_label}"))}
       {card("最新開獎期別", esc(latest_period))}
-      {card("最新開獎台灣時間", esc(latest_tw_label))}
-      {card("最新開獎號碼", esc(latest_numbers))}
-      {card("下期預測目標日", esc(target_date))}
-      {card("下期台灣開獎時間", esc(target_tw_label))}
-      {card("戰報產生台灣時間", esc(report_time))}
+      {card("下期預測目標日", esc(f"{target_date} / 台灣時間 {target_tw_label}"))}
+      {card("戰報產生時間", esc(report_time))}
     </div>
   </section>
   <section id="prediction" class="panel active">
@@ -4738,7 +4761,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
       {table(["類型", "號碼", "判讀"], basic_pack_rows)}
     </div>
     <div class="band singlebox">
-      <h2>最強獨隻1中1（預測目標日 {esc(target_date)} / 台灣開獎 {esc(target_tw_label)}）</h2>
+      <h2>最強獨隻1中1</h2>
       <div class="grid">
         {card("獨隻號碼", esc(fmt_numbers(primary_single) or "-"), "hot-card")}
         {card("預測目標日", esc(target_date))}
@@ -4769,25 +4792,26 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
   <section id="review" class="panel">
     <div class="band">
       <h2>上期命中檢討（{esc(review_basis)}）</h2>
-      {demote_h2(compact_hits_html_tiantianle(settled, snapshots or []))}
-      {demote_h2(compact_review_html_tiantianle(settled))}
+      {flatten_h2_h3(compact_hits_html_tiantianle(settled, snapshots or []))}
+      {flatten_h2_h3(compact_review_html_tiantianle(settled))}
     </div>
-    {demote_h2(compact_zero_hit_rescue_html_tiantianle(analysis))}
-    {demote_h2(compact_post_draw_correction_html_tiantianle(analysis))}
     <div class="band warn">
-      <h3>第10到15名補中檢討</h3>
+      <h3>強牌檢討</h3>
+      {flatten_h2_h3(compact_zero_hit_rescue_html_tiantianle(analysis))}
+      {flatten_h2_h3(compact_post_draw_correction_html_tiantianle(analysis))}
+      <p><strong>第10到15名補中檢討</strong></p>
       {table(["項目", "數值", "比例或合計", "說明"], backup_summary_rows, "等待已結算資料寫入")}
       {table(["開獎日", "第10到15名", "補中號", "補中顆數", "前九命中顆數", "判讀"], backup_hit_rows, "等待第10到15名補中明細寫入")}
+      {flatten_h2_h3(compact_failure_data_html_tiantianle(analysis))}
     </div>
-    {demote_h2(compact_failure_data_html_tiantianle(analysis))}
   </section>
   <section id="monthly" class="panel">
-    {monthly_summary_html_tiantianle(analysis, snapshots or [])}
+    {monthly_539_headings(monthly_summary_html_tiantianle(analysis, snapshots or []))}
   </section>
   <section id="avoid" class="panel">
     <div class="band">
       <h2>低機率達標檢討（{esc(review_basis)}）</h2>
-      {compact_low_review_html_tiantianle(analysis, settled)}
+      {flatten_h2_h3(compact_low_review_html_tiantianle(analysis, settled))}
     </div>
     <div class="band warn">
       <h2>低機率反向命中警訊</h2>
@@ -4820,18 +4844,15 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
       <h2>模型滾動調整</h2>
       {table(["模型", "動作", "近期優勢", "長期優勢", "原因"], compact_lifecycle_rows_tiantianle(analysis))}
     </div>
-    <div class="band">
-      <h2>近期預測相似度稽核（{esc(date_basis)}）</h2>
-      {demote_h2(compact_prediction_similarity_audit_html_tiantianle(analysis, latest_tw_label, target_tw_label))}
-    </div>
   </section>
   <section id="system" class="panel">
+    {compact_prediction_similarity_audit_html_tiantianle(analysis, latest_date, target_date)}
     {compact_hard_iron_html_tiantianle(analysis)}
     {compact_stability_governor_html_tiantianle(analysis)}
     {compact_reality_gate_html_tiantianle(analysis)}
     {compact_monthly_breakthrough_html_tiantianle(analysis)}
     <div class="band">
-      <h3>候選前十五</h3>
+      <p><strong>候選前十五</strong></p>
       {table(["排名", "號碼", "指數", "信心", "遺漏", "理由"], candidate_rows(analysis))}
     </div>
     <details class="band">
