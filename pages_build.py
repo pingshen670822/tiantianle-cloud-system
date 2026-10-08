@@ -497,19 +497,39 @@ def inject_mobile_open_sync(html):
     return html + script
 
 
+def is_ironlaw_report_page(path):
+    report_names = {
+        "latest_battle_report.html",
+        "complete_report.html",
+        "tiantianle_complete_report.html",
+        "tiantianle_ironlaw_battle_report.html",
+        "天天樂完整戰報.html",
+        "天天樂最新戰報.html",
+        "最新完整戰報.html",
+        "完整戰報.html",
+        "完整_report.html",
+    }
+    if path.name in report_names:
+        return True
+    parts = set(path.parts)
+    return "reports" in parts and path.suffix.lower() == ".html" and (
+        "battle_report" in path.name or "complete_report" in path.name or "戰報" in path.name
+    )
+
+
 def apply_mobile_open_sync_to_site_html():
     skip_names = {"reset.html", "清除快取.html", "offline.html", "離線頁.html"}
     for path in SITE_DIR.rglob("*.html"):
         if path.name in skip_names:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        updated = inject_mobile_open_sync(inject_cloud_action_controls(text))
+        updated = inject_mobile_open_sync(text)
+        if not is_ironlaw_report_page(path):
+            updated = inject_cloud_action_controls(updated)
         if updated != text:
             path.write_text(updated, encoding="utf-8")
     required = [
         SITE_DIR / "index.html",
-        SITE_DIR / "reports" / "latest_battle_report.html",
-        SITE_DIR / "reports" / "complete_report.html",
     ]
     missing = []
     for path in required:
@@ -525,6 +545,22 @@ def apply_mobile_open_sync_to_site_html():
             missing.append(str(path))
     if missing:
         raise RuntimeError("手機雲端操作按鈕或最新時間欄位缺失：" + "；".join(missing))
+    report_problems = []
+    for path in [
+        SITE_DIR / "reports" / "latest_battle_report.html",
+        SITE_DIR / "reports" / "complete_report.html",
+        SITE_DIR / "latest_battle_report.html",
+        SITE_DIR / "complete_report.html",
+    ]:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "tiantianleCloudControls" in text or "手動更新最新" in text:
+            report_problems.append(str(path))
+        if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+            report_problems.append(str(path))
+    if report_problems:
+        raise RuntimeError("完整戰報必須保持539規格六分頁，禁止混入雲端操作區：" + "；".join(report_problems))
 
 
 def copy_text(src, dst):

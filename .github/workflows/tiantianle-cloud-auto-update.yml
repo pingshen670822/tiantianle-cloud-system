@@ -233,7 +233,6 @@ jobs:
 
           cloud_control_files = [
               "site/index.html",
-              "site/reports/latest_battle_report.html",
           ]
           for item in cloud_control_files:
               path = root / item
@@ -243,6 +242,21 @@ jobs:
                       problems.append(f"手機雲端操作按鈕缺失：{item}")
                   if "目前最新更新時間" not in text:
                       problems.append(f"手機雲端最新更新時間顯示缺失：{item}")
+
+          report_format_files = [
+              "site/reports/latest_battle_report.html",
+              "site/reports/complete_report.html",
+              "site/latest_battle_report.html",
+              "site/complete_report.html",
+          ]
+          for item in report_format_files:
+              path = root / item
+              if path.exists():
+                  text = path.read_text(encoding="utf-8", errors="ignore")
+                  if "tiantianleCloudControls" in text or "手動更新最新" in text:
+                      problems.append(f"完整戰報不得混入雲端操作按鈕：{item}")
+                  if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+                      problems.append(f"完整戰報未保持539六分頁規格：{item}")
 
           analysis_path = root / "reports/latest_analysis.json"
           site_analysis_path = root / "site/latest_analysis.json"
@@ -486,10 +500,25 @@ jobs:
           test -s public_site/reports/complete_report.html
           cp public_site/reports/latest_battle_report.html public_site/latest_battle_report.html
           cp public_site/reports/complete_report.html public_site/complete_report.html
-          grep -q "tiantianleCloudControls" public_site/reports/latest_battle_report.html
-          grep -q "手動更新最新" public_site/reports/latest_battle_report.html
-          grep -q "目前最新更新時間" public_site/reports/latest_battle_report.html
           test -s public_site/index.html
+          grep -q "tiantianleCloudControls" public_site/index.html
+          grep -q "手動更新最新" public_site/index.html
+          grep -q "目前最新更新時間" public_site/index.html
+          python - <<'PY'
+          import pathlib
+          for rel in [
+              "reports/latest_battle_report.html",
+              "reports/complete_report.html",
+              "latest_battle_report.html",
+              "complete_report.html",
+          ]:
+              path = pathlib.Path("public_site") / rel
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              if "tiantianleCloudControls" in text or "手動更新最新" in text:
+                  raise SystemExit(f"完整戰報不得混入雲端操作按鈕：{rel}")
+              if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+                  raise SystemExit(f"完整戰報未保持539六分頁規格：{rel}")
+          PY
           test -s public_site/latest_analysis.json
           test -s public_site/reports/latest_battle_report.html
           touch public_site/.nojekyll
@@ -570,9 +599,24 @@ jobs:
           test -s public_site/reports/complete_report.html
           cp public_site/reports/latest_battle_report.html public_site/latest_battle_report.html
           cp public_site/reports/complete_report.html public_site/complete_report.html
-          grep -q "tiantianleCloudControls" public_site/reports/latest_battle_report.html
-          grep -q "手動更新最新" public_site/reports/latest_battle_report.html
-          grep -q "目前最新更新時間" public_site/reports/latest_battle_report.html
+          grep -q "tiantianleCloudControls" public_site/index.html
+          grep -q "手動更新最新" public_site/index.html
+          grep -q "目前最新更新時間" public_site/index.html
+          python - <<'PY'
+          import pathlib
+          for rel in [
+              "reports/latest_battle_report.html",
+              "reports/complete_report.html",
+              "latest_battle_report.html",
+              "complete_report.html",
+          ]:
+              path = pathlib.Path("public_site") / rel
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              if "tiantianleCloudControls" in text or "手動更新最新" in text:
+                  raise SystemExit(f"完整戰報不得混入雲端操作按鈕：{rel}")
+              if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+                  raise SystemExit(f"完整戰報未保持539六分頁規格：{rel}")
+          PY
           touch public_site/.nojekyll
           publish_dir="$(mktemp -d)"
           cp -a public_site/. "$publish_dir/"
