@@ -1,6 +1,6 @@
 # 天天樂雲端自我修復狀態
 
-- 檢查時間：2026-10-09T00:35:24+08:00 台灣時間
+- 檢查時間：2026-10-09T02:34:33+08:00 台灣時間
 - 狀態：已修復
 - 最新開獎：2026-10-07 / 10 15 27 30 32
 - 應更新到期別：2026-10-07
@@ -13,8 +13,8 @@
 ## 修復步驟
 | 步驟 | 結果 | 秒數 | 說明 |
 | --- | --- | ---: | --- |
-| 來源快取自救 1 | 通過 | 16.1 | {"status": "ok", "successful_sources": 6} |
-| 全歷史重算 1 | 通過 | 209.8 | : 18 /   }, /   "low_probability_settled_count": 0, /   "prediction_status": "recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated", /   "health_status": "ok", /   "system_completeness": 100 / } |
+| 來源快取自救 1 | 通過 | 39.6 | {"status": "ok", "successful_sources": 6} |
+| 全歷史重算 1 | 通過 | 200.1 | : 18 /   }, /   "low_probability_settled_count": 0, /   "prediction_status": "recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated", /   "health_status": "ok", /   "system_completeness": 100 / } |
 | 前九防空修復 1 | 通過 | 0.2 | "target_draw_date": "2026-10-08", /   "target_taiwan_time": "2026-10-09 09:50", /   "top1": [ /     39 /   ], /   "top9": [ /     39, /     11, /     33, /     19, /     2, /     1, /     31, /     29, /     28 /   ] / } |
 | 獨隻軌跡稽核 1 | 通過 | 0.3 | s": 0, /     "model_backtest_hits": 0, /     "model_backtest_rate": 0.0, /     "baseline_rate": 0.128205, /     "backtest_lift": 0.0, /     "meets_90": false, /     "policy": "每日必算一顆獨隻；未有真實回測90%以上，不准標示90%以上準確。" /   } / } |
 | 終極獨隻驗證 1 | 通過 | 0.1 | est_super_single_validation.md", /     "reports/super_single_39_validation.md", /     "site/reports/super_single_39_validation.md", /     "site/最新終極獨隻深度驗證.html", /     "site/latest_super_single_validation.html" /   ] / } |
