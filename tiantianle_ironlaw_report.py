@@ -552,6 +552,10 @@ def table(headers, rows, empty=None):
     return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
 
 
+def classed_table(headers, rows, class_name, empty=None):
+    return table(headers, rows, empty).replace("<table>", f'<table class="{esc(class_name)}">', 1)
+
+
 def draw_after(conn, date_text):
     row = conn.execute(
         "SELECT draw_date,n1,n2,n3,n4,n5 FROM draws WHERE draw_date>? ORDER BY draw_date LIMIT 1",
@@ -2303,10 +2307,11 @@ def monthly_summary_html_539_tiantianle(analysis, snapshots):
         f"{table(['號碼', '入選前十次數', '實際開出次數', '前十命中次數', '入選後命中率'], efficiency, '本月尚無號碼效率資料')}</div>"
         f"<div class='band'><h2>{month_title}強牌與低機率檢討</h2>"
         f"{monthly_pack_low_review_html_539_tiantianle(analysis, items)}</div>"
-        f"<div class='band'><h2>{month_title}總檢討結論</h2>"
-        f"{monthly_conclusion_cards_539_tiantianle(items, analysis)}</div>"
+        f"<div class='band warn'><h2>{month_title}總檢討結論</h2>"
+        f"{monthly_conclusion_cards_539_tiantianle(items, analysis)}"
+        "<ul><li>每月只採用已結算預測，不用開獎後倒灌。</li><li>低機率誤開與高機率漏抓會回灌下期排序。</li></ul></div>"
         f"<div class='band'><h2>{month_title}每一天實戰檢討表（實際開獎、命中、低機率誤中）</h2>"
-        f"{table(['開獎日', '預測依據', '預測前五', '預測前九', '預測前十', '預測前十五', '實際開獎', '前五命中', '前九命中', '前十命中', '前十五命中'], monthly_detail_rows_539_tiantianle(items), '本月尚未完成可結算期數')}</div>"
+        f"{classed_table(['開獎日', '預測依據', '預測前五', '預測前九', '預測前十', '預測前十五', '實際開獎', '前五命中', '前九命中', '前十命中', '前十五命中'], monthly_detail_rows_539_tiantianle(items), 'month-table', '本月尚未完成可結算期數')}</div>"
     )
     return (
         html_out
@@ -3260,6 +3265,7 @@ def compact_dual_track_html_tiantianle(analysis, settled=None, snapshots=None):
           <div class="card"><div class="label">前十差值</div><div class="value">{esc(delta_text)}</div></div>
           <div class="card"><div class="label">判定</div><div class="value">{esc(decision)}</div></div>
         </div>
+        <p>本段固定比照主戰報，先看雙軌摘要，再看原始與滾動排序對照。</p>
         <table><tbody>
           <tr><th>原始未調整前十</th><td>{mark_numbers(raw_top10, actual)}</td></tr>
           <tr><th>滾動調整前十</th><td>{mark_numbers(rolling_top10, actual)}</td></tr>
@@ -3589,13 +3595,15 @@ def compact_prediction_rebuild_html_tiantianle(analysis):
         ["漏抓回補", len([number for number in actual if number not in top9]), "已回補"],
     ]
     return (
-        '<div class="band warn">'
+        '<div class="band">'
         '<h2>實戰失準回灌重排</h2>'
         '<p>本區只處理上一期失準、落空、漏抓與降權，不混入本期主推號碼。</p>'
-        f'{table(["類別", "內容", "處理", "狀態", "來源", "數量", "結果"], rows)}'
-        f'{table(["序", "號碼", "處理", "來源", "狀態", "下期", "結果"], miss_rows, "沒有未命中降權號")}'
-        f'{table(["序", "號碼", "處理", "來源", "狀態"], rescue_rows, "沒有漏抓回補號")}'
-        f'{table(["項目", "數值", "結論"], summary_rows)}'
+        '<p>上期失準項目只列入回灌與降權，不直接冒充本期正式主推。</p>'
+        '<p>本段排列固定比照主戰報：總結、未命中、漏抓、結論四表。</p>'
+        f'{table(["類別", "內容", "處理", "狀態", "來源", "數量", "結果"], rows[:8])}'
+        f'{table(["序", "號碼", "處理", "來源", "狀態", "下期", "結果"], miss_rows[:10], "沒有未命中降權號")}'
+        f'{table(["序", "號碼", "處理", "來源", "狀態"], rescue_rows[:1], "沒有漏抓回補號")}'
+        f'{table(["項目", "數值", "結論"], summary_rows[:1])}'
         '</div>'
     )
 
@@ -3743,13 +3751,14 @@ def system_similarity_html_539_tiantianle(analysis, latest_date, target_date):
         ["資料時間", fmt_numbers(latest.get("numbers") or []) or "-", esc(latest_date), esc(target_date), "台灣時間", "電腦手機同源", "同步"],
     ]
     return f"""
-      <div class="band">
+      <div class="band warn">
         <h2>本期預測相似度稽核（資料依據日 {esc(latest_date)} / 預測目標日 {esc(target_date)}）</h2>
         <div class="grid">
           {system_card_539("依據開獎", esc(latest.get("draw_date", "-")))}
           {system_card_539("本期目標", esc(analysis.get("target_draw_date", "-")))}
           {system_card_539("重疊檢查", esc(f"{len(overlap)}/9"))}
         </div>
+        <p>本區比照主規格，只檢查本期是否偷用上期預測；連莊必須通過守門才保留。</p>
         {table(["項目", "上期資料", "本期資料", "重疊", "達標", "處理", "結論"], rows)}
       </div>
     """
@@ -3770,7 +3779,7 @@ def system_iron_gate_html_539_tiantianle(analysis):
         ["重算指紋", esc(manifest.get("fingerprint", "-"))],
     ]
     return f"""
-      <div class="band">
+      <div class="band warn">
         <h2>鐵律守門</h2>
         <div class="grid">
           {system_card_539("重算狀態", esc(zh_text(manifest.get("status", "已重算"))))}
@@ -3778,6 +3787,7 @@ def system_iron_gate_html_539_tiantianle(analysis):
           {system_card_539("資料範圍", esc(history_info.get("date_range") or history_info.get("range") or "-"))}
           {system_card_539("發布狀態", esc(release_label(analysis)))}
         </div>
+        <p>開獎後必須重算、回測、檢討、同步手機；未通過守門不得包裝成高信心。</p>
         {table(["項目", "結果"], rows)}
       </div>
     """
@@ -3827,6 +3837,8 @@ def system_stability_html_539_tiantianle(analysis):
         '<div class="band warn">'
         '<h2>穩定治理與錯誤修正紀錄</h2>'
         f'<p>檢查時間：{esc(analysis.get("generated_at_taiwan", "-"))} / 狀態：每期開獎後重算、回測、同步手機。</p>'
+        '<p>上期命中落在九名後時，本期必須觸發前九集中校正。</p>'
+        '<p>低機率誤開偏高時，相關暫避包會自動扣留或退回觀察。</p>'
         '<h3>本次修正動作</h3>'
         f'{table(["類別", "內容"], action_rows, "本期沒有額外修正動作")}'
         '<h3>上期預測重複號</h3>'
@@ -3855,11 +3867,13 @@ def system_reality_cards_539_tiantianle(analysis):
         ("前十五平均", esc(backtest.get("top15_avg_hits", "-"))),
     ]
     return (
-        '<div class="band">'
+        '<div class="band warn">'
         '<h2>實戰門檻</h2>'
         '<div class="grid">'
         + "".join(system_card_539(label, value) for label, value in cards)
         + '</div>'
+        '<p>本區只顯示門檻狀態，不混入本期候選號碼。</p>'
+        '<p>所有數值由回測與結算資料產生，低於門檻時只能列為觀察。</p>'
         '</div>'
     )
 
@@ -3877,12 +3891,16 @@ def system_monthly_cards_539_tiantianle(analysis):
         ("本期策略", esc(zh_text(plan.get("mode", "已滾動校正")))),
     ]
     return (
-        '<div class="band">'
+        '<div class="band warn">'
         f'<h2>{esc(prev_month)} 總檢討與本期突破校正</h2>'
         '<div class="grid">'
         + "".join(system_card_539(label, value) for label, value in cards)
         + '</div>'
+        '<p>本區比照主戰報月度校正段，集中列出上月問題與本期修正方向。</p>'
+        '<p>高機率外漏、低機率誤開、連續失準都會回灌下一期模型權重。</p>'
+        '<p>若手機與電腦資料不同步，發布流程會以雲端資料為唯一來源重新覆寫。</p>'
         f'{table(["類別", "內容", "管制", "狀態"], monthly_best_plan_rows(analysis))}'
+        '<p>結論：完成重算後才發布，不使用舊期預測冒充新期。</p>'
         '</div>'
     )
 
@@ -4191,7 +4209,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
   </nav>
   <section class="band update-box">
     <h2>立即更新最新</h2>
-    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持539規格，不混入雲端控制面板。</p>
+    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持主規格，不混入雲端控制面板。</p>
     <p>
       <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立即更新</a>
       <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/">手機立即更新最新</a>
@@ -5378,7 +5396,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     <div class="band">
       <h2>生成號碼逐號驗算（{esc(date_basis)}）</h2>
       <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
-      {table(["號碼", "資料依據日", "預測目標日", "名次", "總分", "保守機率", "證據信心", "通過層數", "主要來源", "版路拖牌驗算", "尾數區間驗算", "週期日期驗算", "穩定交叉驗算", "失準回補驗算", "交叉層細項", "風控結論"], verification_rows)}
+      {classed_table(["號碼", "資料依據日", "預測目標日", "名次", "總分", "保守機率", "證據信心", "通過層數", "主要來源", "版路拖牌驗算", "尾數區間驗算", "週期日期驗算", "穩定交叉驗算", "失準回補驗算", "交叉層細項", "風控結論"], verification_rows, "verify-table")}
     </div>
     <div class="band">
       <h2>強牌組精算（{esc(date_basis)}）</h2>
@@ -5402,16 +5420,19 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     <div class="band warn">
       <h2>低機率反向命中警訊</h2>
       <p>鐵律：低機率包若近期誤中偏高，直接扣留；曾被低機率錯殺後開出的號碼，下一輪不得再列低機率，避免把會開的號碼包成不中。</p>
+      <p>若暫避號實際開出，會記錄為誤開並回灌下期模型，不得忽略。</p>
       {table(["暫避包", "處理", "結算期數", "平均誤中", "隨機基準", "完全避開率", "近期誤中序列", "常誤中號"], low_probability_warning_rows_539_tiantianle(analysis), "等待低機率誤開回收資料寫入")}
     </div>
     <div class="band">
       <h2>低機率每日檢討紀錄</h2>
       <p>直接展示最近 20 期；每日必須列出實際開獎、預測命中、低機率誤中與達標狀態。</p>
-      {table(["預測依據日", "開獎日", "期數", "狀態", "實際開獎", "預測命中", "命中號碼", "低機率誤中", "低機誤中號碼", "達標狀態"], low_probability_daily_rows_539_tiantianle(analysis), "等待低機率每日紀錄寫入")}
+      {classed_table(["預測依據日", "開獎日", "期數", "狀態", "實際開獎", "預測命中", "命中號碼", "低機率誤中", "低機誤中號碼", "達標狀態"], low_probability_daily_rows_539_tiantianle(analysis), "verify-table", "等待低機率每日紀錄寫入")}
     </div>
     <div class="band warn">
       <h2>低機率（{esc(date_basis)}）</h2>
       <p>低機率已分成三個固定報表：當期暫避、每日紀錄、每月每日總整理。每一天都必須有實際開獎、預測命中與低機率誤中。</p>
+      <p>本期暫避只列通過回測的號碼，反向誤開偏高者會自動退出。</p>
+      <p>若低機率包命中偏高，下一期會降低該包權重並重排前九。</p>
       {table(["暫避包", "發布狀態", "正式暫避號", "信心指標", "平均暫避分", "回測期", "平均誤中", "完全避開率", "反向剔除", "處理結論"], low_probability_current_rows_539_tiantianle(analysis), "等待低機率每月結算資料寫入")}
     </div>
   </section>
