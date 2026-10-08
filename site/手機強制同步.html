@@ -21,14 +21,14 @@
       <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
       <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
       <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-08T10:04:02+08:00</div>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-08T10:27:00+08:00</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-07　10 15 27 30 32 / 下期：2026-10-08　2026-10-09 09:50</div>
       <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
     </div>
-    </section><main><div class="box"><h1>天天樂手機強制同步</h1><p class="status" id="status">正在解除舊版手機快取控制</p><a href="prediction.html?v=20261008020551&manual=1">立即開啟最新預測</a></div></main>
+    </section><main><div class="box"><h1>天天樂手機強制同步</h1><p class="status" id="status">正在解除舊版手機快取控制</p><a href="prediction.html?v=20261008022840&manual=1">立即開啟最新預測</a></div></main>
 <script>
 (async function(){
-  var VERSION = '20261008020551';
+  var VERSION = '20261008022840';
   var status = document.getElementById('status');
   function setStatus(text) { if (status) status.textContent = text; }
   async function clearEverything() {
@@ -61,8 +61,98 @@
 })();
 </script>
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261008020551";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-08T10:04:02+08:00";
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261008022840') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261008022840';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    
+    <script>
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261008022840";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-08T10:27:00+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
       try {
@@ -158,95 +248,5 @@
     document.addEventListener('visibilitychange', function() {
       if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
     });
-    </script>
-    
-    <script>
-    (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261008020551') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261008020551';
-      var firstOpenAt = Date.now();
-      var normalCheckMs = 30000;
-      var intenseWindowMs = 180000;
-      function rootPrefix() {
-        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
-      }
-      function currentStamp() {
-        try {
-          var queryStamp = new URL(location.href).searchParams.get('v') || '';
-          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        } catch (err) {
-          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        }
-      }
-      function stampFromPayload(data) {
-        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
-        return raw.replace(/\D/g, '').slice(0, 14);
-      }
-      function setOpenSyncStatus(text) {
-        var el = document.getElementById('mobileUpdateStatus');
-        if (el) el.textContent = text;
-      }
-      async function clearAllBrowserCaches() {
-        if ('serviceWorker' in navigator) {
-          var regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(async function(reg) {
-            try {
-              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
-              await reg.update();
-            } catch (err) {}
-          }));
-        }
-        if ('caches' in window) {
-          var keys = await caches.keys();
-          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
-        }
-      }
-      async function verifyLatestAnalysis(prefix) {
-        try {
-          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
-          if (!res.ok) return null;
-          return await res.json();
-        } catch (err) {
-          return null;
-        }
-      }
-      async function mobileOpenSync() {
-        var prefix = rootPrefix();
-        try {
-          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' }
-          });
-          if (!res.ok) return;
-          var versionData = await res.json();
-          var cloudStamp = stampFromPayload(versionData);
-          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
-          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
-            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
-            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
-            await clearAllBrowserCaches();
-            var target = new URL(location.href);
-            target.searchParams.set('v', cloudStamp);
-            target.searchParams.set('open_sync', Date.now());
-            location.replace(target.toString());
-            return;
-          }
-          var analysis = await verifyLatestAnalysis(prefix);
-          if (analysis && analysis.generated_at_taiwan) {
-            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
-          }
-        } catch (err) {
-          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
-        }
-      }
-      window.addEventListener('pageshow', mobileOpenSync);
-      window.addEventListener('online', mobileOpenSync);
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) mobileOpenSync();
-      });
-      setInterval(function() {
-        mobileOpenSync();
-      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
-    })();
     </script>
     </body></html>
