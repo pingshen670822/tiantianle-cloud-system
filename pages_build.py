@@ -1533,7 +1533,7 @@ def write_pwa_files():
     (SITE_DIR / "force-sync.html").write_text(force_sync, encoding="utf-8")
     (SITE_DIR / "手機強制同步.html").write_text(force_sync, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/tiantianle_low_probability_avoid.html','reports/天天樂低機率精準暫避.html','reports/低機率精準暫避.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -1561,7 +1561,19 @@ self.addEventListener('fetch', event => {{
   const path = decodeURIComponent(url.pathname);
   const isReportShortcut = path.includes('complete_report') || path.includes('完整_report') || path.includes('完整戰報') || path.includes('latest_battle_report') || path.endsWith('/reports/');
   const stableReportUrl = new URL('reports/complete_report.html?v={version}', self.registration.scope).toString();
+  const isNeverCache = path.includes('/reports/') || path.endsWith('latest_analysis.json') || path.endsWith('最新分析資料.json') || path.endsWith('version.json') || path.endsWith('版本.json');
   const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
+  if (isNeverCache) {{
+    url.searchParams.set('v', Date.now().toString());
+    event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
+      if (!response.ok && isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }});
+      return response;
+    }}).catch(() => {{
+      if (isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }});
+      return fetch(event.request, {{ cache: 'no-store' }});
+    }}));
+    return;
+  }}
   if (isFreshFile) {{
     url.searchParams.set('v', '{version}');
     event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
