@@ -103,7 +103,6 @@ def latest_update_snapshot():
 
 
 def build_version():
-    return SITE_BUILD_VERSION
     analysis_path = REPORT_DIR / "latest_analysis.json"
     if analysis_path.exists():
         try:
@@ -114,7 +113,7 @@ def build_version():
                 return digits[:14]
         except Exception:
             pass
-    return datetime.now().strftime("%Y%m%d%H%M%S")
+    return SITE_BUILD_VERSION
 
 
 def inject_mobile_panel(html):
@@ -202,7 +201,7 @@ def inject_mobile_panel(html):
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v={version}', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker-{version}.js', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
@@ -1520,7 +1519,7 @@ def write_pwa_files():
   try {{
     await clearEverything();
     setStatus('{u('\\u820a\\u5feb\\u53d6\\u5df2\\u6e05\\u9664\\uff0c\\u6b63\\u5728\\u91cd\\u65b0\\u62c9\\u53d6\\u96f2\\u7aef')}');
-    await fetch('service-worker.js?force=' + Date.now(), {{ cache: 'reload' }}).catch(function(){{}});
+    await fetch('service-worker-{version}.js?force=' + Date.now(), {{ cache: 'reload' }}).catch(function(){{}});
     await fetch('version.json?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
     await fetch('prediction.html?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
   }} catch (err) {{
@@ -1562,7 +1561,7 @@ self.addEventListener('fetch', event => {{
   const isReportShortcut = path.includes('complete_report') || path.includes('完整_report') || path.includes('完整戰報') || path.includes('latest_battle_report') || path.endsWith('/reports/');
   const stableReportUrl = new URL('reports/complete_report.html?v={version}', self.registration.scope).toString();
   const isNeverCache = path.includes('/reports/') || path.endsWith('latest_analysis.json') || path.endsWith('最新分析資料.json') || path.endsWith('version.json') || path.endsWith('版本.json');
-  const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
+  const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.includes('service-worker') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isNeverCache) {{
     url.searchParams.set('v', Date.now().toString());
     event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
@@ -1593,6 +1592,7 @@ self.addEventListener('fetch', event => {{
 }});
 """
     (SITE_DIR / "service-worker.js").write_text(sw, encoding="utf-8")
+    (SITE_DIR / f"service-worker-{version}.js").write_text(sw, encoding="utf-8")
     write_icon(SITE_DIR / "icon-192.png", 192)
     write_icon(SITE_DIR / "icon-512.png", 512)
 
@@ -1650,7 +1650,7 @@ async function launchTiantianle(){
 }
 document.getElementById('installBtn').addEventListener('click', launchTiantianle);
 document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
-if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=' + Date.now(), { updateViaCache: 'none' });
+if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker-{version}.js', { updateViaCache: 'none' });
 </script>
 </body></html>"""
     html = html.replace("__WORKFLOW_URL__", workflow_url).replace("__PAGE_URL__", page_url)
