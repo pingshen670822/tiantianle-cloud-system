@@ -21,14 +21,14 @@
       <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
       <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
       <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-09T03:32:13+08:00</div>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-09T03:41:20+08:00</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-07　10 15 27 30 32 / 下期：2026-10-08　2026-10-09 09:50</div>
       <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
     </div>
-    </section><main><div class="box"><h1>天天樂手機強制同步</h1><p class="status" id="status">正在解除舊版手機快取控制</p><a href="prediction.html?v=20261009033213&manual=1">立即開啟最新預測</a></div></main>
+    </section><main><div class="box"><h1>天天樂手機強制同步</h1><p class="status" id="status">正在解除舊版手機快取控制</p><a href="prediction.html?v=20261009034120&manual=1">立即開啟最新預測</a></div></main>
 <script>
 (async function(){
-  var VERSION = '20261009033213';
+  var VERSION = '20261009034120';
   var status = document.getElementById('status');
   function setStatus(text) { if (status) status.textContent = text; }
   async function clearEverything() {
@@ -51,7 +51,7 @@
   try {
     await clearEverything();
     setStatus('舊快取已清除，正在重新拉取雲端');
-    await fetch('service-worker-20261009033213.js?force=' + Date.now(), { cache: 'reload' }).catch(function(){});
+    await fetch('service-worker-20261009034120.js?force=' + Date.now(), { cache: 'reload' }).catch(function(){});
     await fetch('version.json?force=' + Date.now(), { cache: 'no-store' }).catch(function(){});
     await fetch('prediction.html?force=' + Date.now(), { cache: 'no-store' }).catch(function(){});
   } catch (err) {
@@ -62,8 +62,8 @@
 </script>
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261009033213') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261009033213';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261009034120') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261009034120';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
@@ -151,8 +151,8 @@
     </script>
     
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261009033213";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-09T03:32:13+08:00";
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261009034120";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-09T03:41:20+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
       try {
