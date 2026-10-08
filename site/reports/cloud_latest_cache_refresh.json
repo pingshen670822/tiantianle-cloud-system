@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-08T10:25:23+08:00",
+  "checked_at_taiwan": "2026-10-08T16:33:20+08:00",
   "status": "ok",
   "successful_sources": 6,
   "total_sources": 7,
@@ -32,7 +32,7 @@
       "file": "lotteryusa_latest.html",
       "url": "https://www.lotteryusa.com/california/fantasy-5/",
       "ok": true,
-      "bytes": 318901,
+      "bytes": 318903,
       "error": "",
       "attempt": 1
     },
@@ -47,7 +47,7 @@
       "file": "lotterynet_latest.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers",
       "ok": true,
-      "bytes": 71251,
+      "bytes": 71246,
       "error": "",
       "attempt": 1
     },
@@ -55,7 +55,7 @@
       "file": "lotterynet_year.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers/2026",
       "ok": true,
-      "bytes": 300633,
+      "bytes": 300634,
       "error": "",
       "attempt": 1
     }
