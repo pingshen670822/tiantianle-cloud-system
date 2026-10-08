@@ -367,6 +367,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
     th,td{border-top:1px solid #e5e9f2;padding:10px;vertical-align:top;text-align:left}
     th{width:30%;color:#27364f;background:#f8fafc}
     .hero{font-size:54px;font-weight:900;letter-spacing:0;margin:10px 0;color:#facc15}
+    .date-line{font-size:17px;font-weight:900;margin:4px 0 10px;color:#fef3c7}
     .note{color:#4b5563;font-size:14px}
     .ok{color:#047857;font-weight:800}
     .warn{color:#b45309;font-weight:800}
@@ -384,6 +385,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
   <header>
     <h1>{html.escape(report_title)}</h1>
     <div class="hero">{fmt_number(number)}</div>
+    <p class="date-line">預測目標日：{html.escape(target_date)}　台灣開獎時間：{html.escape(target_time)}</p>
     <span class="tag">{html.escape(final_status)}</span>
     <span class="tag">台灣時間：{html.escape(now)}</span>
     <p class="note">本頁只做本期終極獨隻驗證，預測、檢討、低機率不混在一起。開獎後仍必須用實際號碼重新檢討。</p>

@@ -2573,6 +2573,10 @@ def compact_super_single_html_tiantianle(analysis):
     super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
     prediction = analysis.get("prediction") or {}
     latest = analysis.get("latest_draw") or {}
+    freshness = analysis.get("freshness") or {}
+    target_date = str(analysis.get("target_draw_date") or "-")
+    target_tw_label = taiwan_time_label(analysis.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "")
+    latest_date = str(latest.get("draw_date") or "-")
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
     pack = packs.get("strong_single") or {}
     numbers = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or pack.get("numbers") or []
@@ -2641,24 +2645,29 @@ def compact_super_single_html_tiantianle(analysis):
     ]
     return f"""
     <div class="band singlebox mega-single">
-      <h2>超高信心高機率強推薦：最強獨隻1中1</h2>
-      <p><strong>本期唯一強推號碼：</strong><span class="num">{number:02d}</span>。獨支欄位全系統只允許這一顆，電腦版與手機版同步讀取同一份唯一獨支決策。</p>
+      <h2>最強獨隻1中1（預測日 {esc(target_date)} / 台灣開獎 {esc(target_tw_label)}）</h2>
+      <p><strong>重點：</strong>本期唯一強推 <span class="num">{number:02d}</span>；資料依據日 {esc(latest_date)}；電腦版與手機版讀同一份決策。</p>
       <div class="grid">
-        <div class="card hot-card"><div class="label">強推號碼</div><div class="value num">{number:02d}</div></div>
-        <div class="card"><div class="label">強推判定</div><div class="value">{esc(super_single.get("status", "超高信心強推薦"))}</div></div>
+        <div class="card hot-card"><div class="label">獨隻號碼（{esc(target_date)}）</div><div class="value num">{number:02d}</div></div>
+        <div class="card"><div class="label">台灣開獎時間</div><div class="value">{esc(target_tw_label)}</div></div>
         <div class="card"><div class="label">總驗算分</div><div class="value">{compact_decimal(score, 2)}</div></div>
         <div class="card"><div class="label">信心指數</div><div class="value">{compact_decimal(confidence, 1)}</div></div>
         <div class="card"><div class="label">交叉驗算</div><div class="value">{esc(cross_text)}</div></div>
         <div class="card"><div class="label">成熟度</div><div class="value">{compact_decimal(maturity_text, 1)}</div></div>
       </div>
-      <h3>逐項驗算</h3>
-      {table(["項目", "數值", "判定"], logic_rows)}
-      <h3>放行證據</h3>
-      {table(["證據"], evidence_rows, "目前沒有放行證據")}
-      <h3>主要來源模型</h3>
-      {table(["模型"], model_rows, "目前沒有來源模型")}
-      <h3>排除其他獨支候選</h3>
-      {table(["號碼", "排名", "未成為獨支原因"], excluded_rows, "沒有其他候選搶獨支")}
+      <details class="detail-box">
+        <summary>點開看獨隻逐項驗算</summary>
+        {table(["項目", "數值", "判定"], logic_rows)}
+      </details>
+      <details class="detail-box">
+        <summary>點開看放行證據與來源模型</summary>
+        {table(["證據"], evidence_rows, "目前沒有放行證據")}
+        {table(["模型"], model_rows, "目前沒有來源模型")}
+      </details>
+      <details class="detail-box">
+        <summary>點開看排除其他獨隻候選</summary>
+        {table(["號碼", "排名", "未成為獨支原因"], excluded_rows, "沒有其他候選搶獨支")}
+      </details>
     </div>
     """
 
@@ -3909,6 +3918,9 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     industrial = analysis.get("industrial_engine") or {}
     validation = industrial.get("strong_single_validation") or {}
     prediction = analysis.get("prediction") or {}
+    freshness = analysis.get("freshness") or {}
+    target_date = str(analysis.get("target_draw_date") or "-")
+    target_tw_label = taiwan_time_label(analysis.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "")
     decision = analysis.get("latest_ironlaw") or analysis.get("decisive_battle_plan") or {}
     super_single = analysis.get("super_single_decision") or decision.get("super_single_decision") or industrial.get("super_single_decision") or {}
     candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
@@ -3939,6 +3951,7 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     latest_reuse = number in latest_numbers
     scores = super_single.get("scores") or {}
     rows = [
+        ["預測目標日", target_date, f"台灣開獎 {target_tw_label}"],
         ["獨隻號碼", fmt_numbers([number]) if number else "-", super_single.get("status") or (validation.get("status", "已重新驗算") if use_validation else "最終排序第一名")],
         ["唯一規則", "一顆", super_single.get("why_unique", "獨支只允許一顆")],
         ["總分", scores.get("修正總分") or (validation.get("score", item.get("score", "-")) if use_validation else item.get("score", "-")), "每期重新計算"],
@@ -3951,11 +3964,14 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     ]
     return (
         '<div class="band singlebox">'
-        '<h2>最強獨隻驗證</h2>'
-        '<p>獨隻必須每期由全系統放行主列重新計算；未通過驗證不得標示高信心，也不得用上期開獎號忽弄。</p>'
-        f'{table(["項目", "數值", "判定"], rows)}'
+        f'<h2>最強獨隻驗證（{esc(target_date)} / 台灣開獎 {esc(target_tw_label)}）</h2>'
+        f'<p><strong>重點：</strong>獨隻 {esc(fmt_numbers([number]) if number else "-")}；每期重新計算，未通過不得標示高信心。</p>'
+        f'{table(["項目", "數值", "判定"], rows[:6])}'
+        '<details class="detail-box"><summary>點開看完整驗證</summary>'
+        f'{table(["項目", "數值", "判定"], rows[6:])}'
         f'{table(["驗證證據"], [[item] for item in evidence], "目前沒有驗證證據")}'
         f'{table(["未通過項目"], [[item] for item in checks], "全部通過或列為觀察輸出")}'
+        '</details>'
         '</div>'
     )
 
@@ -4766,7 +4782,9 @@ def make_markdown(analysis, settled):
         f"- 防守避開：{fmt_numbers((decision.get('defensive_avoid') or [])[:10]) or '-'}",
         f"- 上期沿用守門：重疊 {fmt_numbers(previous_guard.get('current_top9_overlap', [])) or '-'} / 達標連莊 {fmt_numbers(previous_guard.get('top9_reentry_passed') or previous_guard.get('reentry_passed', [])) or '-'} / 未達標剔除 {fmt_numbers((previous_guard.get('reentry_rejected') or [])[:15]) or '-'}",
         "",
-        "## 最強獨隻1中1",
+        f"## 最強獨隻1中1（{analysis.get('target_draw_date')} / 台灣開獎 {target_tw_label}）",
+        f"- 預測目標日：{analysis.get('target_draw_date')}",
+        f"- 台灣開獎時間：{target_tw_label}",
         f"- 獨隻號碼：{fmt_numbers(primary_single) or '-'}",
         f"- 唯一規則：{super_single.get('why_unique', '獨支只允許一顆，每期重新運算')}",
         f"- 選號規則：{super_single.get('selection_rule', '全歷史資料庫、多模型、守門與回測後只留第一名')}",
@@ -5316,6 +5334,9 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     .bar-fill{height:100%;}
     .bar-label,.bar-value{font-size:12px;font-weight:800;}
     .warn{background:#fff7ed;border-color:#fed7aa;}
+    details.detail-box{border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;margin-top:10px;padding:10px;}
+    details.detail-box summary{cursor:pointer;font-weight:900;color:#0f766e;}
+    details.detail-box[open] summary{margin-bottom:10px;}
     a{color:#0f766e;font-weight:800;}
     @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}}
     """
@@ -5373,34 +5394,46 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     <div class="band">
       <h2>核心決策（{esc(date_basis)}）</h2>
       <div class="grid">{core_cards}</div>
-      <p>運算原則：只顯示完成運算後的精準資訊；依全歷史資料庫、多模型交叉驗算與滾動回測輸出。</p>
+      <p>重點只列本期預測；細節請點開各區驗算。</p>
     </div>
     <div class="band singlebox">
-      <h2>最強獨隻1中1</h2>
+      <h2>最強獨隻1中1（預測日 {esc(target_date)} / 台灣開獎 {esc(target_tw_label)}）</h2>
       <div class="grid">
-        <div class="card hot-card"><div class="label">獨隻號碼</div><div class="value num">{esc(fmt_numbers(primary_single) or "-")}</div></div>
-        {card("判定", esc(zh_text(super_single.get("status") or release_text)))}
+        <div class="card hot-card"><div class="label">獨隻號碼（{esc(target_date)}）</div><div class="value num">{esc(fmt_numbers(primary_single) or "-")}</div></div>
+        {card("台灣開獎時間", esc(target_tw_label))}
         {card("獨隻總分", esc(single_gate_rows[0][1] or "-"))}
         {card("模型機率", esc(f"{compact_decimal(primary_item.get('model_probability_percent'), 2)}%"))}
         {card("交叉層數", esc(single_gate_rows[1][1] or "-"))}
       </div>
-      <p><strong>運算邏輯：</strong>本期唯一最強獨隻為 {esc(fmt_numbers(primary_single) or "-")}；資料依據日 {esc(latest_date)}，預測目標日 {esc(target_date)}，台灣開獎時間 {esc(target_tw_label)}。此號由全歷史資料庫、滾動檢討、拖牌共現與交叉驗算產生。</p>
-      <p><strong>來源模型：</strong>{esc(module_source_text)}</p>
-      <p><strong>風控：</strong>禁止直接沿用上期預測；連莊必須達標，未達標號碼自動降權或退回觀察。</p>
-      {table(["驗算層", "分數", "判定"], single_gate_rows)}
+      <p><strong>重點：</strong>資料依據日 {esc(latest_date)}；本期只輸出這一顆最強獨隻，禁止用上期預測冒充下期。</p>
+      <details class="detail-box">
+        <summary>點開看獨隻由來與驗算</summary>
+        {table(["項目", "內容", "判定"], single_rows)}
+        {table(["驗算層", "分數", "判定"], single_gate_rows)}
+      </details>
     </div>
     <div class="band">
       <h2>下期研究候選前9名（{esc(date_basis)}）</h2>
-      {table(["號碼", "資料依據日", "預測目標日", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "公式分數/支撐", "來源模型"], candidate_rows_9)}
+      {table(["類型", "號碼", "狀態"], basic_pack_rows)}
+      <details class="detail-box">
+        <summary>點開看前9名完整排序</summary>
+        {table(["號碼", "資料依據日", "預測目標日", "排名", "分數", "信心", "機率", "遺漏", "驗算數", "公式分數/支撐", "來源模型"], candidate_rows_9)}
+      </details>
     </div>
     <div class="band">
       <h2>生成號碼逐號驗算（{esc(date_basis)}）</h2>
-      <p>每一個推薦號碼都必須列出版路、拖牌或共現檢查、交叉驗算、上期沿用守門與成熟度；未通過守門不得進入下期前九。</p>
-      {classed_table(["號碼", "資料依據日", "預測目標日", "名次", "總分", "保守機率", "證據信心", "通過層數", "主要來源", "版路拖牌驗算", "尾數區間驗算", "週期日期驗算", "穩定交叉驗算", "失準回補驗算", "交叉層細項", "風控結論"], verification_rows, "verify-table")}
+      <p>重點：每個推薦號碼都必須有驗算；完整細項收在下方。</p>
+      <details class="detail-box">
+        <summary>點開看逐號驗算表</summary>
+        {classed_table(["號碼", "資料依據日", "預測目標日", "名次", "總分", "保守機率", "證據信心", "通過層數", "主要來源", "版路拖牌驗算", "尾數區間驗算", "週期日期驗算", "穩定交叉驗算", "失準回補驗算", "交叉層細項", "風控結論"], verification_rows, "verify-table")}
+      </details>
     </div>
     <div class="band">
       <h2>強牌組精算（{esc(date_basis)}）</h2>
-      {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+      <details class="detail-box">
+        <summary>點開看強牌組回測與判定</summary>
+        {table(["類型", "號碼", "狀態", "回測期", "達標率", "平均命中", "判定"], compact_pack_rows_tiantianle(analysis))}
+      </details>
     </div>
   </section>
   <section id="review" class="panel">

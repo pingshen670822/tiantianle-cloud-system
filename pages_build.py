@@ -104,16 +104,18 @@ def latest_update_snapshot():
 
 def build_version():
     analysis_path = REPORT_DIR / "latest_analysis.json"
+    data_version = ""
     if analysis_path.exists():
         try:
             data = json.loads(analysis_path.read_text(encoding="utf-8"))
             stamp = str(data.get("generated_at_taiwan") or data.get("generated_at") or "")
             digits = "".join(ch for ch in stamp if ch.isdigit())
             if digits:
-                return digits[:14]
+                data_version = digits[:14]
         except Exception:
             pass
-    return SITE_BUILD_VERSION
+    # Report layout fixes must also invalidate phone cache even when draw data is unchanged.
+    return max(data_version, SITE_BUILD_VERSION) if data_version else SITE_BUILD_VERSION
 
 
 def inject_mobile_panel(html):
