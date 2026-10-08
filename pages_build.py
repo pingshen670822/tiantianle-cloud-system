@@ -557,6 +557,8 @@ def apply_mobile_open_sync_to_site_html():
         text = path.read_text(encoding="utf-8", errors="replace")
         if "tiantianleCloudControls" in text or "手動更新最新" in text:
             report_problems.append(str(path))
+        if "data-ironlaw-interface" in text or "data-report-style" in text or "position:sticky" in text:
+            report_problems.append(str(path))
         if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
             report_problems.append(str(path))
     if report_problems:

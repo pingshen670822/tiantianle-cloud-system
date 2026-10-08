@@ -226,10 +226,12 @@ jobs:
               path = root / item
               if path.exists():
                   text = path.read_text(encoding="utf-8", errors="ignore")
-                  if "data-ironlaw-interface" not in text:
-                      problems.append(f"完整戰報介面未切換為鐵律規格：{item}")
-                  if 'class="tabs"' in text and "data-ironlaw-interface" not in text:
-                      problems.append(f"完整戰報仍殘留舊式頁籤介面：{item}")
+                  if 'data-ironlaw-interface' in text or 'data-report-style' in text:
+                      problems.append(f"完整戰報不得殘留自訂介面屬性，必須回到539外框：{item}")
+                  if 'position:sticky' in text or 'tiantianle-ironlaw-interface' in text:
+                      problems.append(f"完整戰報不得殘留自訂黏住分頁或覆蓋樣式：{item}")
+                  if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+                      problems.append(f"完整戰報未保持539六分頁規格：{item}")
 
           cloud_control_files = [
               "site/index.html",

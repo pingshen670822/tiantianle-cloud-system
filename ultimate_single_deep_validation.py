@@ -189,8 +189,10 @@ def generate(number: int | None = None) -> dict[str, Any]:
     analysis = read_json(ANALYSIS_PATH)
     prediction = analysis.get("prediction", {})
     if number is None:
+        super_single = analysis.get("super_single_decision", {}) or {}
+        super_numbers = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else [])
         top1 = prediction.get("top1") or prediction.get("strongest") or []
-        number = as_int(top1[0]) if top1 else as_int(analysis.get("super_single_decision", {}).get("number"))
+        number = as_int(super_numbers[0]) if super_numbers else as_int(top1[0] if top1 else None)
     if not number:
         raise RuntimeError("找不到本期終極獨隻")
 
@@ -352,7 +354,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
 
     check_rows = [row(label, "通過" if ok else "未通過", detail) for label, ok, detail in validation_checks]
     now = datetime.now(TAIWAN).strftime("%Y-%m-%d %H:%M:%S")
-    report_title = f"終極獨隻 {fmt_number(number)} 深度驗證"
+    report_title = f"{target_date} 終極獨隻 {fmt_number(number)} 深度驗證"
     css = """
     body{margin:0;background:#f5f7fb;color:#162033;font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;line-height:1.55}
     header{background:#111827;color:#fff;padding:28px 18px}
@@ -398,7 +400,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
     {card("九、最終檢查清單", make_table(check_rows))}
     <section class="panel">
       <h2>十、結論</h2>
-      <p><strong class="ok">目前系統驗證後的本期終極獨隻為 {fmt_number(number)}。</strong></p>
+      <p><strong class="ok">目前系統驗證後，預測目標日 {html.escape(target_date)}、台灣開獎時間 {html.escape(target_time)} 的終極獨隻為 {fmt_number(number)}。</strong></p>
       <p>它通過唯一獨隻一致、嚴格門檻、上期沿用防呆、最新開獎重複防呆、全歷史資料庫接入與候選勝出檢查。第二名差距很小，開獎後必須立刻回寫命中檢討，若未命中要進入下一期滾動修正。</p>
       <p class="note">提醒：樂透開獎仍屬隨機事件，本報告是系統驗證與排序依據，不等同保證命中。</p>
     </section>
@@ -426,7 +428,7 @@ def generate(number: int | None = None) -> dict[str, Any]:
     md_lines += [
         "",
         "## 結論",
-        f"目前系統驗證後的本期終極獨隻為 {fmt_number(number)}。開獎後必須立刻回寫命中檢討，若未命中要進入下一期滾動修正。",
+        f"目前系統驗證後，預測目標日 {target_date}、台灣開獎時間 {target_time} 的終極獨隻為 {fmt_number(number)}。開獎後必須立刻回寫命中檢討，若未命中要進入下一期滾動修正。",
         "",
         "提醒：樂透開獎仍屬隨機事件，本報告是系統驗證與排序依據，不等同保證命中。",
     ]

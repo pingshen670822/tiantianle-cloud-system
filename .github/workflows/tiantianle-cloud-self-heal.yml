@@ -99,23 +99,38 @@ jobs:
           import pathlib
 
           root = pathlib.Path(".")
-          checks = [
-              ("reports/latest_battle_report.html", "data-ironlaw-interface", "完整戰報介面未切換為鐵律規格"),
-              ("site/reports/latest_battle_report.html", "tiantianleCloudControls", "手機雲端操作按鈕缺失"),
-              ("site/reports/latest_battle_report.html", "目前最新更新時間", "手機雲端最新更新時間顯示缺失"),
-          ]
           problems = []
-          for file_name, marker, message in checks:
+          for file_name in [
+              "reports/latest_battle_report.html",
+              "site/reports/latest_battle_report.html",
+              "site/reports/complete_report.html",
+          ]:
               path = root / file_name
               if not path.exists():
                   problems.append(f"缺少必要檔案：{file_name}")
                   continue
               text = path.read_text(encoding="utf-8", errors="ignore")
-              if marker not in text:
-                  problems.append(f"{message}：{file_name}")
+              if 'data-ironlaw-interface' in text or 'data-report-style' in text:
+                  problems.append(f"完整戰報不得殘留自訂介面屬性：{file_name}")
+              if "tiantianleCloudControls" in text or "手動更新最新" in text:
+                  problems.append(f"完整戰報不得混入雲端操作按鈕：{file_name}")
+              if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
+                  problems.append(f"完整戰報未保持539六分頁規格：{file_name}")
+          index_path = root / "site/index.html"
+          if not index_path.exists():
+              problems.append("缺少手機雲端首頁：site/index.html")
+          else:
+              index_text = index_path.read_text(encoding="utf-8", errors="ignore")
+              for marker, message in [
+                  ("tiantianleCloudControls", "手機雲端操作按鈕缺失"),
+                  ("手動更新最新", "手動更新按鈕缺失"),
+                  ("目前最新更新時間", "手機雲端最新更新時間顯示缺失"),
+              ]:
+                  if marker not in index_text:
+                      problems.append(f"{message}：site/index.html")
           if problems:
               raise SystemExit("\n".join(problems))
-          print("self-heal report interface and cloud controls verified")
+          print("self-heal 539 report interface and homepage cloud controls verified")
           PY
       - name: Refuse stale overwrite
         shell: bash

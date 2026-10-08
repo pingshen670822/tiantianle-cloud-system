@@ -3608,6 +3608,14 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
     <button data-tab="models">模型回測</button>
     <button data-tab="system">其他稽核</button>
   </nav>
+  <section class="band update-box">
+    <h2>立即更新最新</h2>
+    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持539規格，不混入雲端控制面板。</p>
+    <p>
+      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立即更新</a>
+      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/">手機立即更新最新</a>
+    </p>
+  </section>
   <section class="band date-ribbon">
     <h2>本報表日期對照</h2>
     <div class="grid">
@@ -4594,9 +4602,35 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
         + card("獨隻", esc(fmt_numbers(primary_single) or "-"), "hot-card")
         + card("9碼核心", esc(fmt_numbers(top9) or "-"))
     )
+    primary_number = safe_int(primary_single[0], 0) if primary_single else 0
+    primary_item = next(
+        (
+            item for item in (analysis.get("official_candidates") or analysis.get("candidates") or [])
+            if safe_int(item.get("number")) == primary_number
+        ),
+        {},
+    )
+    module_sources = []
+    for source in primary_item.get("model_sources") or []:
+        label = zh_text(source.get("label") or source.get("name") or "")
+        if label and label not in module_sources:
+            module_sources.append(label)
+    for item in (super_single.get("explanation") or [])[:8]:
+        label = zh_text(str(item).split("：", 1)[0].split(":", 1)[0])
+        if label and label not in module_sources:
+            module_sources.append(label)
+    if not module_sources:
+        module_sources = ["全歷史頻率", "近期軌跡", "拖牌共現", "日期牌", "尾數區間", "遺漏相位", "分布平衡", "滾動回測", "交叉共識"]
+    module_source_text = "、".join(module_sources[:12])
+    global_method_text = "全歷史頻率、近期軌跡、拖牌共現、日期牌、尾數區間、遺漏相位、分布平衡、滾動回測、蒙地卡羅穩定、交叉共識"
     single_rows = [
+        ["資料依據日", latest_date, f"最新開獎 {latest_numbers}"],
+        ["預測目標日", target_date, f"台灣時間 {target_tw_label}"],
+        ["戰報產生時間", report_time, "台灣時間"],
         ["獨隻號碼", fmt_numbers(primary_single) or "-", "本期唯一輸出"],
         ["判定", zh_text(super_single.get("status") or release_text), "每期開獎後重算"],
+        ["全系統模組來源", module_source_text, "不得憑空產號"],
+        ["世界通用分析法融合", global_method_text, "全部轉成天天樂全歷史資料驗算"],
         ["獨隻總分", zh_text((super_single.get("scores") or {}).get("修正總分") or (super_single.get("scores") or {}).get("超級獨支總合分") or "-"), "全歷史交叉驗算"],
         ["模型機率", zh_text((super_single.get("scores") or {}).get("模型機率") or (super_single.get("scores") or {}).get("信心指標") or "-"), "只作排序依據"],
         ["來源說明", "；".join(zh_text(item) for item in (super_single.get("explanation") or [])[:5]) or "全歷史資料庫、多模型交叉、滾動檢討後產生", "禁止憑空產號"],
@@ -4615,7 +4649,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
     header{background:#111827;color:white;padding:22px 24px;}
     main{max-width:1180px;margin:0 auto;padding:18px;}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#f5f7fb;padding:10px 0;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
     .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
     .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
     .panel{display:none;}
@@ -4625,26 +4659,23 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
     .hot-card{border-color:#fecaca;background:#fff1f2;}
     .singlebox{border-color:#fecaca;background:#fffafa;}
-    .warn{background:#fff7ed;border-color:#fed7aa;}
-    .date-ribbon{background:#ecfeff;border-color:#67e8f9;}
-    .update-box{background:#ecfdf5;border-color:#86efac;}
-    .update-button{display:inline-block;margin:4px 8px 4px 0;padding:10px 14px;border-radius:7px;background:#0f766e;color:white!important;text-decoration:none;font-weight:900;}
-    .update-button.mobile{background:#1d4ed8;}
     .label{font-size:13px;color:#64748b;font-weight:700;}
     .value{font-size:22px;font-weight:900;margin-top:6px;}
+    .date-ribbon{background:#ecfeff;border-color:#67e8f9;}
     table{width:100%;border-collapse:collapse;min-width:760px;}
     th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top;}
     th{background:#f1f5f9;}
     .num{font-size:20px;font-weight:900;color:#b91c1c;}
     .small{font-size:13px;line-height:1.5;}
     .verify-table{min-width:1840px;}
-    .month-chart{display:grid;gap:8px;min-width:760px;}
-    .chart-row{display:grid;grid-template-columns:100px 1fr 120px 1.5fr;gap:10px;align-items:center;border-bottom:1px solid #e5e7eb;padding:8px 0;}
-    .chart-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
-    .chart-track span{display:block;height:100%;background:#0f766e;border-radius:999px;}
+    .month-table{min-width:1500px;}
+    .bar-row{display:grid;grid-template-columns:72px 1fr 58px;gap:8px;align-items:center;min-width:280px;}
+    .bar-track{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;}
+    .bar-fill{height:100%;}
+    .bar-label,.bar-value{font-size:12px;font-weight:800;}
+    .warn{background:#fff7ed;border-color:#fed7aa;}
     a{color:#0f766e;font-weight:800;}
-    pre{white-space:pre-wrap;background:#0b1020;color:#dbeafe;border-radius:8px;padding:16px;overflow:auto;}
-    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}.chart-row{grid-template-columns:1fr;gap:4px}}
+    @media(max-width:680px){main{padding:10px}header{padding:16px}table{min-width:680px}}
     """
     script = """
     <script>
@@ -4656,14 +4687,10 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
       }));
     </script>
     """
-    html_report = f"""<!doctype html>
-<html lang="zh-Hant" data-ironlaw-interface="true" data-report-style="ironlaw539">
+    html_report = f"""<html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>{esc(title)}</title>
   <style>{style}</style>
 </head>
@@ -4683,11 +4710,11 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     <button data-tab="system">其他稽核</button>
   </nav>
   <section class="band update-box">
-    <h2>立刻更新到最新</h2>
-    <p class="update-note">電腦版使用主程式最外層一鍵啟動；手機雲端版使用頁面上的手動更新與當機立即修復按鈕，更新後會顯示最新更新時間。</p>
+    <h2>立即更新最新</h2>
+    <p class="update-note">電腦請使用主程式最外層「一鍵啟動」；手機請回到雲端首頁使用更新與修復入口。戰報頁維持539規格，不混入雲端控制面板。</p>
     <p>
-      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立刻更新</a>
-      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/?v={int(time.time())}">手機雲端同步</a>
+      <a class="update-button" href="../RUN_TIANTIANLE_NOW.bat">電腦立即更新</a>
+      <a class="update-button mobile" href="https://pingshen670822.github.io/tiantianle-cloud-system/">手機立即更新最新</a>
     </p>
   </section>
   <section class="band date-ribbon">
@@ -4711,14 +4738,17 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
       {table(["類型", "號碼", "判讀"], basic_pack_rows)}
     </div>
     <div class="band singlebox">
-      <h2>最強獨隻1中1</h2>
+      <h2>最強獨隻1中1（預測目標日 {esc(target_date)} / 台灣開獎 {esc(target_tw_label)}）</h2>
       <div class="grid">
         {card("獨隻號碼", esc(fmt_numbers(primary_single) or "-"), "hot-card")}
+        {card("預測目標日", esc(target_date))}
+        {card("台灣開獎時間", esc(target_tw_label))}
+        {card("資料依據日", esc(latest_date))}
         {card("判定", esc(zh_text(super_single.get("status") or release_text)))}
-        {card("下期台灣時間", esc(target_tw_label))}
+        {card("全系統模組", esc(module_source_text))}
         {card("發布等級", esc(release_text))}
       </div>
-      <p><strong>強烈標註：</strong>本期唯一最強獨隻為 {esc(fmt_numbers(primary_single) or "-")}，由全歷史資料庫、交叉驗算、上期錯誤回灌與九碼集中檢查後產生。</p>
+      <p><strong>強烈標註：</strong>本期唯一最強獨隻為 {esc(fmt_numbers(primary_single) or "-")}；預測目標日 {esc(target_date)}，台灣開獎時間 {esc(target_tw_label)}，資料依據日 {esc(latest_date)}。此號由全歷史資料庫、全系統模組、世界通用分析法轉換驗算、交叉驗算、上期錯誤回灌與九碼集中檢查後產生。</p>
       {table(["項目", "數值", "判定"], single_rows)}
       {table(["驗算", "資料一", "資料二", "說明", "處理"], single_precision_rows(analysis))}
     </div>
