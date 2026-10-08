@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-08T18:33:19+08:00",
+  "checked_at_taiwan": "2026-10-08T18:42:54+08:00",
   "status": "無嚴重缺漏，仍需模型補強",
   "critical": 0,
   "publish_blocking": 0,
@@ -66,7 +66,7 @@
     "top9_count": 9,
     "top15_count": 15,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-08T18:33:15+08:00",
+    "created_at_taiwan": "2026-10-08T18:42:50+08:00",
     "no_empty_backup": true
   },
   "draw_count": 11943,
@@ -639,7 +639,7 @@
       "獨支、強牌組、嚴格門與戰報顯示已同步"
     ],
     "strict_no_padding": true,
-    "created_at_taiwan": "2026-10-08T18:33:15+08:00"
+    "created_at_taiwan": "2026-10-08T18:42:50+08:00"
   },
   "model_maturity": {
     "status": "passed",
