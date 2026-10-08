@@ -523,8 +523,10 @@ def apply_mobile_open_sync_to_site_html():
         if path.name in skip_names:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        updated = inject_mobile_open_sync(text)
-        if not is_ironlaw_report_page(path):
+        if is_ironlaw_report_page(path):
+            updated = text
+        else:
+            updated = inject_mobile_open_sync(text)
             updated = inject_cloud_action_controls(updated)
         if updated != text:
             path.write_text(updated, encoding="utf-8")
@@ -555,7 +557,7 @@ def apply_mobile_open_sync_to_site_html():
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        if "tiantianleCloudControls" in text or "手動更新最新" in text:
+        if "tiantianleCloudControls" in text or "手動更新最新" in text or "TIANTIANLE_OPEN_SYNC_VERSION" in text:
             report_problems.append(str(path))
         if "data-ironlaw-interface" in text or "data-report-style" in text or "position:sticky" in text:
             report_problems.append(str(path))
