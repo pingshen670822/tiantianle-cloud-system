@@ -201,33 +201,16 @@ def inject_mobile_panel(html):
         }
       } catch (err) {}
     }
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker-{version}.js', { updateViaCache: 'none' }).then(function(reg){
-          reg.update();
-          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        }).catch(function(){});
+    window.addEventListener('load', function(){
+      clearMobileCaches().finally(function(){
         autoRefreshIfStale();
         setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
       });
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) autoRefreshIfStale();
-      });
-      window.addEventListener('online', autoRefreshIfStale);
-      navigator.serviceWorker.addEventListener('controllerchange', function() {
-        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
-          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
-          location.reload();
-        }
-      });
-    } else {
-      window.addEventListener('load', autoRefreshIfStale);
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) autoRefreshIfStale();
-      });
-      window.addEventListener('online', autoRefreshIfStale);
-      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
-    }
+    });
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) autoRefreshIfStale();
+    });
+    window.addEventListener('online', autoRefreshIfStale);
     </script>
     """
     style = style.replace("{version}", version)
@@ -1521,7 +1504,6 @@ def write_pwa_files():
   try {{
     await clearEverything();
     setStatus('{u('\\u820a\\u5feb\\u53d6\\u5df2\\u6e05\\u9664\\uff0c\\u6b63\\u5728\\u91cd\\u65b0\\u62c9\\u53d6\\u96f2\\u7aef')}');
-    await fetch('service-worker-{version}.js?force=' + Date.now(), {{ cache: 'reload' }}).catch(function(){{}});
     await fetch('version.json?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
     await fetch('prediction.html?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
   }} catch (err) {{
@@ -1652,7 +1634,7 @@ async function launchTiantianle(){
 }
 document.getElementById('installBtn').addEventListener('click', launchTiantianle);
 document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
-if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker-{version}.js', { updateViaCache: 'none' });
+if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(regs){ regs.forEach(function(reg){ reg.unregister(); }); });
 </script>
 </body></html>"""
     html = html.replace("__WORKFLOW_URL__", workflow_url).replace("__PAGE_URL__", page_url)
