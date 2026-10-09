@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-10T00:16:04+08:00",
+  "checked_at_taiwan": "2026-10-10T02:03:07+08:00",
   "status": "ok",
   "successful_sources": 6,
   "total_sources": 7,
@@ -8,7 +8,7 @@
       "file": "calottery_正式.html",
       "url": "https://www.calottery.com/en/draw-games/fantasy-5",
       "ok": true,
-      "bytes": 99700,
+      "bytes": 99701,
       "error": "",
       "attempt": 1
     },
@@ -32,7 +32,7 @@
       "file": "lotteryusa_latest.html",
       "url": "https://www.lotteryusa.com/california/fantasy-5/",
       "ok": true,
-      "bytes": 330793,
+      "bytes": 330795,
       "error": "",
       "attempt": 1
     },
