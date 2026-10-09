@@ -34,7 +34,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261009173139">
+    <link rel="manifest" href="manifest.webmanifest?v=20261009174219">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
@@ -58,21 +58,21 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
       <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
       <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-09T17:31:39+08:00</div>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-09T17:42:19+08:00</div>
       <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-08　07 10 25 32 33 / 下期：2026-10-09　2026-10-10 09:50</div>
       <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
     </div>
     </section>
-<header><h1>天天樂 手機雲端首頁</h1><p>產生 台灣時間 2026-10-09 17:31 / 最新開獎 台灣時間 2026-10-09 09:50 / 下期開獎 台灣時間 2026-10-10 09:50</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>產生 台灣時間 2026-10-09 17:42 / 最新開獎 台灣時間 2026-10-09 09:50 / 下期開獎 台灣時間 2026-10-10 09:50</p></header>
 <main>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
       <a class="mobile-action repair-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml">當機立即修復</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="force-sync-20261009173139.html?v=20261009173139">手機不一樣點這裡強制同步</a>
+      <a class="cloud-update-link" href="force-sync-20261009174219.html?v=20261009174219">手機不一樣點這裡強制同步</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261009173139</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261009174219</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
@@ -112,7 +112,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261009173139';
+    window.TIANTIANLE_BUILD_VERSION = '20261009174219';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -140,7 +140,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261009173139&force=' + Date.now());
+      location.replace('首頁.html?v=20261009174219&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -169,8 +169,8 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261009173139') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261009173139';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261009174219') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261009174219';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
@@ -258,8 +258,8 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     </script>
     
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261009173139";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-09T17:31:39+08:00";
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261009174219";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-09T17:42:19+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
       try {
