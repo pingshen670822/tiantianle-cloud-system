@@ -1,108 +1,7 @@
 {
-  "checked_at_taiwan": "2026-10-09T18:32:32+08:00",
+  "checked_at_taiwan": "2026-10-09T19:05:34+08:00",
   "status": "已修復",
   "before": {
-    "generated_at_taiwan": "2026-10-09T18:18:08+08:00",
-    "draw_count": 11944,
-    "latest_draw_date": "2026-10-08",
-    "expected_latest_draw_date": "2026-10-08",
-    "allowed_latest_draw_date": "2026-10-08",
-    "target_draw_date": "2026-10-09",
-    "target_taiwan_time": "2026-10-10 09:50",
-    "latest_numbers": [
-      7,
-      10,
-      25,
-      32,
-      33
-    ],
-    "top1": [
-      39
-    ],
-    "top9": [
-      39,
-      27,
-      11,
-      9,
-      6,
-      19,
-      30,
-      31,
-      5
-    ],
-    "top15": [
-      39,
-      27,
-      11,
-      9,
-      6,
-      19,
-      30,
-      31,
-      5,
-      2,
-      15,
-      3,
-      12,
-      13,
-      37
-    ],
-    "ultimate_single": 39,
-    "ultimate_model": "全歷史防空備援排序",
-    "strong_single_numbers": [
-      39
-    ],
-    "strict_status": "嚴格門檻全擋，已啟用防空備援",
-    "strict_no_padding": true,
-    "qualified_count": 9,
-    "site_latest_draw_date": "2026-10-08",
-    "site_target_draw_date": "2026-10-09",
-    "site_data_latest_draw_date": "2026-10-08",
-    "site_data_target_draw_date": "2026-10-09",
-    "site_generated_at_taiwan": "2026-10-09T18:18:08+08:00",
-    "site_top1": [
-      39
-    ],
-    "site_top9": [
-      39,
-      27,
-      11,
-      9,
-      6,
-      19,
-      30,
-      31,
-      5
-    ],
-    "site_ultimate_single": 39,
-    "site_strong_single_numbers": [
-      39
-    ],
-    "site_data_generated_at_taiwan": "2026-10-09T18:18:08+08:00",
-    "site_data_top1": [
-      39
-    ],
-    "site_data_top9": [
-      39,
-      27,
-      11,
-      9,
-      6,
-      19,
-      30,
-      31,
-      5
-    ],
-    "site_data_ultimate_single": 39,
-    "site_data_strong_single_numbers": [
-      39
-    ],
-    "sync_mismatches": [],
-    "has_unique_super_single": true,
-    "is_stale": false,
-    "is_synced": true
-  },
-  "after": {
     "generated_at_taiwan": "2026-10-09T18:31:19+08:00",
     "draw_count": 11944,
     "latest_draw_date": "2026-10-08",
@@ -203,20 +102,121 @@
     "is_stale": false,
     "is_synced": true
   },
+  "after": {
+    "generated_at_taiwan": "2026-10-09T19:03:38+08:00",
+    "draw_count": 11944,
+    "latest_draw_date": "2026-10-08",
+    "expected_latest_draw_date": "2026-10-08",
+    "allowed_latest_draw_date": "2026-10-08",
+    "target_draw_date": "2026-10-09",
+    "target_taiwan_time": "2026-10-10 09:50",
+    "latest_numbers": [
+      7,
+      10,
+      25,
+      32,
+      33
+    ],
+    "top1": [
+      39
+    ],
+    "top9": [
+      39,
+      27,
+      11,
+      9,
+      6,
+      19,
+      30,
+      31,
+      5
+    ],
+    "top15": [
+      39,
+      27,
+      11,
+      9,
+      6,
+      19,
+      30,
+      31,
+      5,
+      2,
+      15,
+      3,
+      12,
+      13,
+      37
+    ],
+    "ultimate_single": 39,
+    "ultimate_model": "全歷史防空備援排序",
+    "strong_single_numbers": [
+      39
+    ],
+    "strict_status": "嚴格門檻全擋，已啟用防空備援",
+    "strict_no_padding": true,
+    "qualified_count": 9,
+    "site_latest_draw_date": "2026-10-08",
+    "site_target_draw_date": "2026-10-09",
+    "site_data_latest_draw_date": "2026-10-08",
+    "site_data_target_draw_date": "2026-10-09",
+    "site_generated_at_taiwan": "2026-10-09T19:03:38+08:00",
+    "site_top1": [
+      39
+    ],
+    "site_top9": [
+      39,
+      27,
+      11,
+      9,
+      6,
+      19,
+      30,
+      31,
+      5
+    ],
+    "site_ultimate_single": 39,
+    "site_strong_single_numbers": [
+      39
+    ],
+    "site_data_generated_at_taiwan": "2026-10-09T19:03:38+08:00",
+    "site_data_top1": [
+      39
+    ],
+    "site_data_top9": [
+      39,
+      27,
+      11,
+      9,
+      6,
+      19,
+      30,
+      31,
+      5
+    ],
+    "site_data_ultimate_single": 39,
+    "site_data_strong_single_numbers": [
+      39
+    ],
+    "sync_mismatches": [],
+    "has_unique_super_single": true,
+    "is_stale": false,
+    "is_synced": true
+  },
   "steps": [
     {
       "name": "來源快取自救 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python cloud_latest_cache_refresh.py",
-      "ok": true,
-      "seconds": 18.4,
-      "returncode": 0,
-      "tail": "{\"status\": \"ok\", \"successful_sources\": 6}"
+      "ok": false,
+      "seconds": 240.0,
+      "returncode": "timeout",
+      "tail": "timeout"
     },
     {
       "name": "全歷史重算 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python offline_full_history_recalc.py",
       "ok": true,
-      "seconds": 134.7,
+      "seconds": 214.0,
       "returncode": 0,
       "tail": "    \"skipped\": 19\n  },\n  \"period_audit\": {\n    \"status\": \"ok\",\n    \"active_start\": \"2026-09-20\",\n    \"checked\": 18,\n    \"missing_before\": [],\n    \"repaired\": [],\n    \"missing_after\": []\n  },\n  \"settled_count\": 0,\n  \"low_probability_backfill\": {\n    \"inserted\": 0,\n    \"skipped\": 19\n  },\n  \"low_probability_settled_count\": 0,\n  \"prediction_status\": \"recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated\",\n  \"health_status\": \"ok\",\n  \"system_completeness\": 100\n}"
     },
@@ -224,7 +224,7 @@
       "name": "前九防空修復 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python repair_no_empty_prediction.py",
       "ok": true,
-      "seconds": 0.1,
+      "seconds": 0.2,
       "returncode": 0,
       "tail": "    32,\n    33\n  ],\n  \"target_draw_date\": \"2026-10-09\",\n  \"target_taiwan_time\": \"2026-10-10 09:50\",\n  \"top1\": [\n    39\n  ],\n  \"top9\": [\n    39,\n    27,\n    11,\n    9,\n    6,\n    19,\n    30,\n    31,\n    5\n  ]\n}"
     },
@@ -232,7 +232,7 @@
       "name": "獨隻軌跡稽核 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python super_single_pattern_miner.py",
       "ok": true,
-      "seconds": 0.2,
+      "seconds": 0.3,
       "returncode": 0,
       "tail": "    \"name\": \"近 60 期\",\n    \"kind\": \"近期軌跡\",\n    \"hits\": 14,\n    \"samples\": 60,\n    \"rate\": 0.233333,\n    \"lift\": 1.82,\n    \"passed\": true,\n    \"min_samples\": 30,\n    \"detail\": \"39 的近期出現率；少於30期只列觀察不列通過\"\n  },\n  \"truth_guard\": {\n    \"model_backtest_rounds\": 720,\n    \"model_backtest_hits\": 100,\n    \"model_backtest_rate\": 0.1389,\n    \"baseline_rate\": 0.128205,\n    \"backtest_lift\": 1.0834,\n    \"meets_90\": false,\n    \"policy\": \"每日必算一顆獨隻；未有真實回測90%以上，不准標示90%以上準確。\"\n  }\n}"
     },
@@ -248,7 +248,7 @@
       "name": "戰報重建 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python pages_build.py",
       "ok": true,
-      "seconds": 3.3,
+      "seconds": 4.8,
       "returncode": 0,
       "tail": "/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/site/index.html"
     },
@@ -256,7 +256,7 @@
       "name": "公開檔清理 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python sanitize_public_outputs.py",
       "ok": true,
-      "seconds": 0.5,
+      "seconds": 0.7,
       "returncode": 0,
       "tail": "sanitized public outputs"
     },
@@ -264,7 +264,7 @@
       "name": "缺口檢測 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python system_gap_audit.py --fail-on-publish-blocking --local-only",
       "ok": true,
-      "seconds": 0.2,
+      "seconds": 0.3,
       "returncode": 0,
       "tail": "{\"status\": \"無嚴重缺漏，仍需模型補強\", \"issues\": 1, \"critical\": 0, \"publish_blocking\": 0}"
     },
@@ -272,7 +272,7 @@
       "name": "手機本機同步 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python verify_mobile_sync.py --local-only",
       "ok": true,
-      "seconds": 0.1,
+      "seconds": 0.2,
       "returncode": 0,
       "tail": "{\"status\": \"同步\", \"mismatches\": []}"
     },
@@ -280,7 +280,7 @@
       "name": "穩定度監測 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python system_stability_monitor.py",
       "ok": true,
-      "seconds": 0.1,
+      "seconds": 0.2,
       "returncode": 0,
       "tail": "{\"status\": \"穩定\", \"stability_score\": 100.0, \"failed\": 0}"
     }
