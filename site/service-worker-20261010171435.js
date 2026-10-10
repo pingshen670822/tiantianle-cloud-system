@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tiantianle-ironlaw-20261010171834';
+const CACHE_NAME = 'tiantianle-ironlaw-20261010171435';
 const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {
   const keys = await caches.keys();
@@ -9,7 +9,7 @@ async function deleteOldCaches() {
   await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
 }
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20261010171834')).catch(() => cache.addAll(APP_SHELL))));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL.map(url => url + '?v=20261010171435')).catch(() => cache.addAll(APP_SHELL))));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const path = decodeURIComponent(url.pathname);
   const isReportShortcut = path.includes('complete_report') || path.includes('完整_report') || path.includes('完整戰報') || path.includes('latest_battle_report') || path.endsWith('/reports/');
-  const stableReportUrl = new URL('reports/complete_report.html?v=20261010171834', self.registration.scope).toString();
+  const stableReportUrl = new URL('reports/complete_report.html?v=20261010171435', self.registration.scope).toString();
   const isNeverCache = path.includes('/reports/') || path.endsWith('latest_analysis.json') || path.endsWith('最新分析資料.json') || path.endsWith('version.json') || path.endsWith('版本.json');
   const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.includes('service-worker') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isNeverCache) {
@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (isFreshFile) {
-    url.searchParams.set('v', '20261010171834');
+    url.searchParams.set('v', '20261010171435');
     event.respondWith(fetch(url.toString(), { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }).then(response => {
       if (!response.ok && isReportShortcut) return fetch(stableReportUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
       return response;
