@@ -1,4 +1,5 @@
 import base64
+import http.client
 import json
 import pathlib
 import ssl
@@ -68,14 +69,24 @@ def request_json(path, token, data=None, method="GET", tolerate=()):
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    try:
-        raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
-        return json.loads(raw or "{}") if raw else {}
-    except urllib.error.HTTPError as exc:
-        text = exc.read().decode(errors="ignore")
-        if exc.code in tolerate:
-            return {"_status": exc.code, "body": text}
-        raise RuntimeError(f"{method} {path} {exc.code} {text[:500]}")
+    last_error = None
+    for attempt in range(1, 7):
+        try:
+            raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
+            return json.loads(raw or "{}") if raw else {}
+        except urllib.error.HTTPError as exc:
+            text = exc.read().decode(errors="ignore")
+            if exc.code in tolerate:
+                return {"_status": exc.code, "body": text}
+            if exc.code not in {429, 500, 502, 503, 504} or attempt == 6:
+                raise RuntimeError(f"{method} {path} {exc.code} {text[:500]}")
+            last_error = f"{exc.code} {text[:160]}"
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.RemoteDisconnected) as exc:
+            last_error = str(exc)
+            if attempt == 6:
+                raise RuntimeError(f"{method} {path} failed after retries: {last_error}") from exc
+        time.sleep(min(2 ** attempt, 30))
+    raise RuntimeError(f"{method} {path} failed after retries: {last_error}")
 
 
 def allowed(path):

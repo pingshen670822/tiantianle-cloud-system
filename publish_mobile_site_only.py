@@ -1,6 +1,7 @@
 import base64
 import ctypes
 import hashlib
+import http.client
 import json
 import os
 import pathlib
@@ -34,14 +35,24 @@ def request_json(url, data=None, method=None, headers=None, token=None, tolerate
         final_headers["Authorization"] = "Bearer " + token
         final_headers["X-GitHub-Api-Version"] = "2022-11-28"
     req = urllib.request.Request(url, data=body, method=method, headers=final_headers)
-    try:
-        raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
-        return json.loads(raw or "{}") if raw else {}
-    except urllib.error.HTTPError as exc:
-        text = exc.read().decode(errors="ignore")
-        if exc.code in tolerate:
-            return {"_status": exc.code, "body": text}
-        raise RuntimeError(f"{method or 'GET'} {url} {exc.code} {text[:500]}")
+    last_error = None
+    for attempt in range(1, 7):
+        try:
+            raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
+            return json.loads(raw or "{}") if raw else {}
+        except urllib.error.HTTPError as exc:
+            text = exc.read().decode(errors="ignore")
+            if exc.code in tolerate:
+                return {"_status": exc.code, "body": text}
+            if exc.code not in {429, 500, 502, 503, 504} or attempt == 6:
+                raise RuntimeError(f"{method or 'GET'} {url} {exc.code} {text[:500]}")
+            last_error = f"{exc.code} {text[:160]}"
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.RemoteDisconnected) as exc:
+            last_error = str(exc)
+            if attempt == 6:
+                raise RuntimeError(f"{method or 'GET'} {url} failed after retries: {last_error}") from exc
+        time.sleep(min(2 ** attempt, 30))
+    raise RuntimeError(f"{method or 'GET'} {url} failed after retries: {last_error}")
 
 
 def device_token():
