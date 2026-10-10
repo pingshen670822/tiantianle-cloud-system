@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-11T02:40:46+08:00",
+  "checked_at_taiwan": "2026-10-11T05:26:45+08:00",
   "status": "ok",
   "successful_sources": 5,
   "total_sources": 7,
@@ -8,7 +8,7 @@
       "file": "calottery_正式.html",
       "url": "https://www.calottery.com/en/draw-games/fantasy-5",
       "ok": true,
-      "bytes": 100501,
+      "bytes": 100500,
       "error": "",
       "attempt": 1
     },
@@ -25,13 +25,13 @@
       "url": "https://en.lottolyzer.com/history/united-states/fantasy-5-california/",
       "ok": false,
       "bytes": 0,
-      "error": "HTTP Error 502: Bad Gateway"
+      "error": "The read operation timed out"
     },
     {
       "file": "lotteryusa_latest.html",
       "url": "https://www.lotteryusa.com/california/fantasy-5/",
       "ok": true,
-      "bytes": 330793,
+      "bytes": 330784,
       "error": "",
       "attempt": 1
     },
@@ -46,7 +46,7 @@
       "file": "lotterynet_latest.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers",
       "ok": true,
-      "bytes": 71323,
+      "bytes": 67705,
       "error": "",
       "attempt": 1
     },
@@ -54,7 +54,7 @@
       "file": "lotterynet_year.html",
       "url": "https://www.lottery.net/california/fantasy-5/numbers/2026",
       "ok": true,
-      "bytes": 302522,
+      "bytes": 298914,
       "error": "",
       "attempt": 1
     }
