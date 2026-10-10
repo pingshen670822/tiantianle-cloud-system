@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-10T17:27:23+08:00",
+  "checked_at_taiwan": "2026-10-10T17:40:10+08:00",
   "status": "需觀察",
   "stability_score": 81.8,
   "latest_draw_date": "2026-10-09",
@@ -323,7 +323,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-10T17:27:20+08:00"
+    "created_at_taiwan": "2026-10-10T17:40:04+08:00"
   },
   "ultimate_super_single_engine": {
     "status": "未達嚴格門不輸出",
@@ -1195,7 +1195,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-10T17:27:20+08:00"
+    "created_at_taiwan": "2026-10-10T17:40:04+08:00"
   },
   "database": {
     "ok": true,
