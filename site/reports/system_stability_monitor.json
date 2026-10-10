@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-10T06:45:10+08:00",
+  "checked_at_taiwan": "2026-10-10T08:57:26+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-08",
@@ -130,7 +130,7 @@
         "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
       }
     ],
-    "created_at_taiwan": "2026-10-10T06:45:05+08:00",
+    "created_at_taiwan": "2026-10-10T08:57:22+08:00",
     "global_fusion_modules": [
       {
         "module": "指數近期衰減",
@@ -1180,7 +1180,7 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-10T06:45:05+08:00",
+    "created_at_taiwan": "2026-10-10T08:57:22+08:00",
     "ultimate_super_single_selected": 27
   },
   "database": {
