@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-11T01:22:27+08:00",
+  "checked_at_taiwan": "2026-10-11T02:13:30+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-09",
@@ -46,7 +46,7 @@
       "信心指標": 90.3,
       "模型機率": 20.56
     },
-    "created_at_taiwan": "2026-10-11T01:22:19+08:00",
+    "created_at_taiwan": "2026-10-11T02:13:23+08:00",
     "pattern_mining": {
       "passed_signal_count": 23,
       "same_single_reuse_validation": {
@@ -597,7 +597,7 @@
         "strict_gate": "備援觀察"
       }
     ],
-    "created_at_taiwan": "2026-10-11T01:22:19+08:00"
+    "created_at_taiwan": "2026-10-11T02:13:23+08:00"
   },
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -620,7 +620,7 @@
     "top9_count": 9,
     "top15_count": 15,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-11T01:22:19+08:00",
+    "created_at_taiwan": "2026-10-11T02:13:23+08:00",
     "no_empty_backup": true
   },
   "database": {
