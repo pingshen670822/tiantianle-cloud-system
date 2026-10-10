@@ -1,162 +1,162 @@
 {
-  "checked_at_taiwan": "2026-10-10T08:57:31+08:00",
+  "checked_at_taiwan": "2026-10-10T12:33:35+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-10-10T08:56:06+08:00",
-    "draw_count": 11944,
-    "latest_draw_date": "2026-10-08",
+    "generated_at_taiwan": "2026-10-10T12:31:45+08:00",
+    "draw_count": 11945,
+    "latest_draw_date": "2026-10-09",
     "latest_numbers": [
-      7,
-      10,
-      25,
-      32,
-      33
+      11,
+      15,
+      20,
+      23,
+      35
     ],
-    "target_draw_date": "2026-10-09",
-    "target_taiwan_time": "2026-10-10 09:50",
+    "target_draw_date": "2026-10-10",
+    "target_taiwan_time": "2026-10-11 09:50",
     "top1": [
-      39
+      10
     ],
     "top9": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5
+      25,
+      33,
+      27,
+      12,
+      2,
+      1
     ],
     "top15": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5,
-      2,
-      15,
-      3,
+      25,
+      33,
+      27,
       12,
+      2,
+      1,
+      30,
+      6,
+      32,
+      36,
       13,
-      37
+      14
     ],
-    "ultimate_single": 39,
+    "ultimate_single": 10,
     "ultimate_model": "全歷史防空備援排序",
-    "super_single_number": 39,
+    "super_single_number": 10,
     "super_single_status": "全歷史備援唯一輸出",
     "strong_single_numbers": [
-      39
+      10
     ],
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "site": {
-    "generated_at_taiwan": "2026-10-10T08:56:06+08:00",
-    "draw_count": 11944,
-    "latest_draw_date": "2026-10-08",
+    "generated_at_taiwan": "2026-10-10T12:31:45+08:00",
+    "draw_count": 11945,
+    "latest_draw_date": "2026-10-09",
     "latest_numbers": [
-      7,
-      10,
-      25,
-      32,
-      33
+      11,
+      15,
+      20,
+      23,
+      35
     ],
-    "target_draw_date": "2026-10-09",
-    "target_taiwan_time": "2026-10-10 09:50",
+    "target_draw_date": "2026-10-10",
+    "target_taiwan_time": "2026-10-11 09:50",
     "top1": [
-      39
+      10
     ],
     "top9": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5
+      25,
+      33,
+      27,
+      12,
+      2,
+      1
     ],
     "top15": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5,
-      2,
-      15,
-      3,
+      25,
+      33,
+      27,
       12,
+      2,
+      1,
+      30,
+      6,
+      32,
+      36,
       13,
-      37
+      14
     ],
-    "ultimate_single": 39,
+    "ultimate_single": 10,
     "ultimate_model": "全歷史防空備援排序",
-    "super_single_number": 39,
+    "super_single_number": 10,
     "super_single_status": "全歷史備援唯一輸出",
     "strong_single_numbers": [
-      39
+      10
     ],
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
   "site_data": {
-    "generated_at_taiwan": "2026-10-10T08:56:06+08:00",
-    "draw_count": 11944,
-    "latest_draw_date": "2026-10-08",
+    "generated_at_taiwan": "2026-10-10T12:31:45+08:00",
+    "draw_count": 11945,
+    "latest_draw_date": "2026-10-09",
     "latest_numbers": [
-      7,
-      10,
-      25,
-      32,
-      33
+      11,
+      15,
+      20,
+      23,
+      35
     ],
-    "target_draw_date": "2026-10-09",
-    "target_taiwan_time": "2026-10-10 09:50",
+    "target_draw_date": "2026-10-10",
+    "target_taiwan_time": "2026-10-11 09:50",
     "top1": [
-      39
+      10
     ],
     "top9": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5
+      25,
+      33,
+      27,
+      12,
+      2,
+      1
     ],
     "top15": [
+      10,
       39,
-      27,
-      11,
-      9,
-      6,
       19,
-      30,
-      31,
-      5,
-      2,
-      15,
-      3,
+      25,
+      33,
+      27,
       12,
+      2,
+      1,
+      30,
+      6,
+      32,
+      36,
       13,
-      37
+      14
     ],
-    "ultimate_single": 39,
+    "ultimate_single": 10,
     "ultimate_model": "全歷史防空備援排序",
-    "super_single_number": 39,
+    "super_single_number": 10,
     "super_single_status": "全歷史備援唯一輸出",
     "strong_single_numbers": [
-      39
+      10
     ],
     "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
   },
