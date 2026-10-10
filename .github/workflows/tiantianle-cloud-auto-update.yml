@@ -161,11 +161,11 @@ jobs:
         shell: bash
         run: |
           set +e
-          python cloud_self_repair.py --retries 2
+          timeout 600 python cloud_self_repair.py --retries 2
           repair_exit=$?
           if [ "$repair_exit" -ne 0 ]; then
             echo "cloud self-repair still found issues; one more fast retry"
-            python cloud_self_repair.py --retries 1 || true
+            timeout 300 python cloud_self_repair.py --retries 1 || true
           fi
       - name: Full system audit before publish
         shell: bash
@@ -578,7 +578,7 @@ jobs:
             exit 0
           fi
           echo "remote mobile sync failed; running emergency cloud self-repair and republish"
-          python cloud_self_repair.py --retries 2
+          timeout 600 python cloud_self_repair.py --retries 2
           python repair_no_empty_prediction.py
           python pages_build.py
           python sanitize_public_outputs.py
