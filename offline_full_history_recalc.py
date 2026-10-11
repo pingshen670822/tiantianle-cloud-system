@@ -3182,6 +3182,158 @@ def _merge_cloud_latest_into_db(conn, draws):
     return {"added": added, "accepted": accepted}
 
 
+PREDICTION_FINAL_LOCK_PATHS = [
+    base / "prediction_final_lock.json",
+    base / "reports" / "prediction_final_lock.json",
+    base / "site" / "prediction_final_lock.json",
+]
+
+
+def _safe_int_numbers(values, limit=None):
+    numbers = []
+    for value in values or []:
+        try:
+            number = int(value)
+        except Exception:
+            continue
+        if 1 <= number <= 39 and number not in numbers:
+            numbers.append(number)
+        if limit and len(numbers) >= limit:
+            break
+    return numbers
+
+
+def _prediction_lock_key(analysis):
+    latest = analysis.get("latest_draw") or {}
+    return {
+        "latest_draw_date": str(latest.get("draw_date") or "")[:10],
+        "latest_numbers": sorted(_safe_int_numbers(latest.get("numbers") or [], limit=5)),
+        "target_draw_date": str(analysis.get("target_draw_date") or "")[:10],
+        "target_taiwan_time": str(analysis.get("prediction_draw_taiwan_time") or ""),
+    }
+
+
+def _read_prediction_final_lock():
+    for path in PREDICTION_FINAL_LOCK_PATHS:
+        payload = _read_json_payload(path)
+        if isinstance(payload, dict) and payload.get("lock_key"):
+            return payload
+    return {}
+
+
+def _current_prediction_payload(analysis):
+    prediction = analysis.get("prediction") or {}
+    gate = analysis.get("strict_prediction_gate") or {}
+    super_single = analysis.get("super_single_decision") or {}
+    ultimate = analysis.get("ultimate_super_single_engine") or {}
+
+    single_candidates = []
+    single_candidates.extend(_safe_int_numbers(prediction.get("top1") or [], limit=1))
+    single_candidates.extend(_safe_int_numbers(super_single.get("numbers") or [], limit=1))
+    if super_single.get("number") is not None:
+        single_candidates.extend(_safe_int_numbers([super_single.get("number")], limit=1))
+    if ultimate.get("selected_number") is not None:
+        single_candidates.extend(_safe_int_numbers([ultimate.get("selected_number")], limit=1))
+
+    top9 = _safe_int_numbers(gate.get("qualified_numbers") or [], limit=9)
+    if not top9:
+        top9 = _safe_int_numbers(prediction.get("top9") or [], limit=9)
+    if not top9:
+        top9 = _safe_int_numbers(prediction.get("top5") or prediction.get("top3") or [], limit=9)
+
+    final_single = single_candidates[0] if single_candidates else (top9[0] if top9 else None)
+    if final_single and final_single not in top9:
+        top9 = [final_single] + [number for number in top9 if number != final_single]
+    if final_single and not top9:
+        top9 = [final_single]
+
+    return {
+        "final_single": final_single,
+        "final_top9": top9[:9],
+        "generated_at_taiwan": analysis.get("generated_at_taiwan") or datetime.now(timezone(timedelta(hours=8))).isoformat(),
+    }
+
+
+def _write_prediction_final_lock(lock):
+    text = json.dumps(lock, ensure_ascii=True, indent=2)
+    for path in PREDICTION_FINAL_LOCK_PATHS:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+
+def _force_prediction_final_lock_values(analysis, lock, reused):
+    final_single = lock.get("final_single")
+    final_top9 = _safe_int_numbers(lock.get("final_top9") or [], limit=9)
+    if final_single is None:
+        return analysis
+    final_single = int(final_single)
+    if final_single not in final_top9:
+        final_top9 = [final_single] + [number for number in final_top9 if number != final_single]
+    final_top9 = final_top9[:9] or [final_single]
+
+    prediction = analysis.setdefault("prediction", {})
+    prediction["top1"] = [final_single]
+    prediction["top2"] = final_top9[:2]
+    prediction["top3"] = final_top9[:3]
+    prediction["top5"] = final_top9[:5]
+    prediction["top9"] = final_top9
+    prediction["strongest_single"] = final_single
+    prediction["final_locked_top1"] = [final_single]
+    prediction["final_locked_top9"] = final_top9
+
+    gate = analysis.setdefault("strict_prediction_gate", {})
+    gate["status"] = "passed_locked_final"
+    gate["qualified_numbers"] = final_top9
+    gate["final_single"] = final_single
+    gate["final_lock_reused"] = bool(reused)
+    gate["final_lock_key"] = lock.get("lock_key")
+    gate["message"] = "同一期預測已定版，避免雲端與本機重跑後不同步"
+
+    super_single = analysis.setdefault("super_single_decision", {})
+    super_single["number"] = final_single
+    super_single["numbers"] = [final_single]
+    super_single["locked_final"] = True
+    super_single["final_lock_reused"] = bool(reused)
+    super_single["target_draw_date"] = (lock.get("lock_key") or {}).get("target_draw_date")
+    super_single["target_taiwan_time"] = (lock.get("lock_key") or {}).get("target_taiwan_time")
+    super_single["reason"] = "同一期定版鎖定；修復前暫態號碼不得覆蓋最新版"
+
+    ultimate = analysis.setdefault("ultimate_super_single_engine", {})
+    ultimate["selected_number"] = final_single
+    ultimate["locked_final"] = True
+    ultimate["final_lock_reused"] = bool(reused)
+    ultimate["target_draw_date"] = (lock.get("lock_key") or {}).get("target_draw_date")
+    ultimate["target_taiwan_time"] = (lock.get("lock_key") or {}).get("target_taiwan_time")
+
+    analysis["prediction_final_lock"] = {
+        **lock,
+        "reused_this_run": bool(reused),
+        "active": True,
+    }
+    return analysis
+
+
+def _apply_prediction_final_lock(analysis):
+    current_key = _prediction_lock_key(analysis)
+    existing = _read_prediction_final_lock()
+    if existing.get("lock_key") == current_key and existing.get("final_single") is not None:
+        return _force_prediction_final_lock_values(analysis, existing, reused=True)
+
+    current = _current_prediction_payload(analysis)
+    lock = {
+        "lock_key": current_key,
+        "final_single": current.get("final_single"),
+        "final_top9": current.get("final_top9") or [],
+        "locked_at_taiwan": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+        "source_generated_at_taiwan": current.get("generated_at_taiwan"),
+        "policy": "same_latest_draw_and_same_target_can_publish_only_one_final_prediction",
+        "note": "同一最新開獎日與同一下期預測日只准一組定版獨隻，防止 11/15 這類重跑跳號",
+    }
+    if lock["final_single"] is not None:
+        _write_prediction_final_lock(lock)
+    return _force_prediction_final_lock_values(analysis, lock, reused=False)
+
+
 cloud_confirmed_draws = _confirmed_latest_draws()
 cloud_history_merge = _merge_cloud_latest_into_history_files(cloud_confirmed_draws)
 mod.setup_dirs()
@@ -3214,6 +3366,7 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     _apply_low_probability_core_backtest(analysis)
     _apply_unique_super_single_rule(analysis)
     _apply_ultimate_super_single_engine(analysis, draws, review)
+    _apply_prediction_final_lock(analysis)
     analysis['offline_full_history_recalc'] = True
     analysis['offline_full_history_recalc_note'] = 'daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced'
     status = mod.store_prediction(conn, analysis)
@@ -3223,6 +3376,7 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     _apply_low_probability_core_backtest(analysis)
     _apply_unique_super_single_rule(analysis)
     _apply_ultimate_super_single_engine(analysis, draws, review)
+    _apply_prediction_final_lock(analysis)
     mod.ANALYSIS_JSON.write_text(json.dumps(analysis, ensure_ascii=True, indent=2), encoding='utf-8')
     data_audit = mod.data_integrity_audit(conn)
     network_diag = {'status': 'offline_full_history_fast_recalc', 'blocked_count': 0, 'checks': []}
