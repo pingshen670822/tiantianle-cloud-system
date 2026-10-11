@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>天天樂終極獨隻軌跡稽核</title>
+<style>
+body{margin:0;background:#f6f7fb;color:#172033;font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;line-height:1.55}
+header{background:#111827;color:#fff;padding:24px 18px}
+main{max-width:1180px;margin:0 auto;padding:18px}
+.hero{font-size:52px;font-weight:900;color:#facc15}
+.band{background:#fff;border:1px solid #dce3ee;border-radius:8px;margin:14px 0;padding:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-top:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+th{background:#f8fafc}
+.ok{color:#047857;font-weight:900}.warn{color:#b45309;font-weight:900}
+</style>
+
+    <style>
+      .tiantianle-cloud-controls{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}
+      .tiantianle-cloud-title{font-weight:900;color:#7c2d12;white-space:nowrap}
+      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}
+      .tiantianle-cloud-button.manual{background:#166534}
+      .tiantianle-cloud-button.repair{background:#991b1b}
+      .tiantianle-cloud-button.refresh{background:#1d4ed8}
+      .tiantianle-cloud-status{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}
+      .tiantianle-cloud-status.primary-time{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}
+      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
+    </style>
+    </head>
+<body><section class="band update-box"><h2>立刻更新到最新</h2>
+    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
+      <div class="tiantianle-cloud-title">雲端快速操作</div>
+      <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
+      <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
+      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-11T12:25:34+08:00</div>
+      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-10　02 05 10 14 35 / 下期：2026-10-11　2026-10-12 09:50</div>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
+    </div>
+    </section>
+<header>
+  <h1>天天樂終極獨隻軌跡稽核</h1>
+  <div class="hero">11</div>
+  <p>目標期：2026-10-11 / 台灣時間 2026-10-12 09:50</p>
+</header>
+<main>
+  <section class="band">
+    <h2>結論</h2>
+    <p><strong class="ok">本期必算獨隻：11</strong></p>
+    <p>上一期是否同為獨隻：否；本期仍保留原因：已用最新開獎、全歷史、拖牌、日期與走步回測重新計算，不是複製上期。</p>
+    <p>真實回測達 90%：<strong class="warn">未達，禁止偽裝</strong>。系統會每天輸出獨隻，但回測未達 90% 不准寫成 90%。</p>
+  </section>
+  <section class="band">
+    <h2>最強通過訊號</h2>
+    <table><thead><tr><th>類別</th><th>訊號</th><th>命中</th><th>命中率</th><th>優勢倍數</th><th>判定</th><th>說明</th></tr></thead><tbody><tr><td>近期軌跡</td><td>近 30 期</td><td>6/30</td><td>20.00%</td><td>1.56</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>近期軌跡</td><td>近 120 期</td><td>22/120</td><td>18.33%</td><td>1.43</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>14-35 拖 11</td><td>27/160</td><td>16.88%</td><td>1.3163</td><td>通過</td><td>前一期同含 14、35，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>05-14 拖 11</td><td>23/138</td><td>16.67%</td><td>1.3</td><td>通過</td><td>前一期同含 05、14，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>10-14 拖 11</td><td>30/183</td><td>16.39%</td><td>1.2787</td><td>通過</td><td>前一期同含 10、14，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 360 期</td><td>58/360</td><td>16.11%</td><td>1.2567</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-05 拖 11</td><td>26/164</td><td>15.85%</td><td>1.2366</td><td>通過</td><td>前一期同含 02、05，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 720 期</td><td>110/720</td><td>15.28%</td><td>1.1917</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-14 拖 11</td><td>25/165</td><td>15.15%</td><td>1.1818</td><td>通過</td><td>前一期同含 02、14，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 60 期</td><td>9/60</td><td>15.00%</td><td>1.17</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-10 拖 11</td><td>26/177</td><td>14.69%</td><td>1.1458</td><td>通過</td><td>前一期同含 02、10，下一期開 11</td></tr><tr><td>單號拖牌</td><td>14 拖 11</td><td>222/1523</td><td>14.58%</td><td>1.137</td><td>通過</td><td>前一期含 14，下一期開 11</td></tr></tbody></table>
+  </section>
+  <section class="band">
+    <h2>全部軌跡與規律檢查</h2>
+    <table><thead><tr><th>類別</th><th>訊號</th><th>命中</th><th>命中率</th><th>優勢倍數</th><th>判定</th><th>說明</th></tr></thead><tbody><tr><td>近期軌跡</td><td>近 30 期</td><td>6/30</td><td>20.00%</td><td>1.56</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>近期軌跡</td><td>近 120 期</td><td>22/120</td><td>18.33%</td><td>1.43</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>14-35 拖 11</td><td>27/160</td><td>16.88%</td><td>1.3163</td><td>通過</td><td>前一期同含 14、35，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>05-14 拖 11</td><td>23/138</td><td>16.67%</td><td>1.3</td><td>通過</td><td>前一期同含 05、14，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>10-14 拖 11</td><td>30/183</td><td>16.39%</td><td>1.2787</td><td>通過</td><td>前一期同含 10、14，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 360 期</td><td>58/360</td><td>16.11%</td><td>1.2567</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-05 拖 11</td><td>26/164</td><td>15.85%</td><td>1.2366</td><td>通過</td><td>前一期同含 02、05，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 720 期</td><td>110/720</td><td>15.28%</td><td>1.1917</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-14 拖 11</td><td>25/165</td><td>15.15%</td><td>1.1818</td><td>通過</td><td>前一期同含 02、14，下一期開 11</td></tr><tr><td>近期軌跡</td><td>近 60 期</td><td>9/60</td><td>15.00%</td><td>1.17</td><td>通過</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>雙號拖牌</td><td>02-10 拖 11</td><td>26/177</td><td>14.69%</td><td>1.1458</td><td>通過</td><td>前一期同含 02、10，下一期開 11</td></tr><tr><td>單號拖牌</td><td>14 拖 11</td><td>222/1523</td><td>14.58%</td><td>1.137</td><td>通過</td><td>前一期含 14，下一期開 11</td></tr><tr><td>差值拖牌</td><td>14 -3 生成 11</td><td>222/1523</td><td>14.58%</td><td>1.137</td><td>通過</td><td>前一期含 14 時，以位移 -3 指向 11，下一期實際開 11 的單顆命中率</td></tr><tr><td>單號拖牌</td><td>05 拖 11</td><td>220/1550</td><td>14.19%</td><td>1.1071</td><td>通過</td><td>前一期含 05，下一期開 11</td></tr><tr><td>差值拖牌</td><td>05 +6 生成 11</td><td>220/1550</td><td>14.19%</td><td>1.1071</td><td>通過</td><td>前一期含 05 時，以位移 +6 指向 11，下一期實際開 11 的單顆命中率</td></tr><tr><td>日期牌</td><td>同日期尾 11</td><td>196/1408</td><td>13.92%</td><td>1.0858</td><td>通過</td><td>目標日 2026-10-11 的同日期尾樣本</td></tr><tr><td>日期牌</td><td>同月日尾 11</td><td>164/1182</td><td>13.87%</td><td>1.0822</td><td>通過</td><td>目標日 2026-10-11 的同月日尾樣本</td></tr><tr><td>日期牌</td><td>同月份 11</td><td>140/1012</td><td>13.83%</td><td>1.0791</td><td>通過</td><td>目標日 2026-10-11 的同月份樣本</td></tr><tr><td>日期牌</td><td>同星期 11</td><td>231/1683</td><td>13.73%</td><td>1.0706</td><td>通過</td><td>目標日 2026-10-11 的同星期樣本</td></tr><tr><td>遺漏軌跡</td><td>遺漏 1 期附近</td><td>714/5275</td><td>13.54%</td><td>1.0558</td><td>通過</td><td>目前 11 遺漏 1 期，採 0-3 期相近樣本</td></tr><tr><td>單號拖牌</td><td>35 拖 11</td><td>202/1520</td><td>13.29%</td><td>1.0366</td><td>通過</td><td>前一期含 35，下一期開 11</td></tr><tr><td>差值拖牌</td><td>35 +15 生成 11</td><td>202/1520</td><td>13.29%</td><td>1.0366</td><td>通過</td><td>前一期含 35 時，以位移 +15 指向 11，下一期實際開 11 的單顆命中率</td></tr><tr><td>近期軌跡</td><td>近 14 期</td><td>2/14</td><td>14.29%</td><td>1.1143</td><td>未達</td><td>11 的近期出現率；少於30期只列觀察不列通過</td></tr><tr><td>單號拖牌</td><td>10 拖 11</td><td>205/1601</td><td>12.80%</td><td>0.9988</td><td>未達</td><td>前一期含 10，下一期開 11</td></tr><tr><td>差值拖牌</td><td>10 +1 生成 11</td><td>205/1601</td><td>12.80%</td><td>0.9988</td><td>未達</td><td>前一期含 10 時，以位移 +1 指向 11，下一期實際開 11 的單顆命中率</td></tr><tr><td>單號拖牌</td><td>02 拖 11</td><td>205/1608</td><td>12.75%</td><td>0.9944</td><td>未達</td><td>前一期含 02，下一期開 11</td></tr><tr><td>差值拖牌</td><td>02 +9 生成 11</td><td>205/1608</td><td>12.75%</td><td>0.9944</td><td>未達</td><td>前一期含 02 時，以位移 +9 指向 11，下一期實際開 11 的單顆命中率</td></tr><tr><td>雙號拖牌</td><td>05-35 拖 11</td><td>19/151</td><td>12.58%</td><td>0.9815</td><td>未達</td><td>前一期同含 05、35，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>10-35 拖 11</td><td>21/179</td><td>11.73%</td><td>0.9151</td><td>未達</td><td>前一期同含 10、35，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>05-10 拖 11</td><td>19/174</td><td>10.92%</td><td>0.8517</td><td>未達</td><td>前一期同含 05、10，下一期開 11</td></tr><tr><td>雙號拖牌</td><td>02-35 拖 11</td><td>15/164</td><td>9.15%</td><td>0.7134</td><td>未達</td><td>前一期同含 02、35，下一期開 11</td></tr></tbody></table>
+  </section>
+</main>
+
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261011122534') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261011122534';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    
+    <script>
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261011122534";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-11T12:25:34+08:00";
+    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
+    async function tiantianleClearVisibleCaches() {
+      try {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      } catch (err) {}
+    }
+    function tiantianleFormatCloudNumbers(numbers) {
+      if (!Array.isArray(numbers)) return '-';
+      return numbers.map(function(number) {
+        var value = parseInt(number, 10);
+        if (!Number.isFinite(value)) return '';
+        return String(value).padStart(2, '0');
+      }).filter(Boolean).join(' ') || '-';
+    }
+    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {
+      if (!data) return;
+      var latest = data.latest_draw || {};
+      var generated = data.generated_at_taiwan || data.generated_at || '-';
+      var latestDate = latest.draw_date || '-';
+      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
+      var targetDate = data.target_draw_date || '-';
+      var targetTime = data.prediction_draw_taiwan_time || '-';
+      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
+      var drawEl = document.getElementById('tiantianleLatestDrawLine');
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
+      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
+      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {
+        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
+        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
+      }
+    }
+    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (!res.ok) throw new Error('latest_analysis not ready');
+        var data = await res.json();
+        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
+        return data;
+      } catch (err) {
+        var status = document.getElementById('tiantianleCloudActionStatus');
+        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
+        return null;
+      }
+    }
+    function tiantianleStartUpdatePolling(label) {
+      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+      tiantianleRefreshLatestUpdateDisplay(label);
+      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {
+        tiantianleRefreshLatestUpdateDisplay(label);
+      }, 15000);
+      setTimeout(function() {
+        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {
+          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
+        }
+      }, 30 * 60 * 1000);
+    }
+    async function tiantianleForceReadLatestNow() {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = '正在重讀雲端最新更新時間';
+      await tiantianleClearVisibleCaches();
+      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
+    }
+    async function tiantianlePrepareCloudAction(label) {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
+      await tiantianleClearVisibleCaches();
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), { cache: 'no-store' });
+        await fetch(prefix + 'version.json?manual=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      tiantianleStartUpdatePolling(label);
+    }
+    window.addEventListener('pageshow', function() { tiantianleRefreshLatestUpdateDisplay('頁面開啟'); });
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
+    });
+    </script>
+    </body>
+</html>

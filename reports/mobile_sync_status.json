@@ -1,0 +1,169 @@
+{
+  "checked_at_taiwan": "2026-10-11T12:27:29+08:00",
+  "status": "同步",
+  "local": {
+    "generated_at_taiwan": "2026-10-11T12:25:34+08:00",
+    "draw_count": 11946,
+    "latest_draw_date": "2026-10-10",
+    "latest_numbers": [
+      2,
+      5,
+      10,
+      14,
+      35
+    ],
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "top1": [
+      11
+    ],
+    "top9": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25
+    ],
+    "top15": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25,
+      9,
+      6,
+      32,
+      31,
+      30,
+      12
+    ],
+    "ultimate_single": 11,
+    "ultimate_model": "全歷史防空備援排序",
+    "super_single_number": 11,
+    "super_single_status": "全歷史備援唯一輸出",
+    "strong_single_numbers": [
+      11
+    ],
+    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+  },
+  "site": {
+    "generated_at_taiwan": "2026-10-11T12:25:34+08:00",
+    "draw_count": 11946,
+    "latest_draw_date": "2026-10-10",
+    "latest_numbers": [
+      2,
+      5,
+      10,
+      14,
+      35
+    ],
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "top1": [
+      11
+    ],
+    "top9": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25
+    ],
+    "top15": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25,
+      9,
+      6,
+      32,
+      31,
+      30,
+      12
+    ],
+    "ultimate_single": 11,
+    "ultimate_model": "全歷史防空備援排序",
+    "super_single_number": 11,
+    "super_single_status": "全歷史備援唯一輸出",
+    "strong_single_numbers": [
+      11
+    ],
+    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+  },
+  "site_data": {
+    "generated_at_taiwan": "2026-10-11T12:25:34+08:00",
+    "draw_count": 11946,
+    "latest_draw_date": "2026-10-10",
+    "latest_numbers": [
+      2,
+      5,
+      10,
+      14,
+      35
+    ],
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "top1": [
+      11
+    ],
+    "top9": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25
+    ],
+    "top15": [
+      11,
+      27,
+      39,
+      15,
+      19,
+      3,
+      33,
+      13,
+      25,
+      9,
+      6,
+      32,
+      31,
+      30,
+      12
+    ],
+    "ultimate_single": 11,
+    "ultimate_model": "全歷史防空備援排序",
+    "super_single_number": 11,
+    "super_single_status": "全歷史備援唯一輸出",
+    "strong_single_numbers": [
+      11
+    ],
+    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+  },
+  "remote": {},
+  "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
+  "remote_report_url": "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json",
+  "remote_data_url": "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json",
+  "remote_error": "",
+  "mismatches": []
+}
