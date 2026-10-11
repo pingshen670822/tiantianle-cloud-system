@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-11T20:18:19+08:00",
+  "checked_at_taiwan": "2026-10-11T23:52:11+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-10",
@@ -116,7 +116,7 @@
         "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
       }
     ],
-    "created_at_taiwan": "2026-10-11T20:18:15+08:00",
+    "created_at_taiwan": "2026-10-11T23:52:05+08:00",
     "global_fusion_modules": [
       {
         "module": "共現關聯",
@@ -172,7 +172,12 @@
         "weight": 0.06,
         "weighted_score": 0.01576
       }
-    ]
+    ],
+    "locked_final": true,
+    "final_lock_reused": true,
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "reason": "同一期定版鎖定；修復前暫態號碼不得覆蓋最新版"
   },
   "ultimate_super_single_engine": {
     "status": "已完成超級獨支重整",
@@ -661,11 +666,15 @@
         "reason": "信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60、排序超出前十五嚴格觀察區"
       }
     ],
-    "policy": "全歷史、多窗口、拖牌、遺漏、日期牌、尾數與區間模型先回測，再套本期嚴格門，只輸出一顆超級獨支。"
+    "policy": "全歷史、多窗口、拖牌、遺漏、日期牌、尾數與區間模型先回測，再套本期嚴格門，只輸出一顆超級獨支。",
+    "locked_final": true,
+    "final_lock_reused": true,
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50"
   },
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
-    "status": "嚴格通過",
+    "status": "passed_locked_final",
     "policy": "所有預測號碼必須通過主列放行、上期沿用防呆、剛開出連莊高標、交叉驗算、成熟度、信心、機率、全歷史分數與原始總分；不足不補位。",
     "no_padding": true,
     "padding_banned": true,
@@ -1152,8 +1161,23 @@
         }
       }
     ],
-    "created_at_taiwan": "2026-10-11T20:18:15+08:00",
-    "ultimate_super_single_selected": 15
+    "created_at_taiwan": "2026-10-11T23:52:04+08:00",
+    "ultimate_super_single_selected": 15,
+    "final_single": 15,
+    "final_lock_reused": true,
+    "final_lock_key": {
+      "latest_draw_date": "2026-10-10",
+      "latest_numbers": [
+        2,
+        5,
+        10,
+        14,
+        35
+      ],
+      "target_draw_date": "2026-10-11",
+      "target_taiwan_time": "2026-10-12 09:50"
+    },
+    "message": "同一期預測已定版，避免雲端與本機重跑後不同步"
   },
   "database": {
     "ok": true,
