@@ -208,6 +208,12 @@ def main() -> None:
         "lock": (analysis.get("prediction_final_lock") or {}).get("final_single"),
     }
     analysis = apply_to_payload(analysis, write_files=True)
+    try:
+        import tiantianle_ironlaw_report
+
+        tiantianle_ironlaw_report.save_reports()
+    except Exception as exc:
+        print(json.dumps({"report_render_warning": str(exc)}, ensure_ascii=False))
     after = {
         "top1": (analysis.get("prediction") or {}).get("top1"),
         "super_single": (analysis.get("super_single_decision") or {}).get("number"),

@@ -264,6 +264,52 @@ def high_confidence_candidates(analysis, limit=9):
     return rows[:limit]
 
 
+def prediction_display_numbers(analysis, limit=9):
+    prediction = analysis.get("prediction") or {}
+    lock = analysis.get("prediction_final_lock") or {}
+    sources = [
+        lock.get("final_top9"),
+        prediction.get("top15") if limit > 9 else None,
+        prediction.get("top9"),
+        prediction.get("top5"),
+        prediction.get("top3"),
+        prediction.get("top1"),
+    ]
+    numbers = []
+    for source in sources:
+        for value in source or []:
+            number = safe_int(value)
+            if 1 <= number <= 39 and number not in numbers:
+                numbers.append(number)
+                if len(numbers) >= limit:
+                    return numbers
+        if numbers:
+            break
+    if not numbers and lock.get("final_single"):
+        numbers = [safe_int(lock.get("final_single"))]
+    return numbers[:limit]
+
+
+def prediction_display_candidates(analysis, limit=9):
+    source = analysis.get("official_candidates") or analysis.get("candidates") or []
+    by_number = {}
+    for item in source:
+        if not isinstance(item, dict):
+            continue
+        number = safe_int(item.get("number"))
+        if 1 <= number <= 39 and number not in by_number:
+            by_number[number] = dict(item)
+    rows = []
+    for idx, number in enumerate(prediction_display_numbers(analysis, limit), 1):
+        item = dict(by_number.get(number) or {"number": number})
+        item["rank"] = idx
+        item["_display_rank"] = idx
+        item["top9_core"] = True
+        item["final_lock_selected"] = bool((analysis.get("prediction_final_lock") or {}).get("final_single") == number)
+        rows.append(item)
+    return rows
+
+
 def pack_confidence_note(analysis, numbers):
     candidates = {safe_int(item.get("number")): item for item in (analysis.get("candidates") or []) if isinstance(item, dict)}
     high_notes = []
@@ -1963,7 +2009,7 @@ def compact_pack_status(pack):
 
 def compact_candidate_rows_tiantianle(analysis, limit=9):
     rows = []
-    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    candidates = prediction_display_candidates(analysis, limit)
     for rank, item in enumerate(candidates[:limit], 1):
         cross = item.get("cross_validation") or {}
         source_text = candidate_reason_text(item, 6)
@@ -1984,7 +2030,7 @@ def compact_candidate_rows_tiantianle(analysis, limit=9):
 
 def compact_number_verification_rows_tiantianle(analysis, limit=9):
     rows = []
-    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    candidates = prediction_display_candidates(analysis, limit)
     for rank, item in enumerate(candidates[:limit], 1):
         cross = item.get("cross_validation") or {}
         maturity = item.get("practical_maturity") or {}
@@ -2029,7 +2075,7 @@ def compact_number_verification_rows_tiantianle(analysis, limit=9):
 
 def compact_candidate_rows_539_tiantianle(analysis, latest_date, target_date, limit=9):
     rows = []
-    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    candidates = prediction_display_candidates(analysis, limit)
     for rank, item in enumerate(candidates[:limit], 1):
         cross = item.get("cross_validation") or {}
         formula = item.get("formula_engine") or {}
@@ -2054,7 +2100,7 @@ def compact_candidate_rows_539_tiantianle(analysis, latest_date, target_date, li
 
 def compact_number_verification_rows_539_tiantianle(analysis, latest_date, target_date, limit=15):
     rows = []
-    candidates = analysis.get("official_candidates") or analysis.get("candidates") or []
+    candidates = prediction_display_candidates(analysis, limit)
     for rank, item in enumerate(candidates[:limit], 1):
         number = safe_int(item.get("number"))
         cross = item.get("cross_validation") or {}
@@ -5306,15 +5352,15 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
     low_alert_rows = low_probability_error_recovery_rows(analysis)
 
     style = """
-    body{margin:0;background:#f5f7fb;color:#172033;font-family:"Microsoft JhengHei",Arial,sans-serif;}
-    header{background:#111827;color:white;padding:22px 24px;}
+    body{margin:0;background:#f3f4f6;color:#111827;font-family:"Microsoft JhengHei",Arial,sans-serif;}
+    header{background:#0b1220;color:white;padding:22px 24px;border-bottom:4px solid #0f766e;}
     main{max-width:1180px;margin:0 auto;padding:18px;}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
     .tabs button{border:1px solid #cbd5e1;background:white;border-radius:7px;padding:10px 14px;font-weight:800;cursor:pointer;}
     .tabs button.active{background:#0f766e;color:white;border-color:#0f766e;}
     .panel{display:none;}
     .panel.active{display:block;}
-    .band{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;}
+    .band{background:white;border:1px solid #dbe3ee;border-radius:8px;padding:16px;margin-bottom:14px;overflow:auto;box-shadow:0 1px 2px rgba(15,23,42,.04);}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
     .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#fbfdff;}
     .hot-card{border-color:#fecaca;background:#fff1f2;}
@@ -5359,7 +5405,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
 </head>
 <body>
 <header>
-  <h1>天天樂 精算預測戰報</h1>
+  <h1>天天樂 專業精算戰報</h1>
   <p>產生時間 {esc(report_time)} / 全歷史資料 {esc(date_range)} / 共 {esc(count)} 期 / 期別 1 到 {esc(latest_period)}</p>
   <p>最新開獎 {esc(latest_period)} 期 / {esc(latest_date)} / {esc(latest_numbers)}　預測目標 {esc(target_date)}</p>
 </header>
@@ -5518,7 +5564,7 @@ def build_report():
     backtest = industrial_backtest(analysis)
     latest_tw_time = freshness.get("latest_taiwan_safe_update_time", "-")
     target_tw_time = freshness.get("target_taiwan_safe_update_time", "-")
-    title = u("\\u5929\\u5929\\u6a02 \\u958b\\u734e\\u9810\\u6e2c\\u6230\\u5831")
+    title = "天天樂 專業精算戰報"
     subtitle = (
         f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(analysis.get('generated_at_taiwan'))} / "
         f"{u('\\u7f8e\\u570b\\u52a0\\u5dde\\u6700\\u65b0\\u958b\\u734e\\u65e5')} {esc(latest.get('draw_date'))} / "
@@ -5627,8 +5673,9 @@ def split_prediction_review(report_html):
         review = panel_inner("review")
         prediction_html = f'<!doctype html><html lang="zh-Hant" data-compact-report="true">{head}<body>{header}<main>{nav_prediction}{prediction}</main></body></html>'
         review_html = f'<!doctype html><html lang="zh-Hant" data-compact-report="true">{head}<body>{header}<main>{nav_review}{review}</main></body></html>'
-        prediction_html = prediction_html.replace("<title>天天樂 精算預測戰報</title>", "<title>天天樂 下期預測</title>", 1).replace("<h1>天天樂 精算預測戰報</h1>", "<h1>天天樂 下期預測</h1>", 1)
-        review_html = review_html.replace("<title>天天樂 精算預測戰報</title>", "<title>天天樂 上期檢討</title>", 1).replace("<h1>天天樂 精算預測戰報</h1>", "<h1>天天樂 上期檢討</h1>", 1)
+        for report_title in ["天天樂 專業精算戰報", "天天樂 精算預測戰報"]:
+            prediction_html = prediction_html.replace(f"<title>{report_title}</title>", "<title>天天樂 下期預測</title>", 1).replace(f"<h1>{report_title}</h1>", "<h1>天天樂 下期預測</h1>", 1)
+            review_html = review_html.replace(f"<title>{report_title}</title>", "<title>天天樂 上期檢討</title>", 1).replace(f"<h1>{report_title}</h1>", "<h1>天天樂 上期檢討</h1>", 1)
         return prediction_html, review_html
 
     start = report_html.find("<main>")

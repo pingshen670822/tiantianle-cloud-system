@@ -33,6 +33,7 @@ ALLOWLIST = {
     "cloud_latest_cache_refresh.py",
     "cloud_self_repair.py",
     "fantasy5_full_history.csv",
+    "full_system_integrity_scan.py",
     "industrial_engine.py",
     "offline_full_history_recalc.py",
     "pages_build.py",

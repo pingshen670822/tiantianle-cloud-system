@@ -76,6 +76,7 @@ jobs:
             verify_mobile_sync.py \
             tiantianle_ironlaw_report.py \
             prediction_final_lock_guard.py \
+            full_system_integrity_scan.py \
             "美國加州天天樂_20260618_第1版.py"
       - name: Run independent cloud self-repair
         shell: bash
@@ -85,6 +86,7 @@ jobs:
           repair_exit=$?
           python prediction_final_lock_guard.py
           python pages_build.py
+          python full_system_integrity_scan.py --local-only || true
           if [ "$repair_exit" -ne 0 ]; then
             echo "first self-heal pass failed; running emergency fallback"
             timeout 300 python "美國加州天天樂_20260618_第1版.py" || true
@@ -92,6 +94,7 @@ jobs:
             repair_exit=$?
             python prediction_final_lock_guard.py
             python pages_build.py
+            python full_system_integrity_scan.py --local-only || true
           fi
           exit "$repair_exit"
       - name: Verify local repair result
@@ -100,6 +103,7 @@ jobs:
           python system_gap_audit.py --fail-on-publish-blocking --local-only
           python verify_mobile_sync.py --local-only
           python system_stability_monitor.py
+          python full_system_integrity_scan.py --local-only
           python - <<'PY'
           import pathlib
 
@@ -276,6 +280,7 @@ jobs:
           timeout 420 python cloud_self_repair.py --retries 1
           python prediction_final_lock_guard.py
           python pages_build.py
+          python full_system_integrity_scan.py --local-only || true
           python verify_mobile_sync.py --local-only
           rm -rf public_site
           mkdir -p public_site/data public_site/reports
