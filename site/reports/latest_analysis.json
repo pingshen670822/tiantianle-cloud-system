@@ -1,8 +1,8 @@
 {
   "engine_version": "\u7f8e\u570b\u52a0\u5dde\u5929\u5929\u6a02_20260812_\u7b2c18\u7248_\u96f6\u4e2d\u65cf\u7fa4\u6025\u6551\u7248",
   "industrial_engine_version": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild",
-  "generated_at_taiwan": "2026-10-12T03:30:38+08:00",
-  "generated_at_california": "2026-10-11T12:30:38-07:00",
+  "generated_at_taiwan": "2026-10-12T04:21:42+08:00",
+  "generated_at_california": "2026-10-11T13:21:42-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11946,
@@ -1468,7 +1468,7 @@
           "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
         }
       ],
-      "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+      "created_at_taiwan": "2026-10-12T04:23:25+08:00",
       "global_fusion_modules": [
         {
           "module": "\u5171\u73fe\u95dc\u806f",
@@ -1803,7 +1803,7 @@
           "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
         }
       ],
-      "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+      "created_at_taiwan": "2026-10-12T04:23:25+08:00",
       "global_fusion_modules": [
         {
           "module": "\u5171\u73fe\u95dc\u806f",
@@ -1945,11 +1945,11 @@
       15
     ],
     "no_empty_repair": true,
-    "no_empty_repair_time_taiwan": "2026-10-12T03:32:28+08:00"
+    "no_empty_repair_time_taiwan": "2026-10-12T04:23:32+08:00"
   },
   "freshness": {
     "california_today": "2026-10-11",
-    "california_time": "12:30:38",
+    "california_time": "13:21:42",
     "allowed_latest_draw_date": "2026-10-10",
     "age_days": 0,
     "status": "ok",
@@ -7289,7 +7289,7 @@
       "zero_top9_rate": 0.2,
       "avg_top9_hits": 1.1,
       "avg_rank_10_to_25_hits": 2.05,
-      "enforced_at_taiwan": "2026-10-12T03:29:10+08:00"
+      "enforced_at_taiwan": "2026-10-12T04:20:14+08:00"
     },
     "breakthrough_rebuild": {
       "status": "\u5df2\u6aa2\u67e5",
@@ -8067,7 +8067,7 @@
         14,
         35
       ],
-      "created_at_taiwan": "2026-10-12T03:30:26+08:00"
+      "created_at_taiwan": "2026-10-12T04:21:31+08:00"
     },
     "zero_hit_cluster_rescue_gate": {
       "status": "\u5df2\u6aa2\u67e5",
@@ -25971,7 +25971,7 @@
               "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
             }
           ],
-          "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+          "created_at_taiwan": "2026-10-12T04:23:25+08:00",
           "global_fusion_modules": [
             {
               "module": "\u5171\u73fe\u95dc\u806f",
@@ -26801,7 +26801,7 @@
           ]
         }
       ],
-      "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+      "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
     },
     "multi_model_correction": {
       "status": "\u5df2\u57f7\u884c",
@@ -27369,7 +27369,7 @@
         "\u7368\u652f\u3001\u5f37\u724c\u7d44\u3001\u56b4\u683c\u9580\u8207\u6230\u5831\u986f\u793a\u5df2\u540c\u6b65"
       ],
       "strict_no_padding": true,
-      "created_at_taiwan": "2026-10-12T03:32:28+08:00"
+      "created_at_taiwan": "2026-10-12T04:23:32+08:00"
     },
     "post9_hit_leak_audit": {
       "active": false,
@@ -27578,7 +27578,7 @@
       ],
       "max_top9_overlap_allowed": 4,
       "max_top5_overlap_allowed": 2,
-      "enforced_at_taiwan": "2026-10-12T03:29:10+08:00",
+      "enforced_at_taiwan": "2026-10-12T04:20:14+08:00",
       "breakthrough_rebuild_applied": true
     },
     "adaptive_weight_calibration": {
@@ -27831,7 +27831,7 @@
           "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
         }
       ],
-      "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+      "created_at_taiwan": "2026-10-12T04:23:25+08:00",
       "global_fusion_modules": [
         {
           "module": "\u5171\u73fe\u95dc\u806f",
@@ -28383,7 +28383,7 @@
           }
         }
       ],
-      "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+      "created_at_taiwan": "2026-10-12T04:23:25+08:00",
       "ultimate_super_single_selected": 15,
       "final_single": 15,
       "final_lock_reused": true,
@@ -31330,7 +31330,7 @@
         "zero_top9_rate": 0.2,
         "avg_top9_hits": 1.1,
         "avg_rank_10_to_25_hits": 2.05,
-        "enforced_at_taiwan": "2026-10-12T03:29:10+08:00"
+        "enforced_at_taiwan": "2026-10-12T04:20:14+08:00"
       },
       "breakthrough_rebuild": {
         "status": "\u5df2\u6aa2\u67e5",
@@ -32108,7 +32108,7 @@
           14,
           35
         ],
-        "created_at_taiwan": "2026-10-12T03:30:26+08:00"
+        "created_at_taiwan": "2026-10-12T04:21:31+08:00"
       },
       "zero_hit_cluster_rescue_gate": {
         "status": "\u5df2\u6aa2\u67e5",
@@ -50012,7 +50012,7 @@
                 "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
               }
             ],
-            "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+            "created_at_taiwan": "2026-10-12T04:23:25+08:00",
             "global_fusion_modules": [
               {
                 "module": "\u5171\u73fe\u95dc\u806f",
@@ -51606,7 +51606,7 @@
         ],
         "max_top9_overlap_allowed": 4,
         "max_top5_overlap_allowed": 2,
-        "enforced_at_taiwan": "2026-10-12T03:29:10+08:00",
+        "enforced_at_taiwan": "2026-10-12T04:20:14+08:00",
         "breakthrough_rebuild_applied": true
       },
       "adaptive_weight_calibration": {
@@ -51859,7 +51859,7 @@
             "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
           }
         ],
-        "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+        "created_at_taiwan": "2026-10-12T04:23:25+08:00",
         "global_fusion_modules": [
           {
             "module": "\u5171\u73fe\u95dc\u806f",
@@ -52411,7 +52411,7 @@
             }
           }
         ],
-        "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+        "created_at_taiwan": "2026-10-12T04:23:25+08:00",
         "ultimate_super_single_selected": 15,
         "final_single": 15,
         "final_lock_reused": true,
@@ -70994,7 +70994,7 @@
               "reason": "\u4e0a\u671f\u6cbf\u7528\u5b88\u9580\u672a\u901a\u904e\u3001\u4e3b\u5217\u653e\u884c\u672a\u901a\u904e\u3001\u4fe1\u5fc3\u6307\u6a19\u4f4e\u65bc80\u3001\u6a21\u578b\u4fdd\u5b88\u6a5f\u7387\u4f4e\u65bc15\u3001\u539f\u59cb\u7e3d\u5206\u4f4e\u65bc0.60"
             }
           ],
-          "created_at_taiwan": "2026-10-12T03:32:21+08:00",
+          "created_at_taiwan": "2026-10-12T04:23:25+08:00",
           "global_fusion_modules": [
             {
               "module": "\u5171\u73fe\u95dc\u806f",
@@ -80684,7 +80684,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "ultimate_super_single": {
         "selected_model": "\u8c9d\u6c0f\u99ac\u53ef\u592b\u7368\u652f",
@@ -81096,7 +81096,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -81327,7 +81327,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -81819,7 +81819,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -82053,7 +82053,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -82255,7 +82255,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -82722,7 +82722,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -82916,7 +82916,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -83100,7 +83100,7 @@
         "passed": true,
         "status": "\u5168\u6b77\u53f2\u9632\u7a7a\u5099\u63f4\u901a\u904e",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -83304,7 +83304,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -83508,7 +83508,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -83713,7 +83713,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -83906,7 +83906,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -84107,7 +84107,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -84536,7 +84536,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -84724,7 +84724,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -84912,7 +84912,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -85094,7 +85094,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -85278,7 +85278,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -85680,7 +85680,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -86081,7 +86081,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -86484,7 +86484,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -86878,7 +86878,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -87299,7 +87299,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -87696,7 +87696,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -88097,7 +88097,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -88501,7 +88501,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -88885,7 +88885,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -89306,7 +89306,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -89701,7 +89701,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -90096,7 +90096,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -90488,7 +90488,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -90865,7 +90865,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -91233,7 +91233,7 @@
         "passed": false,
         "status": "\u7b2c\u4e8c\u5c64\u5099\u67e5\u4e0d\u5217\u4e3b\u63a8",
         "no_empty_backup": true,
-        "checked_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "checked_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "no_empty_backup_selected": true,
       "no_empty_backup_reason": "\u56b4\u683c\u9580\u6abb\u5168\u64cb\uff0c\u6539\u7528\u5168\u6b77\u53f2\u6392\u5e8f\u8207\u6700\u65b0\u958b\u734e\u6392\u9664\u9632\u5446\u8f38\u51fa\uff0c\u907f\u514d\u6230\u5831\u7a7a\u767d\u3002"
@@ -92512,7 +92512,7 @@
           "\u7368\u652f\u3001\u5f37\u724c\u7d44\u3001\u56b4\u683c\u9580\u8207\u6230\u5831\u986f\u793a\u5df2\u540c\u6b65"
         ],
         "strict_no_padding": true,
-        "created_at_taiwan": "2026-10-12T03:32:28+08:00"
+        "created_at_taiwan": "2026-10-12T04:23:32+08:00"
       },
       "final_lock_enforced": true
     },
@@ -93804,7 +93804,7 @@
     {
       "based_on_date": "2026-10-10",
       "target_date": "2026-10-11",
-      "created_at": "2026-10-12T03:32:21+08:00",
+      "created_at": "2026-10-12T04:23:25+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
@@ -97585,7 +97585,7 @@
     "top9_count": 1,
     "top15_count": 1,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-12T03:32:28+08:00",
+    "created_at_taiwan": "2026-10-12T04:23:32+08:00",
     "ultimate_super_single_selected": 15,
     "final_single": 15,
     "final_lock_reused": true,
@@ -97602,7 +97602,7 @@
       "target_taiwan_time": "2026-10-12 09:50"
     },
     "message": "\u540c\u4e00\u671f\u9810\u6e2c\u5df2\u5b9a\u7248\uff0c\u907f\u514d\u96f2\u7aef\u8207\u672c\u6a5f\u91cd\u8dd1\u5f8c\u4e0d\u540c\u6b65",
-    "final_lock_enforced_at_taiwan": "2026-10-12T03:32:43+08:00",
+    "final_lock_enforced_at_taiwan": "2026-10-12T04:23:46+08:00",
     "no_empty_backup": true
   },
   "super_single_decision": {
@@ -97623,7 +97623,7 @@
       "\u4fe1\u5fc3\u6307\u6a19": 80.0,
       "\u6a21\u578b\u6a5f\u7387": 15.31
     },
-    "created_at_taiwan": "2026-10-12T03:32:28+08:00",
+    "created_at_taiwan": "2026-10-12T04:23:32+08:00",
     "locked_final": true,
     "target_draw_date": "2026-10-11",
     "target_taiwan_time": "2026-10-12 09:50",
@@ -98273,7 +98273,7 @@
     "final_lock_reused": true,
     "target_draw_date": "2026-10-11",
     "target_taiwan_time": "2026-10-12 09:50",
-    "created_at_taiwan": "2026-10-12T03:32:28+08:00"
+    "created_at_taiwan": "2026-10-12T04:23:32+08:00"
   },
   "prediction_final_lock": {
     "lock_key": {
@@ -98298,13 +98298,13 @@
     "note": "\u540c\u4e00\u6700\u65b0\u958b\u734e\u65e5\u8207\u540c\u4e00\u4e0b\u671f\u9810\u6e2c\u65e5\u53ea\u51c6\u4e00\u7d44\u5b9a\u7248\u7368\u96bb\uff0c\u9632\u6b62 11/15 \u9019\u985e\u91cd\u8dd1\u8df3\u865f",
     "reused_this_run": true,
     "active": true,
-    "guard_enforced_at_taiwan": "2026-10-12T03:32:43+08:00"
+    "guard_enforced_at_taiwan": "2026-10-12T04:23:46+08:00"
   },
   "offline_full_history_recalc": true,
   "offline_full_history_recalc_note": "daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced",
   "super_single_pattern_mining": {
     "version": "super_single_pattern_miner_v20261007",
-    "created_at_taiwan": "2026-10-12T03:32:29+08:00",
+    "created_at_taiwan": "2026-10-12T04:23:33+08:00",
     "selected_number": 15,
     "latest_draw_date": "2026-10-10",
     "latest_numbers": [

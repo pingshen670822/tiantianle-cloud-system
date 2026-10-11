@@ -1,70 +1,7 @@
 {
-  "checked_at_taiwan": "2026-10-12T03:32:42+08:00",
+  "checked_at_taiwan": "2026-10-12T04:23:46+08:00",
   "status": "已修復",
   "before": {
-    "generated_at_taiwan": "2026-10-12T02:44:56+08:00",
-    "draw_count": 11946,
-    "latest_draw_date": "2026-10-10",
-    "expected_latest_draw_date": "2026-10-10",
-    "allowed_latest_draw_date": "2026-10-10",
-    "target_draw_date": "2026-10-11",
-    "target_taiwan_time": "2026-10-12 09:50",
-    "latest_numbers": [
-      2,
-      5,
-      10,
-      14,
-      35
-    ],
-    "top1": [
-      15
-    ],
-    "top9": [
-      15
-    ],
-    "top15": [
-      15
-    ],
-    "ultimate_single": 15,
-    "ultimate_model": "全歷史防空備援排序",
-    "strong_single_numbers": [
-      15
-    ],
-    "strict_status": "定版鎖強制同步",
-    "strict_no_padding": true,
-    "qualified_count": 1,
-    "site_latest_draw_date": "2026-10-10",
-    "site_target_draw_date": "2026-10-11",
-    "site_data_latest_draw_date": "2026-10-10",
-    "site_data_target_draw_date": "2026-10-11",
-    "site_generated_at_taiwan": "2026-10-12T02:44:56+08:00",
-    "site_top1": [
-      15
-    ],
-    "site_top9": [
-      15
-    ],
-    "site_ultimate_single": 15,
-    "site_strong_single_numbers": [
-      15
-    ],
-    "site_data_generated_at_taiwan": "2026-10-12T02:44:56+08:00",
-    "site_data_top1": [
-      15
-    ],
-    "site_data_top9": [
-      15
-    ],
-    "site_data_ultimate_single": 15,
-    "site_data_strong_single_numbers": [
-      15
-    ],
-    "sync_mismatches": [],
-    "has_unique_super_single": true,
-    "is_stale": false,
-    "is_synced": true
-  },
-  "after": {
     "generated_at_taiwan": "2026-10-12T03:30:38+08:00",
     "draw_count": 11946,
     "latest_draw_date": "2026-10-10",
@@ -127,12 +64,75 @@
     "is_stale": false,
     "is_synced": true
   },
+  "after": {
+    "generated_at_taiwan": "2026-10-12T04:21:42+08:00",
+    "draw_count": 11946,
+    "latest_draw_date": "2026-10-10",
+    "expected_latest_draw_date": "2026-10-10",
+    "allowed_latest_draw_date": "2026-10-10",
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "latest_numbers": [
+      2,
+      5,
+      10,
+      14,
+      35
+    ],
+    "top1": [
+      15
+    ],
+    "top9": [
+      15
+    ],
+    "top15": [
+      15
+    ],
+    "ultimate_single": 15,
+    "ultimate_model": "全歷史防空備援排序",
+    "strong_single_numbers": [
+      15
+    ],
+    "strict_status": "定版鎖強制同步",
+    "strict_no_padding": true,
+    "qualified_count": 1,
+    "site_latest_draw_date": "2026-10-10",
+    "site_target_draw_date": "2026-10-11",
+    "site_data_latest_draw_date": "2026-10-10",
+    "site_data_target_draw_date": "2026-10-11",
+    "site_generated_at_taiwan": "2026-10-12T04:21:42+08:00",
+    "site_top1": [
+      15
+    ],
+    "site_top9": [
+      15
+    ],
+    "site_ultimate_single": 15,
+    "site_strong_single_numbers": [
+      15
+    ],
+    "site_data_generated_at_taiwan": "2026-10-12T04:21:42+08:00",
+    "site_data_top1": [
+      15
+    ],
+    "site_data_top9": [
+      15
+    ],
+    "site_data_ultimate_single": 15,
+    "site_data_strong_single_numbers": [
+      15
+    ],
+    "sync_mismatches": [],
+    "has_unique_super_single": true,
+    "is_stale": false,
+    "is_synced": true
+  },
   "steps": [
     {
       "name": "來源快取自救 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python cloud_latest_cache_refresh.py",
       "ok": true,
-      "seconds": 17.0,
+      "seconds": 17.3,
       "returncode": 0,
       "tail": "{\"status\": \"ok\", \"successful_sources\": 6}"
     },
@@ -140,7 +140,7 @@
       "name": "全歷史重算 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python offline_full_history_recalc.py",
       "ok": true,
-      "seconds": 215.4,
+      "seconds": 215.3,
       "returncode": 0,
       "tail": "    \"skipped\": 21\n  },\n  \"period_audit\": {\n    \"status\": \"ok\",\n    \"active_start\": \"2026-09-20\",\n    \"checked\": 20,\n    \"missing_before\": [],\n    \"repaired\": [],\n    \"missing_after\": []\n  },\n  \"settled_count\": 0,\n  \"low_probability_backfill\": {\n    \"inserted\": 0,\n    \"skipped\": 21\n  },\n  \"low_probability_settled_count\": 0,\n  \"prediction_status\": \"recomputed_updated_watch_only_pending+low_probability_updated+snapshot_updated\",\n  \"health_status\": \"ok\",\n  \"system_completeness\": 100\n}"
     },
@@ -164,7 +164,7 @@
       "name": "定版鎖同步 1-2",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python prediction_final_lock_guard.py",
       "ok": true,
-      "seconds": 0.5,
+      "seconds": 0.4,
       "returncode": 0,
       "tail": "{\"status\": \"ok\", \"before\": {\"top1\": [15], \"super_single\": 15, \"lock\": 15}, \"after\": {\"top1\": [15], \"super_single\": 15, \"lock\": 15}}"
     },
@@ -220,7 +220,7 @@
       "name": "戰報重建定版 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python pages_build.py",
       "ok": true,
-      "seconds": 5.0,
+      "seconds": 4.9,
       "returncode": 0,
       "tail": "/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/site/index.html"
     },
@@ -244,7 +244,7 @@
       "name": "手機本機同步 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python verify_mobile_sync.py --local-only",
       "ok": true,
-      "seconds": 0.2,
+      "seconds": 0.1,
       "returncode": 0,
       "tail": "{\"status\": \"同步\", \"mismatches\": []}"
     },
@@ -252,7 +252,7 @@
       "name": "穩定度監測 1",
       "command": "/opt/hostedtoolcache/Python/3.12.15/x64/bin/python system_stability_monitor.py",
       "ok": true,
-      "seconds": 0.2,
+      "seconds": 0.1,
       "returncode": 0,
       "tail": "{\"status\": \"穩定\", \"stability_score\": 100.0, \"failed\": 0}"
     }
