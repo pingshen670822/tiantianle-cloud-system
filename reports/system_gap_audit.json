@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-11T23:52:18+08:00",
+  "checked_at_taiwan": "2026-10-12T02:46:19+08:00",
   "status": "無嚴重缺漏，仍需模型補強",
   "critical": 0,
   "publish_blocking": 0,
@@ -18,55 +18,25 @@
   "target_draw_date": "2026-10-11",
   "target_taiwan_time": "2026-10-12 09:50",
   "top9": [
-    11,
-    27,
-    39,
-    15,
-    19,
-    3,
-    33,
-    13,
-    25
+    15
   ],
   "top15": [
-    11,
-    27,
-    39,
-    15,
-    19,
-    3,
-    33,
-    13,
-    25,
-    9,
-    6,
-    32,
-    31,
-    30,
-    12
+    15
   ],
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
-    "status": "嚴格門檻全擋，已啟用防空備援",
+    "status": "定版鎖強制同步",
     "policy": "所有預測號碼必須通過主列放行、上期沿用防呆、剛開出連莊高標、交叉驗算、成熟度、信心、機率、全歷史分數與原始總分；不足不補位。",
     "no_padding": true,
     "padding_banned": true,
     "qualified_numbers": [
-      11,
-      27,
-      39,
-      15,
-      19,
-      3,
-      33,
-      13,
-      25
+      15
     ],
-    "qualified_count": 9,
-    "top9_count": 9,
-    "top15_count": 15,
+    "qualified_count": 1,
+    "top9_count": 1,
+    "top15_count": 1,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-11T23:52:11+08:00",
+    "created_at_taiwan": "2026-10-12T02:46:06+08:00",
     "ultimate_super_single_selected": 15,
     "final_single": 15,
     "final_lock_reused": true,
@@ -83,6 +53,7 @@
       "target_taiwan_time": "2026-10-12 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
+    "final_lock_enforced_at_taiwan": "2026-10-12T02:46:15+08:00",
     "no_empty_backup": true
   },
   "draw_count": 11946,
@@ -174,10 +145,10 @@
     "slump_recovery_ready": true,
     "main_count": 9,
     "main_numbers": [
+      15,
       11,
       27,
       39,
-      15,
       19,
       3,
       33,
@@ -185,10 +156,10 @@
       25
     ],
     "core_passed_numbers": [
+      15,
       11,
       27,
       39,
-      15,
       19,
       3,
       33,
@@ -196,10 +167,10 @@
       25
     ],
     "coverage_passed_numbers": [
+      15,
       11,
       27,
       39,
-      15,
       19,
       3,
       33,
@@ -652,17 +623,17 @@
   },
   "strong_single_validation": {
     "status": "唯一輸出",
-    "number": 11,
+    "number": 15,
     "numbers": [
-      11
+      15
     ],
     "must_output_single": true,
     "fake_data_guard": "通過",
     "latest_draw_reuse": false,
     "latest_draw_reuse_allowed": true,
-    "score": 0.891958,
-    "candidate_score": 0.891958,
-    "confidence_index": 93.7,
+    "score": 0.611774,
+    "candidate_score": 0.611774,
+    "confidence_index": 80.0,
     "cross_validation": {
       "passed_count": 6,
       "total_count": 6
@@ -676,7 +647,7 @@
       "獨支、強牌組、嚴格門與戰報顯示已同步"
     ],
     "strict_no_padding": true,
-    "created_at_taiwan": "2026-10-11T23:52:11+08:00"
+    "created_at_taiwan": "2026-10-12T02:46:06+08:00"
   },
   "model_maturity": {
     "status": "passed",
