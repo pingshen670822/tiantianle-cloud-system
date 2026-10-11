@@ -37,6 +37,7 @@ ALLOWLIST = {
     "offline_full_history_recalc.py",
     "pages_build.py",
     "prediction_final_lock.json",
+    "prediction_final_lock_guard.py",
     "run_california_fantasy5_once.ps1",
     "sanitize_public_outputs.py",
     "system_gap_audit.py",

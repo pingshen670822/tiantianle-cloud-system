@@ -27,6 +27,12 @@ def load_analysis() -> dict[str, Any]:
 
 
 def write_analysis(analysis: dict[str, Any]) -> None:
+    try:
+        from prediction_final_lock_guard import apply_to_payload
+
+        analysis = apply_to_payload(analysis, write_files=False)
+    except Exception:
+        pass
     text = json.dumps(analysis, ensure_ascii=True, indent=2)
     ANALYSIS_PATH.write_text(text, encoding="utf-8")
     (SITE / "latest_analysis.json").write_text(text, encoding="utf-8")

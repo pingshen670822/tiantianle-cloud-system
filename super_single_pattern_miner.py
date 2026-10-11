@@ -54,6 +54,12 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def write_json_all(payload: dict[str, Any]) -> None:
+    try:
+        from prediction_final_lock_guard import apply_to_payload
+
+        payload = apply_to_payload(payload, write_files=False)
+    except Exception:
+        pass
     text = json.dumps(payload, ensure_ascii=True, indent=2)
     for path in [
         REPORTS / "latest_analysis.json",
@@ -331,6 +337,12 @@ th{{background:#f8fafc}}
 
 def mine() -> dict[str, Any]:
     analysis = load_json(ANALYSIS_PATH)
+    try:
+        from prediction_final_lock_guard import apply_to_payload
+
+        analysis = apply_to_payload(analysis, write_files=False)
+    except Exception:
+        pass
     number = selected_number(analysis)
     if not number:
         raise RuntimeError("找不到本期獨隻")
