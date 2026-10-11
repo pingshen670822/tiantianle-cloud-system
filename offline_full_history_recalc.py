@@ -1,10 +1,14 @@
 import importlib.util
+import csv
 import json
 import math
 import os
 import shutil
 import sqlite3
+import ssl
 import sys
+import time
+import urllib.request
 from collections import Counter
 from tiantianle_formula_engine import compute_formula_engine_analysis, blend_formula_into_candidates
 import industrial_engine as ironlaw_engine
@@ -2999,6 +3003,187 @@ def fast_compute_industrial_analysis(draws, review=None):
     }
 
 mod.compute_industrial_analysis = fast_compute_industrial_analysis
+
+
+def _read_json_payload(path):
+    try:
+        p = Path(path)
+        if not p.exists():
+            return {}
+        return json.loads(p.read_text(encoding='utf-8-sig'))
+    except Exception:
+        return {}
+
+
+def _fetch_json_payload(url):
+    try:
+        req = urllib.request.Request(
+            url + (("&" if "?" in url else "?") + f"cb={int(time.time())}"),
+            headers={
+                "User-Agent": "tiantianle-offline-recalc-cloud-latest-guard/1.0",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+            },
+        )
+        raw = urllib.request.urlopen(req, timeout=20, context=ssl._create_unverified_context()).read().decode("utf-8", errors="ignore")
+        return json.loads(raw)
+    except Exception:
+        return {}
+
+
+def _extract_confirmed_latest_draw(payload, source):
+    if not isinstance(payload, dict):
+        return None
+    latest = payload.get("latest_draw") or {}
+    draw_date = str(latest.get("draw_date") or (payload.get("freshness") or {}).get("latest_draw_date") or "")[:10]
+    numbers = latest.get("numbers") or []
+    try:
+        numbers = sorted(int(number) for number in numbers)
+    except Exception:
+        return None
+    if not draw_date or not mod.valid_numbers(numbers):
+        return None
+    if not mod.draw_date_allowed(draw_date):
+        return None
+    confirmed = (payload.get("freshness") or {}).get("latest_source_confirmed")
+    source_label = latest.get("source") or (payload.get("freshness") or {}).get("latest_source") or source
+    if confirmed is False and "consensus" not in str(source_label).lower() and "official" not in str(source_label).lower():
+        return None
+    return {
+        "draw_date": draw_date,
+        "numbers": numbers,
+        "source": f"cloud_confirmed_latest:{source}",
+        "generated_at_taiwan": payload.get("generated_at_taiwan") or "",
+    }
+
+
+def _confirmed_latest_draws():
+    candidates = []
+    for rel in [
+        "reports/latest_analysis.json",
+        "site/latest_analysis.json",
+        "site/data/latest_analysis.json",
+        "site/reports/latest_analysis.json",
+    ]:
+        item = _extract_confirmed_latest_draw(_read_json_payload(base / rel), rel)
+        if item:
+            candidates.append(item)
+    for url in [
+        "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
+        "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json",
+        "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json",
+    ]:
+        item = _extract_confirmed_latest_draw(_fetch_json_payload(url), url)
+        if item:
+            candidates.append(item)
+    by_date = {}
+    for item in candidates:
+        old = by_date.get(item["draw_date"])
+        if old is None or item.get("generated_at_taiwan", "") >= old.get("generated_at_taiwan", ""):
+            by_date[item["draw_date"]] = item
+    return [by_date[key] for key in sorted(by_date)]
+
+
+def _row_numbers(row):
+    try:
+        return [int(row.get(key) or 0) for key in ["n1", "n2", "n3", "n4", "n5"]]
+    except Exception:
+        return []
+
+
+def _merge_draw_into_csv(path, draw_date, numbers, source):
+    path = Path(path)
+    if not path.exists():
+        return {"file": str(path), "status": "missing"}
+    rows = []
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or [])
+        for row in reader:
+            rows.append(dict(row))
+    if not fieldnames:
+        return {"file": str(path), "status": "no_header"}
+    changed = False
+    found = False
+    for row in rows:
+        if str(row.get("draw_date") or row.get("date") or "")[:10] != draw_date:
+            continue
+        found = True
+        if _row_numbers(row) != numbers:
+            for idx, number in enumerate(numbers, start=1):
+                row[f"n{idx}"] = str(number)
+            if "source" in fieldnames:
+                row["source"] = source
+            changed = True
+        break
+    if not found:
+        row = {key: "" for key in fieldnames}
+        if "local_index" in fieldnames:
+            max_index = 0
+            for existing in rows:
+                try:
+                    max_index = max(max_index, int(existing.get("local_index") or 0))
+                except Exception:
+                    pass
+            row["local_index"] = str(max_index + 1)
+        if "draw_no" in fieldnames:
+            max_draw_no = 0
+            for existing in rows:
+                try:
+                    max_draw_no = max(max_draw_no, int(existing.get("draw_no") or 0))
+                except Exception:
+                    pass
+            row["draw_no"] = str(max_draw_no + 1)
+        row["draw_date"] = draw_date
+        for idx, number in enumerate(numbers, start=1):
+            row[f"n{idx}"] = str(number)
+        if "source" in fieldnames:
+            row["source"] = source
+        rows.append(row)
+        changed = True
+    if changed:
+        rows.sort(key=lambda item: str(item.get("draw_date") or item.get("date") or ""))
+        if "local_index" in fieldnames:
+            for idx, row in enumerate(rows, start=1):
+                row["local_index"] = str(idx)
+        if "draw_no" in fieldnames:
+            for idx, row in enumerate(rows, start=1):
+                row["draw_no"] = str(idx)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        with tmp.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+        tmp.replace(path)
+    return {"file": str(path), "status": "updated" if changed else "already_present", "draw_date": draw_date}
+
+
+def _merge_cloud_latest_into_history_files(draws):
+    results = []
+    for item in draws:
+        draw_date = item["draw_date"]
+        numbers = item["numbers"]
+        source = item["source"]
+        for rel in ["fantasy5_full_history.csv", "data/fantasy5_full_history.csv", "data/california_fantasy5.csv"]:
+            results.append(_merge_draw_into_csv(base / rel, draw_date, numbers, source))
+    return results
+
+
+def _merge_cloud_latest_into_db(conn, draws):
+    accepted = []
+    added = 0
+    for item in draws:
+        before = conn.total_changes
+        mod.upsert_draw(conn, item["draw_date"], item["numbers"], item["source"])
+        if conn.total_changes > before:
+            added += 1
+        accepted.append(item)
+    conn.commit()
+    return {"added": added, "accepted": accepted}
+
+
+cloud_confirmed_draws = _confirmed_latest_draws()
+cloud_history_merge = _merge_cloud_latest_into_history_files(cloud_confirmed_draws)
 mod.setup_dirs()
 root_history_csv = base / "fantasy5_full_history.csv"
 if root_history_csv.exists():
@@ -3009,6 +3194,7 @@ with sqlite3.connect(mod.DB_PATH) as conn:
     conn.execute("DELETE FROM draws WHERE draw_date > ?", (mod.latest_allowed_draw_date(),))
     csv_imported = mod.auto_import_csv_files(conn)
     cached_latest_import = mod.import_cached_latest_pages(conn)
+    cloud_latest_import = _merge_cloud_latest_into_db(conn, cloud_confirmed_draws)
     snapshot_backfill = mod.backfill_predictions_from_snapshots(conn)
     settled_count = mod.settle_predictions(conn)
     mod.export_csv(conn)
@@ -3057,6 +3243,9 @@ print(json.dumps({
     'main_program': str(main_path.name),
     'csv_imported_files': len(csv_imported),
     'cached_latest_added': cached_latest_import.get('added', 0) if isinstance(cached_latest_import, dict) else 0,
+    'cloud_confirmed_latest_added': cloud_latest_import.get('added', 0),
+    'cloud_confirmed_latest': cloud_latest_import.get('accepted', []),
+    'cloud_history_merge': cloud_history_merge,
     'draw_count': len(draws),
     'latest_draw': analysis['latest_draw']['draw_date'],
     'latest_numbers': analysis['latest_draw']['numbers'],
