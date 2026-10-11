@@ -1,6 +1,6 @@
 # 天天樂雲端最新來源快取自救
 
-- 檢查時間：2026-10-11 20:11:55 台灣時間
+- 檢查時間：2026-10-11 20:15:37 台灣時間
 - 狀態：ok
 - 成功來源：6/7
 
@@ -9,7 +9,7 @@
 | calottery_正式.html | 成功 | 97806 | - |
 | lotto8_latest.html | 成功 | 92447 | - |
 | lottolyzer_latest.html | 成功 | 131943 | - |
-| lotteryusa_latest.html | 成功 | 330789 | - |
+| lotteryusa_latest.html | 成功 | 330787 | - |
 | lotteryusa_year.html | 失敗 | 0 | HTTP Error 404: Not Found |
-| lotterynet_latest.html | 成功 | 71229 | - |
-| lotterynet_year.html | 成功 | 303460 | - |
+| lotterynet_latest.html | 成功 | 71239 | - |
+| lotterynet_year.html | 成功 | 303466 | - |
