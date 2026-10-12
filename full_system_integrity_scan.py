@@ -79,7 +79,7 @@ def read_json(path: Path) -> dict[str, Any]:
 
 def fetch_json(path: str) -> dict[str, Any]:
     try:
-        url = f"{REMOTE_BASE}/{path}?scan={int(time.time())}"
+        url = f"{REMOTE_BASE}/{path}?scan={int(time.time() * 1000)}"
         req = urllib.request.Request(
             url,
             headers={
@@ -142,6 +142,29 @@ def equal_core(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
         "first_candidate",
     ]
     return [field for field in fields if left.get(field) != right.get(field)]
+
+
+def fetch_remote_core_until_synced(
+    path: str,
+    base_core: dict[str, Any],
+    retries: int = 12,
+    sleep_seconds: int = 5,
+) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
+    payload: dict[str, Any] = {}
+    core: dict[str, Any] = {}
+    diff: list[str] = []
+    for attempt in range(1, retries + 1):
+        payload = fetch_json(path)
+        if payload.get("_error"):
+            diff = ["_error"]
+        else:
+            core = core_payload(payload)
+            diff = equal_core(base_core, core)
+            if not diff:
+                return payload, core, []
+        if attempt < retries:
+            time.sleep(sleep_seconds)
+    return payload, core, diff
 
 
 def html_section(text: str, start_marker: str, end_marker: str) -> str:
@@ -254,18 +277,23 @@ def scan(include_remote: bool = True) -> dict[str, Any]:
 
     remote_core = {}
     if include_remote:
-        remote_payloads = {
-            "latest_analysis.json": fetch_json("latest_analysis.json"),
-            "data/latest_analysis.json": fetch_json("data/latest_analysis.json"),
-            "reports/latest_analysis.json": fetch_json("reports/latest_analysis.json"),
-        }
-        remote_core = {name: core_payload(payload) for name, payload in remote_payloads.items() if not payload.get("_error")}
+        remote_payloads: dict[str, dict[str, Any]] = {}
+        remote_diffs: dict[str, list[str]] = {}
+        for name in [
+            "latest_analysis.json",
+            "data/latest_analysis.json",
+            "reports/latest_analysis.json",
+        ]:
+            payload, core, diff = fetch_remote_core_until_synced(name, base_core)
+            remote_payloads[name] = payload
+            remote_diffs[name] = diff
+            if core:
+                remote_core[name] = core
         for name, payload in remote_payloads.items():
             if payload.get("_error"):
                 add_issue(issues, "warning", "雲端讀取", f"{name} 讀取失敗：{payload.get('_error')}", "稍後重試或檢查 Pages 部署")
                 continue
-            core = core_payload(payload)
-            diff = equal_core(base_core, core)
+            diff = remote_diffs.get(name) or []
             if diff:
                 add_issue(issues, "critical", "雲端同步", f"{name} 與本機不同步：{', '.join(diff)}", "重新發布手機雲端版")
 
