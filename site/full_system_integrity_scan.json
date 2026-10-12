@@ -1,10 +1,10 @@
 {
-  "checked_at_taiwan": "2026-10-12T08:26:58+08:00",
+  "checked_at_taiwan": "2026-10-12T08:39:02+08:00",
   "status": "通過",
   "critical_count": 0,
   "warning_count": 0,
   "local": {
-    "generated_at_taiwan": "2026-10-12T08:25:36+08:00",
+    "generated_at_taiwan": "2026-10-12T08:36:52+08:00",
     "draw_count": 11946,
     "latest_draw_date": "2026-10-10",
     "latest_numbers": [

@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-12T08:26:53+08:00",
+  "checked_at_taiwan": "2026-10-12T08:38:55+08:00",
   "status": "穩定",
   "stability_score": 100.0,
   "latest_draw_date": "2026-10-10",
@@ -38,7 +38,7 @@
       "信心指標": 80.0,
       "模型機率": 15.31
     },
-    "created_at_taiwan": "2026-10-12T08:26:42+08:00",
+    "created_at_taiwan": "2026-10-12T08:38:40+08:00",
     "locked_final": true,
     "target_draw_date": "2026-10-11",
     "target_taiwan_time": "2026-10-12 09:50",
@@ -688,7 +688,7 @@
     "final_lock_reused": true,
     "target_draw_date": "2026-10-11",
     "target_taiwan_time": "2026-10-12 09:50",
-    "created_at_taiwan": "2026-10-12T08:26:42+08:00"
+    "created_at_taiwan": "2026-10-12T08:38:40+08:00"
   },
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -703,7 +703,7 @@
     "top9_count": 1,
     "top15_count": 1,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-12T08:26:42+08:00",
+    "created_at_taiwan": "2026-10-12T08:38:40+08:00",
     "ultimate_super_single_selected": 15,
     "final_single": 15,
     "final_lock_reused": true,
@@ -720,7 +720,7 @@
       "target_taiwan_time": "2026-10-12 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
-    "final_lock_enforced_at_taiwan": "2026-10-12T08:26:48+08:00",
+    "final_lock_enforced_at_taiwan": "2026-10-12T08:38:48+08:00",
     "no_empty_backup": true
   },
   "database": {
