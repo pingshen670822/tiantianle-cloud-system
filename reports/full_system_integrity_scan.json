@@ -1,40 +1,40 @@
 {
-  "checked_at_taiwan": "2026-10-12T08:39:02+08:00",
+  "checked_at_taiwan": "2026-10-12T15:32:07+08:00",
   "status": "通過",
   "critical_count": 0,
   "warning_count": 0,
   "local": {
-    "generated_at_taiwan": "2026-10-12T08:36:52+08:00",
-    "draw_count": 11946,
-    "latest_draw_date": "2026-10-10",
+    "generated_at_taiwan": "2026-10-12T15:29:55+08:00",
+    "draw_count": 11947,
+    "latest_draw_date": "2026-10-11",
     "latest_numbers": [
-      2,
-      5,
-      10,
-      14,
-      35
+      8,
+      18,
+      26,
+      27,
+      36
     ],
-    "target_draw_date": "2026-10-11",
-    "target_taiwan_time": "2026-10-12 09:50",
+    "target_draw_date": "2026-10-12",
+    "target_taiwan_time": "2026-10-13 09:50",
     "top1": [
-      15
+      38
     ],
     "top9": [
-      15
+      38
     ],
     "top15": [
-      15
+      38
     ],
-    "lock_single": 15,
+    "lock_single": 38,
     "lock_top9": [
-      15
+      38
     ],
     "gate_numbers": [
-      15
+      38
     ],
-    "super_single": 15,
-    "ultimate_single": 15,
-    "first_candidate": 15,
+    "super_single": 38,
+    "ultimate_single": 38,
+    "first_candidate": 38,
     "first_candidate_rank": 1,
     "first_candidate_locked": true
   },

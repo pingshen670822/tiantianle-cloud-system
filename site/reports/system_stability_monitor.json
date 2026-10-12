@@ -1,49 +1,49 @@
 {
-  "checked_at_taiwan": "2026-10-12T08:38:55+08:00",
+  "checked_at_taiwan": "2026-10-12T15:32:00+08:00",
   "status": "穩定",
   "stability_score": 100.0,
-  "latest_draw_date": "2026-10-10",
-  "expected_latest_draw_date": "2026-10-10",
+  "latest_draw_date": "2026-10-11",
+  "expected_latest_draw_date": "2026-10-11",
   "latest_numbers": [
-    2,
-    5,
-    10,
-    14,
-    35
+    8,
+    18,
+    26,
+    27,
+    36
   ],
-  "latest_taiwan_safe_update_time": "2026-10-11 09:50",
-  "target_draw_date": "2026-10-11",
-  "target_taiwan_safe_update_time": "2026-10-12 09:50",
+  "latest_taiwan_safe_update_time": "2026-10-12 09:50",
+  "target_draw_date": "2026-10-12",
+  "target_taiwan_safe_update_time": "2026-10-13 09:50",
   "top9": [
-    15
+    38
   ],
   "top1": [
-    15
+    38
   ],
   "super_single_decision": {
     "version": "no_empty_backup_v20261006",
     "title": "最強唯一高機率獨隻",
     "status": "定版鎖唯一輸出",
-    "number": 15,
+    "number": 38,
     "numbers": [
-      15
+      38
     ],
     "unique": true,
     "pool_size": 1,
     "selection_rule": "嚴格門檻全擋時，禁止空白戰報；改用全歷史排序、最新開獎排除、防呆檢查後輸出唯一獨隻。",
-    "why_unique": "15 為本輪全歷史備援排序最高且未出現在最新開獎號碼的號碼。",
+    "why_unique": "38 為本輪全歷史備援排序最高且未出現在最新開獎號碼的號碼。",
     "latest_draw_reuse": false,
     "scores": {
-      "候選分數": 0.611774,
-      "信心指標": 80.0,
-      "模型機率": 15.31
+      "候選分數": 0.500392,
+      "信心指標": 74.5,
+      "模型機率": 12.5
     },
-    "created_at_taiwan": "2026-10-12T08:38:40+08:00",
+    "created_at_taiwan": "2026-10-12T15:31:45+08:00",
     "locked_final": true,
-    "target_draw_date": "2026-10-11",
-    "target_taiwan_time": "2026-10-12 09:50",
+    "target_draw_date": "2026-10-12",
+    "target_taiwan_time": "2026-10-13 09:50",
     "pattern_mining": {
-      "passed_signal_count": 18,
+      "passed_signal_count": 19,
       "same_single_reuse_validation": {
         "same_as_previous_top1": false,
         "passed": true,
@@ -60,74 +60,74 @@
       },
       "top_signals": [
         {
+          "name": "26-27 拖 38",
+          "kind": "雙號拖牌",
+          "hits": 29,
+          "samples": 164,
+          "rate": 0.176829,
+          "lift": 1.3793,
+          "passed": true,
+          "min_samples": 25,
+          "detail": "前一期同含 26、27，下一期開 38"
+        },
+        {
           "name": "近 60 期",
           "kind": "近期軌跡",
-          "hits": 13,
+          "hits": 10,
           "samples": 60,
-          "rate": 0.216667,
-          "lift": 1.69,
+          "rate": 0.166667,
+          "lift": 1.3,
           "passed": true,
           "min_samples": 30,
-          "detail": "15 的近期出現率；少於30期只列觀察不列通過"
+          "detail": "38 的近期出現率；少於30期只列觀察不列通過"
         },
         {
-          "name": "10-35 拖 15",
-          "kind": "雙號拖牌",
-          "hits": 36,
-          "samples": 179,
-          "rate": 0.201117,
-          "lift": 1.5687,
-          "passed": true,
-          "min_samples": 25,
-          "detail": "前一期同含 10、35，下一期開 15"
-        },
-        {
-          "name": "近 30 期",
-          "kind": "近期軌跡",
-          "hits": 6,
-          "samples": 30,
-          "rate": 0.2,
-          "lift": 1.56,
-          "passed": true,
-          "min_samples": 30,
-          "detail": "15 的近期出現率；少於30期只列觀察不列通過"
-        },
-        {
-          "name": "05-14 拖 15",
-          "kind": "雙號拖牌",
-          "hits": 26,
-          "samples": 138,
-          "rate": 0.188406,
-          "lift": 1.4696,
-          "passed": true,
-          "min_samples": 25,
-          "detail": "前一期同含 05、14，下一期開 15"
-        },
-        {
-          "name": "05-10 拖 15",
+          "name": "08-27 拖 38",
           "kind": "雙號拖牌",
           "hits": 27,
-          "samples": 174,
-          "rate": 0.155172,
-          "lift": 1.2103,
+          "samples": 164,
+          "rate": 0.164634,
+          "lift": 1.2841,
           "passed": true,
           "min_samples": 25,
-          "detail": "前一期同含 05、10，下一期開 15"
+          "detail": "前一期同含 08、27，下一期開 38"
+        },
+        {
+          "name": "18-26 拖 38",
+          "kind": "雙號拖牌",
+          "hits": 21,
+          "samples": 132,
+          "rate": 0.159091,
+          "lift": 1.2409,
+          "passed": true,
+          "min_samples": 25,
+          "detail": "前一期同含 18、26，下一期開 38"
+        },
+        {
+          "name": "08-26 拖 38",
+          "kind": "雙號拖牌",
+          "hits": 28,
+          "samples": 181,
+          "rate": 0.154696,
+          "lift": 1.2066,
+          "passed": true,
+          "min_samples": 25,
+          "detail": "前一期同含 08、26，下一期開 38"
         }
       ]
     },
     "explanation": [
-      "近期軌跡：近 60 期，命中率 21.67%，優勢 1.69 倍",
-      "雙號拖牌：10-35 拖 15，命中率 20.11%，優勢 1.5687 倍",
-      "近期軌跡：近 30 期，命中率 20.00%，優勢 1.56 倍",
-      "雙號拖牌：05-14 拖 15，命中率 18.84%，優勢 1.4696 倍",
-      "雙號拖牌：05-10 拖 15，命中率 15.52%，優勢 1.2103 倍"
+      "雙號拖牌：26-27 拖 38，命中率 17.68%，優勢 1.3793 倍",
+      "近期軌跡：近 60 期，命中率 16.67%，優勢 1.3 倍",
+      "雙號拖牌：08-27 拖 38，命中率 16.46%，優勢 1.2841 倍",
+      "雙號拖牌：18-26 拖 38，命中率 15.91%，優勢 1.2409 倍",
+      "雙號拖牌：08-26 拖 38，命中率 15.47%，優勢 1.2066 倍"
     ]
   },
   "ultimate_super_single_engine": {
     "status": "定版鎖唯一輸出",
     "version": "ultimate_super_single_v20261005",
-    "selected_number": 15,
+    "selected_number": 38,
     "selected_model": "全歷史防空備援排序",
     "selected_model_backtest": {
       "model": "貝氏馬可夫獨支",
@@ -138,10 +138,9 @@
       "recent_60_hit_rate": 0.1333,
       "recent_120_hit_rate": 0.1583,
       "max_miss_streak": 37,
-      "current_miss_streak": 0,
+      "current_miss_streak": 1,
       "stability_score": 0.12436,
       "last_20_picks": [
-        2,
         2,
         11,
         2,
@@ -160,146 +159,147 @@
         11,
         39,
         11,
-        10
+        10,
+        11
       ]
     },
     "candidate_audit": [
       {
-        "number": 15,
+        "number": 38,
         "rank": 1,
         "model_rank": 1,
-        "model_score": 0.611774,
-        "candidate_support_score": 0.550009,
-        "composite_score": 0.611774,
+        "model_score": 0.500392,
+        "candidate_support_score": 0.459796,
+        "composite_score": 0.500392,
         "strict_gate": "備援觀察"
       },
       {
-        "number": 11,
+        "number": 10,
         "rank": 2,
         "model_rank": 2,
-        "model_score": 0.891958,
-        "candidate_support_score": 0.942696,
-        "composite_score": 0.891958,
-        "strict_gate": "備援觀察"
-      },
-      {
-        "number": 27,
-        "rank": 3,
-        "model_rank": 3,
-        "model_score": 0.742426,
-        "candidate_support_score": 0.610731,
-        "composite_score": 0.742426,
+        "model_score": 0.892795,
+        "candidate_support_score": 0.955146,
+        "composite_score": 0.892795,
         "strict_gate": "備援觀察"
       },
       {
         "number": 39,
+        "rank": 3,
+        "model_rank": 3,
+        "model_score": 0.800642,
+        "candidate_support_score": 0.86168,
+        "composite_score": 0.800642,
+        "strict_gate": "備援觀察"
+      },
+      {
+        "number": 11,
         "rank": 4,
         "model_rank": 4,
-        "model_score": 0.704656,
-        "candidate_support_score": 0.653644,
-        "composite_score": 0.704656,
+        "model_score": 0.748314,
+        "candidate_support_score": 0.942675,
+        "composite_score": 0.748314,
         "strict_gate": "備援觀察"
       },
       {
         "number": 19,
         "rank": 5,
         "model_rank": 5,
-        "model_score": 0.58794,
-        "candidate_support_score": 0.63331,
-        "composite_score": 0.58794,
+        "model_score": 0.649933,
+        "candidate_support_score": 0.785315,
+        "composite_score": 0.649933,
         "strict_gate": "備援觀察"
       },
       {
-        "number": 3,
+        "number": 6,
         "rank": 6,
         "model_rank": 6,
-        "model_score": 0.586947,
-        "candidate_support_score": 0.486922,
-        "composite_score": 0.586947,
+        "model_score": 0.635024,
+        "candidate_support_score": 0.754437,
+        "composite_score": 0.635024,
         "strict_gate": "備援觀察"
       },
       {
         "number": 33,
         "rank": 7,
         "model_rank": 7,
-        "model_score": 0.552198,
-        "candidate_support_score": 0.483691,
-        "composite_score": 0.552198,
+        "model_score": 0.599792,
+        "candidate_support_score": 0.647536,
+        "composite_score": 0.599792,
         "strict_gate": "備援觀察"
       },
       {
-        "number": 13,
+        "number": 37,
         "rank": 8,
         "model_rank": 8,
-        "model_score": 0.549324,
-        "candidate_support_score": 0.576005,
-        "composite_score": 0.549324,
+        "model_score": 0.594152,
+        "candidate_support_score": 0.489235,
+        "composite_score": 0.594152,
         "strict_gate": "備援觀察"
       },
       {
         "number": 25,
         "rank": 9,
         "model_rank": 9,
-        "model_score": 0.532967,
-        "candidate_support_score": 0.335405,
-        "composite_score": 0.532967,
+        "model_score": 0.588839,
+        "candidate_support_score": 0.491922,
+        "composite_score": 0.588839,
         "strict_gate": "備援觀察"
       }
     ],
     "selected_feature_breakdown": [
       {
-        "module": "共現關聯",
-        "score": 0.93922,
-        "weight": 0.16,
-        "weighted_score": 0.15028
-      },
-      {
         "module": "貝氏收縮",
-        "score": 0.55615,
+        "score": 0.99014,
         "weight": 0.21,
-        "weighted_score": 0.11679
-      },
-      {
-        "module": "指數近期衰減",
-        "score": 0.84302,
-        "weight": 0.12,
-        "weighted_score": 0.10116
+        "weighted_score": 0.20793
       },
       {
         "module": "馬可夫轉移",
-        "score": 0.49363,
+        "score": 0.93702,
         "weight": 0.2,
-        "weighted_score": 0.09873
+        "weighted_score": 0.1874
+      },
+      {
+        "module": "共現關聯",
+        "score": 0.89833,
+        "weight": 0.16,
+        "weighted_score": 0.14373
+      },
+      {
+        "module": "指數近期衰減",
+        "score": 1.0,
+        "weight": 0.12,
+        "weighted_score": 0.12
       },
       {
         "module": "拖牌共振",
-        "score": 0.54545,
+        "score": 0.83333,
         "weight": 0.1,
-        "weighted_score": 0.05455
+        "weighted_score": 0.08333
       },
       {
         "module": "多窗口近期頻率",
-        "score": 0.65273,
+        "score": 0.77345,
         "weight": 0.08,
-        "weighted_score": 0.05222
-      },
-      {
-        "module": "週期回補",
-        "score": 0.52381,
-        "weight": 0.04,
-        "weighted_score": 0.02095
+        "weighted_score": 0.06188
       },
       {
         "module": "星期牌",
-        "score": 0.58491,
+        "score": 0.78,
         "weight": 0.03,
-        "weighted_score": 0.01755
+        "weighted_score": 0.0234
+      },
+      {
+        "module": "週期回補",
+        "score": 0.54286,
+        "weight": 0.04,
+        "weighted_score": 0.02171
       },
       {
         "module": "遺漏週期",
-        "score": 0.26265,
+        "score": 0.26546,
         "weight": 0.06,
-        "weighted_score": 0.01576
+        "weighted_score": 0.01593
       }
     ],
     "model_backtest": {
@@ -315,10 +315,9 @@
           "recent_60_hit_rate": 0.1333,
           "recent_120_hit_rate": 0.1583,
           "max_miss_streak": 37,
-          "current_miss_streak": 0,
+          "current_miss_streak": 1,
           "stability_score": 0.12436,
           "last_20_picks": [
-            2,
             2,
             11,
             2,
@@ -337,41 +336,8 @@
             11,
             39,
             11,
-            10
-          ]
-        },
-        {
-          "model": "近期衰減穩定獨支",
-          "rounds": 720,
-          "hit_count": 94,
-          "hit_rate": 0.1306,
-          "recent_30_hit_rate": 0.1,
-          "recent_60_hit_rate": 0.1167,
-          "recent_120_hit_rate": 0.1333,
-          "max_miss_streak": 41,
-          "current_miss_streak": 8,
-          "stability_score": 0.10139,
-          "last_20_picks": [
-            39,
-            9,
-            9,
-            39,
-            39,
-            39,
-            9,
-            19,
-            19,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39,
-            39
+            10,
+            11
           ]
         },
         {
@@ -383,10 +349,9 @@
           "recent_60_hit_rate": 0.1,
           "recent_120_hit_rate": 0.125,
           "max_miss_streak": 26,
-          "current_miss_streak": 11,
+          "current_miss_streak": 12,
           "stability_score": 0.10122,
           "last_20_picks": [
-            2,
             2,
             2,
             39,
@@ -405,6 +370,41 @@
             39,
             39,
             39,
+            39,
+            39
+          ]
+        },
+        {
+          "model": "近期衰減穩定獨支",
+          "rounds": 720,
+          "hit_count": 94,
+          "hit_rate": 0.1306,
+          "recent_30_hit_rate": 0.1,
+          "recent_60_hit_rate": 0.1167,
+          "recent_120_hit_rate": 0.125,
+          "max_miss_streak": 41,
+          "current_miss_streak": 9,
+          "stability_score": 0.09872,
+          "last_20_picks": [
+            9,
+            9,
+            39,
+            39,
+            39,
+            9,
+            19,
+            19,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
             39
           ]
         },
@@ -417,10 +417,9 @@
           "recent_60_hit_rate": 0.0833,
           "recent_120_hit_rate": 0.1333,
           "max_miss_streak": 30,
-          "current_miss_streak": 8,
+          "current_miss_streak": 9,
           "stability_score": 0.09442,
           "last_20_picks": [
-            2,
             2,
             2,
             2,
@@ -433,6 +432,7 @@
             11,
             39,
             11,
+            39,
             39,
             39,
             39,
@@ -449,12 +449,11 @@
           "hit_rate": 0.1333,
           "recent_30_hit_rate": 0.0667,
           "recent_60_hit_rate": 0.0833,
-          "recent_120_hit_rate": 0.1167,
+          "recent_120_hit_rate": 0.1083,
           "max_miss_streak": 28,
-          "current_miss_streak": 8,
-          "stability_score": 0.09144,
+          "current_miss_streak": 9,
+          "stability_score": 0.08878,
           "last_20_picks": [
-            2,
             9,
             9,
             2,
@@ -467,6 +466,7 @@
             11,
             39,
             11,
+            39,
             39,
             39,
             39,
@@ -485,7 +485,7 @@
           "recent_60_hit_rate": 0.0833,
           "recent_120_hit_rate": 0.1083,
           "max_miss_streak": 29,
-          "current_miss_streak": 4,
+          "current_miss_streak": 5,
           "stability_score": 0.08214,
           "last_20_picks": [
             9,
@@ -497,7 +497,6 @@
             9,
             9,
             9,
-            9,
             11,
             11,
             11,
@@ -507,6 +506,7 @@
             11,
             39,
             9,
+            39,
             39
           ]
         },
@@ -517,12 +517,11 @@
           "hit_rate": 0.1222,
           "recent_30_hit_rate": 0.0667,
           "recent_60_hit_rate": 0.0833,
-          "recent_120_hit_rate": 0.0917,
+          "recent_120_hit_rate": 0.0833,
           "max_miss_streak": 29,
-          "current_miss_streak": 0,
-          "stability_score": 0.07956,
+          "current_miss_streak": 1,
+          "stability_score": 0.07689,
           "last_20_picks": [
-            9,
             9,
             9,
             9,
@@ -541,7 +540,8 @@
             7,
             19,
             9,
-            10
+            10,
+            11
           ]
         },
         {
@@ -553,10 +553,9 @@
           "recent_60_hit_rate": 0.0667,
           "recent_120_hit_rate": 0.1,
           "max_miss_streak": 33,
-          "current_miss_streak": 22,
+          "current_miss_streak": 23,
           "stability_score": 0.07525,
           "last_20_picks": [
-            2,
             9,
             2,
             9,
@@ -575,6 +574,7 @@
             11,
             39,
             39,
+            39,
             39
           ]
         }
@@ -583,72 +583,72 @@
     },
     "strict_rejected_candidates": [
       {
-        "number": 11,
-        "rank": 1,
-        "reason": "主列放行未通過"
-      },
-      {
-        "number": 10,
-        "rank": 2,
-        "reason": "上期沿用守門未通過、剛開出號未達獨支連莊高標、主列放行未通過"
-      },
-      {
-        "number": 27,
-        "rank": 3,
-        "reason": "主列放行未通過"
-      },
-      {
         "number": 39,
-        "rank": 4,
+        "rank": 2,
         "reason": "上期沿用守門未通過、主列放行未通過"
       },
       {
-        "number": 2,
-        "rank": 6,
-        "reason": "上期沿用守門未通過、剛開出號未達獨支連莊高標、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+        "number": 11,
+        "rank": 3,
+        "reason": "上期沿用守門未通過、主列放行未通過"
+      },
+      {
+        "number": 27,
+        "rank": 4,
+        "reason": "上期沿用守門未通過、剛開出號未達獨支連莊高標、主列放行未通過"
       },
       {
         "number": 19,
-        "rank": 7,
-        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
-      },
-      {
-        "number": 3,
-        "rank": 8,
-        "reason": "信心指標低於80、模型保守機率低於15、原始總分低於0.60"
-      },
-      {
-        "number": 33,
-        "rank": 9,
-        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
-      },
-      {
-        "number": 13,
-        "rank": 10,
-        "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
-      },
-      {
-        "number": 25,
-        "rank": 11,
-        "reason": "信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60"
-      },
-      {
-        "number": 9,
-        "rank": 12,
-        "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+        "rank": 5,
+        "reason": "上期沿用守門未通過、主列放行未通過"
       },
       {
         "number": 6,
-        "rank": 13,
+        "rank": 6,
+        "reason": "上期沿用守門未通過、主列放行未通過"
+      },
+      {
+        "number": 33,
+        "rank": 7,
+        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、原始總分低於0.60"
+      },
+      {
+        "number": 37,
+        "rank": 8,
+        "reason": "成熟度低於78、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+      },
+      {
+        "number": 25,
+        "rank": 9,
+        "reason": "信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+      },
+      {
+        "number": 2,
+        "rank": 10,
         "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
       },
       {
-        "number": 5,
-        "rank": 14,
-        "reason": "上期沿用守門未通過、剛開出號未達獨支連莊高標、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+        "number": 32,
+        "rank": 11,
+        "reason": "信心指標低於80、模型保守機率低於15、原始總分低於0.60"
       },
       {
-        "number": 32,
+        "number": 28,
+        "rank": 12,
+        "reason": "信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+      },
+      {
+        "number": 14,
+        "rank": 13,
+        "reason": "信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+      },
+      {
+        "number": 1,
+        "rank": 14,
+        "reason": "主列放行未通過、成熟度低於78、信心指標低於80、模型保守機率低於15、原始總分低於0.60"
+      },
+      {
+        "number": 35,
         "rank": 15,
         "reason": "信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60"
       },
@@ -658,37 +658,37 @@
         "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60、排序超出前十五嚴格觀察區"
       },
       {
-        "number": 30,
+        "number": 38,
         "rank": 17,
-        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
+        "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
       },
       {
         "number": 12,
         "rank": 18,
-        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
-      },
-      {
-        "number": 29,
-        "rank": 19,
         "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60、排序超出前十五嚴格觀察區"
       },
       {
-        "number": 36,
-        "rank": 20,
-        "reason": "上期沿用守門未通過、主列放行未通過、信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60、排序超出前十五嚴格觀察區"
+        "number": 16,
+        "rank": 19,
+        "reason": "成熟度低於78、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
       },
       {
-        "number": 28,
+        "number": 30,
+        "rank": 20,
+        "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
+      },
+      {
+        "number": 29,
         "rank": 21,
-        "reason": "信心指標低於80、模型保守機率低於15、全歷史校準分數低於0.40、原始總分低於0.60、排序超出前十五嚴格觀察區"
+        "reason": "主列放行未通過、信心指標低於80、模型保守機率低於15、原始總分低於0.60、排序超出前十五嚴格觀察區"
       }
     ],
     "policy": "全歷史、多窗口、拖牌、遺漏、日期牌、尾數與區間模型先回測，再套本期嚴格門，只輸出一顆超級獨支。",
     "locked_final": true,
     "final_lock_reused": true,
-    "target_draw_date": "2026-10-11",
-    "target_taiwan_time": "2026-10-12 09:50",
-    "created_at_taiwan": "2026-10-12T08:38:40+08:00"
+    "target_draw_date": "2026-10-12",
+    "target_taiwan_time": "2026-10-13 09:50",
+    "created_at_taiwan": "2026-10-12T15:31:45+08:00"
   },
   "strict_prediction_gate": {
     "version": "嚴格推薦輸出門_v20260929_no_padding",
@@ -697,83 +697,83 @@
     "no_padding": true,
     "padding_banned": true,
     "qualified_numbers": [
-      15
+      38
     ],
     "qualified_count": 1,
     "top9_count": 1,
     "top15_count": 1,
     "rejected_numbers": [],
-    "created_at_taiwan": "2026-10-12T08:38:40+08:00",
-    "ultimate_super_single_selected": 15,
-    "final_single": 15,
+    "created_at_taiwan": "2026-10-12T15:31:45+08:00",
+    "ultimate_super_single_selected": 10,
+    "final_single": 38,
     "final_lock_reused": true,
     "final_lock_key": {
-      "latest_draw_date": "2026-10-10",
+      "latest_draw_date": "2026-10-11",
       "latest_numbers": [
-        2,
-        5,
-        10,
-        14,
-        35
+        8,
+        18,
+        26,
+        27,
+        36
       ],
-      "target_draw_date": "2026-10-11",
-      "target_taiwan_time": "2026-10-12 09:50"
+      "target_draw_date": "2026-10-12",
+      "target_taiwan_time": "2026-10-13 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
-    "final_lock_enforced_at_taiwan": "2026-10-12T08:38:48+08:00",
+    "final_lock_enforced_at_taiwan": "2026-10-12T15:31:53+08:00",
     "no_empty_backup": true
   },
   "database": {
     "ok": true,
-    "count": 11946,
-    "latest": "2026-10-10",
-    "prediction_count": 21,
-    "prediction_latest": "2026-10-10",
-    "prediction_target": "2026-10-11",
-    "low_probability_count": 21,
-    "low_probability_latest": "2026-10-10"
+    "count": 11947,
+    "latest": "2026-10-11",
+    "prediction_count": 22,
+    "prediction_latest": "2026-10-11",
+    "prediction_target": "2026-10-12",
+    "low_probability_count": 22,
+    "low_probability_latest": "2026-10-11"
   },
   "checks": [
     {
       "name": "本機最新資料",
       "ok": true,
-      "detail": "戰報 2026-10-10 / 資料庫 2026-10-10",
+      "detail": "戰報 2026-10-11 / 資料庫 2026-10-11",
       "action": "重跑全歷史重算並重建戰報"
     },
     {
       "name": "目前期別時效",
       "ok": true,
-      "detail": "目前 2026-10-10 / 應到 2026-10-10",
+      "detail": "目前 2026-10-11 / 應到 2026-10-11",
       "action": "雲端自救先抓最新來源，再重算並發布手機版"
     },
     {
       "name": "手機同步資料",
       "ok": true,
-      "detail": "根 2026-10-10 / data 2026-10-10 / reports 2026-10-10 / 下期 2026-10-11",
+      "detail": "根 2026-10-11 / data 2026-10-11 / reports 2026-10-11 / 下期 2026-10-12",
       "action": "重建手機根目錄、data與reports檔案並重新發布雲端"
     },
     {
       "name": "全歷史資料庫",
       "ok": true,
-      "detail": "11946 筆",
+      "detail": "11947 筆",
       "action": "重新匯入全歷史 CSV 與快取頁面"
     },
     {
       "name": "下期預測產生",
       "ok": true,
-      "detail": "15（嚴格通過不足不補）",
+      "detail": "38（嚴格通過不足不補）",
       "action": "重新運算候選排序與九碼主推"
     },
     {
       "name": "最強獨隻唯一輸出",
       "ok": true,
-      "detail": "15",
+      "detail": "38",
       "action": "重新執行超級獨隻全歷史多模型競賽；缺獨隻即視為故障"
     },
     {
       "name": "低機率紀錄",
       "ok": true,
-      "detail": "低機率最新 2026-10-10",
+      "detail": "低機率最新 2026-10-11",
       "action": "重建低機率每日紀錄與每月檢討"
     },
     {
