@@ -1,0 +1,43 @@
+{
+  "checked_at_taiwan": "2026-10-12T08:26:58+08:00",
+  "status": "通過",
+  "critical_count": 0,
+  "warning_count": 0,
+  "local": {
+    "generated_at_taiwan": "2026-10-12T08:25:36+08:00",
+    "draw_count": 11946,
+    "latest_draw_date": "2026-10-10",
+    "latest_numbers": [
+      2,
+      5,
+      10,
+      14,
+      35
+    ],
+    "target_draw_date": "2026-10-11",
+    "target_taiwan_time": "2026-10-12 09:50",
+    "top1": [
+      15
+    ],
+    "top9": [
+      15
+    ],
+    "top15": [
+      15
+    ],
+    "lock_single": 15,
+    "lock_top9": [
+      15
+    ],
+    "gate_numbers": [
+      15
+    ],
+    "super_single": 15,
+    "ultimate_single": 15,
+    "first_candidate": 15,
+    "first_candidate_rank": 1,
+    "first_candidate_locked": true
+  },
+  "remote": {},
+  "issues": []
+}
