@@ -11944,5 +11944,5 @@ local_index,draw_no,draw_date,n1,n2,n3,n4,n5,source
 11943,11943,2026-10-07,10,15,27,30,32,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
 11944,11944,2026-10-08,7,10,25,32,33,consensus_latest:cache:lotterynet+lotteryusa+lotto8
 11945,11945,2026-10-09,11,15,20,23,35,consensus_latest:cache:lotterynet+lotteryusa+lotto8
-11946,11946,2026-10-10,2,5,10,14,35,auto_csv_import:00_root_fantasy5_full_history.csv
-11947,11947,2026-10-11,8,18,26,27,36,auto_csv_import:00_root_fantasy5_full_history.csv
+11946,11946,2026-10-10,2,5,10,14,35,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
+11947,11947,2026-10-11,8,18,26,27,36,consensus_latest:cache:lotterynet+lotteryusa+lotto8+lottolyzer
