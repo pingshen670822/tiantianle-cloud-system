@@ -1,10 +1,10 @@
 {
-  "checked_at_taiwan": "2026-10-14T02:57:48+08:00",
+  "checked_at_taiwan": "2026-10-14T03:59:51+08:00",
   "status": "需修復",
   "critical_count": 5,
   "warning_count": 0,
   "local": {
-    "generated_at_taiwan": "2026-10-14T02:55:44+08:00",
+    "generated_at_taiwan": "2026-10-14T03:58:32+08:00",
     "draw_count": 11948,
     "latest_draw_date": "2026-10-12",
     "latest_numbers": [
