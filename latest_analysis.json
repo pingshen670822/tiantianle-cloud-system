@@ -1232,7 +1232,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "high_confidence_numbers": [
       {
@@ -1254,6 +1258,22 @@
       {
         "number": 5,
         "note": "十重驗證同步通過"
+      },
+      {
+        "number": 11,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 10,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 39,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 19,
+        "note": "十重驗證同步通過"
       }
     ],
     "high_confidence_core": [
@@ -1261,7 +1281,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "defensive_avoid": [
       22,
@@ -1593,7 +1617,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "high_confidence_numbers": [
       {
@@ -1615,6 +1643,22 @@
       {
         "number": 5,
         "note": "十重驗證同步通過"
+      },
+      {
+        "number": 11,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 10,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 39,
+        "note": "十重驗證同步通過"
+      },
+      {
+        "number": 19,
+        "note": "十重驗證同步通過"
       }
     ],
     "high_confidence_core": [
@@ -1622,7 +1666,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "defensive_avoid": [
       22,
@@ -1947,21 +1995,33 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "top10": [
       2,
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "top15": [
       2,
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "high_confidence_note": "高機率信心牌已依最近失誤、漏抓復活、近期實開風險重新排序；未過守門者只列研究，不包裝成必中。",
     "formal_high_confidence": [
@@ -1972,7 +2032,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "low_probability_5_not_hit": [
       22,
@@ -2031,7 +2095,11 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
     "prediction_date": "2026-10-14",
     "target_draw_date": "2026-10-14",
@@ -79874,6 +79942,11 @@
         "total_count": 13,
         "passed": true,
         "critical_ok": true,
+        "base_full_pass": true,
+        "release_tier": "完全通過",
+        "remediation_notes": [
+          "上期沿用重驗通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -79885,7 +79958,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -79927,7 +80000,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.672",
+            "detail": "校準 0.672 / 復活 0.504",
             "critical": false,
             "status": "通過"
           },
@@ -79948,7 +80021,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "4 項",
+            "detail": "來源 4 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -79962,7 +80035,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -80235,10 +80308,15 @@
       },
       "tenfold_pack_validation": {
         "number": 11,
-        "passed_count": 12,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
-        "critical_ok": false,
+        "passed": true,
+        "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "連莊補強通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -80249,10 +80327,10 @@
           },
           {
             "name": "最新開獎重複防呆",
-            "passed": false,
-            "detail": "避免剛開出號未驗證連莊",
+            "passed": true,
+            "detail": "連莊補強：重複分 0.942 / 信心 92.8 / 交叉 6/6",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "上期沿用防呆",
@@ -80292,7 +80370,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "1.000",
+            "detail": "校準 1.000 / 復活 0.400",
             "critical": false,
             "status": "通過"
           },
@@ -80313,7 +80391,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "6 項",
+            "detail": "來源 6 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -80327,7 +80405,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -80596,10 +80674,15 @@
       },
       "tenfold_pack_validation": {
         "number": 10,
-        "passed_count": 12,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
-        "critical_ok": false,
+        "passed": true,
+        "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "上期沿用重驗通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -80611,16 +80694,16 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
-            "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "passed": true,
+            "detail": "沿用重驗：信心 91.6 / 機率 21.22% / 交叉 6/6",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "交叉驗算",
@@ -80653,7 +80736,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.792",
+            "detail": "校準 0.792 / 復活 0.068",
             "critical": false,
             "status": "通過"
           },
@@ -80674,7 +80757,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "5 項",
+            "detail": "來源 5 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -80688,7 +80771,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -80960,6 +81043,11 @@
         "total_count": 13,
         "passed": true,
         "critical_ok": true,
+        "base_full_pass": true,
+        "release_tier": "完全通過",
+        "remediation_notes": [
+          "上期沿用重驗通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -80971,7 +81059,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -81013,7 +81101,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.727",
+            "detail": "校準 0.727 / 復活 0.343",
             "critical": false,
             "status": "通過"
           },
@@ -81034,7 +81122,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "5 項",
+            "detail": "來源 5 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -81048,7 +81136,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -81310,6 +81398,9 @@
         "total_count": 13,
         "passed": true,
         "critical_ok": true,
+        "base_full_pass": true,
+        "release_tier": "完全通過",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -81321,7 +81412,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -81363,7 +81454,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.531",
+            "detail": "校準 0.531 / 復活 0.327",
             "critical": false,
             "status": "通過"
           },
@@ -81384,7 +81475,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "3 項",
+            "detail": "來源 3 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -81398,7 +81489,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -81665,10 +81756,15 @@
       },
       "tenfold_pack_validation": {
         "number": 39,
-        "passed_count": 12,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
-        "critical_ok": false,
+        "passed": true,
+        "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "上期沿用重驗通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -81680,16 +81776,16 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
-            "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "passed": true,
+            "detail": "沿用重驗：信心 86.0 / 機率 18.37% / 交叉 6/6",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "交叉驗算",
@@ -81722,7 +81818,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.612",
+            "detail": "校準 0.612 / 復活 0.023",
             "critical": false,
             "status": "通過"
           },
@@ -81743,7 +81839,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "4 項",
+            "detail": "來源 4 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -81757,7 +81853,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -82018,10 +82114,15 @@
       },
       "tenfold_pack_validation": {
         "number": 6,
-        "passed_count": 10,
+        "passed_count": 11,
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -82033,14 +82134,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": false,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "連莊補強：重複分 1.000 / 信心 82.9 / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 82.9 / 機率 16.79% / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
@@ -82075,7 +82176,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.787",
+            "detail": "校準 0.787 / 復活 0.240",
             "critical": false,
             "status": "通過"
           },
@@ -82096,7 +82197,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "5 項",
+            "detail": "來源 5 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -82109,10 +82210,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -82377,10 +82478,16 @@
       },
       "tenfold_pack_validation": {
         "number": 19,
-        "passed_count": 11,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
-        "critical_ok": false,
+        "passed": true,
+        "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "上期沿用重驗通過",
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -82392,16 +82499,16 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
-            "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "passed": true,
+            "detail": "沿用重驗：信心 81.6 / 機率 16.12% / 交叉 6/6",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "交叉驗算",
@@ -82434,7 +82541,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.516",
+            "detail": "校準 0.516 / 復活 0.072",
             "critical": false,
             "status": "通過"
           },
@@ -82455,7 +82562,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "4 項",
+            "detail": "來源 4 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -82468,10 +82575,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -82719,10 +82826,15 @@
       },
       "tenfold_pack_validation": {
         "number": 4,
-        "passed_count": 10,
+        "passed_count": 11,
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -82734,14 +82846,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": false,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "連莊補強：重複分 0.877 / 信心 81.0 / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 81.0 / 機率 15.82% / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
@@ -82776,7 +82888,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.545",
+            "detail": "校準 0.545 / 復活 0.450",
             "critical": false,
             "status": "通過"
           },
@@ -82797,7 +82909,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "2 項",
+            "detail": "來源 2 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -82810,10 +82922,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -83043,10 +83155,16 @@
       },
       "tenfold_pack_validation": {
         "number": 30,
-        "passed_count": 11,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
+        "passed": true,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "全歷史替代來源通過",
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -83058,7 +83176,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -83100,7 +83218,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.409",
+            "detail": "校準 0.409 / 復活 0.153",
             "critical": false,
             "status": "通過"
           },
@@ -83120,10 +83238,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "1 項",
+            "passed": true,
+            "detail": "來源 1 / 特徵 8 / 理由 10",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -83134,10 +83252,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -83361,10 +83479,17 @@
       },
       "tenfold_pack_validation": {
         "number": 29,
-        "passed_count": 10,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
+        "passed": true,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "全歷史復活校準通過",
+          "全歷史替代來源通過",
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -83376,7 +83501,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -83417,10 +83542,10 @@
           },
           {
             "name": "全歷史校準分",
-            "passed": false,
-            "detail": "0.380",
+            "passed": true,
+            "detail": "校準 0.380 / 復活 0.492",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "候選總分",
@@ -83438,10 +83563,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "0 項",
+            "passed": true,
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -83452,10 +83577,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -83706,6 +83831,9 @@
         "total_count": 13,
         "passed": true,
         "critical_ok": true,
+        "base_full_pass": true,
+        "release_tier": "完全通過",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -83717,7 +83845,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -83759,7 +83887,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.520",
+            "detail": "校準 0.520 / 復活 0.552",
             "critical": false,
             "status": "通過"
           },
@@ -83780,7 +83908,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "2 項",
+            "detail": "來源 2 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -83794,7 +83922,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -84016,10 +84144,15 @@
       },
       "tenfold_pack_validation": {
         "number": 31,
-        "passed_count": 9,
+        "passed_count": 10,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "九碼前排補強放行通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -84031,7 +84164,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -84073,7 +84206,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.370",
+            "detail": "校準 0.370 / 復活 0.485",
             "critical": false,
             "status": "未通過"
           },
@@ -84094,7 +84227,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -84107,10 +84240,10 @@
           },
           {
             "name": "主列或輔助放行",
-            "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "passed": true,
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           }
         ],
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
@@ -84345,6 +84478,9 @@
         "total_count": 13,
         "passed": true,
         "critical_ok": true,
+        "base_full_pass": true,
+        "release_tier": "完全通過",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -84356,7 +84492,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -84398,7 +84534,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.492",
+            "detail": "校準 0.492 / 復活 0.573",
             "critical": false,
             "status": "通過"
           },
@@ -84419,7 +84555,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "3 項",
+            "detail": "來源 3 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -84433,7 +84569,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -84657,10 +84793,16 @@
       },
       "tenfold_pack_validation": {
         "number": 32,
-        "passed_count": 11,
+        "passed_count": 13,
         "total_count": 13,
-        "passed": false,
+        "passed": true,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "補強驗證通過",
+        "remediation_notes": [
+          "全歷史復活校準通過",
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -84672,7 +84814,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -84713,10 +84855,10 @@
           },
           {
             "name": "全歷史校準分",
-            "passed": false,
-            "detail": "0.322",
+            "passed": true,
+            "detail": "校準 0.322 / 復活 0.503",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "候選總分",
@@ -84734,10 +84876,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "0 項",
+            "passed": true,
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -84749,7 +84891,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -84968,10 +85110,15 @@
       },
       "tenfold_pack_validation": {
         "number": 25,
-        "passed_count": 6,
+        "passed_count": 7,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -84983,7 +85130,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -85025,7 +85172,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.330",
+            "detail": "校準 0.330 / 復活 0.439",
             "critical": false,
             "status": "未通過"
           },
@@ -85045,10 +85192,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "0 項",
+            "passed": true,
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -85060,7 +85207,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -85317,6 +85464,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -85328,14 +85478,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 77.1 / 機率 13.83% / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
@@ -85370,7 +85520,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.439",
+            "detail": "校準 0.439 / 復活 0.349",
             "critical": false,
             "status": "通過"
           },
@@ -85391,7 +85541,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "2 項",
+            "detail": "來源 2 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -85405,7 +85555,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -85660,6 +85810,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -85671,7 +85824,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": false,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "連莊補強：重複分 0.727 / 信心 76.7 / 交叉 5/6",
             "critical": false,
             "status": "未通過"
           },
@@ -85713,7 +85866,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.521",
+            "detail": "校準 0.521 / 復活 0.493",
             "critical": false,
             "status": "通過"
           },
@@ -85734,7 +85887,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "4 項",
+            "detail": "來源 4 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -85748,7 +85901,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -86010,6 +86163,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -86021,14 +86177,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 76.3 / 機率 13.42% / 交叉 6/6",
             "critical": false,
             "status": "未通過"
           },
@@ -86063,7 +86219,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.419",
+            "detail": "校準 0.419 / 復活 0.000",
             "critical": false,
             "status": "通過"
           },
@@ -86084,7 +86240,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "3 項",
+            "detail": "來源 3 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -86098,7 +86254,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -86320,10 +86476,15 @@
       },
       "tenfold_pack_validation": {
         "number": 13,
-        "passed_count": 6,
+        "passed_count": 7,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -86335,7 +86496,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -86377,7 +86538,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.522",
+            "detail": "校準 0.522 / 復活 0.331",
             "critical": false,
             "status": "通過"
           },
@@ -86397,10 +86558,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "1 項",
+            "passed": true,
+            "detail": "來源 1 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -86412,7 +86573,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -86639,10 +86800,15 @@
       },
       "tenfold_pack_validation": {
         "number": 28,
-        "passed_count": 7,
+        "passed_count": 8,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -86654,7 +86820,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -86696,7 +86862,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.347",
+            "detail": "校準 0.347 / 復活 0.549",
             "critical": false,
             "status": "未通過"
           },
@@ -86716,10 +86882,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "1 項",
+            "passed": true,
+            "detail": "來源 1 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -86731,7 +86897,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -86951,10 +87117,15 @@
       },
       "tenfold_pack_validation": {
         "number": 1,
-        "passed_count": 6,
+        "passed_count": 7,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -86966,7 +87137,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -87008,7 +87179,7 @@
           {
             "name": "全歷史校準分",
             "passed": true,
-            "detail": "0.439",
+            "detail": "校準 0.439 / 復活 0.333",
             "critical": false,
             "status": "通過"
           },
@@ -87028,10 +87199,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "0 項",
+            "passed": true,
+            "detail": "來源 0 / 特徵 8 / 理由 10",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -87043,7 +87214,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -87278,6 +87449,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -87289,7 +87463,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -87331,7 +87505,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.230",
+            "detail": "校準 0.230 / 復活 0.437",
             "critical": false,
             "status": "未通過"
           },
@@ -87352,7 +87526,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
             "status": "未通過"
           },
@@ -87366,7 +87540,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -87599,10 +87773,15 @@
       },
       "tenfold_pack_validation": {
         "number": 35,
-        "passed_count": 7,
+        "passed_count": 8,
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -87614,7 +87793,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -87656,7 +87835,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.228",
+            "detail": "校準 0.228 / 復活 0.505",
             "critical": false,
             "status": "未通過"
           },
@@ -87676,10 +87855,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "1 項",
+            "passed": true,
+            "detail": "來源 1 / 特徵 8 / 理由 10",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -87691,7 +87870,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -87908,6 +88087,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -87919,7 +88101,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -87961,7 +88143,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.248",
+            "detail": "校準 0.248 / 復活 0.650",
             "critical": false,
             "status": "未通過"
           },
@@ -87982,7 +88164,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "1 項",
+            "detail": "來源 1 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -87996,7 +88178,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -88224,10 +88406,15 @@
       },
       "tenfold_pack_validation": {
         "number": 12,
-        "passed_count": 6,
+        "passed_count": 7,
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -88239,14 +88426,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 72.4 / 機率 11.43% / 交叉 5/6",
             "critical": false,
             "status": "未通過"
           },
@@ -88281,7 +88468,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.359",
+            "detail": "校準 0.359 / 復活 0.001",
             "critical": false,
             "status": "未通過"
           },
@@ -88301,10 +88488,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "0 項",
+            "passed": true,
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -88316,7 +88503,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -88532,6 +88719,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -88543,7 +88733,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -88585,7 +88775,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.284",
+            "detail": "校準 0.284 / 復活 0.492",
             "critical": false,
             "status": "未通過"
           },
@@ -88606,7 +88796,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -88620,7 +88810,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -88843,6 +89033,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -88854,7 +89047,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -88896,7 +89089,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.259",
+            "detail": "校準 0.259 / 復活 0.379",
             "critical": false,
             "status": "未通過"
           },
@@ -88917,7 +89110,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "未通過"
           },
@@ -88931,7 +89124,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -89157,6 +89350,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -89168,7 +89364,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -89210,7 +89406,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.189",
+            "detail": "校準 0.189 / 復活 0.411",
             "critical": false,
             "status": "未通過"
           },
@@ -89231,7 +89427,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -89245,7 +89441,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -89460,6 +89656,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -89471,7 +89670,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -89513,7 +89712,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.277",
+            "detail": "校準 0.277 / 復活 0.351",
             "critical": false,
             "status": "未通過"
           },
@@ -89534,7 +89733,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
             "status": "未通過"
           },
@@ -89548,7 +89747,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -89769,6 +89968,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -89780,7 +89982,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -89822,7 +90024,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.225",
+            "detail": "校準 0.225 / 復活 0.416",
             "critical": false,
             "status": "未通過"
           },
@@ -89843,7 +90045,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 7",
             "critical": false,
             "status": "未通過"
           },
@@ -89857,7 +90059,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -90097,6 +90299,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -90108,14 +90313,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 70.9 / 機率 10.66% / 交叉 4/6",
             "critical": false,
             "status": "未通過"
           },
@@ -90150,7 +90355,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.156",
+            "detail": "校準 0.156 / 復活 0.000",
             "critical": false,
             "status": "未通過"
           },
@@ -90171,7 +90376,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "1 項",
+            "detail": "來源 1 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "未通過"
           },
@@ -90185,7 +90390,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -90426,6 +90631,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -90437,7 +90645,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -90479,7 +90687,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.320",
+            "detail": "校準 0.320 / 復活 0.280",
             "critical": false,
             "status": "未通過"
           },
@@ -90500,7 +90708,7 @@
           {
             "name": "全歷史模型來源",
             "passed": true,
-            "detail": "2 項",
+            "detail": "來源 2 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "通過"
           },
@@ -90514,7 +90722,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -90741,6 +90949,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -90752,14 +90963,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 68.2 / 機率 9.29% / 交叉 3/6",
             "critical": false,
             "status": "未通過"
           },
@@ -90794,7 +91005,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.243",
+            "detail": "校準 0.243 / 復活 0.419",
             "critical": false,
             "status": "未通過"
           },
@@ -90815,7 +91026,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
             "status": "未通過"
           },
@@ -90829,7 +91040,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -91039,6 +91250,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -91050,7 +91264,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -91092,7 +91306,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.199",
+            "detail": "校準 0.199 / 復活 0.652",
             "critical": false,
             "status": "未通過"
           },
@@ -91113,7 +91327,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -91127,7 +91341,7 @@
           {
             "name": "主列或輔助放行",
             "passed": true,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "通過"
           }
@@ -91356,10 +91570,15 @@
       },
       "tenfold_pack_validation": {
         "number": 26,
-        "passed_count": 2,
+        "passed_count": 3,
         "total_count": 13,
         "passed": false,
         "critical_ok": false,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [
+          "全歷史替代來源通過"
+        ],
         "checks": [
           {
             "name": "候選資料存在",
@@ -91371,14 +91590,14 @@
           {
             "name": "最新開獎重複防呆",
             "passed": false,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "連莊補強：重複分 0.747 / 信心 66.8 / 交叉 2/6",
             "critical": false,
             "status": "未通過"
           },
           {
             "name": "上期沿用防呆",
             "passed": false,
-            "detail": "strict_no_previous_reuse",
+            "detail": "沿用重驗：信心 66.8 / 機率 8.57% / 交叉 2/6",
             "critical": false,
             "status": "未通過"
           },
@@ -91413,7 +91632,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.320",
+            "detail": "校準 0.320 / 復活 0.405",
             "critical": false,
             "status": "未通過"
           },
@@ -91433,10 +91652,10 @@
           },
           {
             "name": "全歷史模型來源",
-            "passed": false,
-            "detail": "1 項",
+            "passed": true,
+            "detail": "來源 1 / 特徵 8 / 理由 10",
             "critical": false,
-            "status": "未通過"
+            "status": "通過"
           },
           {
             "name": "產號理由足量",
@@ -91448,7 +91667,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -91668,6 +91887,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -91679,7 +91901,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -91721,7 +91943,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.156",
+            "detail": "校準 0.156 / 復活 0.304",
             "critical": false,
             "status": "未通過"
           },
@@ -91742,7 +91964,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 8",
             "critical": false,
             "status": "未通過"
           },
@@ -91756,7 +91978,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -91978,6 +92200,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -91989,7 +92214,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -92031,7 +92256,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.253",
+            "detail": "校準 0.253 / 復活 0.191",
             "critical": false,
             "status": "未通過"
           },
@@ -92052,7 +92277,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "1 項",
+            "detail": "來源 1 / 特徵 8 / 理由 10",
             "critical": false,
             "status": "未通過"
           },
@@ -92066,7 +92291,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -92278,6 +92503,9 @@
         "total_count": 13,
         "passed": false,
         "critical_ok": true,
+        "base_full_pass": false,
+        "release_tier": "未放行",
+        "remediation_notes": [],
         "checks": [
           {
             "name": "候選資料存在",
@@ -92289,7 +92517,7 @@
           {
             "name": "最新開獎重複防呆",
             "passed": true,
-            "detail": "避免剛開出號未驗證連莊",
+            "detail": "一般通過",
             "critical": false,
             "status": "通過"
           },
@@ -92331,7 +92559,7 @@
           {
             "name": "全歷史校準分",
             "passed": false,
-            "detail": "0.000",
+            "detail": "校準 0.000 / 復活 0.197",
             "critical": false,
             "status": "未通過"
           },
@@ -92352,7 +92580,7 @@
           {
             "name": "全歷史模型來源",
             "passed": false,
-            "detail": "0 項",
+            "detail": "來源 0 / 特徵 8 / 理由 9",
             "critical": false,
             "status": "未通過"
           },
@@ -92366,7 +92594,7 @@
           {
             "name": "主列或輔助放行",
             "passed": false,
-            "detail": "主列通過或高信心輔助放行",
+            "detail": "主列通過、高信心，或九碼補強重驗通過",
             "critical": false,
             "status": "未通過"
           }
@@ -92582,7 +92810,7 @@
       "final_lock_enforced": true,
       "tenfold_validation_gate": {
         "version": "十重驗證守門_v20261014",
-        "checked_at_taiwan": "2026-10-14T12:59:38+08:00",
+        "checked_at_taiwan": "2026-10-14T13:11:16+08:00",
         "status": "通過",
         "minimum_required": 10,
         "total_count": 17,
@@ -92726,9 +92954,13 @@
           27,
           33,
           9,
-          5
+          5,
+          11,
+          10,
+          39,
+          19
         ],
-        "pack_pool_size": 5,
+        "pack_pool_size": 9,
         "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
         "history_files": {
           "fantasy5_full_history.csv": {
@@ -92851,14 +93083,18 @@
         27,
         33,
         9,
-        5
+        5,
+        11,
+        10,
+        39,
+        19
       ],
       "theoretical_probability": {
         "probability": 0.0,
         "odds_1_in": null
       },
       "status": "十重驗證同步通過",
-      "pool_size": 5,
+      "pool_size": 9,
       "expected_pool_size": 5,
       "strict_no_padding": false,
       "final_lock_enforced": true,
@@ -101529,7 +101765,7 @@
       "target_taiwan_time": "2026-10-15 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
-    "final_lock_enforced_at_taiwan": "2026-10-14T12:59:38+08:00"
+    "final_lock_enforced_at_taiwan": "2026-10-14T13:11:16+08:00"
   },
   "super_single_decision": {
     "version": "超級獨支全歷史多模型競賽_v20261005",
@@ -102213,13 +102449,13 @@
     "note": "同一最新開獎日與同一下期預測日只准一組定版獨隻，防止 11/15 這類重跑跳號",
     "reused_this_run": true,
     "active": true,
-    "guard_enforced_at_taiwan": "2026-10-14T12:59:38+08:00"
+    "guard_enforced_at_taiwan": "2026-10-14T13:11:16+08:00"
   },
   "offline_full_history_recalc": true,
   "offline_full_history_recalc_note": "daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced",
   "tenfold_validation_gate": {
     "version": "十重驗證守門_v20261014",
-    "checked_at_taiwan": "2026-10-14T12:59:38+08:00",
+    "checked_at_taiwan": "2026-10-14T13:11:16+08:00",
     "status": "通過",
     "minimum_required": 10,
     "total_count": 17,
@@ -102363,9 +102599,13 @@
       27,
       33,
       9,
-      5
+      5,
+      11,
+      10,
+      39,
+      19
     ],
-    "pack_pool_size": 5,
+    "pack_pool_size": 9,
     "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
     "history_files": {
       "fantasy5_full_history.csv": {

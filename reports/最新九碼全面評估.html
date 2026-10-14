@@ -24,11 +24,33 @@
     th{background:#eef2f7;white-space:nowrap}
     td{font-size:14px}
   </style>
-</head>
-<body>
+
+    <style>
+      .tiantianle-cloud-controls{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}
+      .tiantianle-cloud-title{font-weight:900;color:#7c2d12;white-space:nowrap}
+      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}
+      .tiantianle-cloud-button.manual{background:#166534}
+      .tiantianle-cloud-button.repair{background:#991b1b}
+      .tiantianle-cloud-button.refresh{background:#1d4ed8}
+      .tiantianle-cloud-status{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}
+      .tiantianle-cloud-status.primary-time{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}
+      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
+    </style>
+    </head>
+<body><section class="band update-box"><h2>立刻更新到最新</h2>
+    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
+      <div class="tiantianle-cloud-title">雲端快速操作</div>
+      <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
+      <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
+      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-14T10:26:44+08:00</div>
+      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-13　03 04 06 11 26 / 下期：2026-10-14　2026-10-15 09:50</div>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
+    </div>
+    </section>
 <header>
   <h1>天天樂最新九碼全面評估</h1>
-  <p>建立時間：2026-10-14 12:59:40 台灣時間</p>
+  <p>建立時間：2026-10-14 13:11:18 台灣時間</p>
 </header>
 <main>
   <section>
@@ -37,7 +59,7 @@
       <div class="card"><div class="label">最新開獎</div><div class="value">2026-10-13</div><div>03 04 06 11 26</div></div>
       <div class="card"><div class="label">預測目標</div><div class="value">2026-10-14</div><div>台灣開獎 2026-10-15 09:50</div></div>
       <div class="card"><div class="label">十重驗證</div><div class="value ok">通過</div><div>17/17</div></div>
-      <div class="card"><div class="label">九碼池狀態</div><div class="value warn">5 顆</div><div>正式九碼池目前 5 顆；系統禁止用未全項通過號碼硬補。</div></div>
+      <div class="card"><div class="label">九碼池狀態</div><div class="value warn">9 顆</div><div>正式九碼池已滿 9 顆。</div></div>
     </div>
   </section>
   <section>
@@ -48,18 +70,208 @@
       <div class="card"><div class="label">3中1~3</div><div class="value num">02 27 33</div></div>
       <div class="card"><div class="label">5中1~5</div><div class="value num">02 27 33 09 05</div></div>
     </div>
-    <p><strong>正式九碼池：</strong>02 27 33 09 05</p>
+    <p><strong>正式九碼池：</strong>02 27 33 09 05 11 10 39 19</p>
     <p>正式推薦必須逐號全項通過；未通過者只列未放行觀察，不得硬塞九碼。</p>
   </section>
   <section>
     <h2>正式池逐號評估</h2>
-    <div class="table-wrap"><table><thead><tr><th>序</th><th>號碼</th><th>層級</th><th>信心</th><th>模型機率</th><th>總分</th><th>遺漏</th><th>穩定</th><th>驗證</th><th>弱點</th><th>結論</th></tr></thead><tbody><tr><td>1</td><td><strong class="num">02</strong></td><td>主力高信心區</td><td>85.6</td><td>18.16</td><td>0.726194</td><td>1</td><td>3</td><td>13/13</td><td>無</td><td>完整通過，列入正式九碼池</td></tr><tr><td>2</td><td><strong class="num">27</strong></td><td>主力高信心區</td><td>91.3</td><td>21.07</td><td>0.842361</td><td>2</td><td>4</td><td>13/13</td><td>無</td><td>完整通過，列入正式九碼池</td></tr><tr><td>3</td><td><strong class="num">33</strong></td><td>主力高信心區</td><td>87.1</td><td>18.93</td><td>0.757935</td><td>5</td><td>4</td><td>13/13</td><td>無</td><td>完整通過，列入正式九碼池</td></tr><tr><td>4</td><td><strong class="num">09</strong></td><td>主選延伸區</td><td>79.7</td><td>15.15</td><td>0.606174</td><td>1</td><td>2</td><td>13/13</td><td>無</td><td>完整通過，列入正式九碼池</td></tr><tr><td>5</td><td><strong class="num">05</strong></td><td>主選延伸區</td><td>78.9</td><td>14.74</td><td>0.58878</td><td>3</td><td>2</td><td>13/13</td><td>無</td><td>完整通過，列入正式九碼池</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>序</th><th>號碼</th><th>層級</th><th>信心</th><th>模型機率</th><th>總分</th><th>遺漏</th><th>穩定</th><th>驗證</th><th>驗證型態</th><th>補強理由</th><th>弱點</th><th>結論</th></tr></thead><tbody><tr><td>1</td><td><strong class="num">02</strong></td><td>主力高信心區</td><td>85.6</td><td>18.16</td><td>0.726194</td><td>1</td><td>3</td><td>13/13</td><td>完全通過</td><td>上期沿用重驗通過</td><td>無</td><td>完全通過，列入正式九碼池</td></tr><tr><td>2</td><td><strong class="num">27</strong></td><td>主力高信心區</td><td>91.3</td><td>21.07</td><td>0.842361</td><td>2</td><td>4</td><td>13/13</td><td>完全通過</td><td>上期沿用重驗通過</td><td>無</td><td>完全通過，列入正式九碼池</td></tr><tr><td>3</td><td><strong class="num">33</strong></td><td>主力高信心區</td><td>87.1</td><td>18.93</td><td>0.757935</td><td>5</td><td>4</td><td>13/13</td><td>完全通過</td><td>無</td><td>無</td><td>完全通過，列入正式九碼池</td></tr><tr><td>4</td><td><strong class="num">09</strong></td><td>主選延伸區</td><td>79.7</td><td>15.15</td><td>0.606174</td><td>1</td><td>2</td><td>13/13</td><td>完全通過</td><td>無</td><td>無</td><td>完全通過，列入正式九碼池</td></tr><tr><td>5</td><td><strong class="num">05</strong></td><td>主選延伸區</td><td>78.9</td><td>14.74</td><td>0.58878</td><td>3</td><td>2</td><td>13/13</td><td>完全通過</td><td>無</td><td>無</td><td>完全通過，列入正式九碼池</td></tr><tr><td>6</td><td><strong class="num">11</strong></td><td>正式九碼延伸區</td><td>92.8</td><td>21.84</td><td>0.873437</td><td>0</td><td>4</td><td>13/13</td><td>補強驗證通過</td><td>連莊補強通過</td><td>無</td><td>補強驗證通過，列入正式九碼池</td></tr><tr><td>7</td><td><strong class="num">10</strong></td><td>正式九碼延伸區</td><td>91.6</td><td>21.22</td><td>0.848281</td><td>3</td><td>3</td><td>13/13</td><td>補強驗證通過</td><td>上期沿用重驗通過</td><td>無</td><td>補強驗證通過，列入正式九碼池</td></tr><tr><td>8</td><td><strong class="num">39</strong></td><td>正式九碼延伸區</td><td>86.0</td><td>18.37</td><td>0.734698</td><td>11</td><td>3</td><td>13/13</td><td>補強驗證通過</td><td>上期沿用重驗通過</td><td>無</td><td>補強驗證通過，列入正式九碼池</td></tr><tr><td>9</td><td><strong class="num">19</strong></td><td>正式九碼延伸區</td><td>81.6</td><td>16.12</td><td>0.645288</td><td>9</td><td>3</td><td>13/13</td><td>補強驗證通過</td><td>上期沿用重驗通過、九碼前排補強放行通過</td><td>無</td><td>補強驗證通過，列入正式九碼池</td></tr></tbody></table></div>
   </section>
   <section>
     <h2>未放行候選檢查</h2>
     <p>這一區只說明為什麼高分候選沒有進正式池，不能當正式推薦。</p>
-    <div class="table-wrap"><table><thead><tr><th>號碼</th><th>信心</th><th>模型機率</th><th>總分</th><th>遺漏</th><th>驗證</th><th>未過項</th><th>結論</th></tr></thead><tbody><tr><td><strong class="num muted">11</strong></td><td>92.8</td><td>21.84</td><td>0.873437</td><td>0</td><td>12/13</td><td>剛開出重複防呆</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">10</strong></td><td>91.6</td><td>21.22</td><td>0.848281</td><td>3</td><td>12/13</td><td>上期沿用防呆</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">39</strong></td><td>86.0</td><td>18.37</td><td>0.734698</td><td>11</td><td>12/13</td><td>上期沿用防呆</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">06</strong></td><td>82.9</td><td>16.79</td><td>0.671491</td><td>0</td><td>10/13</td><td>剛開出重複防呆、上期沿用防呆、主列或輔助放行</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">19</strong></td><td>81.6</td><td>16.12</td><td>0.645288</td><td>9</td><td>11/13</td><td>上期沿用防呆、主列或輔助放行</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">04</strong></td><td>81.0</td><td>15.82</td><td>0.632066</td><td>0</td><td>10/13</td><td>剛開出重複防呆、上期沿用防呆、主列或輔助放行</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">30</strong></td><td>80.7</td><td>15.66</td><td>0.626753</td><td>6</td><td>11/13</td><td>全歷史模型來源、主列或輔助放行</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">29</strong></td><td>80.6</td><td>15.61</td><td>0.624817</td><td>7</td><td>10/13</td><td>全歷史校準分、全歷史模型來源、主列或輔助放行</td><td>未通過正式放行，不得混入正式九碼</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>號碼</th><th>信心</th><th>模型機率</th><th>總分</th><th>遺漏</th><th>驗證</th><th>驗證型態</th><th>未過項</th><th>結論</th></tr></thead><tbody><tr><td><strong class="num muted">06</strong></td><td>82.9</td><td>16.79</td><td>0.671491</td><td>0</td><td>11/13</td><td>未放行</td><td>剛開出重複防呆、上期沿用防呆</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">04</strong></td><td>81.0</td><td>15.82</td><td>0.632066</td><td>0</td><td>11/13</td><td>未放行</td><td>剛開出重複防呆、上期沿用防呆</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">30</strong></td><td>80.7</td><td>15.66</td><td>0.626753</td><td>6</td><td>13/13</td><td>補強驗證通過</td><td>無</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">29</strong></td><td>80.6</td><td>15.61</td><td>0.624817</td><td>7</td><td>13/13</td><td>補強驗證通過</td><td>無</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">31</strong></td><td>79.0</td><td>14.8</td><td>0.591841</td><td>9</td><td>10/13</td><td>未放行</td><td>交叉驗算、全歷史校準分、全歷史模型來源</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">32</strong></td><td>78.6</td><td>14.59</td><td>0.583999</td><td>5</td><td>13/13</td><td>補強驗證通過</td><td>無</td><td>未通過正式放行，不得混入正式九碼</td></tr><tr><td><strong class="num muted">03</strong></td><td>76.7</td><td>13.62</td><td>0.544047</td><td>0</td><td>9/13</td><td>未放行</td><td>剛開出重複防呆、信心指標、模型保守機率、候選總分</td><td>未通過正式放行，不得混入正式九碼</td></tr></tbody></table></div>
   </section>
 </main>
-</body>
+
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261014131119') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261014131119';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    
+    <script>
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261014131119";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-14T10:26:44+08:00";
+    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
+    async function tiantianleClearVisibleCaches() {
+      try {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      } catch (err) {}
+    }
+    function tiantianleFormatCloudNumbers(numbers) {
+      if (!Array.isArray(numbers)) return '-';
+      return numbers.map(function(number) {
+        var value = parseInt(number, 10);
+        if (!Number.isFinite(value)) return '';
+        return String(value).padStart(2, '0');
+      }).filter(Boolean).join(' ') || '-';
+    }
+    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {
+      if (!data) return;
+      var latest = data.latest_draw || {};
+      var generated = data.generated_at_taiwan || data.generated_at || '-';
+      var latestDate = latest.draw_date || '-';
+      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
+      var targetDate = data.target_draw_date || '-';
+      var targetTime = data.prediction_draw_taiwan_time || '-';
+      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
+      var drawEl = document.getElementById('tiantianleLatestDrawLine');
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
+      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
+      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {
+        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
+        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
+      }
+    }
+    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (!res.ok) throw new Error('latest_analysis not ready');
+        var data = await res.json();
+        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
+        return data;
+      } catch (err) {
+        var status = document.getElementById('tiantianleCloudActionStatus');
+        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
+        return null;
+      }
+    }
+    function tiantianleStartUpdatePolling(label) {
+      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+      tiantianleRefreshLatestUpdateDisplay(label);
+      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {
+        tiantianleRefreshLatestUpdateDisplay(label);
+      }, 15000);
+      setTimeout(function() {
+        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {
+          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
+        }
+      }, 30 * 60 * 1000);
+    }
+    async function tiantianleForceReadLatestNow() {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = '正在重讀雲端最新更新時間';
+      await tiantianleClearVisibleCaches();
+      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
+    }
+    async function tiantianlePrepareCloudAction(label) {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
+      await tiantianleClearVisibleCaches();
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), { cache: 'no-store' });
+        await fetch(prefix + 'version.json?manual=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      tiantianleStartUpdatePolling(label);
+    }
+    window.addEventListener('pageshow', function() { tiantianleRefreshLatestUpdateDisplay('頁面開啟'); });
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
+    });
+    </script>
+    </body>
 </html>
