@@ -1,25 +1,25 @@
 {
   "lock_key": {
-    "latest_draw_date": "2026-10-11",
+    "latest_draw_date": "2026-10-13",
     "latest_numbers": [
-      8,
-      18,
-      26,
-      27,
-      36
+      3,
+      4,
+      6,
+      11,
+      26
     ],
-    "target_draw_date": "2026-10-12",
-    "target_taiwan_time": "2026-10-13 09:50"
+    "target_draw_date": "2026-10-14",
+    "target_taiwan_time": "2026-10-15 09:50"
   },
-  "final_single": 38,
+  "final_single": 2,
   "final_top9": [
-    38
+    2
   ],
-  "locked_at_taiwan": "2026-10-12T11:34:32+08:00",
-  "source_generated_at_taiwan": "2026-10-12T11:32:51+08:00",
+  "locked_at_taiwan": "2026-10-14T10:28:38+08:00",
+  "source_generated_at_taiwan": "2026-10-14T10:26:44+08:00",
   "policy": "same_latest_draw_and_same_target_can_publish_only_one_final_prediction",
   "note": "\u540c\u4e00\u6700\u65b0\u958b\u734e\u65e5\u8207\u540c\u4e00\u4e0b\u671f\u9810\u6e2c\u65e5\u53ea\u51c6\u4e00\u7d44\u5b9a\u7248\u7368\u96bb\uff0c\u9632\u6b62 11/15 \u9019\u985e\u91cd\u8dd1\u8df3\u865f",
   "reused_this_run": true,
   "active": true,
-  "guard_enforced_at_taiwan": "2026-10-12T11:45:39+08:00"
+  "guard_enforced_at_taiwan": "2026-10-14T10:29:12+08:00"
 }
