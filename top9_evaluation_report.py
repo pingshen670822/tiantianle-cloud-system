@@ -77,14 +77,14 @@ def candidate_row(analysis: dict[str, Any], number: int, latest_numbers: set[int
     elif official and position <= 5:
         tier = "主選延伸區"
     elif official:
-        tier = "九碼補強區"
+        tier = "正式九碼延伸區"
     else:
         tier = "未放行觀察"
 
     if official and passed_count >= total_count:
         conclusion = "完整通過，列入正式九碼池"
     elif official:
-        conclusion = "通過最低門檻，列入九碼補強區"
+        conclusion = "不符合正式推薦，必須移出正式池"
     else:
         conclusion = "未通過正式放行，不得混入正式九碼"
 
@@ -145,7 +145,7 @@ def build_report() -> dict[str, Any]:
             "three": fmt_numbers((analysis.get("prediction") or {}).get("top3")),
             "five": fmt_numbers((analysis.get("prediction") or {}).get("top5")),
             "nine": fmt_numbers(pool),
-            "note": "目前正式九碼池未補滿九顆；未通過剛開出重複防呆、上期沿用防呆或最低驗證門檻者不硬塞。",
+            "note": "正式推薦必須逐號全項通過；未通過者只列未放行觀察，不得硬塞九碼。",
         },
     }
     return payload
@@ -195,7 +195,7 @@ def render_html(payload: dict[str, Any]) -> str:
 
     summary = payload["summary"]
     count_note = (
-        f"正式九碼池目前 {payload['official_pool_count']} 顆；系統禁止用未過關號碼硬補。"
+        f"正式九碼池目前 {payload['official_pool_count']} 顆；系統禁止用未全項通過號碼硬補。"
         if payload["official_pool_count"] < 9
         else "正式九碼池已滿 9 顆。"
     )

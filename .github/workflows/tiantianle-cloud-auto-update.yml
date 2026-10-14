@@ -193,6 +193,7 @@ jobs:
             repair_no_empty_prediction.py \
             prediction_final_lock_guard.py \
             tenfold_validation_gate.py \
+            top9_evaluation_report.py \
             full_system_integrity_scan.py \
             tiantianle_ironlaw_report.py \
             "美國加州天天樂_20260618_第1版.py" || echo "py_compile warning"

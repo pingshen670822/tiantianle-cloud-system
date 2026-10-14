@@ -190,9 +190,10 @@ def candidate_pack_checks(item: dict[str, Any], latest_numbers: set[int]) -> dic
         "number": number,
         "passed_count": passed_count,
         "total_count": len(checks),
-        "passed": passed_count >= 10 and critical_ok,
+        "passed": passed_count == len(checks) and critical_ok,
         "critical_ok": critical_ok,
         "checks": checks,
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": safe_float(item.get("score")),
         "confidence_index": safe_float(item.get("confidence_index")),
         "rank": safe_int(item.get("rank"), 999),
@@ -219,7 +220,9 @@ def verified_pack_pool(analysis: dict[str, Any], selected_number: int) -> list[i
         )
     )
     pool = numbers([item.get("number") for item in rows], limit=9)
-    if selected_number and selected_number not in pool:
+    selected_candidate = find_candidate(analysis, selected_number) if selected_number else {}
+    selected_validation = candidate_pack_checks(selected_candidate, latest_numbers) if selected_candidate else {}
+    if selected_number and selected_number not in pool and selected_validation.get("passed"):
         pool = [selected_number] + pool
     return pool[:9]
 
@@ -379,6 +382,7 @@ def build_gate(analysis: dict[str, Any]) -> dict[str, Any]:
         "checks": checks,
         "verified_pack_pool": pack_pool,
         "pack_pool_size": len(pack_pool),
+        "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
         "history_files": {
             name: {
                 "rows": len(rows),
@@ -387,7 +391,7 @@ def build_gate(analysis: dict[str, Any]) -> dict[str, Any]:
             }
             for name, rows in histories.items()
         },
-        "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。",
+        "policy": "必須以全歷史資料庫重新運算；系統層至少十項驗證通過才可出報告，逐號推薦必須全項通過才可標示正式高信心。",
     }
 
 
