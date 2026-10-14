@@ -76,6 +76,7 @@ jobs:
             verify_mobile_sync.py \
             tiantianle_ironlaw_report.py \
             prediction_final_lock_guard.py \
+            tenfold_validation_gate.py \
             full_system_integrity_scan.py \
             "美國加州天天樂_20260618_第1版.py"
       - name: Run independent cloud self-repair

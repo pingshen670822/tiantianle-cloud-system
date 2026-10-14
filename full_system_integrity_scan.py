@@ -36,6 +36,7 @@ REPORT_HTML_PATHS = [
 PY_COMPILE_FILES = [
     "offline_full_history_recalc.py",
     "prediction_final_lock_guard.py",
+    "tenfold_validation_gate.py",
     "repair_no_empty_prediction.py",
     "super_single_pattern_miner.py",
     "ultimate_single_deep_validation.py",
@@ -213,6 +214,8 @@ def workflow_guard_scan(issues: list[dict[str, str]]) -> None:
         text = path.read_text(encoding="utf-8", errors="ignore")
         if "prediction_final_lock_guard.py" not in text:
             add_issue(issues, "critical", "雲端排程", f"{path.name} 未接定版鎖守門", "所有會改預測的步驟後都要跑定版鎖")
+        if "tenfold_validation_gate.py" not in text:
+            add_issue(issues, "critical", "雲端排程", f"{path.name} 未接十重驗證守門", "所有發布前必須跑十重驗證")
 
 
 def scan(include_remote: bool = True) -> dict[str, Any]:
@@ -240,9 +243,6 @@ def scan(include_remote: bool = True) -> dict[str, Any]:
         expected = [lock_single]
         checks = {
             "top1": base_core.get("top1"),
-            "top9": base_core.get("top9"),
-            "top15": base_core.get("top15"),
-            "gate_numbers": base_core.get("gate_numbers"),
             "super_single": [base_core.get("super_single")],
             "ultimate_single": [base_core.get("ultimate_single")],
             "first_candidate": [base_core.get("first_candidate")],
@@ -252,6 +252,39 @@ def scan(include_remote: bool = True) -> dict[str, Any]:
                 add_issue(issues, "critical", "定版鎖", f"{field} 未同步定版獨隻 {lock_single}，目前 {fmt_numbers(value)}", "套用 prediction_final_lock_guard.py")
     else:
         add_issue(issues, "critical", "定版鎖", "缺少定版獨隻")
+
+    base_payload = local_payloads.get(base_name) or {}
+    tenfold = base_payload.get("tenfold_validation_gate") or {}
+    tenfold_passed = safe_int(tenfold.get("passed_count"))
+    tenfold_minimum = safe_int(tenfold.get("minimum_required"), 10)
+    if tenfold.get("status") != "通過" or tenfold_passed < tenfold_minimum:
+        add_issue(
+            issues,
+            "critical",
+            "十重驗證",
+            f"十重驗證未通過或不足：{tenfold_passed}/{tenfold.get('total_count', 0)}，最低 {tenfold_minimum}",
+            "先跑 tenfold_validation_gate.py，再重建戰報",
+        )
+    pack_pool = numbers(tenfold.get("verified_pack_pool") or [])
+    prediction = base_payload.get("prediction") or {}
+    if pack_pool:
+        expected_groups = {
+            "top2": pack_pool[:2],
+            "top3": pack_pool[:3],
+            "top5": pack_pool[:5],
+            "top9": pack_pool[:9],
+            "top15": pack_pool[:9],
+        }
+        for field, expected_group in expected_groups.items():
+            actual = numbers(prediction.get(field) or [])
+            if actual != expected_group:
+                add_issue(
+                    issues,
+                    "critical",
+                    "包牌同步",
+                    f"{field} 顯示 {fmt_numbers(actual)}，十重驗證池為 {fmt_numbers(expected_group)}",
+                    "重新執行 tenfold_validation_gate.py",
+                )
 
     expected_top9 = base_core.get("top9") or []
     for path in REPORT_HTML_PATHS:

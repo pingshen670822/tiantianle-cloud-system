@@ -267,13 +267,15 @@ def high_confidence_candidates(analysis, limit=9):
 def prediction_display_numbers(analysis, limit=9):
     prediction = analysis.get("prediction") or {}
     lock = analysis.get("prediction_final_lock") or {}
+    tenfold = analysis.get("tenfold_validation_gate") or {}
     sources = [
-        lock.get("final_top9"),
+        tenfold.get("verified_pack_pool"),
         prediction.get("top15") if limit > 9 else None,
         prediction.get("top9"),
         prediction.get("top5"),
         prediction.get("top3"),
         prediction.get("top1"),
+        lock.get("final_top9"),
     ]
     numbers = []
     for source in sources:
@@ -4022,6 +4024,49 @@ def compact_strong_single_validation_html_tiantianle(analysis):
     )
 
 
+def tenfold_validation_html_tiantianle(analysis):
+    gate = analysis.get("tenfold_validation_gate") or {}
+    if not gate:
+        return ""
+    checks = gate.get("checks") or []
+    pack_pool = gate.get("verified_pack_pool") or (analysis.get("prediction") or {}).get("tenfold_verified_pack_pool") or []
+    status = zh_text(gate.get("status") or "未檢查")
+    passed = safe_int(gate.get("passed_count"))
+    total = safe_int(gate.get("total_count"))
+    minimum = safe_int(gate.get("minimum_required"))
+    selected = safe_int(gate.get("selected_number"))
+    summary_rows = [
+        ["驗證結論", status, f"通過 {passed}/{total}；最低門檻 {minimum} 項"],
+        ["預測目標日", zh_text(gate.get("target_draw_date", "-")), f"台灣開獎 {zh_text(gate.get('target_taiwan_time', '-'))}"],
+        ["定版獨隻", fmt_numbers([selected]) if selected else "-", "獨隻只准一顆"],
+        ["2中1~2同步池", fmt_numbers(pack_pool[:2]) or "-", "由十重驗證池取前二"],
+        ["3中1~3同步池", fmt_numbers(pack_pool[:3]) or "-", "由十重驗證池取前三"],
+        ["5中1~5同步池", fmt_numbers(pack_pool[:5]) or "-", "由十重驗證池取前五"],
+        ["9碼同步池", fmt_numbers(pack_pool[:9]) or "-", "不超過九顆"],
+    ]
+    check_rows = [
+        [
+            zh_text(item.get("name", "-")),
+            zh_text(item.get("status", "-")),
+            zh_text(item.get("detail", "-")),
+        ]
+        for item in checks
+    ]
+    first_rows = check_rows[:10]
+    rest_rows = check_rows[10:]
+    return (
+        '<div class="band singlebox">'
+        '<h2>十重驗證守門</h2>'
+        '<p><strong>鐵律：</strong>出報告前必須以全歷史資料庫重新運算，至少十項驗證通過；未通過不得標示高信心。</p>'
+        f'{table(["項目", "數值", "判定"], summary_rows)}'
+        f'{table(["驗證項目", "狀態", "細節"], first_rows, "尚未寫入十重驗證資料")}'
+        '<details class="detail-box"><summary>點開看其餘驗證與同步細節</summary>'
+        f'{table(["驗證項目", "狀態", "細節"], rest_rows, "沒有其餘驗證項目")}'
+        '</details>'
+        '</div>'
+    )
+
+
 def compact_post_draw_correction_html_tiantianle(analysis):
     industrial = analysis.get("industrial_engine") or {}
     protocol = industrial.get("post_draw_error_correction") or {}
@@ -4342,6 +4387,7 @@ def build_compact_tiantianle_report(analysis, settled, snapshots=None):
   <section id="models" class="panel">
     {compact_super_single_html_tiantianle(analysis)}
     {strong_single_validation_html}
+    {tenfold_validation_html_tiantianle(analysis)}
     {perfect_date_drag_html}
     {top9_concentration_html}
     {formula_lab_html}
@@ -5458,6 +5504,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
         {table(["驗算層", "分數", "判定"], single_gate_rows)}
       </details>
     </div>
+    {tenfold_validation_html_tiantianle(analysis)}
     <div class="band">
       <h2>下期研究候選前9名（{esc(date_basis)}）</h2>
       {table(["類型", "號碼", "狀態"], basic_pack_rows)}

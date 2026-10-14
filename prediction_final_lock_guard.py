@@ -208,6 +208,14 @@ def main() -> None:
         "lock": (analysis.get("prediction_final_lock") or {}).get("final_single"),
     }
     analysis = apply_to_payload(analysis, write_files=True)
+    tenfold = {}
+    try:
+        import tenfold_validation_gate
+
+        tenfold = tenfold_validation_gate.apply_to_files(render_report=False)
+        analysis = read_json(REPORTS / "latest_analysis.json")
+    except Exception as exc:
+        print(json.dumps({"tenfold_validation_warning": str(exc)}, ensure_ascii=False))
     try:
         import tiantianle_ironlaw_report
 
@@ -218,6 +226,9 @@ def main() -> None:
         "top1": (analysis.get("prediction") or {}).get("top1"),
         "super_single": (analysis.get("super_single_decision") or {}).get("number"),
         "lock": (analysis.get("prediction_final_lock") or {}).get("final_single"),
+        "tenfold_status": tenfold.get("status"),
+        "tenfold_passed": tenfold.get("passed_count"),
+        "pack_pool": tenfold.get("verified_pack_pool"),
     }
     print(json.dumps({"status": "ok", "before": before, "after": after}, ensure_ascii=False))
 
