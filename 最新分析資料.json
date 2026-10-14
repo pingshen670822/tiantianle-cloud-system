@@ -2083,7 +2083,10 @@
       30,
       32,
       29
-    ]
+    ],
+    "prediction_date": "2026-10-14",
+    "target_draw_date": "2026-10-14",
+    "prediction_taiwan_time": "2026-10-15 09:50"
   },
   "freshness": {
     "california_today": "2026-10-13",
@@ -92591,7 +92594,7 @@
       "final_lock_enforced": true,
       "tenfold_validation_gate": {
         "version": "十重驗證守門_v20261014",
-        "checked_at_taiwan": "2026-10-14T10:45:02+08:00",
+        "checked_at_taiwan": "2026-10-14T10:50:41+08:00",
         "status": "通過",
         "minimum_required": 10,
         "total_count": 17,
@@ -92779,7 +92782,9 @@
         "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。"
       },
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "two_hit_one": {
       "name": "最強高機率2中1~2",
@@ -92799,7 +92804,9 @@
       "strict_no_padding": false,
       "final_lock_enforced": true,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "three_hit_two": {
       "name": "最強高機率3中1~3",
@@ -92820,7 +92827,9 @@
       "strict_no_padding": false,
       "final_lock_enforced": true,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "five_hit_two": {
       "name": "最強高機率5中1~5",
@@ -92843,7 +92852,9 @@
       "strict_no_padding": false,
       "final_lock_enforced": true,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "nine_hit_three": {
       "name": "最強高機率9中2以上",
@@ -92869,7 +92880,9 @@
       "strict_no_padding": false,
       "final_lock_enforced": true,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "precision_single": {
       "name": "精算獨支1中1",
@@ -92887,7 +92900,9 @@
       "expected_pool_size": 1,
       "strict_no_padding": false,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "precision_two_hit_one": {
       "name": "精算2中1~2",
@@ -92906,7 +92921,9 @@
       "expected_pool_size": 2,
       "strict_no_padding": false,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     },
     "precision_three_hit_one": {
       "name": "精算3中1~3",
@@ -92926,7 +92943,9 @@
       "expected_pool_size": 3,
       "strict_no_padding": false,
       "tenfold_verified": true,
-      "tenfold_validation_status": "通過"
+      "tenfold_validation_status": "通過",
+      "target_draw_date": "2026-10-14",
+      "target_taiwan_time": "2026-10-15 09:50"
     }
   },
   "precision_micro_models": {
@@ -101527,7 +101546,7 @@
       "target_taiwan_time": "2026-10-15 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
-    "final_lock_enforced_at_taiwan": "2026-10-14T10:45:01+08:00"
+    "final_lock_enforced_at_taiwan": "2026-10-14T10:50:41+08:00"
   },
   "super_single_decision": {
     "version": "超級獨支全歷史多模型競賽_v20261005",
@@ -102211,13 +102230,13 @@
     "note": "同一最新開獎日與同一下期預測日只准一組定版獨隻，防止 11/15 這類重跑跳號",
     "reused_this_run": true,
     "active": true,
-    "guard_enforced_at_taiwan": "2026-10-14T10:45:01+08:00"
+    "guard_enforced_at_taiwan": "2026-10-14T10:50:41+08:00"
   },
   "offline_full_history_recalc": true,
   "offline_full_history_recalc_note": "daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced",
   "tenfold_validation_gate": {
     "version": "十重驗證守門_v20261014",
-    "checked_at_taiwan": "2026-10-14T10:45:02+08:00",
+    "checked_at_taiwan": "2026-10-14T10:50:41+08:00",
     "status": "通過",
     "minimum_required": 10,
     "total_count": 17,

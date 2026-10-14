@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-14T10:34:21+08:00",
+  "checked_at_taiwan": "2026-10-14T10:49:32+08:00",
   "status": "同步",
   "local": {
     "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
@@ -18,15 +18,29 @@
       2
     ],
     "top9": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "top15": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "ultimate_single": 2,
     "ultimate_model": "貝氏馬可夫獨支",
     "super_single_number": 2,
-    "super_single_status": "定版鎖唯一輸出",
+    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
     "strong_single_numbers": [
       2
     ],
@@ -49,15 +63,29 @@
       2
     ],
     "top9": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "top15": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "ultimate_single": 2,
     "ultimate_model": "貝氏馬可夫獨支",
     "super_single_number": 2,
-    "super_single_status": "定版鎖唯一輸出",
+    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
     "strong_single_numbers": [
       2
     ],
@@ -80,15 +108,29 @@
       2
     ],
     "top9": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "top15": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "ultimate_single": 2,
     "ultimate_model": "貝氏馬可夫獨支",
     "super_single_number": 2,
-    "super_single_status": "定版鎖唯一輸出",
+    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
     "strong_single_numbers": [
       2
     ],
@@ -111,15 +153,29 @@
       2
     ],
     "top9": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "top15": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "ultimate_single": 2,
     "ultimate_model": "貝氏馬可夫獨支",
     "super_single_number": 2,
-    "super_single_status": "定版鎖唯一輸出",
+    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
     "strong_single_numbers": [
       2
     ],

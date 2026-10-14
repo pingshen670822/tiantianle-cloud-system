@@ -50,7 +50,7 @@
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261014104503">
+    <link rel="manifest" href="manifest.webmanifest?v=20261014105048">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
@@ -80,9 +80,9 @@
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
       <a class="mobile-action repair-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml">當機立即修復</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="force-sync-20261014104503.html?v=20261014104503">手機不一樣點這裡強制同步</a>
+      <a class="cloud-update-link" href="force-sync-20261014105048.html?v=20261014105048">手機不一樣點這裡強制同步</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261014104503</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261014105048</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
@@ -289,7 +289,7 @@
     
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261014104503';
+    window.TIANTIANLE_BUILD_VERSION = '20261014105048';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -317,7 +317,7 @@
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261014104503&force=' + Date.now());
+      location.replace('首頁.html?v=20261014105048&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -346,8 +346,8 @@
     
     <script>
     (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261014104503') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261014104503';
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261014105048') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261014105048';
       var firstOpenAt = Date.now();
       var normalCheckMs = 30000;
       var intenseWindowMs = 180000;
@@ -435,7 +435,7 @@
     </script>
     
     <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261014104503";
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261014105048";
     window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-14T10:26:44+08:00";
     window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
     async function tiantianleClearVisibleCaches() {
