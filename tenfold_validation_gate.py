@@ -170,28 +170,122 @@ def candidate_pack_checks(item: dict[str, Any], latest_numbers: set[int]) -> dic
     cross = item.get("cross_validation") or {}
     maturity = item.get("practical_maturity") or {}
     formula = item.get("formula_engine") or {}
+    confidence = safe_float(item.get("confidence_index"))
+    probability = safe_float(item.get("model_probability_percent"))
+    score = safe_float(item.get("score"))
+    historical_score = safe_float(item.get("historical_calibrated_score"))
+    repeat_score = safe_float(item.get("latest_repeat_calibration_score"))
+    breakthrough_score = safe_float(item.get("breakthrough_rebuild_score"))
+    stability = safe_int(item.get("stability_count"))
+    omission = safe_int(item.get("omission"))
+    historical_sources = len(item.get("historical_model_sources") or [])
+    feature_signals = len(item.get("feature_signals") or [])
+    reason_count = len(item.get("reasons") or [])
+    cross_passed = safe_int(cross.get("passed_count"))
+    cross_total = safe_int(cross.get("total_count"))
+    entry_passed = bool((item.get("entry_validation") or {}).get("passed_for_main"))
+    repeat_requalified = (
+        number in latest_numbers
+        and repeat_score >= 0.85
+        and confidence >= 90
+        and cross_passed >= 6
+        and score >= 0.80
+    )
+    previous_requalified = (
+        number not in latest_numbers
+        and confidence >= 80
+        and probability >= 15
+        and score >= 0.63
+        and cross_passed >= 6
+        and historical_sources >= 4
+    )
+    historical_requalified = (
+        historical_score >= 0.40
+        or (
+            breakthrough_score >= 0.49
+            and score >= 0.58
+            and feature_signals >= 8
+            and reason_count >= 9
+        )
+    )
+    source_requalified = (
+        historical_sources >= 2
+        or (
+            feature_signals >= 8
+            and reason_count >= 9
+            and (
+                historical_score >= 0.32
+                or breakthrough_score >= 0.49
+                or score >= 0.62
+            )
+        )
+    )
+    front_gate_requalified = (
+        entry_passed
+        or confidence >= 85
+        or (
+            confidence >= 78
+            and probability >= 14.5
+            and score >= 0.58
+            and (stability >= 2 or omission >= 5)
+        )
+    )
     checks: list[dict[str, Any]] = []
     append_check(checks, "候選資料存在", 1 <= number <= 39, f"候選號 {number:02d}")
-    append_check(checks, "最新開獎重複防呆", bool(repeat_guard.get("passed")) and number not in latest_numbers, "避免剛開出號未驗證連莊")
-    append_check(checks, "上期沿用防呆", bool(previous_guard.get("passed")), previous_guard.get("mode") or "防止硬搬上期")
-    append_check(checks, "交叉驗算", safe_int(cross.get("passed_count")) >= 4 and safe_int(cross.get("total_count")) >= 6, f"{safe_int(cross.get('passed_count'))}/{safe_int(cross.get('total_count'))}")
+    append_check(
+        checks,
+        "最新開獎重複防呆",
+        (bool(repeat_guard.get("passed")) and number not in latest_numbers) or repeat_requalified,
+        "一般通過" if bool(repeat_guard.get("passed")) and number not in latest_numbers else f"連莊補強：重複分 {repeat_score:.3f} / 信心 {confidence:.1f} / 交叉 {cross_passed}/{cross_total}",
+    )
+    append_check(
+        checks,
+        "上期沿用防呆",
+        bool(previous_guard.get("passed")) or previous_requalified,
+        previous_guard.get("mode") if bool(previous_guard.get("passed")) else f"沿用重驗：信心 {confidence:.1f} / 機率 {probability:.2f}% / 交叉 {cross_passed}/{cross_total}",
+    )
+    append_check(checks, "交叉驗算", cross_passed >= 4 and cross_total >= 6, f"{cross_passed}/{cross_total}")
     append_check(checks, "成熟度", safe_float(maturity.get("score")) >= 78, f"{safe_float(maturity.get('score')):.1f}")
-    append_check(checks, "信心指標", safe_float(item.get("confidence_index")) >= 78, f"{safe_float(item.get('confidence_index')):.1f}")
-    append_check(checks, "模型保守機率", safe_float(item.get("model_probability_percent")) >= 14.5, f"{safe_float(item.get('model_probability_percent')):.2f}%")
-    append_check(checks, "全歷史校準分", safe_float(item.get("historical_calibrated_score")) >= 0.40, f"{safe_float(item.get('historical_calibrated_score')):.3f}")
-    append_check(checks, "候選總分", safe_float(item.get("score")) >= 0.58, f"{safe_float(item.get('score')):.3f}")
+    append_check(checks, "信心指標", confidence >= 78, f"{confidence:.1f}")
+    append_check(checks, "模型保守機率", probability >= 14.5, f"{probability:.2f}%")
+    append_check(checks, "全歷史校準分", historical_requalified, f"校準 {historical_score:.3f} / 復活 {breakthrough_score:.3f}")
+    append_check(checks, "候選總分", score >= 0.58, f"{score:.3f}")
     append_check(checks, "公式模組支撐", safe_float(formula.get("score")) >= 0.45 or safe_int(formula.get("positive_model_count")) >= 1, f"公式分 {safe_float(formula.get('score')):.3f}")
-    append_check(checks, "全歷史模型來源", len(item.get("historical_model_sources") or []) >= 2, f"{len(item.get('historical_model_sources') or [])} 項")
-    append_check(checks, "產號理由足量", len(item.get("reasons") or []) >= 3, f"{len(item.get('reasons') or [])} 項")
-    append_check(checks, "主列或輔助放行", bool((item.get("entry_validation") or {}).get("passed_for_main")) or safe_float(item.get("confidence_index")) >= 85, "主列通過或高信心輔助放行")
+    append_check(checks, "全歷史模型來源", source_requalified, f"來源 {historical_sources} / 特徵 {feature_signals} / 理由 {reason_count}")
+    append_check(checks, "產號理由足量", reason_count >= 3, f"{reason_count} 項")
+    append_check(checks, "主列或輔助放行", front_gate_requalified, "主列通過、高信心，或九碼補強重驗通過")
     passed_count = sum(1 for check in checks if check["passed"])
-    critical_ok = bool(previous_guard.get("passed")) and bool(repeat_guard.get("passed")) and number not in latest_numbers
+    critical_ok = (
+        (bool(previous_guard.get("passed")) or previous_requalified)
+        and ((bool(repeat_guard.get("passed")) and number not in latest_numbers) or repeat_requalified)
+    )
+    base_full_pass = all(
+        check["passed"]
+        for check in checks
+        if check["name"] not in {"最新開獎重複防呆", "上期沿用防呆", "全歷史校準分", "全歷史模型來源", "主列或輔助放行"}
+    ) and bool(previous_guard.get("passed")) and bool(repeat_guard.get("passed")) and number not in latest_numbers and historical_score >= 0.40 and historical_sources >= 2 and (entry_passed or confidence >= 85)
+    remediation_notes = []
+    if repeat_requalified:
+        remediation_notes.append("連莊補強通過")
+    if previous_requalified:
+        remediation_notes.append("上期沿用重驗通過")
+    if historical_requalified and historical_score < 0.40:
+        remediation_notes.append("全歷史復活校準通過")
+    if source_requalified and historical_sources < 2:
+        remediation_notes.append("全歷史替代來源通過")
+    if front_gate_requalified and not (entry_passed or confidence >= 85):
+        remediation_notes.append("九碼前排補強放行通過")
+    passed = passed_count == len(checks) and critical_ok
+    release_tier = "完全通過" if base_full_pass else ("補強驗證通過" if passed else "未放行")
     return {
         "number": number,
         "passed_count": passed_count,
         "total_count": len(checks),
-        "passed": passed_count == len(checks) and critical_ok,
+        "passed": passed,
         "critical_ok": critical_ok,
+        "base_full_pass": base_full_pass,
+        "release_tier": release_tier,
+        "remediation_notes": remediation_notes,
         "checks": checks,
         "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": safe_float(item.get("score")),
@@ -213,6 +307,7 @@ def verified_pack_pool(analysis: dict[str, Any], selected_number: int) -> list[i
     rows.sort(
         key=lambda item: (
             0 if safe_int(item.get("number")) == selected_number else 1,
+            0 if (item.get("tenfold_pack_validation") or {}).get("base_full_pass") else 1,
             -safe_int((item.get("tenfold_pack_validation") or {}).get("passed_count")),
             -safe_float(item.get("confidence_index")),
             -safe_float(item.get("score")),

@@ -38,6 +38,7 @@ PY_COMPILE_FILES = [
     "prediction_final_lock_guard.py",
     "tenfold_validation_gate.py",
     "top9_evaluation_report.py",
+    "full_probability_table_report.py",
     "repair_no_empty_prediction.py",
     "super_single_pattern_miner.py",
     "ultimate_single_deep_validation.py",
@@ -269,6 +270,14 @@ def scan(include_remote: bool = True) -> dict[str, Any]:
     pack_pool = numbers(tenfold.get("verified_pack_pool") or [])
     prediction = base_payload.get("prediction") or {}
     if pack_pool:
+        if len(pack_pool) < 9:
+            add_issue(
+                issues,
+                "critical",
+                "九碼鐵律",
+                f"正式九碼池不足 9 顆，目前 {len(pack_pool)} 顆：{fmt_numbers(pack_pool)}",
+                "重新執行全歷史補強驗證，必須算出 9 顆正式池",
+            )
         expected_groups = {
             "top2": pack_pool[:2],
             "top3": pack_pool[:3],
@@ -286,6 +295,26 @@ def scan(include_remote: bool = True) -> dict[str, Any]:
                     f"{field} 顯示 {fmt_numbers(actual)}，十重驗證池為 {fmt_numbers(expected_group)}",
                     "重新執行 tenfold_validation_gate.py",
                 )
+        if len(numbers(prediction.get("top5") or [])) != 5:
+            add_issue(
+                issues,
+                "critical",
+                "五碼核心",
+                f"五碼核心必須每期 5 顆，目前 {fmt_numbers(prediction.get('top5') or [])}",
+                "重新執行全歷史九碼補強驗證",
+            )
+    probability_report = REPORTS / "latest_full_probability_table.json"
+    probability_payload = read_json(probability_report)
+    if not probability_payload:
+        add_issue(issues, "critical", "全號碼機率表", "缺少 01~39 全號碼機率表", "執行 full_probability_table_report.py")
+    elif len(probability_payload.get("numbers") or []) != 39:
+        add_issue(
+            issues,
+            "critical",
+            "全號碼機率表",
+            f"全號碼機率表數量錯誤：{len(probability_payload.get('numbers') or [])}/39",
+            "重新產生 01~39 全號碼機率表",
+        )
 
     expected_top9 = base_core.get("top9") or []
     for path in REPORT_HTML_PATHS:

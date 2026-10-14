@@ -228,6 +228,18 @@ def main() -> None:
         top9_evaluation_report.main()
     except Exception as exc:
         print(json.dumps({"top9_evaluation_warning": str(exc)}, ensure_ascii=False))
+    try:
+        import full_probability_table_report
+
+        full_probability_table_report.main()
+    except Exception as exc:
+        print(json.dumps({"full_probability_table_warning": str(exc)}, ensure_ascii=False))
+    try:
+        import pages_build
+
+        pages_build.main()
+    except Exception as exc:
+        print(json.dumps({"site_sync_warning": str(exc)}, ensure_ascii=False))
     after = {
         "top1": (analysis.get("prediction") or {}).get("top1"),
         "super_single": (analysis.get("super_single_decision") or {}).get("number"),

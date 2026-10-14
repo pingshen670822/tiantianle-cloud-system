@@ -34,6 +34,7 @@ ALLOWLIST = {
     "cloud_self_repair.py",
     "fantasy5_full_history.csv",
     "full_system_integrity_scan.py",
+    "full_probability_table_report.py",
     "industrial_engine.py",
     "offline_full_history_recalc.py",
     "pages_build.py",

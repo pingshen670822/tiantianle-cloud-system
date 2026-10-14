@@ -64,6 +64,8 @@ def candidate_row(analysis: dict[str, Any], number: int, latest_numbers: set[int
         for item in check.get("checks", [])
         if not item.get("passed")
     ]
+    release_tier = str(check.get("release_tier") or ("完全通過" if not failed else "未放行"))
+    remediation_notes = [str(item) for item in (check.get("remediation_notes") or []) if str(item)]
     passed_count = int(check.get("passed_count") or 0)
     total_count = int(check.get("total_count") or 0)
     confidence = float(candidate.get("confidence_index") or 0) if candidate else 0.0
@@ -82,7 +84,7 @@ def candidate_row(analysis: dict[str, Any], number: int, latest_numbers: set[int
         tier = "未放行觀察"
 
     if official and passed_count >= total_count:
-        conclusion = "完整通過，列入正式九碼池"
+        conclusion = f"{release_tier}，列入正式九碼池"
     elif official:
         conclusion = "不符合正式推薦，必須移出正式池"
     else:
@@ -101,6 +103,8 @@ def candidate_row(analysis: dict[str, Any], number: int, latest_numbers: set[int
         "passed_checks": passed_count,
         "total_checks": total_count,
         "failed_checks": failed,
+        "release_tier": release_tier,
+        "remediation_notes": remediation_notes,
         "official": official,
         "conclusion": conclusion,
     }
@@ -172,6 +176,8 @@ def render_html(payload: dict[str, Any]) -> str:
                 esc(row["omission"]),
                 esc(row["stability_count"]),
                 esc(f"{row['passed_checks']}/{row['total_checks']}"),
+                esc(row["release_tier"]),
+                esc("、".join(row["remediation_notes"]) if row["remediation_notes"] else "無"),
                 esc(failed),
                 esc(row["conclusion"]),
             ]
@@ -188,6 +194,7 @@ def render_html(payload: dict[str, Any]) -> str:
                 esc(row["score"]),
                 esc(row["omission"]),
                 esc(f"{row['passed_checks']}/{row['total_checks']}"),
+                esc(row["release_tier"]),
                 esc(failed),
                 esc(row["conclusion"]),
             ]
@@ -254,12 +261,12 @@ def render_html(payload: dict[str, Any]) -> str:
   </section>
   <section>
     <h2>正式池逐號評估</h2>
-    {table(["序", "號碼", "層級", "信心", "模型機率", "總分", "遺漏", "穩定", "驗證", "弱點", "結論"], official_rows)}
+    {table(["序", "號碼", "層級", "信心", "模型機率", "總分", "遺漏", "穩定", "驗證", "驗證型態", "補強理由", "弱點", "結論"], official_rows)}
   </section>
   <section>
     <h2>未放行候選檢查</h2>
     <p>這一區只說明為什麼高分候選沒有進正式池，不能當正式推薦。</p>
-    {table(["號碼", "信心", "模型機率", "總分", "遺漏", "驗證", "未過項", "結論"], rejected_rows)}
+    {table(["號碼", "信心", "模型機率", "總分", "遺漏", "驗證", "驗證型態", "未過項", "結論"], rejected_rows)}
   </section>
 </main>
 </body>
