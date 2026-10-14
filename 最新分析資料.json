@@ -1232,10 +1232,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "high_confidence_numbers": [
       {
@@ -1257,18 +1254,6 @@
       {
         "number": 5,
         "note": "十重驗證同步通過"
-      },
-      {
-        "number": 30,
-        "note": "十重驗證同步通過"
-      },
-      {
-        "number": 32,
-        "note": "十重驗證同步通過"
-      },
-      {
-        "number": 29,
-        "note": "十重驗證同步通過"
       }
     ],
     "high_confidence_core": [
@@ -1276,10 +1261,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "defensive_avoid": [
       22,
@@ -1611,10 +1593,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "high_confidence_numbers": [
       {
@@ -1636,18 +1615,6 @@
       {
         "number": 5,
         "note": "十重驗證同步通過"
-      },
-      {
-        "number": 30,
-        "note": "十重驗證同步通過"
-      },
-      {
-        "number": 32,
-        "note": "十重驗證同步通過"
-      },
-      {
-        "number": 29,
-        "note": "十重驗證同步通過"
       }
     ],
     "high_confidence_core": [
@@ -1655,10 +1622,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "defensive_avoid": [
       22,
@@ -1983,30 +1947,21 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "top10": [
       2,
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "top15": [
       2,
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "high_confidence_note": "高機率信心牌已依最近失誤、漏抓復活、近期實開風險重新排序；未過守門者只列研究，不包裝成必中。",
     "formal_high_confidence": [
@@ -2017,10 +1972,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "low_probability_5_not_hit": [
       22,
@@ -2079,10 +2031,7 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "prediction_date": "2026-10-14",
     "target_draw_date": "2026-10-14",
@@ -80018,6 +79967,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.726194,
         "confidence_index": 85.6,
         "rank": 1
@@ -80382,6 +80332,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.873437,
         "confidence_index": 92.8,
         "rank": 2
@@ -80742,6 +80693,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.848281,
         "confidence_index": 91.6,
         "rank": 3
@@ -81101,6 +81053,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.842361,
         "confidence_index": 91.3,
         "rank": 4
@@ -81450,6 +81403,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.757935,
         "confidence_index": 87.1,
         "rank": 5
@@ -81808,6 +81762,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.734698,
         "confidence_index": 86.0,
         "rank": 6
@@ -82160,6 +82115,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.671491,
         "confidence_index": 82.9,
         "rank": 7
@@ -82518,6 +82474,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.645288,
         "confidence_index": 81.6,
         "rank": 8
@@ -82859,6 +82816,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.632066,
         "confidence_index": 81.0,
         "rank": 9
@@ -83087,7 +83045,7 @@
         "number": 30,
         "passed_count": 11,
         "total_count": 13,
-        "passed": true,
+        "passed": false,
         "critical_ok": true,
         "checks": [
           {
@@ -83182,6 +83140,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.626753,
         "confidence_index": 80.7,
         "rank": 10
@@ -83404,7 +83363,7 @@
         "number": 29,
         "passed_count": 10,
         "total_count": 13,
-        "passed": true,
+        "passed": false,
         "critical_ok": true,
         "checks": [
           {
@@ -83499,6 +83458,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.624817,
         "confidence_index": 80.6,
         "rank": 11
@@ -83839,6 +83799,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.606174,
         "confidence_index": 79.7,
         "rank": 12
@@ -84152,6 +84113,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.591841,
         "confidence_index": 79.0,
         "rank": 13
@@ -84476,6 +84438,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.58878,
         "confidence_index": 78.9,
         "rank": 14
@@ -84696,7 +84659,7 @@
         "number": 32,
         "passed_count": 11,
         "total_count": 13,
-        "passed": true,
+        "passed": false,
         "critical_ok": true,
         "checks": [
           {
@@ -84791,6 +84754,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.583999,
         "confidence_index": 78.6,
         "rank": 15
@@ -85101,6 +85065,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.555917,
         "confidence_index": 77.2,
         "rank": 16
@@ -85445,6 +85410,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.553754,
         "confidence_index": 77.1,
         "rank": 17
@@ -85787,6 +85753,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.544047,
         "confidence_index": 76.7,
         "rank": 18
@@ -86136,6 +86103,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.536045,
         "confidence_index": 76.3,
         "rank": 19
@@ -86449,6 +86417,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.526154,
         "confidence_index": 75.8,
         "rank": 20
@@ -86767,6 +86736,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.512932,
         "confidence_index": 75.1,
         "rank": 21
@@ -87078,6 +87048,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.493885,
         "confidence_index": 74.2,
         "rank": 22
@@ -87400,6 +87371,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.491127,
         "confidence_index": 74.1,
         "rank": 23
@@ -87724,6 +87696,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.470278,
         "confidence_index": 73.0,
         "rank": 24
@@ -88028,6 +88001,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.460316,
         "confidence_index": 72.6,
         "rank": 25
@@ -88347,6 +88321,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.456805,
         "confidence_index": 72.4,
         "rank": 26
@@ -88650,6 +88625,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.44408,
         "confidence_index": 71.8,
         "rank": 27
@@ -88960,6 +88936,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.442638,
         "confidence_index": 71.7,
         "rank": 28
@@ -89273,6 +89250,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.441452,
         "confidence_index": 71.6,
         "rank": 29
@@ -89575,6 +89553,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.430901,
         "confidence_index": 71.1,
         "rank": 30
@@ -89883,6 +89862,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.429138,
         "confidence_index": 71.0,
         "rank": 31
@@ -90210,6 +90190,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.425567,
         "confidence_index": 70.9,
         "rank": 32
@@ -90538,6 +90519,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.410164,
         "confidence_index": 70.1,
         "rank": 33
@@ -90852,6 +90834,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.372063,
         "confidence_index": 68.2,
         "rank": 34
@@ -91149,6 +91132,7 @@
             "status": "通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.369636,
         "confidence_index": 68.1,
         "rank": 35
@@ -91469,6 +91453,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.343334,
         "confidence_index": 66.8,
         "rank": 36
@@ -91776,6 +91761,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.325251,
         "confidence_index": 65.9,
         "rank": 37
@@ -92085,6 +92071,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.290916,
         "confidence_index": 64.3,
         "rank": 38
@@ -92384,6 +92371,7 @@
             "status": "未通過"
           }
         ],
+        "release_policy": "正式推薦必須逐號全項通過；未全過只能列觀察，不得混入推薦。",
         "score": 0.168698,
         "confidence_index": 58.3,
         "rank": 39
@@ -92594,7 +92582,7 @@
       "final_lock_enforced": true,
       "tenfold_validation_gate": {
         "version": "十重驗證守門_v20261014",
-        "checked_at_taiwan": "2026-10-14T10:50:41+08:00",
+        "checked_at_taiwan": "2026-10-14T12:58:46+08:00",
         "status": "通過",
         "minimum_required": 10,
         "total_count": 17,
@@ -92738,12 +92726,10 @@
           27,
           33,
           9,
-          5,
-          30,
-          32,
-          29
+          5
         ],
-        "pack_pool_size": 8,
+        "pack_pool_size": 5,
+        "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
         "history_files": {
           "fantasy5_full_history.csv": {
             "rows": 11949,
@@ -92779,7 +92765,7 @@
             ]
           }
         },
-        "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。"
+        "policy": "必須以全歷史資料庫重新運算；系統層至少十項驗證通過才可出報告，逐號推薦必須全項通過才可標示正式高信心。"
       },
       "tenfold_verified": true,
       "tenfold_validation_status": "通過",
@@ -92865,17 +92851,14 @@
         27,
         33,
         9,
-        5,
-        30,
-        32,
-        29
+        5
       ],
       "theoretical_probability": {
         "probability": 0.0,
         "odds_1_in": null
       },
       "status": "十重驗證同步通過",
-      "pool_size": 8,
+      "pool_size": 5,
       "expected_pool_size": 5,
       "strict_no_padding": false,
       "final_lock_enforced": true,
@@ -101546,7 +101529,7 @@
       "target_taiwan_time": "2026-10-15 09:50"
     },
     "message": "同一期預測已定版，避免雲端與本機重跑後不同步",
-    "final_lock_enforced_at_taiwan": "2026-10-14T10:50:41+08:00"
+    "final_lock_enforced_at_taiwan": "2026-10-14T12:58:45+08:00"
   },
   "super_single_decision": {
     "version": "超級獨支全歷史多模型競賽_v20261005",
@@ -102230,13 +102213,13 @@
     "note": "同一最新開獎日與同一下期預測日只准一組定版獨隻，防止 11/15 這類重跑跳號",
     "reused_this_run": true,
     "active": true,
-    "guard_enforced_at_taiwan": "2026-10-14T10:50:41+08:00"
+    "guard_enforced_at_taiwan": "2026-10-14T12:58:45+08:00"
   },
   "offline_full_history_recalc": true,
   "offline_full_history_recalc_note": "daily fast path; all ranking calculations used local full history database; ultimate super single tournament enforced",
   "tenfold_validation_gate": {
     "version": "十重驗證守門_v20261014",
-    "checked_at_taiwan": "2026-10-14T10:50:41+08:00",
+    "checked_at_taiwan": "2026-10-14T12:58:46+08:00",
     "status": "通過",
     "minimum_required": 10,
     "total_count": 17,
@@ -102380,12 +102363,10 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
-    "pack_pool_size": 8,
+    "pack_pool_size": 5,
+    "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
     "history_files": {
       "fantasy5_full_history.csv": {
         "rows": 11949,
@@ -102421,6 +102402,6 @@
         ]
       }
     },
-    "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。"
+    "policy": "必須以全歷史資料庫重新運算；系統層至少十項驗證通過才可出報告，逐號推薦必須全項通過才可標示正式高信心。"
   }
 }

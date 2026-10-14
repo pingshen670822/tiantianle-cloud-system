@@ -1,6 +1,6 @@
 {
   "version": "十重驗證守門_v20261014",
-  "checked_at_taiwan": "2026-10-14T12:53:27+08:00",
+  "checked_at_taiwan": "2026-10-14T12:59:38+08:00",
   "status": "通過",
   "minimum_required": 10,
   "total_count": 17,
@@ -144,12 +144,10 @@
     27,
     33,
     9,
-    5,
-    30,
-    32,
-    29
+    5
   ],
-  "pack_pool_size": 8,
+  "pack_pool_size": 5,
+  "official_pool_policy": "逐號 13/13 全項通過才准進正式推薦；不足九顆不補位。",
   "history_files": {
     "fantasy5_full_history.csv": {
       "rows": 11949,
@@ -185,5 +183,5 @@
       ]
     }
   },
-  "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。"
+  "policy": "必須以全歷史資料庫重新運算；系統層至少十項驗證通過才可出報告，逐號推薦必須全項通過才可標示正式高信心。"
 }

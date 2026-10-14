@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-14T12:53:36+08:00",
+  "checked_at_taiwan": "2026-10-14T12:59:48+08:00",
   "status": "通過",
   "critical_count": 0,
   "warning_count": 0,
@@ -24,20 +24,14 @@
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "top15": [
       2,
       27,
       33,
       9,
-      5,
-      30,
-      32,
-      29
+      5
     ],
     "lock_single": 2,
     "lock_top9": [

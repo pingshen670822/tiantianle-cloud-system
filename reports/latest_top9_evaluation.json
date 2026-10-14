@@ -1,6 +1,6 @@
 {
   "title": "天天樂最新九碼全面評估",
-  "created_at_taiwan": "2026-10-14 12:53:29",
+  "created_at_taiwan": "2026-10-14 12:59:40",
   "latest_draw_date": "2026-10-13",
   "latest_numbers": [
     3,
@@ -11,7 +11,7 @@
   ],
   "target_draw_date": "2026-10-14",
   "target_taiwan_time": "2026-10-15 09:50",
-  "official_pool_count": 8,
+  "official_pool_count": 5,
   "official_pool": [
     {
       "position": 1,
@@ -92,64 +92,6 @@
       "failed_checks": [],
       "official": true,
       "conclusion": "完整通過，列入正式九碼池"
-    },
-    {
-      "position": 6,
-      "number": 30,
-      "number_text": "30",
-      "tier": "九碼補強區",
-      "score": 0.626753,
-      "confidence": 80.7,
-      "model_probability_percent": 15.66,
-      "omission": 6,
-      "stability_count": 2,
-      "passed_checks": 11,
-      "total_checks": 13,
-      "failed_checks": [
-        "全歷史模型來源",
-        "主列或輔助放行"
-      ],
-      "official": true,
-      "conclusion": "通過最低門檻，列入九碼補強區"
-    },
-    {
-      "position": 7,
-      "number": 32,
-      "number_text": "32",
-      "tier": "九碼補強區",
-      "score": 0.583999,
-      "confidence": 78.6,
-      "model_probability_percent": 14.59,
-      "omission": 5,
-      "stability_count": 2,
-      "passed_checks": 11,
-      "total_checks": 13,
-      "failed_checks": [
-        "全歷史校準分",
-        "全歷史模型來源"
-      ],
-      "official": true,
-      "conclusion": "通過最低門檻，列入九碼補強區"
-    },
-    {
-      "position": 8,
-      "number": 29,
-      "number_text": "29",
-      "tier": "九碼補強區",
-      "score": 0.624817,
-      "confidence": 80.6,
-      "model_probability_percent": 15.61,
-      "omission": 7,
-      "stability_count": 3,
-      "passed_checks": 10,
-      "total_checks": 13,
-      "failed_checks": [
-        "全歷史校準分",
-        "全歷史模型來源",
-        "主列或輔助放行"
-      ],
-      "official": true,
-      "conclusion": "通過最低門檻，列入九碼補強區"
     }
   ],
   "rejected_watch": [
@@ -268,19 +210,17 @@
     },
     {
       "position": 7,
-      "number": 31,
-      "number_text": "31",
+      "number": 30,
+      "number_text": "30",
       "tier": "未放行觀察",
-      "score": 0.591841,
-      "confidence": 79.0,
-      "model_probability_percent": 14.8,
-      "omission": 9,
-      "stability_count": 1,
-      "passed_checks": 9,
+      "score": 0.626753,
+      "confidence": 80.7,
+      "model_probability_percent": 15.66,
+      "omission": 6,
+      "stability_count": 2,
+      "passed_checks": 11,
       "total_checks": 13,
       "failed_checks": [
-        "交叉驗算",
-        "全歷史校準分",
         "全歷史模型來源",
         "主列或輔助放行"
       ],
@@ -289,21 +229,20 @@
     },
     {
       "position": 8,
-      "number": 3,
-      "number_text": "03",
+      "number": 29,
+      "number_text": "29",
       "tier": "未放行觀察",
-      "score": 0.544047,
-      "confidence": 76.7,
-      "model_probability_percent": 13.62,
-      "omission": 0,
+      "score": 0.624817,
+      "confidence": 80.6,
+      "model_probability_percent": 15.61,
+      "omission": 7,
       "stability_count": 3,
-      "passed_checks": 9,
+      "passed_checks": 10,
       "total_checks": 13,
       "failed_checks": [
-        "剛開出重複防呆",
-        "信心指標",
-        "模型保守機率",
-        "候選總分"
+        "全歷史校準分",
+        "全歷史模型來源",
+        "主列或輔助放行"
       ],
       "official": false,
       "conclusion": "未通過正式放行，不得混入正式九碼"
@@ -317,7 +256,7 @@
     "two": "02 27",
     "three": "02 27 33",
     "five": "02 27 33 09 05",
-    "nine": "02 27 33 09 05 30 32 29",
-    "note": "目前正式九碼池未補滿九顆；未通過剛開出重複防呆、上期沿用防呆或最低驗證門檻者不硬塞。"
+    "nine": "02 27 33 09 05",
+    "note": "正式推薦必須逐號全項通過；未通過者只列未放行觀察，不得硬塞九碼。"
   }
 }
