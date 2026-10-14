@@ -1,10 +1,10 @@
 {
   "status": "cloud_published",
-  "checked_at_taiwan": "2026-10-14T10:33:18+08:00",
+  "checked_at_taiwan": "2026-10-14T10:34:39+08:00",
   "exit_code": 0,
-  "commit_sha": "7f5f9098ffe92f5a59f3762abbe009857603a505",
+  "commit_sha": "8e667f45c007a94d15ff6444c4286466bcbab2bc",
   "published_files": 326,
-  "uploaded_files": 225,
-  "reused_files": 102,
+  "uploaded_files": 5,
+  "reused_files": 322,
   "mobile_url": "https://pingshen670822.github.io/tiantianle-cloud-system/"
 }

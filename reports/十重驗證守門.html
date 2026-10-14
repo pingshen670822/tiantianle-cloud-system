@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天天樂十重驗證守門</title>
+  <style>
+    body{font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f3f4f6;color:#111827;margin:0}
+    header{background:#0b1220;color:white;padding:20px}
+    main{max-width:1080px;margin:0 auto;padding:16px}
+    .band{background:white;border:1px solid #dbe3ee;border-radius:8px;padding:16px;margin-bottom:12px}
+    table{width:100%;border-collapse:collapse;min-width:760px}
+    th,td{border-bottom:1px solid #e5e7eb;padding:9px;text-align:left;vertical-align:top}
+    th{background:#f1f5f9}
+    .ok{color:#047857;font-weight:900}
+    .bad{color:#b91c1c;font-weight:900}
+  </style>
+
+    <style>
+      .tiantianle-cloud-controls{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}
+      .tiantianle-cloud-title{font-weight:900;color:#7c2d12;white-space:nowrap}
+      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}
+      .tiantianle-cloud-button.manual{background:#166534}
+      .tiantianle-cloud-button.repair{background:#991b1b}
+      .tiantianle-cloud-button.refresh{background:#1d4ed8}
+      .tiantianle-cloud-status{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}
+      .tiantianle-cloud-status.primary-time{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}
+      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
+    </style>
+    </head>
+<body><section class="band update-box"><h2>立刻更新到最新</h2>
+    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
+      <div class="tiantianle-cloud-title">雲端快速操作</div>
+      <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
+      <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
+      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
+      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-14T10:26:44+08:00</div>
+      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-13　03 04 06 11 26 / 下期：2026-10-14　2026-10-15 09:50</div>
+      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
+    </div>
+    </section>
+<header>
+  <h1>天天樂十重驗證守門</h1>
+  <p>檢查時間：2026-10-14T10:45:02+08:00 台灣時間</p>
+</header>
+<main>
+  <section class="band">
+    <h2>驗證結論</h2>
+    <p class="ok">十重驗證守門：通過，通過 17/17，最低門檻 10 項。</p>
+    <p>預測目標：2026-10-14 / 台灣開獎 2026-10-15 09:50</p>
+    <p>定版獨隻：02</p>
+  </section>
+  <section class="band">
+    <h2>逐項驗證</h2>
+    <table><thead><tr><th>驗證項目</th><th>狀態</th><th>細節</th></tr></thead><tbody><tr><td>全歷史資料庫筆數</td><td>通過</td><td>三份歷史檔皆需一萬期以上</td></tr>
+<tr><td>三份歷史資料最新一致</td><td>通過</td><td>最新開獎 2026-10-13 / 03 04 06 11 26</td></tr>
+<tr><td>主資料與手機資料同步</td><td>通過</td><td>reports、site、data、site/reports 四份分析檔必須一致</td></tr>
+<tr><td>最新與預測日期遞進</td><td>通過</td><td>最新 2026-10-13，預測 2026-10-14</td></tr>
+<tr><td>定版鎖一致</td><td>通過</td><td>定版鎖 02 / 本期獨隻 02</td></tr>
+<tr><td>獨隻唯一一致</td><td>通過</td><td>主預測、獨隻決策、終極引擎、定版鎖與強牌獨隻必須同號</td></tr>
+<tr><td>候選資料存在</td><td>通過</td><td>候選號 02 必須有逐號驗算資料</td></tr>
+<tr><td>嚴格守門通過</td><td>通過</td><td>必須通過嚴格門且列入正式放行號</td></tr>
+<tr><td>上期預測沿用防呆</td><td>通過</td><td>strict_no_previous_reuse</td></tr>
+<tr><td>最新開獎重複防呆</td><td>通過</td><td>剛開出號未達連莊高標不得直接搶獨隻</td></tr>
+<tr><td>交叉驗算滿格</td><td>通過</td><td>6/6</td></tr>
+<tr><td>實戰成熟度通過</td><td>通過</td><td>成熟度 90.0</td></tr>
+<tr><td>全歷史校準分通過</td><td>通過</td><td>校準 0.672 / 總分 0.726</td></tr>
+<tr><td>多模組融合足量</td><td>通過</td><td>融合模組 9 項</td></tr>
+<tr><td>走步回測足量</td><td>通過</td><td>走步回測 720 期</td></tr>
+<tr><td>獨隻模型勝過隨機基準</td><td>通過</td><td>模型 13.19% / 基準 12.82%</td></tr>
+<tr><td>低機率暫避衝突檢查</td><td>通過</td><td>獨隻不得同時被列入低機率暫避</td></tr></tbody></table>
+  </section>
+</main>
+
+    <script>
+    (function(){
+      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261014104503') return;
+      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261014104503';
+      var firstOpenAt = Date.now();
+      var normalCheckMs = 30000;
+      var intenseWindowMs = 180000;
+      function rootPrefix() {
+        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
+      }
+      function currentStamp() {
+        try {
+          var queryStamp = new URL(location.href).searchParams.get('v') || '';
+          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        } catch (err) {
+          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
+        }
+      }
+      function stampFromPayload(data) {
+        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
+        return raw.replace(/\D/g, '').slice(0, 14);
+      }
+      function setOpenSyncStatus(text) {
+        var el = document.getElementById('mobileUpdateStatus');
+        if (el) el.textContent = text;
+      }
+      async function clearAllBrowserCaches() {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      }
+      async function verifyLatestAnalysis(prefix) {
+        try {
+          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (err) {
+          return null;
+        }
+      }
+      async function mobileOpenSync() {
+        var prefix = rootPrefix();
+        try {
+          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (!res.ok) return;
+          var versionData = await res.json();
+          var cloudStamp = stampFromPayload(versionData);
+          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
+          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
+            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
+            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
+            await clearAllBrowserCaches();
+            var target = new URL(location.href);
+            target.searchParams.set('v', cloudStamp);
+            target.searchParams.set('open_sync', Date.now());
+            location.replace(target.toString());
+            return;
+          }
+          var analysis = await verifyLatestAnalysis(prefix);
+          if (analysis && analysis.generated_at_taiwan) {
+            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
+          }
+        } catch (err) {
+          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
+        }
+      }
+      window.addEventListener('pageshow', mobileOpenSync);
+      window.addEventListener('online', mobileOpenSync);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) mobileOpenSync();
+      });
+      setInterval(function() {
+        mobileOpenSync();
+      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
+    })();
+    </script>
+    
+    <script>
+    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261014104503";
+    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-14T10:26:44+08:00";
+    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
+    async function tiantianleClearVisibleCaches() {
+      try {
+        if ('serviceWorker' in navigator) {
+          var regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(async function(reg) {
+            try {
+              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
+              await reg.update();
+            } catch (err) {}
+          }));
+        }
+        if ('caches' in window) {
+          var keys = await caches.keys();
+          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
+        }
+      } catch (err) {}
+    }
+    function tiantianleFormatCloudNumbers(numbers) {
+      if (!Array.isArray(numbers)) return '-';
+      return numbers.map(function(number) {
+        var value = parseInt(number, 10);
+        if (!Number.isFinite(value)) return '';
+        return String(value).padStart(2, '0');
+      }).filter(Boolean).join(' ') || '-';
+    }
+    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {
+      if (!data) return;
+      var latest = data.latest_draw || {};
+      var generated = data.generated_at_taiwan || data.generated_at || '-';
+      var latestDate = latest.draw_date || '-';
+      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
+      var targetDate = data.target_draw_date || '-';
+      var targetTime = data.prediction_draw_taiwan_time || '-';
+      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
+      var drawEl = document.getElementById('tiantianleLatestDrawLine');
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
+      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
+      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {
+        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
+        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
+      }
+    }
+    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (!res.ok) throw new Error('latest_analysis not ready');
+        var data = await res.json();
+        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
+        return data;
+      } catch (err) {
+        var status = document.getElementById('tiantianleCloudActionStatus');
+        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
+        return null;
+      }
+    }
+    function tiantianleStartUpdatePolling(label) {
+      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+      tiantianleRefreshLatestUpdateDisplay(label);
+      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {
+        tiantianleRefreshLatestUpdateDisplay(label);
+      }, 15000);
+      setTimeout(function() {
+        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {
+          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
+          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
+        }
+      }, 30 * 60 * 1000);
+    }
+    async function tiantianleForceReadLatestNow() {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = '正在重讀雲端最新更新時間';
+      await tiantianleClearVisibleCaches();
+      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
+    }
+    async function tiantianlePrepareCloudAction(label) {
+      var status = document.getElementById('tiantianleCloudActionStatus');
+      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
+      await tiantianleClearVisibleCaches();
+      try {
+        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
+        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), { cache: 'no-store' });
+        await fetch(prefix + 'version.json?manual=' + Date.now(), { cache: 'no-store' });
+      } catch (err) {}
+      tiantianleStartUpdatePolling(label);
+    }
+    window.addEventListener('pageshow', function() { tiantianleRefreshLatestUpdateDisplay('頁面開啟'); });
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
+    });
+    </script>
+    </body>
+</html>

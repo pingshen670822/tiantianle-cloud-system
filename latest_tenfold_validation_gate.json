@@ -1,0 +1,189 @@
+{
+  "version": "十重驗證守門_v20261014",
+  "checked_at_taiwan": "2026-10-14T10:45:02+08:00",
+  "status": "通過",
+  "minimum_required": 10,
+  "total_count": 17,
+  "passed_count": 17,
+  "failed_count": 0,
+  "critical_failed": [],
+  "selected_number": 2,
+  "target_draw_date": "2026-10-14",
+  "target_taiwan_time": "2026-10-15 09:50",
+  "latest_draw_date": "2026-10-13",
+  "latest_numbers": [
+    3,
+    4,
+    6,
+    11,
+    26
+  ],
+  "checks": [
+    {
+      "name": "全歷史資料庫筆數",
+      "passed": true,
+      "detail": "三份歷史檔皆需一萬期以上",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "三份歷史資料最新一致",
+      "passed": true,
+      "detail": "最新開獎 2026-10-13 / 03 04 06 11 26",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "主資料與手機資料同步",
+      "passed": true,
+      "detail": "reports、site、data、site/reports 四份分析檔必須一致",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "最新與預測日期遞進",
+      "passed": true,
+      "detail": "最新 2026-10-13，預測 2026-10-14",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "定版鎖一致",
+      "passed": true,
+      "detail": "定版鎖 02 / 本期獨隻 02",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "獨隻唯一一致",
+      "passed": true,
+      "detail": "主預測、獨隻決策、終極引擎、定版鎖與強牌獨隻必須同號",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "候選資料存在",
+      "passed": true,
+      "detail": "候選號 02 必須有逐號驗算資料",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "嚴格守門通過",
+      "passed": true,
+      "detail": "必須通過嚴格門且列入正式放行號",
+      "critical": true,
+      "status": "通過"
+    },
+    {
+      "name": "上期預測沿用防呆",
+      "passed": true,
+      "detail": "strict_no_previous_reuse",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "最新開獎重複防呆",
+      "passed": true,
+      "detail": "剛開出號未達連莊高標不得直接搶獨隻",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "交叉驗算滿格",
+      "passed": true,
+      "detail": "6/6",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "實戰成熟度通過",
+      "passed": true,
+      "detail": "成熟度 90.0",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "全歷史校準分通過",
+      "passed": true,
+      "detail": "校準 0.672 / 總分 0.726",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "多模組融合足量",
+      "passed": true,
+      "detail": "融合模組 9 項",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "走步回測足量",
+      "passed": true,
+      "detail": "走步回測 720 期",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "獨隻模型勝過隨機基準",
+      "passed": true,
+      "detail": "模型 13.19% / 基準 12.82%",
+      "critical": false,
+      "status": "通過"
+    },
+    {
+      "name": "低機率暫避衝突檢查",
+      "passed": true,
+      "detail": "獨隻不得同時被列入低機率暫避",
+      "critical": false,
+      "status": "通過"
+    }
+  ],
+  "verified_pack_pool": [
+    2,
+    27,
+    33,
+    9,
+    5,
+    30,
+    32,
+    29
+  ],
+  "pack_pool_size": 8,
+  "history_files": {
+    "fantasy5_full_history.csv": {
+      "rows": 11949,
+      "latest_draw_date": "2026-10-13",
+      "latest_numbers": [
+        3,
+        4,
+        6,
+        11,
+        26
+      ]
+    },
+    "data/fantasy5_full_history.csv": {
+      "rows": 11949,
+      "latest_draw_date": "2026-10-13",
+      "latest_numbers": [
+        3,
+        4,
+        6,
+        11,
+        26
+      ]
+    },
+    "data/california_fantasy5.csv": {
+      "rows": 11949,
+      "latest_draw_date": "2026-10-13",
+      "latest_numbers": [
+        3,
+        4,
+        6,
+        11,
+        26
+      ]
+    }
+  },
+  "policy": "必須以全歷史資料庫重新運算，至少十項驗證通過才可出報告與標示高信心。"
+}

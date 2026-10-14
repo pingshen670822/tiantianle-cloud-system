@@ -1,5 +1,5 @@
 {
-  "checked_at_taiwan": "2026-10-14T10:34:15+08:00",
+  "checked_at_taiwan": "2026-10-14T10:45:13+08:00",
   "status": "通過",
   "critical_count": 0,
   "warning_count": 0,
@@ -20,10 +20,24 @@
       2
     ],
     "top9": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "top15": [
-      2
+      2,
+      27,
+      33,
+      9,
+      5,
+      30,
+      32,
+      29
     ],
     "lock_single": 2,
     "lock_top9": [
@@ -38,112 +52,6 @@
     "first_candidate_rank": 1,
     "first_candidate_locked": true
   },
-  "remote": {
-    "latest_analysis.json": {
-      "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-      "draw_count": 11949,
-      "latest_draw_date": "2026-10-13",
-      "latest_numbers": [
-        3,
-        4,
-        6,
-        11,
-        26
-      ],
-      "target_draw_date": "2026-10-14",
-      "target_taiwan_time": "2026-10-15 09:50",
-      "top1": [
-        2
-      ],
-      "top9": [
-        2
-      ],
-      "top15": [
-        2
-      ],
-      "lock_single": 2,
-      "lock_top9": [
-        2
-      ],
-      "gate_numbers": [
-        2
-      ],
-      "super_single": 2,
-      "ultimate_single": 2,
-      "first_candidate": 2,
-      "first_candidate_rank": 1,
-      "first_candidate_locked": true
-    },
-    "data/latest_analysis.json": {
-      "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-      "draw_count": 11949,
-      "latest_draw_date": "2026-10-13",
-      "latest_numbers": [
-        3,
-        4,
-        6,
-        11,
-        26
-      ],
-      "target_draw_date": "2026-10-14",
-      "target_taiwan_time": "2026-10-15 09:50",
-      "top1": [
-        2
-      ],
-      "top9": [
-        2
-      ],
-      "top15": [
-        2
-      ],
-      "lock_single": 2,
-      "lock_top9": [
-        2
-      ],
-      "gate_numbers": [
-        2
-      ],
-      "super_single": 2,
-      "ultimate_single": 2,
-      "first_candidate": 2,
-      "first_candidate_rank": 1,
-      "first_candidate_locked": true
-    },
-    "reports/latest_analysis.json": {
-      "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-      "draw_count": 11949,
-      "latest_draw_date": "2026-10-13",
-      "latest_numbers": [
-        3,
-        4,
-        6,
-        11,
-        26
-      ],
-      "target_draw_date": "2026-10-14",
-      "target_taiwan_time": "2026-10-15 09:50",
-      "top1": [
-        2
-      ],
-      "top9": [
-        2
-      ],
-      "top15": [
-        2
-      ],
-      "lock_single": 2,
-      "lock_top9": [
-        2
-      ],
-      "gate_numbers": [
-        2
-      ],
-      "super_single": 2,
-      "ultimate_single": 2,
-      "first_candidate": 2,
-      "first_candidate_rank": 1,
-      "first_candidate_locked": true
-    }
-  },
+  "remote": {},
   "issues": []
 }
