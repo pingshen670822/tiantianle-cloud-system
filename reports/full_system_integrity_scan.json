@@ -1,0 +1,102 @@
+{
+  "checked_at_taiwan": "2026-10-14T08:21:01+08:00",
+  "status": "需修復",
+  "critical_count": 5,
+  "warning_count": 0,
+  "local": {
+    "generated_at_taiwan": "2026-10-14T08:19:45+08:00",
+    "draw_count": 11948,
+    "latest_draw_date": "2026-10-12",
+    "latest_numbers": [
+      2,
+      9,
+      11,
+      17,
+      18
+    ],
+    "target_draw_date": "2026-10-13",
+    "target_taiwan_time": "2026-10-14 09:50",
+    "top1": [
+      27
+    ],
+    "top9": [
+      27,
+      15,
+      39,
+      10,
+      19,
+      14,
+      13,
+      12,
+      33
+    ],
+    "top15": [
+      27,
+      15,
+      39,
+      10,
+      19,
+      14,
+      13,
+      12,
+      33,
+      3,
+      31,
+      5,
+      32,
+      30,
+      29
+    ],
+    "lock_single": 0,
+    "lock_top9": [],
+    "gate_numbers": [
+      27,
+      15,
+      39,
+      10,
+      19,
+      14,
+      13,
+      12,
+      33
+    ],
+    "super_single": 27,
+    "ultimate_single": 27,
+    "first_candidate": 27,
+    "first_candidate_rank": 1,
+    "first_candidate_locked": false
+  },
+  "remote": {},
+  "issues": [
+    {
+      "level": "critical",
+      "area": "定版鎖",
+      "message": "缺少定版獨隻",
+      "fix": ""
+    },
+    {
+      "level": "critical",
+      "area": "戰報候選表",
+      "message": "reports/latest_battle_report.html 前9表格顯示 27 15 39 10 19 14 13 11 12 33，主資料為 27 15 39 10 19 14 13 12 33",
+      "fix": "報表生成必須使用 prediction.top9"
+    },
+    {
+      "level": "critical",
+      "area": "戰報候選表",
+      "message": "reports/tiantianle_ironlaw_battle_report.html 前9表格顯示 27 15 39 10 19 14 13 11 12 33，主資料為 27 15 39 10 19 14 13 12 33",
+      "fix": "報表生成必須使用 prediction.top9"
+    },
+    {
+      "level": "critical",
+      "area": "戰報候選表",
+      "message": "site/reports/latest_battle_report.html 前9表格顯示 27 15 39 10 19 14 13 11 12 33，主資料為 27 15 39 10 19 14 13 12 33",
+      "fix": "報表生成必須使用 prediction.top9"
+    },
+    {
+      "level": "critical",
+      "area": "戰報候選表",
+      "message": "site/reports/complete_report.html 前9表格顯示 27 15 39 10 19 14 13 11 12 33，主資料為 27 15 39 10 19 14 13 12 33",
+      "fix": "報表生成必須使用 prediction.top9"
+    }
+  ]
+}
