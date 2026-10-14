@@ -52,6 +52,7 @@ ALLOWLIST = {
     "tiantianle_formula_engine.py",
     "tiantianle_ironlaw_report.py",
     "tenfold_validation_gate.py",
+    "top9_evaluation_report.py",
     "ultimate_single_deep_validation.py",
     "verify_mobile_sync.py",
     "publish_mobile_site_only.py",

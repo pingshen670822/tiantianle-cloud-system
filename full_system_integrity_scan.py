@@ -37,6 +37,7 @@ PY_COMPILE_FILES = [
     "offline_full_history_recalc.py",
     "prediction_final_lock_guard.py",
     "tenfold_validation_gate.py",
+    "top9_evaluation_report.py",
     "repair_no_empty_prediction.py",
     "super_single_pattern_miner.py",
     "ultimate_single_deep_validation.py",

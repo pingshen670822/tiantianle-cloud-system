@@ -222,6 +222,12 @@ def main() -> None:
         tiantianle_ironlaw_report.save_reports()
     except Exception as exc:
         print(json.dumps({"report_render_warning": str(exc)}, ensure_ascii=False))
+    try:
+        import top9_evaluation_report
+
+        top9_evaluation_report.main()
+    except Exception as exc:
+        print(json.dumps({"top9_evaluation_warning": str(exc)}, ensure_ascii=False))
     after = {
         "top1": (analysis.get("prediction") or {}).get("top1"),
         "super_single": (analysis.get("super_single_decision") or {}).get("number"),
