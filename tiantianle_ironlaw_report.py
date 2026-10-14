@@ -5331,7 +5331,8 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
         + card("檢查", esc("通過" if freshness.get("status") in {"fresh", "ok", "ok_before_draw"} else fresh_text))
         + card("待結算目標期", esc(target_period))
         + card("獨隻", esc(fmt_numbers(primary_single) or "-"), "hot-card")
-        + card("9碼核心", esc(fmt_numbers(top9) or "-"))
+        + card("必算五碼核心", esc(fmt_numbers(top5) or "-"), "hot-card")
+        + card("必算9碼核心", esc(fmt_numbers(top9) or "-"))
     )
     primary_number = safe_int(primary_single[0], 0) if primary_single else 0
     primary_item = next(
@@ -5387,7 +5388,7 @@ def build_exact_ironlaw_order_report(analysis, settled, snapshots, title, subtit
         ["最強高機率獨隻1中1", fmt_numbers(primary_single) or "-", "唯一獨隻"],
         ["最強高機率2中1~2", fmt_numbers(top2) or "-", "前九內二碼精算"],
         ["最強高機率3中1~3", fmt_numbers(top3) or "-", "前九內三碼精算"],
-        ["最強高機率5中1~5", fmt_numbers(top5) or "-", "前九內五碼精算"],
+        ["每期必算五碼核心5中1~5", fmt_numbers(top5) or "-", "前九內五碼精算；少於五顆即判定故障"],
         ["最強高機率9中2以上", fmt_numbers(top9) or "-", "不超過九顆"],
     ]
     pack_rows_539 = [

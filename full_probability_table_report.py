@@ -167,7 +167,7 @@ def build_report() -> dict[str, Any]:
             "three": fmt_numbers(prediction.get("top3")),
             "five": fmt_numbers(prediction.get("top5")),
             "nine": fmt_numbers(top9),
-            "policy": "01~39 全部列出；正式推薦必須通過逐號驗證，觀察與暫避不得混作主推。",
+            "policy": "每期必算五碼核心；01~39 全部列出；正式推薦必須通過逐號驗證，觀察與暫避不得混作主推。",
         },
         "numbers": rows,
     }
@@ -251,7 +251,7 @@ def render_html(payload: dict[str, Any]) -> str:
   </section>
   <section>
     <h2>核心組合</h2>
-    <p><strong>獨隻：</strong>{esc(summary['single'])}　<strong>2中1~2：</strong>{esc(summary['two'])}　<strong>3中1~3：</strong>{esc(summary['three'])}　<strong>5中1~5：</strong>{esc(summary['five'])}</p>
+    <p><strong>獨隻：</strong>{esc(summary['single'])}　<strong>2中1~2：</strong>{esc(summary['two'])}　<strong>3中1~3：</strong>{esc(summary['three'])}　<strong>必算五碼核心：</strong>{esc(summary['five'])}</p>
     <p>{esc(summary['policy'])}</p>
   </section>
   <section>

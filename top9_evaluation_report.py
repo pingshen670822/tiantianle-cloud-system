@@ -149,7 +149,7 @@ def build_report() -> dict[str, Any]:
             "three": fmt_numbers((analysis.get("prediction") or {}).get("top3")),
             "five": fmt_numbers((analysis.get("prediction") or {}).get("top5")),
             "nine": fmt_numbers(pool),
-            "note": "正式推薦必須逐號全項通過；未通過者只列未放行觀察，不得硬塞九碼。",
+            "note": "每期必算五碼核心，且正式九碼必須逐號驗證；未通過者只列未放行觀察，不得硬塞主推。",
         },
     }
     return payload
@@ -254,7 +254,7 @@ def render_html(payload: dict[str, Any]) -> str:
       <div class="card"><div class="label">最強獨隻</div><div class="value num">{esc(summary['single'])}</div></div>
       <div class="card"><div class="label">2中1~2</div><div class="value num">{esc(summary['two'])}</div></div>
       <div class="card"><div class="label">3中1~3</div><div class="value num">{esc(summary['three'])}</div></div>
-      <div class="card"><div class="label">5中1~5</div><div class="value num">{esc(summary['five'])}</div></div>
+      <div class="card"><div class="label">必算五碼核心</div><div class="value num">{esc(summary['five'])}</div></div>
     </div>
     <p><strong>正式九碼池：</strong>{esc(summary['nine'])}</p>
     <p>{esc(summary['note'])}</p>
