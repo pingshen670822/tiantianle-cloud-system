@@ -402,6 +402,15 @@ def apply_to_payload(analysis: dict[str, Any]) -> dict[str, Any]:
     passed = gate.get("status") == "通過"
 
     prediction = analysis.setdefault("prediction", {})
+    target_date = str(analysis.get("target_draw_date") or gate.get("target_draw_date") or "")[:10]
+    target_taiwan_time = str(
+        analysis.get("prediction_draw_taiwan_time")
+        or gate.get("target_taiwan_time")
+        or ""
+    )
+    prediction["prediction_date"] = target_date
+    prediction["target_draw_date"] = target_date
+    prediction["prediction_taiwan_time"] = target_taiwan_time
     prediction["tenfold_validation_required"] = True
     prediction["tenfold_validation_status"] = gate.get("status")
     prediction["tenfold_validation_passed_count"] = gate.get("passed_count")
@@ -473,6 +482,8 @@ def apply_to_payload(analysis: dict[str, Any]) -> dict[str, Any]:
                     "hit_goal_max": hit_goal_max,
                     "pool_size": len(pack_numbers),
                     "expected_pool_size": hit_goal_max,
+                    "target_draw_date": target_date,
+                    "target_taiwan_time": target_taiwan_time,
                     "status": "十重驗證同步通過",
                     "strict_no_padding": len(pack_numbers) < hit_goal_max,
                     "tenfold_verified": True,
