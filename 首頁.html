@@ -33,15 +33,16 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261015132429">
+    <link rel="manifest" href="manifest.webmanifest?v=20261015143717">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
     </head>
 <body>
-<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-10-15 13:24 / 台灣最新可確認時間 2026-10-15 09:50 台灣時間 / 下期預測台灣時間 2026-10-16 09:50 台灣時間</p></header>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-10-15 14:37 / 台灣最新可確認時間 2026-10-15 09:50 台灣時間 / 下期預測台灣時間 2026-10-16 09:50 台灣時間</p></header>
 <main><section id="ensemble50-required"><h2>適用日期：2026-10-15（加州開獎日）</h2>
+<p>最新核對時間（台灣）：2026-10-15T14:37:19+08:00</p>
 <p>台灣開獎時間：2026-10-16 09:50；資料截至：2026-10-14；資料狀態：ok</p>
 <h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝50組選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
 <div style="overflow:auto"><table><thead><tr><th>組別</th><th>號碼</th><th>模組共識信心</th><th>高機率狀態</th><th>逐期回測命中</th><th>隨機基準</th><th>95%信賴區間</th></tr></thead><tbody><tr><td>終極獨隻</td><td>02</td><td>4.0%</td><td>未證實高機率／觀察</td><td>9/60 (15.0%)</td><td>12.820513%</td><td>[8.1, 26.11]</td></tr><tr><td>2中2</td><td>02、27</td><td>11.0%</td><td>未證實高機率／觀察</td><td>1/60 (1.67%)</td><td>1.349528%</td><td>[0.29, 8.86]</td></tr><tr><td>3中3</td><td>02、10、27</td><td>22.0%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.109421%</td><td>[0, 6.02]</td></tr><tr><td>5中5</td><td>02、10、11、27、33</td><td>39.2%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.000174%</td><td>[0, 6.02]</td></tr><tr><td>7中5</td><td>02、10、11、15、19、27、33</td><td>45.71%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.003647%</td><td>[0, 6.02]</td></tr><tr><td>9中5</td><td>02、06、10、11、15、19、27、33、39</td><td>50.22%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.021884%</td><td>[0, 6.02]</td></tr></tbody></table></div>
@@ -51,9 +52,9 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       <h2>天天樂手機雲端獨立版</h2>
       <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="清除快取.html?v=20261015132429">手機沒更新點這裡清除舊快取</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20261015143717">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261015132429</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261015143717</p>
       
     </section>
     <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
@@ -92,7 +93,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261015132429';
+    window.TIANTIANLE_BUILD_VERSION = '20261015143717';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -120,7 +121,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261015132429&force=' + Date.now());
+      location.replace('首頁.html?v=20261015143717&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -137,7 +138,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261015132429', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261015143717', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
