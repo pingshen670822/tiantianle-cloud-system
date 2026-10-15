@@ -67,6 +67,7 @@ PACK_GOALS = {
     "precision_three_hit_one": 1,
 }
 CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
+PACK_GOALS.update({f'top15_six_{i:02d}': 5 for i in range(1,11)})
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
@@ -2824,6 +2825,10 @@ def analyze(draws, review=None):
     required_packs = {key: dict(pack, theoretical_probability=theoretical_probability(len(pack['numbers']), pack['hit_goal']))
                       for key, pack in zip(required_keys, ensemble50['packs'])}
     tiantianle_core['strong_prediction_packs'].update(required_packs)
+    tiantianle_core['strong_prediction_packs'].update({
+        f"top15_six_{p['group']:02d}": dict(p, name=f"前15名六碼組合{p['group']}（6中5）", hit_goal=5,
+                                          theoretical_probability=theoretical_probability(6,5))
+        for p in ensemble50['six_number_combinations']['groups']})
     freshness = data_freshness(draws[-1]["draw_date"])
     latest_source = draws[-1].get("source", "")
     latest_source_confirmed = source_is_confirmed(latest_source)

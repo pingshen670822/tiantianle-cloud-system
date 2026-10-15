@@ -4,6 +4,7 @@ import json
 import html
 from collections import Counter
 from datetime import date, timedelta
+from itertools import combinations
 
 WINDOWS = (10, 20, 30, 45, 60, 90, 120, 180, 365, 720)
 FAMILIES = ('頻率平滑', '指數動量', '間隔危險率', '前期轉移', '共現關聯')
@@ -68,6 +69,41 @@ def consensus(modules):
             scores[n] += 39-i
     return sorted(scores, key=lambda n:(-scores[n],n))
 
+def six_number_groups(modules, ranked, count=10):
+    """Fixed ranking/co-occurrence score with diversified groups, no outcome input."""
+    pool=ranked[:15]
+    quality=dict.fromkeys(pool,0.0)
+    pairs=Counter()
+    for m in modules:
+        for i,n in enumerate(m['ranking']):
+            if n in quality:
+                quality[n]+=(39-i)/(39*len(modules))
+        pairs.update(combinations(sorted(m['ranking'][:9]),2))
+    candidates=[]
+    for combo in combinations(sorted(pool),6):
+        individual=sum(quality[n] for n in combo)/6
+        support=sum(pairs[p]/len(modules) for p in combinations(combo,2))/15
+        candidates.append((combo,0.8*individual+0.2*support))
+    selected=[]
+    usage=Counter()
+    remaining=candidates
+    for slot in range(count):
+        def selection_score(row):
+            combo,score=row
+            shared=max((len(set(combo)&set(p['numbers'])) for p in selected),default=0)
+            coverage=sum(1/(1+usage[n]) for n in combo)/6
+            return score+0.18*coverage-0.08*shared/6
+        eligible=[row for row in remaining if all(len(set(row[0])&set(p['numbers']))<=4 for p in selected)]
+        combo,score=max(eligible or remaining,key=lambda row:(selection_score(row),tuple(-n for n in row[0])))
+        selected.append({'group':slot+1,'numbers':list(combo),'model_score':round(score*100,2),
+                         'confidence_label':'模型優先候選／未證實高機率'})
+        usage.update(combo)
+        remaining=[r for r in remaining if r[0]!=combo]
+    return {'top15_ranked':pool,'groups':selected,'group_count':count,
+            'method':'50組排名分數80%＋前九共現支持20%；另以覆蓋與重疊限制分散10組',
+            'score_meaning':'模型評分0–100，不是中獎機率；組號是固定選組順序',
+            'unique_numbers_covered':len(usage)}
+
 def compute(draws, samples=60):
     if len(draws)<120:
         raise ValueError('50組驗證至少需要120期資料')
@@ -83,12 +119,21 @@ def compute(draws, samples=60):
     samples = min(samples,len(draws)-100)
     hits = {m['id']:[] for m in modules}
     pack_hits = {label:[] for _,_,label in GOALS}
+    six_stats=[Counter() for _ in range(10)]
+    six_any=Counter()
     for end in range(len(draws)-samples,len(draws)):
         prior = rank_modules(draws[:end])
         actual = set(draws[end]['numbers'])
         for m in prior:
             hits[m['id']].append(len(actual & set(m['ranking'][:5])))
         ranked = consensus(prior)
+        prior_six=six_number_groups(prior,ranked)
+        period_hits=[len(actual & set(p['numbers'])) for p in prior_six['groups']]
+        for stat, hit in zip(six_stats,period_hits):
+            for goal in (2,3,4,5):
+                stat[goal]+=hit>=goal
+        for goal in (2,3,4,5):
+            six_any[goal]+=max(period_hits)>=goal
         for size,goal,label in GOALS:
             pack_hits[label].append(len(actual & set(ranked[:size]))>=goal)
     for m in modules:
@@ -96,6 +141,14 @@ def compute(draws, samples=60):
         m['validation'] = {'samples':samples, 'top5_avg_hits':round(sum(values)/samples,4),
                            'random_top5_expected_hits':25/39, 'structural_pass': sorted(m['ranking'])==list(range(1,40))}
     ranked = consensus(modules)
+    six=six_number_groups(modules,ranked)
+    for p,stat in zip(six['groups'],six_stats):
+        p['backtest_samples']=samples
+        p['backtest_hits_at_least']={str(g):stat[g] for g in (2,3,4,5)}
+    six['walk_forward_samples']=samples
+    six['any_group_hits_at_least']={str(g):six_any[g] for g in (2,3,4,5)}
+    six['verification']={'groups_unique':len({tuple(p['numbers']) for p in six['groups']})==10,
+                         'all_from_top15':all(set(p['numbers'])<=set(ranked[:15]) and len(set(p['numbers']))==6 for p in six['groups'])}
     packs=[]
     for size,goal,label in GOALS:
         numbers = sorted(ranked[:size])
@@ -112,7 +165,7 @@ def compute(draws, samples=60):
                       'backtest_samples':samples,'backtest_successes':wins,'backtest_rate_percent':round(rate*100,2),
                       'wilson_95_percent':[round(max(0,centre-margin)*100,2),round(min(1,centre+margin)*100,2)],
                       'random_baseline_percent':round(baseline*100,6)})
-    return {'version':'ensemble50_v1','module_count':len(modules),'modules':modules,'ranking':ranked,'packs':packs,
+    return {'version':'ensemble50_v2_six_number_groups','six_number_combinations':six,'module_count':len(modules),'modules':modules,'ranking':ranked,'packs':packs,
             'based_on_date':dates[-1],'target_draw_date':(date.fromisoformat(dates[-1])+timedelta(days=1)).isoformat(),
             'verification':{'status':'passed','modules_verified':sum(m['validation']['structural_pass'] for m in modules),
                             'walk_forward_samples':samples,'future_data_used':False,'weighting':'預先固定等權排名平均',
@@ -133,7 +186,37 @@ def report_section(analysis):
     for p in e['packs']:
         interval=p['wilson_95_percent']
         lines.append(f"| {p['name']} | {'、'.join(f'{n:02}' for n in p['numbers'])} | {p['model_agreement_percent']}% | {p['confidence_label']} | {p['backtest_successes']}/{p['backtest_samples']}（{p['backtest_rate_percent']}%） | {p['random_baseline_percent']}% | {interval[0]}–{interval[1]}% |")
+    six=e.get('six_number_combinations')
+    if six:
+        lines.extend(['','## 前15名六碼組合（10組）',
+                      '前15名依模型排名：'+'、'.join(f'{n:02}' for n in six['top15_ranked']),
+                      six['score_meaning'],
+                      '| 組別 | 六碼 | 模型評分 | 回測≥2中 | ≥3中 | ≥4中 | 5中 | 信心狀態 |',
+                      '| --- | --- | --- | --- | --- | --- | --- | --- |'])
+        for p in six['groups']:
+            bt=p['backtest_hits_at_least']; total=p['backtest_samples']
+            lines.append(f"| {p['group']} | {'、'.join(f'{n:02}' for n in p['numbers'])} | {p['model_score']} | {bt['2']}/{total} | {bt['3']}/{total} | {bt['4']}/{total} | {bt['5']}/{total} | {p['confidence_label']} |")
     return '\n'.join(lines)
+
+def six_html(e):
+    six=e.get('six_number_combinations')
+    if not six:
+        return ''
+    rows=[]
+    for p in six['groups']:
+        bt=p['backtest_hits_at_least']; total=p['backtest_samples']
+        cells=(p['group'],'、'.join(f'{n:02}' for n in p['numbers']),p['model_score'],
+               *(f'{bt[str(g)]}/{total}' for g in (2,3,4,5)),p['confidence_label'])
+        rows.append('<tr>'+''.join(f'<td>{html.escape(str(v))}</td>' for v in cells)+'</tr>')
+    pool='、'.join(f'{n:02}' for n in six['top15_ranked'])
+    summary='；'.join(f"至少{g}中：{six['any_group_hits_at_least'][str(g)]}/{six['walk_forward_samples']}期" for g in (2,3,4,5))
+    return f'''<section id="top15-six-groups"><h2>前15名六碼組合 · 10組模型優先候選</h2>
+<p>適用日期：{e['target_draw_date']}（加州開獎日）</p><p>前15名依模型排名：<b>{pool}</b></p>
+<p>{six['method']}。{six['score_meaning']}。信心狀態：未證實高機率。</p>
+<div style="overflow:auto"><table><thead><tr><th>組別</th><th>6碼組合</th><th>模型評分</th><th>回測≥2中</th><th>≥3中</th><th>≥4中</th><th>5中</th><th>信心狀態</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<p>60期逐期回測，每期用當時的前15名重新選10組，再核對下一期；各列是選組順序的策略表現，並非本期固定號碼的歷史命中率。</p>
+<p>10組中任一組命中的期數：{summary}。10組互有重疊，此處按期去重計算。</p>
+<p>檢查：10組互不重複、每組6個不同號碼、全部取自前15名；實際涵蓋{six['unique_numbers_covered']}個號碼。</p></section>'''
 
 def html_section(analysis):
     e=analysis['ensemble50']
@@ -147,7 +230,7 @@ def html_section(analysis):
 <h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝50組選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
 <div style="overflow:auto"><table><thead><tr><th>組別</th><th>號碼</th><th>模組共識信心</th><th>高機率狀態</th><th>逐期回測命中</th><th>隨機基準</th><th>95%信賴區間</th></tr></thead><tbody>{rows}</tbody></table></div>
 <p>50／50運算完成，{e['verification']['modules_verified']}／50結構驗證通過；最近{e['verification']['walk_forward_samples']}期逐期回測，每期只使用開獎前資料。</p>
-<details><summary>50組模組驗證明細</summary><table><tr><th>模組</th><th>方法</th><th>視窗期數</th><th>Top5平均命中（隨機基準0.6410）</th><th>結構驗證</th></tr>{details}</table></details></section>'''
+<details><summary>50組模組驗證明細</summary><table><tr><th>模組</th><th>方法</th><th>視窗期數</th><th>Top5平均命中（隨機基準0.6410）</th><th>結構驗證</th></tr>{details}</table></details></section>''' + six_html(e)
 
 def attach_reports(analysis, report_dir):
     for name in ('latest_battle_report.html','tiantianle_ironlaw_battle_report.html','dashboard.html','prediction.html','complete_report.html'):
