@@ -25,10 +25,6 @@ def u(text):
     return text.encode("ascii").decode("unicode_escape")
 
 
-def escape_html(value):
-    return html.escape("" if value is None else str(value))
-
-
 def repo_from_git_remote():
     try:
         remote = subprocess.check_output(
@@ -60,7 +56,7 @@ def cloud_links():
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip() or DEFAULT_CLOUD_REPO or repo_from_git_remote()
     if "/" not in repo:
         repo = DEFAULT_CLOUD_REPO
-    workflow_url = f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-auto-update.yml"
+    workflow_url = f"https://github.com/{repo}/actions/workflows/daily-update.yml"
     owner, name = repo.split("/", 1)
     page_url = f"https://{owner}.github.io/{name}/"
     saved_url_path = ROOT / "tiantianle-mobile-cloud-url.txt"
@@ -72,55 +68,23 @@ def cloud_links():
     return repo, workflow_url, page_url
 
 
-def cloud_self_heal_url(repo=None):
-    repo = repo or cloud_links()[0]
-    return f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-self-heal.yml"
-
-
-def latest_update_snapshot():
-    analysis_path = REPORT_DIR / "latest_analysis.json"
-    snapshot = {
-        "generated": "-",
-        "latest_draw": "-",
-        "latest_numbers": "-",
-        "target_draw": "-",
-        "target_taiwan_time": "-",
-    }
-    if not analysis_path.exists():
-        return snapshot
-    try:
-        data = json.loads(analysis_path.read_text(encoding="utf-8"))
-    except Exception:
-        return snapshot
-    latest = data.get("latest_draw") or {}
-    numbers = latest.get("numbers") or []
-    snapshot["generated"] = str(data.get("generated_at_taiwan") or data.get("generated_at") or "-")
-    snapshot["latest_draw"] = str(latest.get("draw_date") or "-")
-    snapshot["latest_numbers"] = " ".join(f"{int(number):02d}" for number in numbers) if numbers else "-"
-    snapshot["target_draw"] = str(data.get("target_draw_date") or "-")
-    snapshot["target_taiwan_time"] = str(data.get("prediction_draw_taiwan_time") or "-")
-    return snapshot
-
-
 def build_version():
+    return SITE_BUILD_VERSION
     analysis_path = REPORT_DIR / "latest_analysis.json"
-    data_version = ""
     if analysis_path.exists():
         try:
             data = json.loads(analysis_path.read_text(encoding="utf-8"))
             stamp = str(data.get("generated_at_taiwan") or data.get("generated_at") or "")
             digits = "".join(ch for ch in stamp if ch.isdigit())
             if digits:
-                data_version = digits[:14]
+                return digits[:14]
         except Exception:
             pass
-    # Report layout fixes must also invalidate phone cache even when draw data is unchanged.
-    return max(data_version, SITE_BUILD_VERSION) if data_version else SITE_BUILD_VERSION
+    return datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def inject_mobile_panel(html):
     repo, workflow_url, page_url = cloud_links()
-    self_heal_url = cloud_self_heal_url(repo)
     version = build_version()
     local_note = ""
     if repo == "OWNER/REPOSITORY":
@@ -129,9 +93,8 @@ def inject_mobile_panel(html):
     <section class="band launch-panel">
       <h2>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u96f2\\u7aef\\u7368\\u7acb\\u7248')}</h2>
       <a class="mobile-action" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0\\u6700\\u65b0\\u958b\\u734e')}</a>
-      <a class="mobile-action repair-action" href="{self_heal_url}">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">{u('\\u91cd\\u65b0\\u8b80\\u53d6\\u96f2\\u7aef\\u6700\\u65b0\\u9801')}</button>
-      <a class="cloud-update-link" href="force-sync-{version}.html?v={version}">{u('\\u624b\\u6a5f\\u4e0d\\u4e00\\u6a23\\u9ede\\u9019\\u88e1\\u5f37\\u5236\\u540c\\u6b65')}</a>
+      <a class="cloud-update-link" href="reset.html?v={version}">{u('\\u624b\\u6a5f\\u6c92\\u66f4\\u65b0\\u9ede\\u9019\\u88e1\\u6e05\\u9664\\u820a\\u5feb\\u53d6')}</a>
       <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{u('\\u5df2\\u8a2d\\u5b9a\\uff0c\\u624b\\u6a5f\\u53ef\\u76f4\\u63a5\\u6536\\u85cf\\u672c\\u9801')}</span></p>
       <p class="cloud-note" id="mobileUpdateStatus">{u('\\u7248\\u672c')} {version}</p>
       {local_note}
@@ -142,7 +105,6 @@ def inject_mobile_panel(html):
     <style>
       .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
       .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
-      .repair-action{margin-top:10px;background:#991b1b}
       .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
       .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
       .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
@@ -201,16 +163,33 @@ def inject_mobile_panel(html):
         }
       } catch (err) {}
     }
-    window.addEventListener('load', function(){
-      clearMobileCaches().finally(function(){
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js?v={version}', { updateViaCache: 'none' }).then(function(reg){
+          reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }).catch(function(){});
         autoRefreshIfStale();
         setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
       });
-    });
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) autoRefreshIfStale();
-    });
-    window.addEventListener('online', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
+          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
+          location.reload();
+        }
+      });
+    } else {
+      window.addEventListener('load', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
+    }
     </script>
     """
     style = style.replace("{version}", version)
@@ -219,336 +198,6 @@ def inject_mobile_panel(html):
     html = html.replace("</head>", style + "</head>")
     html = html.replace("</body>", script + "</body>")
     return html.replace("<main>", "<main>" + panel, 1)
-
-
-def inject_cloud_action_controls(html):
-    if "tiantianleCloudControls" in html:
-        return html
-    repo, workflow_url, _ = cloud_links()
-    self_heal_url = cloud_self_heal_url(repo)
-    version = build_version()
-    snapshot = latest_update_snapshot()
-    panel = f"""
-    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="{u('\\u96f2\\u7aef\\u64cd\\u4f5c')}">
-      <div class="tiantianle-cloud-title">{u('\\u96f2\\u7aef\\u5feb\\u901f\\u64cd\\u4f5c')}</div>
-      <a class="tiantianle-cloud-button manual" href="{workflow_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}')">{u('\\u624b\\u52d5\\u66f4\\u65b0\\u6700\\u65b0')}</a>
-      <a class="tiantianle-cloud-button repair" href="{self_heal_url}" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}')">{u('\\u7576\\u6a5f\\u7acb\\u5373\\u4fee\\u5fa9')}</a>
-      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">{u('\\u91cd\\u8b80\\u6700\\u65b0\\u6642\\u9593')}</button>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：{escape_html(snapshot['generated'])}</div>
-      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：{escape_html(snapshot['latest_draw'])}　{escape_html(snapshot['latest_numbers'])} / 下期：{escape_html(snapshot['target_draw'])}　{escape_html(snapshot['target_taiwan_time'])}</div>
-      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">{u('\\u624b\\u6a5f\\u6309\\u9215\\u6703\\u958b\\u555f\\u96f2\\u7aef\\u5de5\\u4f5c\\u6d41\\uff0c\\u672c\\u9801\\u6703\\u6bcf15\\u79d2\\u91cd\\u8b80\\u6700\\u65b0\\u6642\\u9593')}</div>
-    </div>
-    """
-    style = f"""
-    <style>
-      .tiantianle-cloud-controls{{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}}
-      .tiantianle-cloud-title{{font-weight:900;color:#7c2d12;white-space:nowrap}}
-      .tiantianle-cloud-button{{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}}
-      .tiantianle-cloud-button.manual{{background:#166534}}
-      .tiantianle-cloud-button.repair{{background:#991b1b}}
-      .tiantianle-cloud-button.refresh{{background:#1d4ed8}}
-      .tiantianle-cloud-status{{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}}
-      .tiantianle-cloud-status.primary-time{{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}}
-      @media(max-width:680px){{.tiantianle-cloud-controls{{grid-template-columns:1fr}}.tiantianle-cloud-title,.tiantianle-cloud-status{{grid-column:1/-1}}.tiantianle-cloud-button{{font-size:16px;padding:14px 8px}}}}
-    </style>
-    """
-    script = f"""
-    <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "{version}";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "{escape_html(snapshot['generated'])}";
-    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
-    async function tiantianleClearVisibleCaches() {{
-      try {{
-        if ('serviceWorker' in navigator) {{
-          var regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(async function(reg) {{
-            try {{
-              if (reg.active) reg.active.postMessage({{ type: 'CLEAR_CACHE' }});
-              await reg.update();
-            }} catch (err) {{}}
-          }}));
-        }}
-        if ('caches' in window) {{
-          var keys = await caches.keys();
-          await Promise.all(keys.map(function(key) {{ return caches.delete(key); }}));
-        }}
-      }} catch (err) {{}}
-    }}
-    function tiantianleFormatCloudNumbers(numbers) {{
-      if (!Array.isArray(numbers)) return '-';
-      return numbers.map(function(number) {{
-        var value = parseInt(number, 10);
-        if (!Number.isFinite(value)) return '';
-        return String(value).padStart(2, '0');
-      }}).filter(Boolean).join(' ') || '-';
-    }}
-    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {{
-      if (!data) return;
-      var latest = data.latest_draw || {{}};
-      var generated = data.generated_at_taiwan || data.generated_at || '-';
-      var latestDate = latest.draw_date || '-';
-      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
-      var targetDate = data.target_draw_date || '-';
-      var targetTime = data.prediction_draw_taiwan_time || '-';
-      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
-      var drawEl = document.getElementById('tiantianleLatestDrawLine');
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
-      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
-      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {{
-        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
-        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
-      }}
-    }}
-    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {{
-      try {{
-        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
-        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {{
-          cache: 'no-store',
-          headers: {{ 'Cache-Control': 'no-cache' }}
-        }});
-        if (!res.ok) throw new Error('latest_analysis not ready');
-        var data = await res.json();
-        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
-        return data;
-      }} catch (err) {{
-        var status = document.getElementById('tiantianleCloudActionStatus');
-        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
-        return null;
-      }}
-    }}
-    function tiantianleStartUpdatePolling(label) {{
-      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
-      tiantianleRefreshLatestUpdateDisplay(label);
-      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {{
-        tiantianleRefreshLatestUpdateDisplay(label);
-      }}, 15000);
-      setTimeout(function() {{
-        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {{
-          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
-          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
-        }}
-      }}, 30 * 60 * 1000);
-    }}
-    async function tiantianleForceReadLatestNow() {{
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = '正在重讀雲端最新更新時間';
-      await tiantianleClearVisibleCaches();
-      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
-    }}
-    async function tiantianlePrepareCloudAction(label) {{
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
-      await tiantianleClearVisibleCaches();
-      try {{
-        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
-        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), {{ cache: 'no-store' }});
-        await fetch(prefix + 'version.json?manual=' + Date.now(), {{ cache: 'no-store' }});
-      }} catch (err) {{}}
-      tiantianleStartUpdatePolling(label);
-    }}
-    window.addEventListener('pageshow', function() {{ tiantianleRefreshLatestUpdateDisplay('頁面開啟'); }});
-    document.addEventListener('visibilitychange', function() {{
-      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
-    }});
-    </script>
-    """
-    if "</head>" in html:
-        html = html.replace("</head>", style + "</head>", 1)
-    else:
-        html = style + html
-    if "</body>" in html:
-        html = html.replace("</body>", script + "</body>", 1)
-    else:
-        html = html + script
-    if "update-box" in html and "</section>" in html:
-        marker = '<section class="band update-box">'
-        start = html.find(marker)
-        if start >= 0:
-            end = html.find("</section>", start)
-            if end >= 0:
-                return html[:end] + panel + html[end:]
-    if "<body>" in html:
-        return html.replace("<body>", "<body><section class=\"band update-box\"><h2>立刻更新到最新</h2>" + panel + "</section>", 1)
-    if "<main>" in html:
-        return html.replace("<main>", "<main>" + panel, 1)
-    return panel + html
-
-
-def mobile_open_sync_script(version):
-    script = """
-    <script>
-    (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '{version}') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '{version}';
-      var firstOpenAt = Date.now();
-      var normalCheckMs = 30000;
-      var intenseWindowMs = 180000;
-      function rootPrefix() {
-        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
-      }
-      function currentStamp() {
-        try {
-          var queryStamp = new URL(location.href).searchParams.get('v') || '';
-          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        } catch (err) {
-          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        }
-      }
-      function stampFromPayload(data) {
-        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
-        return raw.replace(/\\D/g, '').slice(0, 14);
-      }
-      function setOpenSyncStatus(text) {
-        var el = document.getElementById('mobileUpdateStatus');
-        if (el) el.textContent = text;
-      }
-      async function clearAllBrowserCaches() {
-        if ('serviceWorker' in navigator) {
-          var regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(async function(reg) {
-            try {
-              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
-              await reg.update();
-            } catch (err) {}
-          }));
-        }
-        if ('caches' in window) {
-          var keys = await caches.keys();
-          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
-        }
-      }
-      async function verifyLatestAnalysis(prefix) {
-        try {
-          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
-          if (!res.ok) return null;
-          return await res.json();
-        } catch (err) {
-          return null;
-        }
-      }
-      async function mobileOpenSync() {
-        var prefix = rootPrefix();
-        try {
-          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' }
-          });
-          if (!res.ok) return;
-          var versionData = await res.json();
-          var cloudStamp = stampFromPayload(versionData);
-          var localStamp = String(currentStamp()).replace(/\\D/g, '').slice(0, 14);
-          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
-            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
-            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
-            await clearAllBrowserCaches();
-            var target = new URL(location.href);
-            target.searchParams.set('v', cloudStamp);
-            target.searchParams.set('open_sync', Date.now());
-            location.replace(target.toString());
-            return;
-          }
-          var analysis = await verifyLatestAnalysis(prefix);
-          if (analysis && analysis.generated_at_taiwan) {
-            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
-          }
-        } catch (err) {
-          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
-        }
-      }
-      window.addEventListener('pageshow', mobileOpenSync);
-      window.addEventListener('online', mobileOpenSync);
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) mobileOpenSync();
-      });
-      setInterval(function() {
-        mobileOpenSync();
-      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
-    })();
-    </script>
-    """
-    return script.replace("{version}", version)
-
-
-def inject_mobile_open_sync(html):
-    if "TIANTIANLE_OPEN_SYNC_VERSION" in html:
-        return html
-    script = mobile_open_sync_script(build_version())
-    if "</body>" in html:
-        return html.replace("</body>", script + "</body>")
-    if "</html>" in html:
-        return html.replace("</html>", script + "</html>")
-    return html + script
-
-
-def is_ironlaw_report_page(path):
-    report_names = {
-        "latest_battle_report.html",
-        "complete_report.html",
-        "tiantianle_complete_report.html",
-        "tiantianle_ironlaw_battle_report.html",
-        "天天樂完整戰報.html",
-        "天天樂最新戰報.html",
-        "最新完整戰報.html",
-        "完整戰報.html",
-        "完整_report.html",
-    }
-    if path.name in report_names:
-        return True
-    parts = set(path.parts)
-    return "reports" in parts and path.suffix.lower() == ".html" and (
-        "battle_report" in path.name or "complete_report" in path.name or "戰報" in path.name
-    )
-
-
-def apply_mobile_open_sync_to_site_html():
-    skip_names = {"reset.html", "清除快取.html", "offline.html", "離線頁.html"}
-    for path in SITE_DIR.rglob("*.html"):
-        if path.name in skip_names:
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if is_ironlaw_report_page(path):
-            updated = text
-        else:
-            updated = inject_mobile_open_sync(text)
-            updated = inject_cloud_action_controls(updated)
-        if updated != text:
-            path.write_text(updated, encoding="utf-8")
-    required = [
-        SITE_DIR / "index.html",
-    ]
-    missing = []
-    for path in required:
-        if not path.exists():
-            missing.append(str(path))
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if "tiantianleCloudControls" not in text or "手動更新最新" not in text or "目前最新更新時間" not in text:
-            fixed = inject_mobile_open_sync(inject_cloud_action_controls(text))
-            path.write_text(fixed, encoding="utf-8")
-            text = fixed
-        if "tiantianleCloudControls" not in text or "手動更新最新" not in text or "目前最新更新時間" not in text:
-            missing.append(str(path))
-    if missing:
-        raise RuntimeError("手機雲端操作按鈕或最新時間欄位缺失：" + "；".join(missing))
-    report_problems = []
-    for path in [
-        SITE_DIR / "reports" / "latest_battle_report.html",
-        SITE_DIR / "reports" / "complete_report.html",
-        SITE_DIR / "latest_battle_report.html",
-        SITE_DIR / "complete_report.html",
-    ]:
-        if not path.exists():
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if "tiantianleCloudControls" in text or "手動更新最新" in text or "TIANTIANLE_OPEN_SYNC_VERSION" in text:
-            report_problems.append(str(path))
-        if "data-ironlaw-interface" in text or "data-report-style" in text or "position:sticky" in text:
-            report_problems.append(str(path))
-        if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
-            report_problems.append(str(path))
-    if report_problems:
-        raise RuntimeError("完整戰報必須保持539規格六分頁，禁止混入雲端操作區：" + "；".join(report_problems))
 
 
 def copy_text(src, dst):
@@ -674,12 +323,12 @@ def display_time(value):
 
 def taiwan_time_label(value):
     text = display_time(value)
-    return f"台灣時間 {text}" if text and text != "-" else "-"
+    return f"{text} 台灣時間" if text and text != "-" else "-"
 
 
 def ca_date_note(value):
     text = "-" if value is None or value == "" else str(value)
-    return f"開獎期別 {text}"
+    return f"對應開獎日 {text}"
 
 
 def zh_join(values, limit=None):
@@ -744,10 +393,7 @@ def candidate_route_text(item):
 
 def candidate_guard_text(item):
     guard = item.get("previous_prediction_guard") or {}
-    entry = item.get("entry_validation") or {}
     pieces = []
-    if entry:
-        pieces.append(entry.get("status_label") or entry.get("status") or "全系統檢核")
     if guard:
         if guard.get("reentry_required"):
             pieces.append("連莊達標通過" if guard.get("reentry_passed") else "連莊未達標剔除")
@@ -763,14 +409,6 @@ def build_mobile_number_verification_block(data):
     for item in (data.get("official_candidates") or data.get("candidates") or [])[:9]:
         cross = item.get("cross_validation") or {}
         maturity = item.get("practical_maturity") or {}
-        entry = item.get("entry_validation") or {}
-        evidence = entry.get("evidence") or {}
-        gate_text = (
-            f"{entry.get('status_label', entry.get('status', '全系統檢核'))}；"
-            f"{u('\\u5206\\u6578')} {evidence.get('分數', '-')}；"
-            f"{u('\\u4fe1\\u5fc3')} {evidence.get('信心', '-')}；"
-            f"{u('\\u591a\\u6a21\\u578b')} {evidence.get('多模型數', '-')}"
-        )
         rows.append(
             "<tr>"
             f"<th>{int(item.get('number')):02d}</th>"
@@ -778,7 +416,7 @@ def build_mobile_number_verification_block(data):
             f"<td>{esc(candidate_reason_text(item, 8))}</td>"
             f"<td>{esc(cross.get('passed_count', '-'))}/{esc(cross.get('total_count', '-'))}</td>"
             f"<td>{u('\\u7a69\\u5b9a')} {esc(item.get('stability_count', '-'))} / {u('\\u907a\\u6f0f')} {esc(item.get('omission', '-'))}</td>"
-            f"<td>{esc(gate_text)} / {esc(candidate_guard_text(item))}</td>"
+            f"<td>{esc(candidate_guard_text(item))}</td>"
             f"<td>{u('\\u6210\\u719f\\u5ea6')} {esc(maturity.get('score', '-'))} / {esc(mobile_status(maturity.get('tier', '-')))}</td>"
             "</tr>"
         )
@@ -803,18 +441,15 @@ def confidence_level(item):
     maturity_score = safe_float(maturity.get("score", 0))
     maturity_tier = mobile_status(maturity.get("tier", "-") or "-")
     rank = safe_int(item.get("rank", 99), 99)
-    entry = item.get("entry_validation") or {}
-    entry_passed = bool(entry.get("passed_for_main", item.get("top9_core", rank <= 9)))
-    high_confidence_allowed = bool(entry.get("high_confidence_allowed", True))
-    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9 and entry_passed
-    top9_note = entry.get("status_label") or ("前九核心" if top9_core else "前九外備查")
+    top9_core = bool(item.get("top9_core", rank <= 9)) and rank <= 9
+    top9_note = "前九核心" if top9_core else "前九外備查"
     if not top9_core or maturity_score < 58:
         level = u("\\u89c0\\u5bdf")
         css = "confidence-watch"
-    elif high_confidence_allowed and confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3 and maturity_score >= 70:
+    elif confidence >= 88 and (probability >= 15 or stability >= 5) and passed >= 3 and maturity_score >= 70:
         level = u("\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-high"
-    elif high_confidence_allowed and (confidence >= 85 or probability >= 15 or stability >= 5 or maturity_score >= 70):
+    elif confidence >= 85 or probability >= 15 or stability >= 5 or maturity_score >= 70:
         level = u("\\u4e2d\\u9ad8\\u4fe1\\u5fc3")
         css = "confidence-mid"
     else:
@@ -869,48 +504,6 @@ def ultra_precision_candidate_score(item):
 
 def ultra_precision_recommendations(candidates, analysis=None):
     analysis = analysis or {}
-    super_single = (
-        analysis.get("super_single_decision")
-        or ((analysis.get("industrial_engine") or {}).get("super_single_decision"))
-        or {}
-    )
-    prediction = analysis.get("prediction") or {}
-    strong_packs = analysis.get("strong_packs") or {}
-    two_pack = strong_packs.get("two_hit_one") or {}
-    three_pack = strong_packs.get("three_hit_two") or strong_packs.get("precision_three_hit_one") or {}
-    selected_single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or prediction.get("top1") or []
-    if selected_single:
-        top2 = prediction.get("top2") or two_pack.get("numbers") or selected_single[:1]
-        top3 = prediction.get("top3") or three_pack.get("numbers") or top2
-        scores = super_single.get("scores") or {}
-        score = scores.get("超級獨支總合分") or scores.get("修正總分") or scores.get("信心指標") or 0
-        selected_model = scores.get("勝出模型") or scores.get("採用模型") or (super_single.get("route_sources") or ["全球融合精算"])[0]
-        recent_60 = scores.get("最近60期命中率") or "-"
-        status = super_single.get("status") or "超級獨支唯一輸出"
-        return {
-            "single": {
-                "numbers": selected_single[:1],
-                "score": score,
-                "status": status,
-                "selected_model_label": selected_model,
-                "recent_60": {"pass_rate": recent_60},
-            },
-            "two": {
-                "numbers": top2[:2],
-                "score": score,
-                "status": "同源嚴格組合",
-                "selected_model_label": selected_model,
-                "recent_60": {"pass_rate": recent_60},
-            },
-            "three": {
-                "numbers": top3[:3],
-                "score": score,
-                "status": "同源嚴格組合",
-                "selected_model_label": selected_model,
-                "recent_60": {"pass_rate": recent_60},
-            },
-            "ranked": [],
-        }
     engine_precision = (
         analysis.get("precision_micro_models")
         or ((analysis.get("industrial_engine") or {}).get("precision_micro_models"))
@@ -919,11 +512,7 @@ def ultra_precision_recommendations(candidates, analysis=None):
     )
     if engine_precision.get("single") or engine_precision.get("two") or engine_precision.get("three"):
         return engine_precision
-    pool = [
-        item for item in candidates[:9]
-        if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)
-        and (item.get("entry_validation") or {}).get("passed_for_main", True)
-    ]
+    pool = [item for item in candidates[:9] if item.get("top9_core", safe_int(item.get("rank"), 99) <= 9)]
     scored = sorted(
         [
             {"number": int(item.get("number")), "score": ultra_precision_candidate_score(item), "item": item}
@@ -1045,40 +634,6 @@ def build_signal_focus(candidates):
     )
 
 
-def build_mobile_basic_config_block(data):
-    decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
-    super_single = data.get("super_single_decision") or decision.get("super_single_decision") or (data.get("industrial_engine") or {}).get("super_single_decision") or {}
-    prediction = data.get("prediction") or {}
-    freshness = data.get("freshness") or {}
-    target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
-    target_time = data.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "-"
-    prediction_day = f"{target_date} / {taiwan_time_label(target_time)}"
-    single = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or prediction.get("strongest") or prediction.get("top1") or []
-    two = decision.get("two_hit_one") or prediction.get("top2") or []
-    three = decision.get("three_hit_one") or prediction.get("top3") or []
-    five = decision.get("five_hit_two") or prediction.get("top5") or []
-    single_reason = "；".join((super_single.get("explanation") or [])[:3]) if super_single else "每期由全歷史資料庫重新運算"
-    rows = [
-        ("1", "預測日", prediction_day),
-        ("2", "最強高機率獨隻", fmt_numbers(single) or "-"),
-        ("3", "最強高機率2中1~2", fmt_numbers(two) or "-"),
-        ("4", "最強高機率3中1~3", fmt_numbers(three) or "-"),
-        ("5", "最強高機率5中1~5", fmt_numbers(five) or "-"),
-        ("6", "獨支由來", single_reason),
-    ]
-    body = "".join(
-        f"<tr><th>{esc(idx)}</th><th>{esc(label)}</th><td>{esc(value)}</td></tr>"
-        for idx, label, value in rows
-    )
-    return (
-        "<section class=\"band signal-focus\">"
-        "<h2>戰報基本配置</h2>"
-        "<p><strong>以下五項為天天樂戰報固定基本欄位，每次重算必須出現。</strong></p>"
-        f"<table><tr><th>#</th><th>項目</th><th>內容</th></tr>{body}</table>"
-        "</section>"
-    )
-
-
 def build_mobile_avoid_rows(data, group_name):
     avoid = data.get("low_probability_avoid") or {}
     groups = avoid.get("groups") or {}
@@ -1137,32 +692,12 @@ def build_mobile_ironlaw_block(data):
     decision = data.get("latest_ironlaw") or data.get("decisive_battle_plan") or {}
     if not decision:
         return ""
-    super_single = data.get("super_single_decision") or decision.get("super_single_decision") or (data.get("industrial_engine") or {}).get("super_single_decision") or {}
     high_numbers = decision.get("high_confidence_core") or [item.get("number") for item in (decision.get("high_confidence_numbers") or []) if item.get("number") is not None]
     avoid_numbers = decision.get("defensive_avoid") or []
     avoid_packs = decision.get("avoid_packs") or ((data.get("low_probability_avoid") or {}).get("avoid_packs") or {})
-    freshness = data.get("freshness") or {}
-    target_date = data.get("target_draw_date") or freshness.get("target_draw_date") or "-"
-    target_time = data.get("prediction_draw_taiwan_time") or freshness.get("target_taiwan_safe_update_time") or "-"
-    prediction_day = f"{target_date} / {taiwan_time_label(target_time)}"
 
     def action_row(label, numbers):
         return f"<tr><th>{esc(label)}</th><td>{esc(fmt_numbers(numbers) or '-')}</td></tr>"
-
-    super_numbers = super_single.get("numbers") or ([super_single.get("number")] if super_single.get("number") else []) or decision.get("primary_single") or []
-    super_rows = []
-    if super_single:
-        score_map = super_single.get("scores") or {}
-        super_rows = [
-            f"<tr><th>{u('\\u552f\\u4e00\\u898f\\u5247')}</th><td>{esc(super_single.get('why_unique', '-'))}</td></tr>",
-            f"<tr><th>{u('\\u9078\\u865f\\u898f\\u5247')}</th><td>{esc(super_single.get('selection_rule', '-'))}</td></tr>",
-            f"<tr><th>{u('\\u4fee\\u6b63\\u7e3d\\u5206')}</th><td>{esc(score_map.get('修正總分', '-'))}</td></tr>",
-            f"<tr><th>{u('\\u4fe1\\u5fc3\\u6307\\u6a19')}</th><td>{esc(score_map.get('信心指標', '-'))}</td></tr>",
-            f"<tr><th>{u('\\u4ea4\\u53c9\\u9a57\\u7b97')}</th><td>{esc(score_map.get('交叉通過', '-'))}</td></tr>",
-        ]
-        for idx, text in enumerate((super_single.get("explanation") or [])[:6], 1):
-            super_rows.append(f"<tr><th>{u('\\u7531\\u4f86')}{idx}</th><td>{esc(text)}</td></tr>")
-    super_rows_html = "".join(super_rows) if super_rows else "<tr><td colspan='2'>本期已重算，沒有額外由來資料。</td></tr>"
 
     pack_rows = []
     for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
@@ -1182,16 +717,14 @@ def build_mobile_ironlaw_block(data):
         f"<section class='band signal-focus'><h2>{u('\\u672c\\u671f\\u660e\\u78ba\\u4f5c\\u6230\\u7b54\\u6848')}</h2>"
         f"<p><strong>{esc(decision.get('conclusion', decision.get('action_label', '-')))}</strong></p>"
         f"<table>"
-        f"<tr><th>預測日</th><td>{esc(prediction_day)}</td></tr>"
-        f"{action_row('最強高機率獨隻', super_numbers)}"
-        f"{action_row('最強高機率2中1~2', decision.get('two_hit_one') or [])}"
-        f"{action_row('最強高機率3中1~3', decision.get('three_hit_one') or [])}"
-        f"{action_row('最強高機率5中1~5', decision.get('five_hit_two') or [])}"
-        f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '2' + u('\\u4f4e\\u6a19') + ' / 9' + u('\\u4e2d') + '3' + u('\\u5f37\\u6a19'), decision.get('nine_hit_three') or [])}"
+        f"{action_row(u('\\u660e\\u78ba\\u7368\\u96bb'), decision.get('primary_single') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '2' + u('\\u4e2d') + '1', decision.get('two_hit_one') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '3' + u('\\u4e2d') + '1~3', decision.get('three_hit_one') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '5' + u('\\u4e2d') + '2', decision.get('five_hit_two') or [])}"
+        f"{action_row(u('\\u660e\\u78ba') + '9' + u('\\u4e2d') + '3', decision.get('nine_hit_three') or [])}"
         f"{action_row(u('\\u9ad8\\u6a5f\\u7387\\u4fe1\\u5fc3\\u724c'), high_numbers[:9])}"
         f"{action_row(u('\\u9632\\u5b88\\u907f\\u958b'), avoid_numbers[:10])}"
         f"</table>"
-        f"<h3>{u('\\u552f\\u4e00\\u7368\\u652f\\u7531\\u4f86')}</h3><table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u5167\\u5bb9')}</th></tr>{super_rows_html}</table>"
         f"<h3>{u('\\u4f4e\\u6a5f\\u7387\\u907f\\u96aa\\u5305')}</h3><table><tr><th>{u('\\u985e\\u5225')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u4fe1\\u5fc3')}</th><th>{u('\\u6307\\u6a19')}</th></tr>{''.join(pack_rows)}</table>"
         f"<h3>{u('\\u6bcf\\u65e5\\u66f4\\u65b0\\u9435\\u5f8b\\u6642\\u9593\\u8868')}</h3><table><tr><th>{u('\\u9805\\u76ee')}</th><th>{u('\\u5167\\u5bb9')}</th></tr>{''.join(time_rows)}</table>"
         f"</section>"
@@ -1206,46 +739,12 @@ def build_mobile_avoid_block(data):
     header = f"<tr><th>#</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u907f\\u958b\\u4fe1\\u5fc3')}</th><th>{u('\\u7b49\\u7d1a')}</th><th>{u('\\u7406\\u7531')}</th></tr>"
     return (
         f"<section class='band danger-zone'><h2>{u('\\u4e0b\\u671f\\u4f4e\\u6a5f\\u7387\\u66ab\\u907f\\u9810\\u6e2c')}</h2>"
-        f"<p><strong>{u('\\u4e0b\\u671f\\u958b\\u734e')}：</strong>{esc(target_tw_label)} / <strong>{u('\\u671f\\u5225')}：</strong>{esc(target_date)}</p>"
+        f"<p><strong>{u('\\u53f0\\u7063\\u958b\\u734e\\u6642\\u9593')}：</strong>{esc(target_tw_label)} / <strong>{u('\\u5c0d\\u61c9\\u958b\\u734e\\u65e5')}：</strong>{esc(target_date)}</p>"
         f"<p>{esc(avoid.get('warning', u('\\u4f4e\\u6a5f\\u7387\\u662f\\u98a8\\u63a7\\u907f\\u958b\\uff0c\\u4e0d\\u662f\\u7d55\\u5c0d\\u4fdd\\u8b49\\u3002')))}</p>"
         f"<p>{u('\\u56de\\u6e2c')}：{u('\\u6a23\\u672c')} {esc(backtest.get('rounds', '-'))} / {u('\\u96f6\\u8aa4\\u5165\\u7387')} {esc(backtest.get('zero_hit_rate', '-'))}</p>"
         f"<h3>{u('\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '五不中')}</table>"
         f"<h3>{u('\\u5341\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十不中')}</table>"
-        f"<h3>{u('\\u5341\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十五不中')}</table>"
-        f"{build_mobile_low_error_recovery(data)}</section>"
-    )
-
-
-def mobile_low_error_payload(data):
-    review = data.get("failure_review") or {}
-    payload = review.get("low_probability_error_recovery") or {}
-    if not payload:
-        payload = ((data.get("industrial_engine") or {}).get("low_probability_error_recovery") or {})
-    return payload if isinstance(payload, dict) else {}
-
-
-def build_mobile_low_error_recovery(data):
-    payload = mobile_low_error_payload(data)
-    hard_block = fmt_numbers(payload.get("hard_block_low_probability_numbers", [])) or "-"
-    rows = []
-    for item in (payload.get("frequent_numbers") or [])[:12]:
-        number = item.get("number")
-        if number is None:
-            continue
-        rows.append(
-            f"<tr><td>{esc(f'{int(number):02d}')}</td>"
-            f"<td>{esc(item.get('count', 0))}</td>"
-            f"<td>{esc(item.get('recent_count', 0))}</td>"
-            f"<td>5不中 {esc(item.get('five_miss_hits', 0))} / 10不中 {esc(item.get('ten_miss_hits', 0))} / 15不中 {esc(item.get('fifteen_miss_hits', 0))}</td>"
-            f"<td>{esc(item.get('last_seen', '-'))}</td>"
-            f"<td>{u('\\u5c01\\u9396\\u4f4e\\u6a5f\\u7387\\uff0c\\u8f49\\u5165\\u4e3b\\u6392\\u5e8f\\u56de\\u6536')}</td></tr>"
-        )
-    body = "".join(rows) or f"<tr><td colspan='6'>{u('\\u76ee\\u524d\\u6c92\\u6709\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u56de\\u6536\\u8cc7\\u6599')}</td></tr>"
-    return (
-        f"<h3>{u('\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u56de\\u6536')}</h3>"
-        f"<p><strong>{u('\\u672c\\u671f\\u5c01\\u9396\\u4f4e\\u6a5f\\u7387\\u6838\\u5fc3')}：</strong>{esc(hard_block)}</p>"
-        f"<p>{esc(payload.get('message', u('\\u6bcf\\u671f\\u958b\\u734e\\u5f8c\\u81ea\\u52d5\\u91cd\\u7b97\\u4f4e\\u6a5f\\u7387\\u8aa4\\u958b\\u3002')))}</p>"
-        f"<table><tr><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u7d2f\\u8a08\\u8aa4\\u958b')}</th><th>{u('\\u8fd1\\u671f')}</th><th>{u('\\u4f86\\u6e90')}</th><th>{u('\\u6700\\u8fd1')}</th><th>{u('\\u8655\\u7406')}</th></tr>{body}</table>"
+        f"<h3>{u('\\u5341\\u4e94\\u4e0d\\u4e2d')}</h3><table>{header}{build_mobile_avoid_rows(data, '十五不中')}</table></section>"
     )
 def build_home_page():
     repo, workflow_url, page_url = cloud_links()
@@ -1257,30 +756,16 @@ def build_home_page():
     latest = data.get("latest_draw") or {}
     latest_tw_label = taiwan_time_label(freshness.get("latest_taiwan_safe_update_time") or data.get("latest_draw_taiwan_update_time") or "")
     target_tw_label = taiwan_time_label(freshness.get("target_taiwan_safe_update_time") or data.get("prediction_draw_taiwan_time") or "")
-    latest_period_note = ca_date_note(latest.get("draw_date"))
-    target_period_note = ca_date_note(data.get("target_draw_date"))
+    latest_ca_note = ca_date_note(latest.get("draw_date"))
+    target_ca_note = ca_date_note(data.get("target_draw_date"))
     industrial = data.get("industrial_engine") or {}
     maturity = industrial.get("practical_maturity") or {}
     release = industrial.get("release_gate") or {}
     packs = data.get("strong_packs") or {}
     candidates = data.get("candidates") or []
-    prediction = data.get("prediction") or {}
-    official_top9_numbers = prediction.get("top9") or [item.get("number") for item in candidates[:9]]
-    official_top9_set = {safe_int(number) for number in official_top9_numbers}
-    official_top9_set.discard(0)
-    official_candidates = [
-        item for item in candidates
-        if safe_int(item.get("number")) in official_top9_set
-    ]
-    official_candidates.sort(
-        key=lambda item: (
-            official_top9_numbers.index(safe_int(item.get("number")))
-            if safe_int(item.get("number")) in official_top9_numbers else 99
-        )
-    )
-    top9 = fmt_numbers(official_top9_numbers)
-    confidence_rows = build_confidence_rows(official_candidates)
-    signal_focus = build_signal_focus(official_candidates)
+    top9 = fmt_numbers([item.get("number") for item in candidates[:9]])
+    confidence_rows = build_confidence_rows(candidates)
+    signal_focus = build_signal_focus(candidates)
     ultra_precision_block = build_ultra_precision_block(candidates, data)
     ultra = ultra_precision_recommendations(candidates, data)
     gap_diagnosis = industrial.get("prediction_gap_diagnosis") or {}
@@ -1313,7 +798,7 @@ def build_home_page():
         add_pack_row(label, item.get("numbers") or [], goal, f"{u('\\u4e8c\\u6b21\\u7cbe\\u7b97')} {item.get('score', 0)} / {mobile_status(item.get('status', 'watch_only'))}")
 
     for key, label in [
-        ("five_hit_two", "5" + u("\\u4e2d") + "1~5"),
+        ("five_hit_two", "5" + u("\\u4e2d") + "2~3"),
         ("nine_hit_three", "9" + u("\\u4e2d") + "3~5"),
     ]:
         pack = packs.get(key) or {}
@@ -1323,13 +808,12 @@ def build_home_page():
         if maturity_status is None and "passed" in pack_maturity:
             maturity_status = "passed" if pack_maturity.get("passed") else "watch_only"
         maturity_text = f"{maturity_value} / {mobile_status(maturity_status or '-')}"
-        goal = "1~5" if key == "five_hit_two" else pack.get("hit_goal")
-        add_pack_row(label, pack.get("numbers") or [], goal, maturity_text)
+        add_pack_row(label, pack.get("numbers") or [], pack.get("hit_goal"), maturity_text)
     page_title = u("\\u5929\\u5929\\u6a02 \\u624b\\u6a5f\\u96f2\\u7aef\\u9996\\u9801")
     subtitle = (
-        f"{u('\\u7522\\u751f')} {esc(taiwan_time_label(data.get('generated_at_taiwan')))} / "
-        f"{u('\\u6700\\u65b0\\u958b\\u734e')} {esc(latest_tw_label)} / "
-        f"{u('\\u4e0b\\u671f\\u958b\\u734e')} {esc(target_tw_label)}"
+        f"{u('\\u5831\\u8868\\u7522\\u751f')} {esc(display_time(data.get('generated_at_taiwan')))} / "
+        f"{u('\\u53f0\\u7063\\u6700\\u65b0\\u53ef\\u78ba\\u8a8d\\u6642\\u9593')} {esc(latest_tw_label)} / "
+        f"{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u53f0\\u7063\\u6642\\u9593')} {esc(target_tw_label)}"
     )
     return f"""<!doctype html>
 <html lang="zh-Hant">
@@ -1372,7 +856,6 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band"><a class="primary secondary" href="每月總整理.html">{u('\\u67e5\\u770b\\u6bcf\\u6708\\u7e3d\\u6574\\u7406')}</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">{u('\\u67e5\\u770b\\u5b8c\\u6574\\u6230\\u5831')}</a></section>
 <section class="band"><a class="primary secondary" href="{esc(workflow_url)}">{u('\\u7acb\\u5373\\u96f2\\u7aef\\u66f4\\u65b0')}</a><p class="url">{u('\\u624b\\u6a5f\\u96f2\\u7aef\\u7db2\\u5740\\u5df2\\u8a2d\\u5b9a')}</p></section>
-{build_mobile_basic_config_block(data)}
 {build_mobile_recalculation_block(data)}
 {build_mobile_no_reuse_guard_block(data)}
 {build_mobile_ironlaw_block(data)}
@@ -1383,9 +866,9 @@ table{{width:100%;min-width:640px;border-collapse:collapse}}th,td{{border-bottom
 <section class="band diagnosis"><h2>{u('\\u5168\\u7cfb\\u7d71\\u547d\\u4e2d\\u7387\\u7f3a\\u53e3\\u8a3a\\u65b7')}</h2><p><strong>{u('\\u65b0\\u589e\\u6a21\\u578b')}:</strong> {esc(gap_diagnosis.get('new_model_added', '-'))} / <strong>{u('\\u72c0\\u614b')}:</strong> {esc(gap_diagnosis.get('status_label', gap_diagnosis.get('status', '-')))}</p><p class="small">{esc(gap_diagnosis.get('message', '-'))}</p><p class="small"><strong>{u('\\u5df2\\u555f\\u7528\\u52d5\\u4f5c')}:</strong> {esc(gap_action_text)}</p><table><tr><th>{u('\\u7f3a\\u53e3')}</th><th>{u('\\u8b49\\u64da')}</th><th>{u('\\u5df2\\u88dc\\u5f37')}</th></tr>{''.join(gap_rows)}</table></section>
 <section class="band high-note"><h2>{u('\\u9ad8\\u6a5f\\u7387\\uff0f\\u9ad8\\u4fe1\\u5fc3\\u9810\\u6e2c\\u52a0\\u8a3b')}</h2><p>{u('\\u6a5f\\u7387\\u9ad8\\u6216\\u4fe1\\u5fc3\\u9ad8\\u7684\\u865f\\u78bc\\u5df2\\u9650\\u5236\\u5728\\u524d\\u4e5d\\u6838\\u5fc3\\u5167\\u986f\\u793a\\uff0c\\u7b2c\\u5341\\u81f3\\u5341\\u4e94\\u540d\\u53ea\\u5217\\u5099\\u67e5\\u3002')}</p><table><tr><th>{u('\\u6392\\u540d')}</th><th>{u('\\u865f\\u78bc')}</th><th>{u('\\u9ad8\\u4fe1\\u5fc3\\u8aaa\\u660e')}</th><th>{u('\\u4f86\\u6e90\\u7406\\u7531')}</th></tr>{confidence_rows}</table></section>
 <div class="grid">
-<section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(latest_tw_label)}</div><p class="small">{esc(latest_period_note)}</p></section>
+<section class="card"><h2>{u('\\u53f0\\u7063\\u6700\\u65b0\\u53ef\\u78ba\\u8a8d\\u6642\\u9593')}</h2><div class="value">{esc(latest_tw_label)}</div><p class="small">{esc(latest_ca_note)}</p></section>
 <section class="card"><h2>{u('\\u6700\\u65b0\\u958b\\u734e\\u865f\\u78bc')}</h2><div class="value">{esc(fmt_numbers(latest.get('numbers', [])))}</div></section>
-<section class="card"><h2>{u('\\u4e0b\\u671f\\u958b\\u734e\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(target_tw_label)}</div><p class="small">{esc(target_period_note)}</p></section>
+<section class="card"><h2>{u('\\u4e0b\\u671f\\u9810\\u6e2c\\u53f0\\u7063\\u6642\\u9593')}</h2><div class="value">{esc(target_tw_label)}</div><p class="small">{esc(target_ca_note)}</p></section>
 <section class="card"><h2>{u('\\u5168\\u6b77\\u53f2\\u7b46\\u6578')}</h2><div class="value">{esc(data.get('draw_count'))}</div></section>
 <section class="card"><h2>{u('\\u767c\\u5e03\\u72c0\\u614b')}</h2><div class="value">{esc(mobile_status(release.get('status', '-')))}</div><p class="small">{u('\\u6b63\\u5f0f\\u767c\\u5e03') if data.get('official_release_allowed') else u('\\u975e\\u6b63\\u5f0f\\u4fdd\\u8b49')}</p></section>
 <section class="card"><h2>{u('\\u5be6\\u6230\\u6210\\u719f\\u5ea6')}</h2><div class="value">{esc(maturity.get('top10_avg_maturity', '-'))}</div><p class="small">{esc(mobile_status(maturity.get('status', '-')))}</p></section>
@@ -1473,50 +956,8 @@ def write_pwa_files():
 </script></body></html>"""
     (SITE_DIR / "reset.html").write_text(reset, encoding="utf-8")
     (SITE_DIR / "清除快取.html").write_text(reset, encoding="utf-8")
-    force_sync = f"""<!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u5f37\\u5236\\u540c\\u6b65')}</title>
-<style>body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:#f6f7fb;color:#111827}}main{{max-width:680px;margin:auto;padding:28px}}.box{{background:#fff;border:1px solid #d8dee9;border-radius:8px;padding:18px}}.status{{font-weight:900;color:#166534}}a{{display:block;margin-top:14px;padding:14px;background:#166534;color:#fff;text-align:center;border-radius:8px;text-decoration:none;font-weight:900}}</style></head>
-<body><main><div class="box"><h1>{u('\\u5929\\u5929\\u6a02\\u624b\\u6a5f\\u5f37\\u5236\\u540c\\u6b65')}</h1><p class="status" id="status">{u('\\u6b63\\u5728\\u89e3\\u9664\\u820a\\u7248\\u624b\\u6a5f\\u5feb\\u53d6\\u63a7\\u5236')}</p><a href="prediction.html?v={version}&manual=1">{u('\\u7acb\\u5373\\u958b\\u555f\\u6700\\u65b0\\u9810\\u6e2c')}</a></div></main>
-<script>
-(async function(){{
-  var VERSION = '{version}';
-  var status = document.getElementById('status');
-  function setStatus(text) {{ if (status) status.textContent = text; }}
-  async function clearEverything() {{
-    if ('serviceWorker' in navigator) {{
-      var regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(async function(reg) {{
-        try {{
-          if (reg.active) reg.active.postMessage({{ type: 'CLEAR_CACHE' }});
-          if (reg.waiting) reg.waiting.postMessage({{ type: 'SKIP_WAITING' }});
-          await reg.update();
-          await reg.unregister();
-        }} catch (err) {{}}
-      }}));
-    }}
-    if ('caches' in window) {{
-      var keys = await caches.keys();
-      await Promise.all(keys.map(function(key) {{ return caches.delete(key); }}));
-    }}
-  }}
-  try {{
-    await clearEverything();
-    setStatus('{u('\\u820a\\u5feb\\u53d6\\u5df2\\u6e05\\u9664\\uff0c\\u6b63\\u5728\\u91cd\\u65b0\\u62c9\\u53d6\\u96f2\\u7aef')}');
-    await fetch('version.json?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
-    await fetch('prediction.html?force=' + Date.now(), {{ cache: 'no-store' }}).catch(function(){{}});
-  }} catch (err) {{
-    setStatus('{u('\\u5df2\\u555f\\u52d5\\u5f37\\u5236\\u540c\\u6b65\\uff0c\\u6b63\\u5728\\u9032\\u5165\\u6700\\u65b0\\u7248')}');
-  }}
-  location.replace('prediction.html?v=' + VERSION + '&force_sync=' + Date.now());
-}})();
-</script></body></html>"""
-    (SITE_DIR / f"force-sync-{version}.html").write_text(force_sync, encoding="utf-8")
-    (SITE_DIR / "force-sync.html").write_text(force_sync, encoding="utf-8")
-    (SITE_DIR / "手機強制同步.html").write_text(force_sync, encoding="utf-8")
     sw = f"""const CACHE_NAME = 'tiantianle-ironlaw-{version}';
-const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
+const APP_SHELL = ['index.html','首頁.html','prediction.html','下期預測.html','review.html','上期未命中檢討.html','tiantianle_low_probability_avoid.html','天天樂低機率精準暫避.html','低機率精準暫避.html','monthly_summary.html','每月總整理.html','六月總整理.html','prediction-history.html','預測歷史對比.html','complete_report.html','完整_report.html','完整戰報.html','天天樂完整戰報.html','reports/complete_report.html','reports/tiantianle_low_probability_avoid.html','reports/天天樂低機率精準暫避.html','reports/低機率精準暫避.html','reports/monthly_summary.html','reports/每月總整理.html','reports/六月總整理.html','reports/完整_report.html','reports/完整戰報.html','reports/天天樂完整戰報.html','reports/latest_battle_report.html','latest_analysis.json','最新分析資料.json','version.json','版本.json','system_health_report.md','系統健康報告.md','manifest.webmanifest','offline.html','離線頁.html','reset.html','清除快取.html','404.html','icon-192.png','icon-512.png'];
 async function deleteAllCaches() {{
   const keys = await caches.keys();
   await Promise.all(keys.map(key => caches.delete(key)));
@@ -1544,19 +985,7 @@ self.addEventListener('fetch', event => {{
   const path = decodeURIComponent(url.pathname);
   const isReportShortcut = path.includes('complete_report') || path.includes('完整_report') || path.includes('完整戰報') || path.includes('latest_battle_report') || path.endsWith('/reports/');
   const stableReportUrl = new URL('reports/complete_report.html?v={version}', self.registration.scope).toString();
-  const isNeverCache = path.includes('/reports/') || path.endsWith('latest_analysis.json') || path.endsWith('最新分析資料.json') || path.endsWith('version.json') || path.endsWith('版本.json');
-  const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.includes('service-worker') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
-  if (isNeverCache) {{
-    url.searchParams.set('v', Date.now().toString());
-    event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
-      if (!response.ok && isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }});
-      return response;
-    }}).catch(() => {{
-      if (isReportShortcut) return fetch(stableReportUrl, {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }});
-      return fetch(event.request, {{ cache: 'no-store' }});
-    }}));
-    return;
-  }}
+  const isFreshFile = url.pathname.endsWith('.html') || url.pathname.endsWith('.json') || url.pathname.endsWith('.md') || url.pathname.endsWith('service-worker.js') || url.pathname.endsWith('manifest.webmanifest') || url.pathname.endsWith('/');
   if (isFreshFile) {{
     url.searchParams.set('v', '{version}');
     event.respondWith(fetch(url.toString(), {{ cache: 'no-store', headers: {{ 'Cache-Control': 'no-cache' }} }}).then(response => {{
@@ -1576,7 +1005,6 @@ self.addEventListener('fetch', event => {{
 }});
 """
     (SITE_DIR / "service-worker.js").write_text(sw, encoding="utf-8")
-    (SITE_DIR / f"service-worker-{version}.js").write_text(sw, encoding="utf-8")
     write_icon(SITE_DIR / "icon-192.png", 192)
     write_icon(SITE_DIR / "icon-512.png", 512)
 
@@ -1634,7 +1062,7 @@ async function launchTiantianle(){
 }
 document.getElementById('installBtn').addEventListener('click', launchTiantianle);
 document.getElementById('stickyBtn').addEventListener('click', launchTiantianle);
-if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(regs){ regs.forEach(function(reg){ reg.unregister(); }); });
+if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js?v=' + Date.now(), { updateViaCache: 'none' });
 </script>
 </body></html>"""
     html = html.replace("__WORKFLOW_URL__", workflow_url).replace("__PAGE_URL__", page_url)
@@ -1648,6 +1076,13 @@ def main():
     prediction = REPORT_DIR / "prediction.html"
     review = REPORT_DIR / "review.html"
     index_html = finalize_user_html(inject_mobile_panel(build_home_page()))
+    analysis_path = REPORT_DIR / 'latest_analysis.json'
+    if analysis_path.exists():
+        current_analysis = json.loads(analysis_path.read_text(encoding='utf-8'))
+        if current_analysis.get('ensemble50'):
+            from ensemble50 import html_section
+            marker = '<main>' if '<main>' in index_html else '<body>'
+            index_html = index_html.replace(marker, marker + html_section(current_analysis), 1)
     (SITE_DIR / "index.html").write_text(index_html, encoding="utf-8")
     (SITE_DIR / "首頁.html").write_text(index_html, encoding="utf-8")
     if prediction.exists():
@@ -1663,8 +1098,6 @@ def main():
         (SITE_DIR / "prediction-history.html").write_text(history_html, encoding="utf-8")
         (SITE_DIR / "預測歷史對比.html").write_text(history_html, encoding="utf-8")
     copy_text(REPORT_DIR / "latest_analysis.json", SITE_DIR / "latest_analysis.json")
-    (SITE_DIR / "data").mkdir(parents=True, exist_ok=True)
-    copy_text(REPORT_DIR / "latest_analysis.json", SITE_DIR / "data" / "latest_analysis.json")
     write_alias(SITE_DIR / "latest_analysis.json", "最新分析資料.json")
     copy_text(REPORT_DIR / "system_health_report.md", SITE_DIR / "system_health_report.md")
     write_alias(SITE_DIR / "system_health_report.md", "系統健康報告.md")
@@ -1735,7 +1168,6 @@ def main():
     write_pwa_files()
     write_install_page()
     write_alias(SITE_DIR / "install.html", "安裝手機版.html")
-    apply_mobile_open_sync_to_site_html()
     print(SITE_DIR / "index.html")
 
 

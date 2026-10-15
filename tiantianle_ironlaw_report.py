@@ -5823,6 +5823,9 @@ def save_reports():
     MONTHLY_HTML.write_text(monthly_html, encoding="utf-8")
     MAIN_MD.write_text(report_md, encoding="utf-8")
     HISTORY_HTML.write_text(history_html, encoding="utf-8")
+    if analysis.get('ensemble50'):
+        from ensemble50 import attach_reports
+        attach_reports(analysis, REPORT_DIR)
     for source, aliases in {
         MAIN_HTML: [
             "天天樂完整戰報.html",

@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 from aerospace_engine import compute_aerospace_assurance
 from industrial_engine import compute_industrial_analysis
 from tiantianle_core import compute_tiantianle_core_analysis
+from ensemble50 import compute as compute_ensemble50, attach_reports as attach_ensemble50_reports
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -47,15 +48,19 @@ IMPORT_REPORT_MD = REPORT_DIR / "csv_import_report.md"
 VALIDATION_REPORT_MD = REPORT_DIR / "source_validation_report.md"
 HEALTH_REPORT_MD = REPORT_DIR / "system_health_report.md"
 DATA_INTEGRITY_REPORT_MD = REPORT_DIR / "data_integrity_report.md"
-NUMBER_MIN = 1
 NUMBER_MAX = 39
 DRAW_SIZE = 5
 WINDOWS = [5, 10, 20, 50, 100]
 PACK_GOALS = {
+    "two_hit_two": 2,
+    "three_hit_three": 3,
+    "five_hit_five": 5,
+    "seven_hit_five": 5,
+    "nine_hit_five": 5,
     "strong_single": 1,
     "two_hit_one": 1,
-    "three_hit_two": 1,
-    "five_hit_two": 1,
+    "three_hit_two": 2,
+    "five_hit_two": 2,
     "nine_hit_three": 3,
     "precision_single": 1,
     "precision_two_hit_one": 1,
@@ -65,7 +70,7 @@ CALIFORNIA_TZ = ZoneInfo("America/Los_Angeles")
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 FULL_HISTORY_START_YEAR = 1992
 FULL_HISTORY_MIN_ROWS = 3000
-ENGINE_VERSION = "美國加州天天樂_20260812_第18版_零中族群急救版"
+ENGINE_VERSION = "天天樂最新版鐵律第4版_20260721"
 OFFICIAL_LATEST_URL = "https://www.calottery.com/en/draw-games/fantasy-5"
 LATEST_CONSENSUS_MIN_SOURCES = 2
 HISTORY_SOURCES = [
@@ -165,7 +170,7 @@ def iso_local(dt):
 
 def latest_allowed_draw_date():
     ca_now = california_now()
-    if (ca_now.hour, ca_now.minute) >= (19, 0):
+    if (ca_now.hour, ca_now.minute) >= (18, 50):
         return ca_now.date().isoformat()
     return (ca_now.date() - timedelta(days=1)).isoformat()
 
@@ -995,6 +1000,27 @@ def fetch_latest_results(conn):
     }
 
 
+def repair_recent_history(conn):
+    """Repair gaps in the latest 120 days from two agreeing annual sources."""
+    recent = conn.execute('SELECT draw_date FROM draws ORDER BY draw_date DESC LIMIT 121').fetchall()
+    gaps = [(a[0], b[0]) for a,b in zip(recent,recent[1:])
+            if (date.fromisoformat(a[0])-date.fromisoformat(b[0])).days != 1]
+    if not gaps:
+        return {'status':'complete','gaps':0}
+    sources, errors = [], []
+    years = sorted({date.fromisoformat(d).year for pair in gaps for d in pair})
+    for year in years:
+        for url in (f'https://www.lottery.net/california/fantasy-5/numbers/{year}',
+                    f'https://lotterycorner.com/ca/fantasy-5/{year}'):
+            try:
+                sources.append((url, parse_year_page(http_text(url),year)))
+            except Exception as exc:
+                errors.append(f'{url}: {type(exc).__name__}')
+    summary = apply_consensus_draws(conn,sources,'annual_gap_repair')
+    conn.commit()
+    return {'gaps_before':len(gaps),'consensus':summary,'errors':errors}
+
+
 def import_cached_latest_pages(conn):
     setup_dirs()
     current_year = california_now().year
@@ -1150,7 +1176,7 @@ def data_freshness(latest_draw_date):
     target = latest + timedelta(days=1)
     latest_release = draw_release_times(latest.isoformat())
     target_release = draw_release_times(target.isoformat())
-    draw_result_due = (ca_now.hour, ca_now.minute) >= (19, 0)
+    draw_result_due = (ca_now.hour, ca_now.minute) >= (18, 50)
     if age_days < 0:
         status = "future_data_error"
     elif age_days == 0:
@@ -1248,8 +1274,8 @@ def build_packs(candidates):
     return {
         "strong_single": {"name": "\u7368\u652f\u7cbe\u6e961\u4e2d1", "hit_goal": 1, "hit_goal_max": 1, "numbers": nums[:1], "theoretical_probability": theoretical_probability(1, 1)},
         "two_hit_one": {"name": "\u6700\u5f372\u4e2d1~2", "hit_goal": 1, "hit_goal_max": 2, "numbers": nums[:2], "theoretical_probability": theoretical_probability(2, 1)},
-        "three_hit_two": {"name": "\u6700\u5f373\u4e2d1~3", "hit_goal": 1, "hit_goal_max": 3, "numbers": nums[:3], "theoretical_probability": theoretical_probability(3, 1)},
-        "five_hit_two": {"name": "\u6700\u5f375\u4e2d1~5", "hit_goal": 1, "hit_goal_max": 5, "numbers": nums[:5], "theoretical_probability": theoretical_probability(5, 1)},
+        "three_hit_two": {"name": "\u6700\u5f373\u4e2d2~3", "hit_goal": 2, "hit_goal_max": 3, "numbers": nums[:3], "theoretical_probability": theoretical_probability(3, 2)},
+        "five_hit_two": {"name": "\u7a69\u5b9a5\u4e2d2~3", "hit_goal": 2, "hit_goal_max": 3, "numbers": nums[:5], "theoretical_probability": theoretical_probability(5, 2)},
         "nine_hit_three": {"name": "\u6700\u5f379\u4e2d3~5", "hit_goal": 3, "hit_goal_max": 5, "numbers": nums[:9], "theoretical_probability": theoretical_probability(9, 3)},
     }
 
@@ -1656,118 +1682,6 @@ def monthly_low_probability_review(conn):
     }
 
 
-def low_probability_error_recovery_review(conn, limit=70, recent_limit=12):
-    rows = conn.execute(
-        """
-        SELECT target_date,actual_date,results_json
-        FROM low_probability_records
-        WHERE status='settled' AND results_json IS NOT NULL
-        ORDER BY actual_date DESC,id DESC
-        LIMIT ?
-        """,
-        (limit,),
-    ).fetchall()
-    if not rows:
-        return {
-            "active": False,
-            "sample_size": 0,
-            "summary": {},
-            "frequent_numbers": [],
-            "hard_block_low_probability_numbers": [],
-            "message": "尚無低機率誤開樣本",
-        }
-    pack_counter = {
-        "five_miss": Counter(),
-        "ten_miss": Counter(),
-        "fifteen_miss": Counter(),
-    }
-    pack_rounds = Counter()
-    pack_hit_rounds = Counter()
-    pack_hit_total = Counter()
-    number_counter = Counter()
-    recent_counter = Counter()
-    weighted_counter = Counter()
-    first_seen = {}
-    last_seen = {}
-    for index, row in enumerate(rows):
-        target_date, actual_date, results_json = row
-        try:
-            results = json.loads(results_json or "{}")
-        except Exception:
-            results = {}
-        recency_weight = 1.0 + max(0.0, (recent_limit - index) / max(1, recent_limit)) * 1.15
-        for key in pack_counter:
-            item = results.get(key) or {}
-            hits = [
-                int(number)
-                for number in (item.get("hit_numbers") or [])
-                if str(number).isdigit() and 1 <= int(number) <= 39
-            ]
-            pack_rounds[key] += 1
-            pack_hit_total[key] += len(hits)
-            if hits:
-                pack_hit_rounds[key] += 1
-            for number in hits:
-                pack_counter[key][number] += 1
-                number_counter[number] += 1
-                weighted_counter[number] += recency_weight
-                if index < recent_limit:
-                    recent_counter[number] += 1
-                first_seen.setdefault(number, actual_date or target_date)
-                last_seen[number] = actual_date or target_date
-    pack_summary = {}
-    for key, label in [("five_miss", "5不中"), ("ten_miss", "10不中"), ("fifteen_miss", "15不中")]:
-        rounds = pack_rounds[key] or 1
-        pack_summary[key] = {
-            "name": label,
-            "rounds": pack_rounds[key],
-            "hit_rounds": pack_hit_rounds[key],
-            "hit_round_rate": round(pack_hit_rounds[key] / rounds, 3),
-            "avg_accidental_hits": round(pack_hit_total[key] / rounds, 3),
-            "frequent_hit_numbers": [{"number": n, "count": c} for n, c in pack_counter[key].most_common(12)],
-        }
-    frequent = []
-    for number, count in number_counter.most_common():
-        five_hits = pack_counter["five_miss"].get(number, 0)
-        ten_hits = pack_counter["ten_miss"].get(number, 0)
-        fifteen_hits = pack_counter["fifteen_miss"].get(number, 0)
-        weighted = weighted_counter[number] + five_hits * 0.75 + ten_hits * 0.35
-        frequent.append({
-            "number": number,
-            "count": count,
-            "recent_count": recent_counter.get(number, 0),
-            "weighted_score": round(weighted, 3),
-            "five_miss_hits": five_hits,
-            "ten_miss_hits": ten_hits,
-            "fifteen_miss_hits": fifteen_hits,
-            "first_seen": first_seen.get(number),
-            "last_seen": last_seen.get(number),
-        })
-    frequent.sort(key=lambda item: (item["recent_count"], item["weighted_score"], item["count"], -item["number"]), reverse=True)
-    hard_block = [
-        item["number"]
-        for item in frequent
-        if item["recent_count"] >= 1 or item["count"] >= 2 or item["five_miss_hits"] >= 1
-    ][:18]
-    active = bool(hard_block) or any(
-        value.get("avg_accidental_hits", 0) > threshold
-        for value, threshold in [
-            (pack_summary.get("five_miss", {}), 0.55),
-            (pack_summary.get("ten_miss", {}), 0.85),
-            (pack_summary.get("fifteen_miss", {}), 1.15),
-        ]
-    )
-    return {
-        "active": active,
-        "sample_size": len(rows),
-        "recent_limit": recent_limit,
-        "summary": pack_summary,
-        "frequent_numbers": frequent[:18],
-        "hard_block_low_probability_numbers": hard_block,
-        "message": "低機率誤開已轉入主排序回收，並封鎖再次列入低機率核心。" if active else "低機率誤開未達回收門檻。",
-    }
-
-
 def apply_low_probability_monthly_guard(analysis):
     monthly = analysis.get("monthly_low_probability_review") or {}
     pack_summary = monthly.get("pack_summary") or {}
@@ -1938,15 +1852,13 @@ def backfill_predictions_from_snapshots(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", [])
-            hit_numbers = sorted(set(numbers) & actual_numbers)
-            hits = len(hit_numbers)
+            hits = len(set(numbers) & actual_numbers)
             goal = PACK_GOALS.get(key, int(pack.get("hit_goal", 1) or 1))
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
-                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         conn.execute(
@@ -2014,15 +1926,13 @@ def _settle_prediction_payload(conn, based_on_date, target_date, candidates_json
     pack_hits = {}
     for key, pack in packs.items():
         numbers = pack.get("numbers", []) if isinstance(pack, dict) else []
-        hit_numbers = sorted(set(numbers) & actual_numbers)
-        hits = len(hit_numbers)
+        hits = len(set(numbers) & actual_numbers)
         goal = PACK_GOALS.get(key, int(pack.get("hit_goal", 1) or 1) if isinstance(pack, dict) else 1)
         pack_hits[key] = {
             "hits": hits,
             "hit_goal": goal,
             "passed": hits >= goal,
             "numbers": numbers,
-            "hit_numbers": hit_numbers,
             "missed_numbers": sorted(set(numbers) - actual_numbers),
         }
     existing = conn.execute(
@@ -2194,15 +2104,13 @@ def settle_predictions(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", [])
-            hit_numbers = sorted(set(numbers) & actual_numbers)
-            hits = len(hit_numbers)
+            hits = len(set(numbers) & actual_numbers)
             goal = PACK_GOALS.get(key, 1)
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
-                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         conn.execute(
@@ -2234,15 +2142,6 @@ def _settled_prediction_from_row(row):
     actual_numbers = json.loads(row[3] or "[]")
     candidate_numbers = [item.get("number") for item in candidates if isinstance(item, dict)]
     actual_set = set(actual_numbers)
-    top5 = candidate_numbers[:5]
-    top9 = candidate_numbers[:9]
-    top10 = candidate_numbers[:10]
-    top15 = candidate_numbers[:15]
-    top5_hit_numbers = sorted(set(top5) & actual_set)
-    top9_hit_numbers = sorted(set(top9) & actual_set)
-    top10_hit_numbers = sorted(set(top10) & actual_set)
-    top15_hit_numbers = sorted(set(top15) & actual_set)
-    rank_10_to_15_hit_numbers = sorted(set(candidate_numbers[9:15]) & actual_set)
     candidate_review = []
     for idx, item in enumerate(candidates[:15], 1):
         if not isinstance(item, dict):
@@ -2264,17 +2163,6 @@ def _settled_prediction_from_row(row):
         "actual_period": row[2],
         "actual_numbers": actual_numbers,
         "candidate_numbers": candidate_numbers,
-        "top5": top5,
-        "top9": top9,
-        "top10": top10,
-        "top15": top15,
-        "hit_numbers": top15_hit_numbers,
-        "top5_hit_numbers": top5_hit_numbers,
-        "top9_hit_numbers": top9_hit_numbers,
-        "top10_hit_numbers": top10_hit_numbers,
-        "top15_hit_numbers": top15_hit_numbers,
-        "rank_10_to_15_hit_numbers": rank_10_to_15_hit_numbers,
-        "missed_actual_numbers": sorted(actual_set - set(top15)),
         "candidate_review": candidate_review,
         "strong_pack_hits": json.loads(row[5] or "{}"),
         "top5_hits": row[6] or 0,
@@ -2434,15 +2322,13 @@ def failure_review(conn):
         pack_hits = {}
         for key, pack in packs.items():
             numbers = pack.get("numbers", []) if isinstance(pack, dict) else []
-            hit_numbers = sorted(set(numbers) & actual_numbers)
-            hits = len(hit_numbers)
+            hits = len(set(numbers) & actual_numbers)
             goal = PACK_GOALS.get(key, 1)
             pack_hits[key] = {
                 "hits": hits,
                 "hit_goal": goal,
                 "passed": hits >= goal,
                 "numbers": numbers,
-                "hit_numbers": hit_numbers,
                 "missed_numbers": sorted(set(numbers) - actual_numbers),
             }
         rows.append(
@@ -2494,12 +2380,9 @@ def failure_review(conn):
     avg_top10 = round(sum(top10_values) / sample_size, 3)
     avg_top15 = round(sum(top15_values) / sample_size, 3)
     zero_top10_count = sum(1 for value in top10_values if value == 0)
-    zero_top15_count = sum(1 for value in top15_values if value == 0)
     weak_top10_count = sum(1 for value in top10_values if value <= 1)
-    latest_settled = settled_items[0] if settled_items else {}
-    latest_zero_top15 = bool(int(latest_settled.get("top15_hits", 0) or 0) == 0)
     severity = "normal"
-    if latest_zero_top15 or avg_top10 < 1.2 or zero_top10_count >= 2 or zero_top15_count >= 1:
+    if avg_top10 < 1.2 or zero_top10_count >= 2:
         severity = "critical"
     elif avg_top10 < 2.0 or weak_top10_count >= 2:
         severity = "warning"
@@ -2519,7 +2402,6 @@ def failure_review(conn):
     ]
 
     monthly_review = monthly_prediction_review(conn)
-    low_error_review = low_probability_error_recovery_review(conn)
     actions = [
         u"\u6700\u8fd15\u671f\u5df2\u7d0d\u5165\u6efe\u52d5\u6aa2\u8a0e\uff0cTop10\u5e73\u5747\u547d\u4e2d\u70ba"
         f" {avg_top10}",
@@ -2531,11 +2413,6 @@ def failure_review(conn):
             u"\u672c\u6708\u7e3d\u6aa2\u8a0e\u5df2\u7d0d\u5165\uff1aTop10\u5e73\u5747 "
             + str(monthly_review.get("avg_top10_hits"))
             + u"\uff0c\u5f37\u7368\u82075\u4e2d2\u672a\u904e\u5be6\u6230\u9580\u6abb\uff0c\u6539\u4ee5\u89c0\u5bdf\u6c60\u8207\u6708\u5ea6\u964d\u6b0a\u904b\u884c"
-        )
-    if low_error_review.get("active"):
-        actions.append(
-            u"\u4f4e\u6a5f\u7387\u8aa4\u958b\u5df2\u5f37\u5236\u56de\u6536\u9032\u4e3b\u6392\u5e8f\uff0c\u7981\u6b62\u518d\u5217\u4f4e\u6a5f\u7387\u6838\u5fc3\uff1a"
-            + fmt_numbers(low_error_review.get("hard_block_low_probability_numbers", [])[:9])
         )
     if pack_fail_counts:
         actions.append(
@@ -2551,10 +2428,6 @@ def failure_review(conn):
         actions.append(
             u"\u6a21\u578b\u5df2\u964d\u4f4e\u77ed\u671f\u71b1\u865f\u8207\u9023\u838a\u6b0a\u91cd\uff0c\u6539\u63d0\u9ad8\u907a\u6f0f\u3001\u5171\u73fe\u3001\u4e2d\u671f\u7a69\u5b9a\u6b0a\u91cd"
         )
-    if latest_zero_top15:
-        actions.append(
-            u"\u672c\u671f\u524d\u5341\u4e94\u5168\u843d\u7a7a\uff0c\u5df2\u555f\u52d5\u524d\u5341\u4e94\u786c\u9694\u96e2\u8207\u96f6\u547d\u4e2d\u53cd\u5411\u91cd\u5efa"
-        )
 
     return {
         "has_review": True,
@@ -2563,15 +2436,12 @@ def failure_review(conn):
         "last_settled": settled_items[0],
         "recent_settled": settled_items,
         "monthly_review": monthly_review,
-        "low_probability_error_recovery": low_error_review,
         "rolling_summary": {
             "sample_size": sample_size,
             "avg_top5_hits": avg_top5,
             "avg_top10_hits": avg_top10,
             "avg_top15_hits": avg_top15,
             "zero_top10_count": zero_top10_count,
-            "zero_top15_count": zero_top15_count,
-            "latest_zero_top15": latest_zero_top15,
             "weak_top10_count": weak_top10_count,
             "failed_number_counts": dict(failed_counts.most_common(15)),
             "hit_number_counts": dict(hit_counts.most_common(15)),
@@ -2774,15 +2644,9 @@ def _build_low_probability_avoid(industrial, candidates):
     source_items = [dict(item) for item in (((industrial or {}).get("unlikely_number_analysis") or {}).get("numbers") or [])]
     used = {int(item.get("number")) for item in source_items if item.get("number") is not None}
     latest_numbers = {int(number) for number in (((industrial or {}).get("recent_draw_firewall") or {}).get("latest_numbers") or [])}
-    low_error = (industrial or {}).get("low_probability_error_recovery") or {}
-    hard_block_low = {
-        int(number)
-        for number in (low_error.get("hard_block_low_probability_numbers") or [])
-        if str(number).isdigit()
-    }
     for item in reversed(candidates or []):
         number = int(item.get("number"))
-        if number in used or number in hard_block_low:
+        if number in used:
             continue
         rank = int(item.get("rank", 99))
         latest_blocked = number in latest_numbers
@@ -2802,26 +2666,18 @@ def _build_low_probability_avoid(industrial, candidates):
         if len(source_items) >= NUMBER_MAX:
             break
     profiles = [_avoid_confidence_profile(item) for item in source_items]
-    for item in profiles:
-        number = int(item.get("number", 0) or 0)
-        if number in hard_block_low:
-            item["avoid_blocked_by_recent_hit_risk"] = True
-            item["low_probability_error_blocked"] = True
-            reasons = list(item.get("reasons") or [])
-            reasons.insert(0, "低機率誤開回收封鎖")
-            item["reasons"] = list(dict.fromkeys(reasons))[:6]
 
     def avoid_rank(item):
         return _safe_int(item.get("candidate_rank", 99), 99)
 
     ordered_profiles = []
     buckets = [
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) <= 9],
-        [item for item in profiles if int(item.get("number", 0)) not in hard_block_low and int(item.get("number", 0)) in latest_numbers],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and not item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) > 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and 9 < avoid_rank(item) <= 15 and item.get("avoid_blocked_by_recent_hit_risk")],
+        [item for item in profiles if int(item.get("number", 0)) not in latest_numbers and avoid_rank(item) <= 9],
+        [item for item in profiles if int(item.get("number", 0)) in latest_numbers],
     ]
     used_numbers = set()
     for bucket in buckets:
@@ -2847,7 +2703,6 @@ def _build_low_probability_avoid(industrial, candidates):
     }
     return {
         "warning": "低機率與不中清單是風控避開模型，不是絕對保證；每期仍會重新驗證與回測。",
-        "low_probability_error_recovery_blocked_numbers": sorted(hard_block_low),
         "groups": groups,
         "avoid_packs": avoid_packs,
         "backtest": (industrial or {}).get("unlikely_backtest") or {},
@@ -2888,39 +2743,22 @@ def _build_latest_ironlaw_decision(strict_policy, avoid_policy, strong_packs, ca
     top_numbers = [int(item.get("number")) for item in (candidates or [])]
     high_rows = _decision_high_confidence_numbers(strict_policy, candidates)
     high_numbers = [int(item.get("number")) for item in high_rows]
-    validation = (industrial or {}).get("strong_single_validation") or {}
-    validated_single = []
-    try:
-        number = int(validation.get("number"))
-        if validation.get("status") in {"已驗證", "verified"} and NUMBER_MIN <= number <= NUMBER_MAX:
-            validated_single = [number]
-    except (TypeError, ValueError):
-        validated_single = []
-    priority_numbers = validated_single + high_numbers
-    priority_seen = set(priority_numbers)
-    high_first_numbers = priority_numbers + [number for number in top_numbers if number not in priority_seen]
-    fallback = high_first_numbers or top_numbers
+    fallback = high_numbers or top_numbers
     formal = bool((strict_policy or {}).get("formal_recommendations"))
     grade = "甲級" if formal else ("乙級" if high_numbers else "丙級")
     action_label = "正式高信心推薦" if formal else ("高信心觀察強化" if high_numbers else "嚴格觀察等待再驗證")
     avoid_packs = (avoid_policy or {}).get("avoid_packs") or {}
     defensive_avoid = (avoid_packs.get("ten_miss") or {}).get("numbers") or [item.get("number") for item in ((avoid_policy or {}).get("groups") or {}).get("十不中", [])]
     return {
-        "version": ENGINE_VERSION,
+        "version": "天天樂最新版鐵律第4版_20260721",
         "action_label": action_label,
         "grade": grade,
-        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1、2中1~2、3中1~3、5中1~5為基本配置",
-        "ironlaw_targets": {
-            "獨隻": "1中1必須每期輸出並列明驗算來源",
-            "五碼": "5中1~5為基本配置，命中顆數逐期回測",
-            "九碼": "9中2為最低標準，9中3以上為強化目標",
-            "低機率": "近期誤開號碼禁止列入低機率核心，必須轉入回收檢討",
-        },
-        "primary_single": fallback[:1] or _pack_numbers(strong_packs, "strong_single", fallback, 1),
-        "two_hit_one": fallback[:2] or _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
-        "three_hit_one": fallback[:3] or _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
-        "five_hit_two": fallback[:5] or _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
-        "nine_hit_three": fallback[:9] or _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
+        "conclusion": f"{action_label} / 等級 {grade} / 每期重算完成 / 高信心限九碼內顯示",
+        "primary_single": _pack_numbers(strong_packs, "strong_single", fallback, 1),
+        "two_hit_one": _pack_numbers(strong_packs, "two_hit_one", fallback, 2),
+        "three_hit_one": _pack_numbers(strong_packs, "three_hit_two", fallback, 3),
+        "five_hit_two": _pack_numbers(strong_packs, "five_hit_two", fallback, 5),
+        "nine_hit_three": _pack_numbers(strong_packs, "nine_hit_three", fallback, 9),
         "high_confidence_numbers": high_rows,
         "high_confidence_core": high_numbers[:9],
         "defensive_avoid": [int(n) for n in defensive_avoid[:10] if n is not None],
@@ -2979,7 +2817,13 @@ def analyze(draws, review=None):
     elif aerospace["release_assurance"]["status"] == "watch_only":
         industrial.setdefault("release_gate", {})["aerospace_status"] = "watch_only"
     candidates = tiantianle_core["candidates"]
-    official_candidates = tiantianle_core.get("official_candidates", candidates)
+    ensemble50 = compute_ensemble50(draws)
+    consensus_order = {n: i for i, n in enumerate(ensemble50['ranking'])}
+    candidates = sorted(candidates, key=lambda item: consensus_order[int(item['number'])])
+    required_keys = ('strong_single', 'two_hit_two', 'three_hit_three', 'five_hit_five', 'seven_hit_five', 'nine_hit_five')
+    required_packs = {key: dict(pack, theoretical_probability=theoretical_probability(len(pack['numbers']), pack['hit_goal']))
+                      for key, pack in zip(required_keys, ensemble50['packs'])}
+    tiantianle_core['strong_prediction_packs'].update(required_packs)
     freshness = data_freshness(draws[-1]["draw_date"])
     latest_source = draws[-1].get("source", "")
     latest_source_confirmed = source_is_confirmed(latest_source)
@@ -2993,11 +2837,13 @@ def analyze(draws, review=None):
         and industrial.get("release_gate", {}).get("status") == "official"
         and aerospace.get("release_assurance", {}).get("status") == "verified"
     )
-    strict_policy = _build_strict_recommendation_policy(official_candidates, industrial, official_release_allowed)
+    # The new consensus has not established a calibrated probability advantage.
+    official_release_allowed = False
+    strict_policy = _build_strict_recommendation_policy(candidates, industrial, official_release_allowed)
     avoid_policy = _build_low_probability_avoid(industrial, candidates)
-    recalculation = _build_recalculation_manifest(draws, official_candidates, industrial, review, freshness)
-    top_numbers = [int(item.get("number")) for item in official_candidates]
-    latest_ironlaw = _build_latest_ironlaw_decision(strict_policy, avoid_policy, tiantianle_core["strong_prediction_packs"], official_candidates, freshness, industrial)
+    recalculation = _build_recalculation_manifest(draws, candidates, industrial, review, freshness)
+    top_numbers = [int(item.get("number")) for item in candidates]
+    latest_ironlaw = _build_latest_ironlaw_decision(strict_policy, avoid_policy, tiantianle_core["strong_prediction_packs"], candidates, freshness, industrial)
     history_status = "complete" if len(draws) >= FULL_HISTORY_MIN_ROWS else ("partial" if len(draws) >= 180 else "seed_only")
     completeness = {
         "status": history_status,
@@ -3007,6 +2853,7 @@ def analyze(draws, review=None):
     }
     return {
         "engine_version": ENGINE_VERSION,
+        "ensemble50": ensemble50,
         "industrial_engine_version": industrial.get("engine_version"),
         "generated_at_taiwan": iso_local(taiwan_now()),
         "generated_at_california": iso_local(california_now()),
@@ -3047,7 +2894,7 @@ def analyze(draws, review=None):
         "primary_tiantianle_core": tiantianle_core,
         "aerospace_assurance": aerospace,
         "candidates": candidates,
-        "official_candidates": official_candidates,
+        "official_candidates": candidates,
         "strong_packs": tiantianle_core["strong_prediction_packs"],
         "precision_micro_models": tiantianle_core.get("precision_micro_models", industrial.get("precision_micro_models", {})),
         "suggested_sets": tiantianle_core["suggested_sets"],
@@ -3376,15 +3223,18 @@ def render_reports(conn, analysis):
     lines = [
         "# \u5929\u5929\u6a02\u9810\u6e2c\u6230\u5831",
         "",
-        f"- \u7522\u751f\u6642\u9593\uff1a\u53f0\u7063\u6642\u9593 {analysis['generated_at_taiwan'].replace('T', ' ')[:16]}",
+        f"- \u53f0\u7063\u7522\u751f\u6642\u9593\uff1a{analysis['generated_at_taiwan']}",
         f"- \u5f15\u64ce\u7248\u672c\uff1a{analysis.get('engine_version', '-')}",
         f"- \u5de5\u696d\u5f15\u64ce\uff1a{analysis.get('industrial_engine', {}).get('engine_version', '-')}",
         f"- \u767c\u5e03\u95dc\u5361\uff1a{analysis.get('industrial_engine', {}).get('release_gate', {}).get('status', '-')}",
         f"- \u822a\u592a\u4fdd\u8b49\uff1a{analysis.get('aerospace_assurance', {}).get('release_assurance', {}).get('status', '-')}",
-        f"- \u6700\u65b0\u958b\u734e\u53f0\u7063\u53ef\u78ba\u8a8d\u6642\u9593\uff1a\u53f0\u7063\u6642\u9593 {analysis['freshness'].get('latest_taiwan_safe_update_time', '-')} / {fmt_numbers(analysis['latest_draw']['numbers'])}",
+        f"- \u7576\u5730\u7522\u751f\u6642\u9593\uff1a{analysis['generated_at_california']}",
+        f"- \u7576\u5730\u65e5\u671f\uff1a{analysis['freshness']['california_today']}",
+        f"- \u7576\u5730\u6642\u9593\uff1a{analysis['freshness'].get('california_time', '-')}",
+        f"- \u6700\u65b0\u958b\u734e\u53f0\u7063\u53ef\u66f4\u65b0\u6642\u9593\uff1a{analysis['freshness'].get('latest_taiwan_safe_update_time', '-')} / {fmt_numbers(analysis['latest_draw']['numbers'])}",
         f"- \u6700\u65b0\u958b\u734e\u4f86\u6e90\uff1a{analysis['freshness'].get('latest_source', '-') or '-'}",
         f"- \u6700\u65b0\u4f86\u6e90\u78ba\u8a8d\uff1a{analysis['freshness'].get('latest_source_confirmed')}",
-        f"- \u4e0b\u671f\u958b\u734e\u6642\u9593\uff1a\u53f0\u7063\u6642\u9593 {analysis['freshness'].get('target_taiwan_safe_update_time', '-')}",
+        f"- \u9810\u6e2c\u958b\u734e\u53f0\u7063\u6642\u9593\uff1a{analysis['freshness'].get('target_taiwan_safe_update_time', '-')}",
         f"- \u8cc7\u6599\u72c0\u614b\uff1a{analysis['freshness']['status']} / \u843d\u5f8c {analysis['freshness']['age_days']} \u5929",
         f"- \u8cc7\u6599\u65b0\u9bae\u5ea6\u5141\u8a31\uff1a{analysis['freshness'].get('official_prediction_allowed')}",
         f"- \u6700\u7d42\u6b63\u5f0f\u767c\u5e03\u5141\u8a31\uff1a{analysis.get('official_release_allowed')}",
@@ -3435,7 +3285,7 @@ def balls(numbers, hot_set=None):
 def release_badge(analysis):
     status = analysis.get("industrial_engine", {}).get("release_gate", {}).get("status")
     allowed = analysis.get("official_release_allowed")
-    if allowed or status == "official":
+    if allowed:
         text = "\u6b63\u5f0f\u767c\u5e03"
         cls = "ok"
     elif status == "verified_research_complete":
@@ -3581,6 +3431,7 @@ def run(full=False):
         else:
             network_diag = {"status": "skipped_fast_update", "blocked_count": 0, "checks": []}
         latest_fetch = fetch_latest_results(conn)
+        latest_fetch['recent_history_repair'] = repair_recent_history(conn)
         refreshed_count = conn.execute("SELECT COUNT(*) FROM draws").fetchone()[0]
         if full or refreshed_count < FULL_HISTORY_MIN_ROWS:
             fetched, errors = fetch_history(conn, full=full)
@@ -3617,6 +3468,7 @@ def run(full=False):
             tiantianle_ironlaw_report.save_reports()
         except Exception as exc:
             log(f"ironlaw_report_failed {exc}")
+        attach_ensemble50_reports(analysis, REPORT_DIR)
         scraper_summary = render_history_scraper_report(conn)
         ok = file_check()
         history_status = analysis["history_completeness"]["status"]
