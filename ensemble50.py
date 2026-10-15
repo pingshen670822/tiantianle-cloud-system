@@ -122,6 +122,7 @@ def report_section(analysis):
     e=analysis['ensemble50']
     fresh=analysis.get('freshness',{})
     lines=['## 必備戰報規格與50組運算驗證',
+           f"- 最新核對時間（台灣）：{analysis.get('last_checked_at_taiwan', analysis.get('generated_at_taiwan', '待確認'))}",
            f"- 適用日期（加州開獎日）：{e['target_draw_date']}",
            f"- 對應台灣開獎時間：{fresh.get('target_taiwan_safe_update_time','待確認')}",
            f"- 資料截至：{e['based_on_date']}；資料狀態：{fresh.get('status','待確認')}",
@@ -141,6 +142,7 @@ def html_section(analysis):
                  f"{p['backtest_successes']}/{p['backtest_samples']} ({p['backtest_rate_percent']}%)",f"{p['random_baseline_percent']}%",p['wilson_95_percent']))+'</tr>' for p in e['packs'])
     details=''.join(f"<tr><td>{m['id']}</td><td>{m['family']}</td><td>{m['window']}</td><td>{m['validation']['top5_avg_hits']}</td><td>通過</td></tr>" for m in e['modules'])
     return f'''<section id="ensemble50-required"><h2>適用日期：{e['target_draw_date']}（加州開獎日）</h2>
+<p>最新核對時間（台灣）：{html.escape(str(analysis.get('last_checked_at_taiwan', analysis.get('generated_at_taiwan', '待確認'))))}</p>
 <p>台灣開獎時間：{html.escape(str(analysis.get('freshness',{}).get('target_taiwan_safe_update_time','待確認')))}；資料截至：{e['based_on_date']}；資料狀態：{html.escape(str(analysis.get('freshness',{}).get('status','待確認')))}</p>
 <h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝50組選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
 <div style="overflow:auto"><table><thead><tr><th>組別</th><th>號碼</th><th>模組共識信心</th><th>高機率狀態</th><th>逐期回測命中</th><th>隨機基準</th><th>95%信賴區間</th></tr></thead><tbody>{rows}</tbody></table></div>
