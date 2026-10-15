@@ -26,7 +26,6 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
     <style>
       .launch-panel{border:3px solid #166534!important;background:#f0fdf4!important}
       .mobile-action{display:block;width:100%;box-sizing:border-box;text-align:center;padding:18px;background:#166534;color:#fff!important;text-decoration:none;border:0;border-radius:8px;font-weight:900;font-size:20px;box-shadow:0 8px 18px rgba(22,101,52,.22)}
-      .repair-action{margin-top:10px;background:#991b1b}
       .mobile-refresh{display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:10px;padding:13px;background:#1d4ed8;color:#fff!important;border:0;border-radius:8px;font-weight:900;font-size:16px}
       .cloud-update-link{display:block;margin-top:12px;text-align:center;color:#1d4ed8;font-weight:900}
       .cloud-note{font-weight:800;color:#14532d;word-break:break-all}
@@ -34,48 +33,30 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       body{padding-bottom:82px}
       @media (max-width:640px){table{min-width:720px}.band{overflow-x:auto}.mobile-action{font-size:20px;padding:18px}}
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=20261014131621">
+    <link rel="manifest" href="manifest.webmanifest?v=20261015132429">
     <meta name="theme-color" content="#111827">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tiantianle">
     <link rel="apple-touch-icon" href="icon-192.png">
-    
-    <style>
-      .tiantianle-cloud-controls{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(150px,1fr) minmax(130px,1fr);gap:8px;align-items:center;margin-top:12px;padding:12px;background:#fff7ed;border:2px solid #f97316;border-radius:8px;font-family:"Microsoft JhengHei",Arial,sans-serif}
-      .tiantianle-cloud-title{font-weight:900;color:#7c2d12;white-space:nowrap}
-      .tiantianle-cloud-button{display:block;text-align:center;border-radius:8px;padding:13px 12px;color:#fff!important;text-decoration:none;font-weight:900;border:0;line-height:1.2;cursor:pointer}
-      .tiantianle-cloud-button.manual{background:#166534}
-      .tiantianle-cloud-button.repair{background:#991b1b}
-      .tiantianle-cloud-button.refresh{background:#1d4ed8}
-      .tiantianle-cloud-status{grid-column:1/-1;font-size:13px;color:#7c2d12;font-weight:800}
-      .tiantianle-cloud-status.primary-time{font-size:15px;color:#14532d;background:#dcfce7;border:1px solid #86efac;border-radius:7px;padding:7px 9px}
-      @media(max-width:680px){.tiantianle-cloud-controls{grid-template-columns:1fr}.tiantianle-cloud-title,.tiantianle-cloud-status{grid-column:1/-1}.tiantianle-cloud-button{font-size:16px;padding:14px 8px}}
-    </style>
     </head>
-<body><section class="band update-box"><h2>立刻更新到最新</h2>
-    <div id="tiantianleCloudControls" class="tiantianle-cloud-controls" aria-label="雲端操作">
-      <div class="tiantianle-cloud-title">雲端快速操作</div>
-      <a class="tiantianle-cloud-button manual" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('手動更新最新')">手動更新最新</a>
-      <a class="tiantianle-cloud-button repair" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener" onclick="tiantianlePrepareCloudAction('當機立即修復')">當機立即修復</a>
-      <button class="tiantianle-cloud-button refresh" type="button" onclick="tiantianleForceReadLatestNow()">重讀最新時間</button>
-      <div id="tiantianleLatestUpdateTime" class="tiantianle-cloud-status primary-time">目前最新更新時間：2026-10-14T10:26:44+08:00</div>
-      <div id="tiantianleLatestDrawLine" class="tiantianle-cloud-status">最新開獎：2026-10-13　03 04 06 11 26 / 下期：2026-10-14　2026-10-15 09:50</div>
-      <div id="tiantianleCloudActionStatus" class="tiantianle-cloud-status">手機按鈕會開啟雲端工作流，本頁會每15秒重讀最新時間</div>
-    </div>
-    </section>
-<header><h1>天天樂 手機雲端首頁</h1><p>產生 台灣時間 2026-10-14 10:26 / 最新開獎 台灣時間 2026-10-14 09:50 / 下期開獎 台灣時間 2026-10-15 09:50</p></header>
-<main>
+<body>
+<header><h1>天天樂 手機雲端首頁</h1><p>報表產生 2026-10-15 13:24 / 台灣最新可確認時間 2026-10-15 09:50 台灣時間 / 下期預測台灣時間 2026-10-16 09:50 台灣時間</p></header>
+<main><section id="ensemble50-required"><h2>適用日期：2026-10-15（加州開獎日）</h2>
+<p>台灣開獎時間：2026-10-16 09:50；資料截至：2026-10-14；資料狀態：ok</p>
+<h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝50組選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
+<div style="overflow:auto"><table><thead><tr><th>組別</th><th>號碼</th><th>模組共識信心</th><th>高機率狀態</th><th>逐期回測命中</th><th>隨機基準</th><th>95%信賴區間</th></tr></thead><tbody><tr><td>終極獨隻</td><td>02</td><td>4.0%</td><td>未證實高機率／觀察</td><td>9/60 (15.0%)</td><td>12.820513%</td><td>[8.1, 26.11]</td></tr><tr><td>2中2</td><td>02、27</td><td>11.0%</td><td>未證實高機率／觀察</td><td>1/60 (1.67%)</td><td>1.349528%</td><td>[0.29, 8.86]</td></tr><tr><td>3中3</td><td>02、10、27</td><td>22.0%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.109421%</td><td>[0, 6.02]</td></tr><tr><td>5中5</td><td>02、10、11、27、33</td><td>39.2%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.000174%</td><td>[0, 6.02]</td></tr><tr><td>7中5</td><td>02、10、11、15、19、27、33</td><td>45.71%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.003647%</td><td>[0, 6.02]</td></tr><tr><td>9中5</td><td>02、06、10、11、15、19、27、33、39</td><td>50.22%</td><td>未證實高機率／觀察</td><td>0/60 (0.0%)</td><td>0.021884%</td><td>[0, 6.02]</td></tr></tbody></table></div>
+<p>50／50運算完成，50／50結構驗證通過；最近60期逐期回測，每期只使用開獎前資料。</p>
+<details><summary>50組模組驗證明細</summary><table><tr><th>模組</th><th>方法</th><th>視窗期數</th><th>Top5平均命中（隨機基準0.6410）</th><th>結構驗證</th></tr><tr><td>M01</td><td>頻率平滑</td><td>10</td><td>0.6</td><td>通過</td></tr><tr><td>M02</td><td>頻率平滑</td><td>20</td><td>0.5833</td><td>通過</td></tr><tr><td>M03</td><td>頻率平滑</td><td>30</td><td>0.6</td><td>通過</td></tr><tr><td>M04</td><td>頻率平滑</td><td>45</td><td>0.4833</td><td>通過</td></tr><tr><td>M05</td><td>頻率平滑</td><td>60</td><td>0.55</td><td>通過</td></tr><tr><td>M06</td><td>頻率平滑</td><td>90</td><td>0.65</td><td>通過</td></tr><tr><td>M07</td><td>頻率平滑</td><td>120</td><td>0.6167</td><td>通過</td></tr><tr><td>M08</td><td>頻率平滑</td><td>180</td><td>0.4833</td><td>通過</td></tr><tr><td>M09</td><td>頻率平滑</td><td>365</td><td>0.6333</td><td>通過</td></tr><tr><td>M10</td><td>頻率平滑</td><td>720</td><td>0.7</td><td>通過</td></tr><tr><td>M11</td><td>指數動量</td><td>10</td><td>0.65</td><td>通過</td></tr><tr><td>M12</td><td>指數動量</td><td>20</td><td>0.6333</td><td>通過</td></tr><tr><td>M13</td><td>指數動量</td><td>30</td><td>0.6</td><td>通過</td></tr><tr><td>M14</td><td>指數動量</td><td>45</td><td>0.45</td><td>通過</td></tr><tr><td>M15</td><td>指數動量</td><td>60</td><td>0.5333</td><td>通過</td></tr><tr><td>M16</td><td>指數動量</td><td>90</td><td>0.5333</td><td>通過</td></tr><tr><td>M17</td><td>指數動量</td><td>120</td><td>0.5667</td><td>通過</td></tr><tr><td>M18</td><td>指數動量</td><td>180</td><td>0.55</td><td>通過</td></tr><tr><td>M19</td><td>指數動量</td><td>365</td><td>0.6</td><td>通過</td></tr><tr><td>M20</td><td>指數動量</td><td>720</td><td>0.6167</td><td>通過</td></tr><tr><td>M21</td><td>間隔危險率</td><td>10</td><td>0.8167</td><td>通過</td></tr><tr><td>M22</td><td>間隔危險率</td><td>20</td><td>0.6333</td><td>通過</td></tr><tr><td>M23</td><td>間隔危險率</td><td>30</td><td>0.65</td><td>通過</td></tr><tr><td>M24</td><td>間隔危險率</td><td>45</td><td>0.6167</td><td>通過</td></tr><tr><td>M25</td><td>間隔危險率</td><td>60</td><td>0.55</td><td>通過</td></tr><tr><td>M26</td><td>間隔危險率</td><td>90</td><td>0.6833</td><td>通過</td></tr><tr><td>M27</td><td>間隔危險率</td><td>120</td><td>0.65</td><td>通過</td></tr><tr><td>M28</td><td>間隔危險率</td><td>180</td><td>0.5667</td><td>通過</td></tr><tr><td>M29</td><td>間隔危險率</td><td>365</td><td>0.55</td><td>通過</td></tr><tr><td>M30</td><td>間隔危險率</td><td>720</td><td>0.55</td><td>通過</td></tr><tr><td>M31</td><td>前期轉移</td><td>10</td><td>0.7</td><td>通過</td></tr><tr><td>M32</td><td>前期轉移</td><td>20</td><td>0.65</td><td>通過</td></tr><tr><td>M33</td><td>前期轉移</td><td>30</td><td>0.5833</td><td>通過</td></tr><tr><td>M34</td><td>前期轉移</td><td>45</td><td>0.6333</td><td>通過</td></tr><tr><td>M35</td><td>前期轉移</td><td>60</td><td>0.6167</td><td>通過</td></tr><tr><td>M36</td><td>前期轉移</td><td>90</td><td>0.6667</td><td>通過</td></tr><tr><td>M37</td><td>前期轉移</td><td>120</td><td>0.6167</td><td>通過</td></tr><tr><td>M38</td><td>前期轉移</td><td>180</td><td>0.6833</td><td>通過</td></tr><tr><td>M39</td><td>前期轉移</td><td>365</td><td>0.65</td><td>通過</td></tr><tr><td>M40</td><td>前期轉移</td><td>720</td><td>0.6167</td><td>通過</td></tr><tr><td>M41</td><td>共現關聯</td><td>10</td><td>0.7167</td><td>通過</td></tr><tr><td>M42</td><td>共現關聯</td><td>20</td><td>0.7333</td><td>通過</td></tr><tr><td>M43</td><td>共現關聯</td><td>30</td><td>0.6667</td><td>通過</td></tr><tr><td>M44</td><td>共現關聯</td><td>45</td><td>0.6</td><td>通過</td></tr><tr><td>M45</td><td>共現關聯</td><td>60</td><td>0.6333</td><td>通過</td></tr><tr><td>M46</td><td>共現關聯</td><td>90</td><td>0.7167</td><td>通過</td></tr><tr><td>M47</td><td>共現關聯</td><td>120</td><td>0.6833</td><td>通過</td></tr><tr><td>M48</td><td>共現關聯</td><td>180</td><td>0.6833</td><td>通過</td></tr><tr><td>M49</td><td>共現關聯</td><td>365</td><td>0.6333</td><td>通過</td></tr><tr><td>M50</td><td>共現關聯</td><td>720</td><td>0.6667</td><td>通過</td></tr></table></details></section>
     <section class="band launch-panel">
       <h2>天天樂手機雲端獨立版</h2>
-      <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新最新開獎</a>
-      <a class="mobile-action repair-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml">當機立即修復</a>
+      <a class="mobile-action" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新最新開獎</a>
       <button class="mobile-refresh" type="button" onclick="forceRefresh()">重新讀取雲端最新頁</button>
-      <a class="cloud-update-link" href="force-sync-20261014131621.html?v=20261014131621">手機不一樣點這裡強制同步</a>
+      <a class="cloud-update-link" href="清除快取.html?v=20261015132429">手機沒更新點這裡清除舊快取</a>
       <p class="cloud-note">雲端網址：<span>已設定，手機可直接收藏本頁</span></p>
-      <p class="cloud-note" id="mobileUpdateStatus">版本 20261014131621</p>
+      <p class="cloud-note" id="mobileUpdateStatus">版本 20261015132429</p>
       
     </section>
-    <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">一鍵雲端更新</a>
+    <a class="mobile-action sticky-launch" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">一鍵雲端更新</a>
     
 <nav class="tabs">
 <a class="active" href="首頁.html">首頁</a>
@@ -89,30 +70,29 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
 <section class="band"><a class="primary danger" href="上期未命中檢討.html">查看上期未命中檢討</a></section>
 <section class="band"><a class="primary secondary" href="每月總整理.html">查看每月總整理</a></section>
 <section class="band"><a class="primary secondary" href="reports/complete_report.html">查看完整戰報</a></section>
-<section class="band"><a class="primary secondary" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml">立即雲端更新</a><p class="url">手機雲端網址已設定</p></section>
-<section class="band signal-focus"><h2>戰報基本配置</h2><p><strong>以下五項為天天樂戰報固定基本欄位，每次重算必須出現。</strong></p><table><tr><th>#</th><th>項目</th><th>內容</th></tr><tr><th>1</th><th>預測日</th><td>2026-10-14 / 台灣時間 2026-10-15 09:50</td></tr><tr><th>2</th><th>最強高機率獨隻</th><td>02</td></tr><tr><th>3</th><th>最強高機率2中1~2</th><td>02 27</td></tr><tr><th>4</th><th>最強高機率3中1~3</th><td>02 27 33</td></tr><tr><th>5</th><th>最強高機率5中1~5</th><td>02 27 33 09 05</td></tr><tr><th>6</th><th>獨支由來</th><td>十重驗證守門：通過，通過 17/17，最低門檻 10 項。；超級獨支競賽模型選中 02，本期只輸出這一顆。；勝出模型：貝氏馬可夫獨支；最近720期獨支回測命中率 13.19%，最近60期 11.67%。</td></tr></table></section>
-<section class='band diagnosis'><h2>每期重算證明</h2><p><strong>已重新運算</strong>：本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。</p><p>重算指紋：cfdf52af2a96bd9a</p><p>依據開獎：2026-10-13 03 04 06 11 26</p><p>推薦模式：嚴格過門輸出 / 本期只輸出通過嚴格條件的號碼；未達條件時寧可少顆，不用備查號補滿。</p><p><strong>高信心號碼：</strong>02</p></section>
-<section class='band diagnosis'><h2>上期沿用守門</h2><p>上期號碼不得直接沿用；連莊必須達標。</p><table><tr><th>項目</th><th>號碼</th><th>判定</th></tr><tr><th>本期前九</th><td>02 27 33 09 05 11 10 39 19</td><td>每期重新運算</td></tr><tr><th>上期預測</th><td>15 10 39 19 11 27 12 33 14</td><td>2026-10-13</td></tr><tr><th>前九重疊</th><td>09 35</td><td>2/9</td></tr><tr><th>達標連莊</th><td>09 35 03</td><td>通過才能留在前九</td></tr><tr><th>未達標剔除</th><td>10 12 14 15 16 19 38 39</td><td>已擋下</td></tr><tr><th>前九替換</th><td>剔除 29 33 27 31 30 25 37</td><td>補入 18 05 09 28 35 02 03</td></tr></table></section>
-<section class='band signal-focus'><h2>本期明確作戰答案</h2><p><strong>正式高信心推薦 / 等級 甲級 / 每期重算完成 / 高信心限九碼內顯示 / 鐵律門檻：1中1、2中1~2、3中1~3、5中1~5為基本配置</strong></p><table><tr><th>預測日</th><td>2026-10-14 / 台灣時間 2026-10-15 09:50</td></tr><tr><th>最強高機率獨隻</th><td>02</td></tr><tr><th>最強高機率2中1~2</th><td>02 27</td></tr><tr><th>最強高機率3中1~3</th><td>02 27 33</td></tr><tr><th>最強高機率5中1~5</th><td>02 27 33 09 05</td></tr><tr><th>明確9中2低標 / 9中3強標</th><td>02 27 33 09 05 11 10 39 19</td></tr><tr><th>高機率信心牌</th><td>02 27 33 09 05 11 10 39 19</td></tr><tr><th>防守避開</th><td>22 01 26 18 21 08 36 23 17 13</td></tr></table><h3>唯一獨支由來</h3><table><tr><th>項目</th><th>內容</th></tr><tr><th>唯一規則</th><td>超級獨支只允許一顆；未通過嚴格門或總合分不足者不得補位。</td></tr><tr><th>選號規則</th><td>全歷史資料庫先做多模型獨支滾動回測，選出勝出模型後，只在嚴格通過候選中挑總合分最高的一顆。</td></tr><tr><th>修正總分</th><td>-</td></tr><tr><th>信心指標</th><td>85.6</td></tr><tr><th>交叉驗算</th><td>6/6</td></tr><tr><th>由來1</th><td>十重驗證守門：通過，通過 17/17，最低門檻 10 項。</td></tr><tr><th>由來2</th><td>超級獨支競賽模型選中 02，本期只輸出這一顆。</td></tr><tr><th>由來3</th><td>勝出模型：貝氏馬可夫獨支；最近720期獨支回測命中率 13.19%，最近60期 11.67%。</td></tr><tr><th>由來4</th><td>本期模型排名第 6 名，模型分 0.71748，候選支撐分 0.7556，總合分 0.67135。</td></tr><tr><th>由來5</th><td>候選原始排名第 6 名，原始分 0.72619，全歷史校準分 0.67241。</td></tr><tr><th>由來6</th><td>信心指標 85.6，模型保守機率 18.16%，交叉驗算 6/6，成熟度 90.0。</td></tr></table><h3>低機率避險包</h3><table><tr><th>類別</th><th>號碼</th><th>信心</th><th>指標</th></tr><tr><td>5不中</td><td>22 01 26 18 21</td><td>誤開偏高降級</td><td>72.0</td></tr><tr><td>10不中</td><td>22 01 26 18 21 08 36 23 17 13</td><td>誤開偏高降級</td><td>62.0</td></tr><tr><td>15不中</td><td>22 01 26 18 21 08 36 23 17 13 35 37 28 15 14</td><td>誤開偏高降級</td><td>45.0</td></tr></table><h3>每日更新鐵律時間表</h3><table><tr><th>項目</th><th>內容</th></tr><tr><td>每日開獎時間</td><td>夏令台灣時間上午09:50；冬令台灣時間上午10:50。</td></tr><tr><td>開獎後更新截止</td><td>夏令上午10:00前必須完成最新開獎匯入、命中結算、重新運算、電腦戰報與手機版同步。</td></tr><tr><td>午間完整重算</td><td>每日下午13:00強制完整重新運算、重新回測、校正模型、重建戰報與手機版。</td></tr><tr><td>預測有效期間</td><td>上午10:00至下午13:00完成問題修正；下午13:00後以完整回測校正版為準。</td></tr><tr><td>禁止事項</td><td>禁止未重新運算就沿用前一期預測；若資料未更新，必須持續追最新開獎資料並留下狀態紀錄。</td></tr></table></section>
-<section class='band diagnosis'><h2>逐號多重驗算明細</h2><p>每一顆號碼都列出版路、拖牌或共現檢查、交叉驗算與守門結果；沒有驗證的號碼不得進入前九。</p><table><tr><th>號碼</th><th>版路</th><th>來源證據</th><th>交叉</th><th>穩定</th><th>守門</th><th>結論</th></tr><tr><th>02</th><td>頻率版路、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、外漏命中校正、綜合模型、全歷史快速重算、九碼內信心前移、全歷史頻率</td><td>6/6</td><td>穩定 3 / 遺漏 1</td><td>失準急救主列通過；分數 -；信心 -；多模型 - / 失準急救主列通過、非上期沿用</td><td>成熟度 90 / 成熟通過</td></tr><tr><th>11</th><td>頻率版路、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、連莊達標保留、九名後外漏命中回補、公式引擎：多週期頻率、牌型跟隨、和值鄰近、五期頻率、二十期頻率</td><td>6/6</td><td>穩定 4 / 遺漏 0</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊達標通過、降權 0.015</td><td>成熟度 90 / 成熟通過</td></tr><tr><th>10</th><td>頻率版路、尾數版路、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、上期前五未達標剔除、九名後外漏命中回補、公式引擎：多週期頻率、牌型跟隨、尾數區間平衡、十期頻率、二十期頻率</td><td>6/6</td><td>穩定 3 / 遺漏 3</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊未達標剔除、降權 0.22</td><td>成熟度 90 / 成熟通過</td></tr><tr><th>27</th><td>頻率版路、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、連莊達標保留、九名後外漏命中回補、公式引擎：牌型跟隨、多週期頻率、和值鄰近、五十期頻率、一百期頻率</td><td>6/6</td><td>穩定 4 / 遺漏 2</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊達標通過、降權 0.015</td><td>成熟度 90 / 成熟通過</td></tr><tr><th>33</th><td>頻率版路、尾數版路、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、連莊達標保留、全歷史中段復活校正、九名後外漏命中回補、公式引擎：尾數區間平衡、牌型跟隨、多週期頻率、綜合模型</td><td>6/6</td><td>穩定 4 / 遺漏 5</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊達標通過、降權 0.015</td><td>成熟度 90 / 觀察</td></tr><tr><th>39</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、上期前五未達標剔除、全歷史中段復活校正、九名後外漏命中回補、公式引擎：多週期頻率、牌型跟隨、遺漏相位、五十期頻率</td><td>6/6</td><td>穩定 3 / 遺漏 11</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊未達標剔除、降權 0.22</td><td>成熟度 90 / 成熟通過</td></tr><tr><th>06</th><td>全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、本期開出號未達標剔除、前九失準降權、全歷史中段復活校正、九名後外漏命中回補、公式引擎弱訊號降權</td><td>4/6</td><td>穩定 2 / 遺漏 0</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊未達標剔除、降權 0.1</td><td>成熟度 83.8 / 觀察</td></tr><tr><th>19</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、上期前五未達標剔除、全歷史中段復活校正、九名後外漏命中回補、公式引擎：牌型跟隨、遺漏相位、和值鄰近、一百期頻率</td><td>6/6</td><td>穩定 3 / 遺漏 9</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊未達標剔除、降權 0.22</td><td>成熟度 89.8 / 成熟通過</td></tr><tr><th>04</th><td>拖牌共現、全歷史綜合</td><td>全歷史校準重組、每期開獎後滾動重算、失準突破重排、本期開出號未達標剔除、全歷史中段復活校正、九名後外漏命中回補、公式引擎：連莊驗證、和值鄰近、拖牌關聯、綜合模型</td><td>4/6</td><td>穩定 2 / 遺漏 0</td><td>備查觀察；分數 -；信心 -；多模型 - / 備查觀察、連莊未達標剔除、降權 0.1</td><td>成熟度 81.7 / 觀察</td></tr></table></section>
-
-<section class="band high-note"><h2>超強信心高機率強推精算</h2><p>只在前九核心內精算，並用近30/60/120期實戰競賽選模型；第十至十五名不列高信心。</p><table><tr><th>目標</th><th>強推號碼</th><th>精算分</th><th>採用模型</th><th>實戰基準</th></tr><tr><th>獨隻1中1</th><td>02</td><td>0.67135</td><td>貝氏馬可夫獨支</td><td>近60期 11.67</td></tr><tr><th>2中1~2</th><td>02 27</td><td>0.67135</td><td>貝氏馬可夫獨支</td><td>近60期 11.67</td></tr><tr><th>3中1~3</th><td>02 27 33</td><td>0.67135</td><td>貝氏馬可夫獨支</td><td>近60期 11.67</td></tr></table></section>
-<section class='band danger-zone'><h2>下期低機率暫避預測</h2><p><strong>下期開獎：</strong>台灣時間 2026-10-15 09:50 / <strong>期別：</strong>2026-10-14</p><p>低機率清單已加入月度誤開守門；未通過者只列風控觀察，不得標示高信心。</p><p>回測：樣本 13 / 零誤入率 -</p><h3>五不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>22</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>2</th><td>01</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>3</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>18</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>21</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr></table><h3>十不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>22</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>2</th><td>01</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>3</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>18</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>21</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>6</th><td>08</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>7</th><td>36</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>8</th><td>23</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>9</th><td>17</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>10</th><td>13</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、綜合出現分偏低</td></tr></table><h3>十五不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>22</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>2</th><td>01</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>3</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>18</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>21</td><td>45.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低</td></tr><tr><th>6</th><td>08</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>7</th><td>36</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>8</th><td>23</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>9</th><td>17</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>10</th><td>13</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、綜合出現分偏低</td></tr><tr><th>11</th><td>35</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>12</th><td>37</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>13</th><td>28</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>14</th><td>15</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>15</th><td>14</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr></table><h3>低機率誤開回收</h3><p><strong>本期封鎖低機率核心：</strong>18 26 17 20 28 35 32 16 04 23 07 09 30 15 10 13 22 01</p><p>低機率誤開已轉入主排序回收，並封鎖再次列入低機率核心。</p><table><tr><th>號碼</th><th>累計誤開</th><th>近期</th><th>來源</th><th>最近</th><th>處理</th></tr><tr><td>18</td><td>15</td><td>12</td><td>5不中 5 / 10不中 5 / 15不中 5</td><td>2026-09-01</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>26</td><td>16</td><td>9</td><td>5不中 4 / 10不中 6 / 15不中 6</td><td>2026-08-09</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>17</td><td>14</td><td>5</td><td>5不中 2 / 10不中 6 / 15不中 6</td><td>2026-08-06</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>20</td><td>9</td><td>3</td><td>5不中 3 / 10不中 3 / 15不中 3</td><td>2026-08-27</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>28</td><td>10</td><td>3</td><td>5不中 2 / 10不中 4 / 15不中 4</td><td>2026-08-30</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>35</td><td>8</td><td>3</td><td>5不中 1 / 10不中 2 / 15不中 5</td><td>2026-08-20</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>32</td><td>3</td><td>3</td><td>5不中 0 / 10不中 1 / 15不中 2</td><td>2026-10-06</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>16</td><td>9</td><td>2</td><td>5不中 2 / 10不中 2 / 15不中 5</td><td>2026-09-11</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>04</td><td>7</td><td>2</td><td>5不中 1 / 10不中 2 / 15不中 4</td><td>2026-08-14</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>23</td><td>3</td><td>2</td><td>5不中 0 / 10不中 1 / 15不中 2</td><td>2026-10-01</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>07</td><td>13</td><td>1</td><td>5不中 2 / 10不中 4 / 15不中 7</td><td>2026-08-14</td><td>封鎖低機率，轉入主排序回收</td></tr><tr><td>09</td><td>5</td><td>1</td><td>5不中 1 / 10不中 1 / 15不中 3</td><td>2026-08-10</td><td>封鎖低機率，轉入主排序回收</td></tr></table></section>
-<section class="band diagnosis"><h2>全系統命中率缺口診斷</h2><p><strong>新增模型:</strong> - / <strong>狀態:</strong> 每日快速重算完成</p><p class="small">-</p><p class="small"><strong>已啟用動作:</strong> -</p><table><tr><th>缺口</th><th>證據</th><th>已補強</th></tr><tr><th>目前診斷</th><td>未見重大結構缺口</td><td>繼續每期滾動重算</td></tr></table></section>
-<section class="band high-note"><h2>高機率／高信心預測加註</h2><p>機率高或信心高的號碼已限制在前九核心內顯示，第十至十五名只列備查。</p><table><tr><th>排名</th><th>號碼</th><th>高信心說明</th><th>來源理由</th></tr><tr><td colspan="4">已完成運算，本期無高信心候選。</td></tr></table></section>
+<section class="band"><a class="primary secondary" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/daily-update.yml">立即雲端更新</a><p class="url">手機雲端網址已設定</p></section>
+<section class='band diagnosis'><h2>每期重算證明</h2><p><strong>已重新運算</strong>：本期依最新開獎資料重新運算、重新回測、重新檢討；禁止沿用上期預測。</p><p>重算指紋：0a8dd6e676762b2e</p><p>依據開獎：2026-10-14 24 31 34 36 37</p><p>推薦模式：高信心觀察 / 本期有高信心候選，但正式發布門檻尚未全過；戰報只標示高信心觀察，不包裝成保證。</p><p><strong>高信心號碼：</strong>11</p></section>
+<section class='band diagnosis'><h2>上期沿用守門</h2><p>上期號碼不得直接沿用；連莊必須達標。</p><table><tr><th>項目</th><th>號碼</th><th>判定</th></tr><tr><th>本期前九</th><td>02 27 10 33 11 19 15 39 06</td><td>每期重新運算</td></tr><tr><th>上期預測</th><td>-</td><td>-</td></tr><tr><th>前九重疊</th><td>10 11 27 28</td><td>4/9</td></tr><tr><th>達標連莊</th><td>11</td><td>通過才能留在前九</td></tr><tr><th>未達標剔除</th><td>-</td><td>已擋下</td></tr><tr><th>前九替換</th><td>剔除 </td><td>補入 </td></tr></table></section>
+<section class='band signal-focus'><h2>本期明確作戰答案</h2><p><strong>高信心觀察強化 / 等級 乙級 / 每期重算完成 / 高信心限九碼內顯示</strong></p><table><tr><th>明確獨隻</th><td>02</td></tr><tr><th>明確2中1</th><td>13 38</td></tr><tr><th>明確3中1~3</th><td>13 21 38</td></tr><tr><th>明確5中2</th><td>10 13 16 21 38</td></tr><tr><th>明確9中3</th><td>10 11 13 14 16 21 30 38 39</td></tr><tr><th>高機率信心牌</th><td>11</td></tr><tr><th>防守避開</th><td>03 06 35 17 26 12 18 02 19 23</td></tr></table><h3>低機率避險包</h3><table><tr><th>類別</th><th>號碼</th><th>信心</th><th>指標</th></tr><tr><td>5不中</td><td>03 06 35 17 26</td><td>誤開偏高降級</td><td>72.0</td></tr><tr><td>10不中</td><td>03 06 35 17 26 12 18 02 19 23</td><td>誤開偏高降級</td><td>62.0</td></tr><tr><td>15不中</td><td>03 06 35 17 26 12 18 02 19 23 25 01 05 08 09</td><td>誤開偏高降級</td><td>45.0</td></tr></table><h3>每日更新鐵律時間表</h3><table><tr><th>項目</th><th>內容</th></tr><tr><td>每日開獎時間</td><td>夏令台灣時間上午09:50；冬令台灣時間上午10:50。</td></tr><tr><td>開獎後更新截止</td><td>夏令上午10:00前必須完成最新開獎匯入、命中結算、重新運算、電腦戰報與手機版同步。</td></tr><tr><td>午間完整重算</td><td>每日下午13:00強制完整重新運算、重新回測、校正模型、重建戰報與手機版。</td></tr><tr><td>預測有效期間</td><td>上午10:00至下午13:00完成問題修正；下午13:00後以完整回測校正版為準。</td></tr><tr><td>禁止事項</td><td>禁止未重新運算就沿用前一期預測；若資料未更新，必須持續追最新開獎資料並留下狀態紀錄。</td></tr></table></section>
+<section class='band diagnosis'><h2>逐號多重驗算明細</h2><p>每一顆號碼都列出版路、拖牌或共現檢查、交叉驗算與守門結果；沒有驗證的號碼不得進入前九。</p><table><tr><th>號碼</th><th>版路</th><th>來源證據</th><th>交叉</th><th>穩定</th><th>守門</th><th>結論</th></tr><tr><th>02</th><td>頻率版路、拖牌共現、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、全歷史錨點、外部方法共識校正、滾動命中指紋、全歷史頻率、正邊際核心、共現配對</td><td>11/21</td><td>穩定 2 / 遺漏 2</td><td>非上期沿用</td><td>成熟度 91.9 / 成熟通過</td></tr><tr><th>27</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、遺漏相位回彈、滾動命中指紋、全歷史頻率、型態缺口橋接</td><td>10/21</td><td>穩定 2 / 遺漏 3</td><td>非上期沿用</td><td>成熟度 80.8 / 可觀察</td></tr><tr><th>10</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、滾動命中指紋、遺漏相位回彈、型態缺口橋接、全歷史頻率</td><td>14/21</td><td>穩定 1 / 遺漏 4</td><td>非上期沿用</td><td>成熟度 100.0 / 成熟通過</td></tr><tr><th>33</th><td>遺漏補償</td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、滾動命中指紋、型態缺口橋接、相似歷史近鄰、遺漏相位回彈、正邊際核心</td><td>10/21</td><td>穩定 1 / 遺漏 6</td><td>非上期沿用</td><td>成熟度 83.2 / 成熟通過</td></tr><tr><th>11</th><td>頻率版路、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、滾動命中指紋、全歷史頻率、相似歷史近鄰、正邊際核心</td><td>12/21</td><td>穩定 2 / 遺漏 1</td><td>非上期沿用</td><td>成熟度 100.0 / 成熟通過</td></tr><tr><th>19</th><td>拖牌共現、遺漏補償</td><td>失準急救前九重建、多模型競賽校正、滾動命中指紋、外部方法共識校正、遺漏相位回彈、遺漏週期、共現配對、正邊際核心</td><td>9/21</td><td>穩定 4 / 遺漏 10</td><td>非上期沿用</td><td>成熟度 75.6 / 可觀察</td></tr><tr><th>15</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、遺漏相位回彈、滾動命中指紋、全歷史錨點、遺漏週期、全歷史頻率</td><td>5/21</td><td>穩定 0 / 遺漏 5</td><td>非上期沿用</td><td>成熟度 65.5 / 研究觀察</td></tr><tr><th>39</th><td>頻率版路、遺漏補償、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、滾動命中指紋、外部方法共識校正、遺漏相位回彈、全歷史錨點、型態缺口橋接、全歷史頻率</td><td>14/21</td><td>穩定 5 / 遺漏 12</td><td>非上期沿用</td><td>成熟度 82.4 / 成熟通過</td></tr><tr><th>06</th><td>頻率版路、拖牌共現、全歷史綜合</td><td>失準急救前九重建、多模型競賽校正、全歷史錨點、外部方法共識校正、全歷史頻率、滾動命中指紋、正邊際核心、共現配對</td><td>5/21</td><td>穩定 0 / 遺漏 1</td><td>非上期沿用</td><td>成熟度 45.9 / 成熟度不足</td></tr></table></section>
+<section class="band signal-focus"><h2>本期主信心牌</h2><div class="signal-numbers">27 10 11</div><p class="signal-detail">27:中高信心 / 10:高信心 / 11:高信心</p><p class="small">高信心號碼已以加粗紅色區塊強調，正式與非正式狀態仍依發布關卡判定。</p></section>
+<section class="band high-note"><h2>超強信心高機率強推精算</h2><p>只在前九核心內精算，並用近30/60/120期實戰競賽選模型；第十至十五名不列高信心。</p><table><tr><th>目標</th><th>強推號碼</th><th>精算分</th><th>採用模型</th><th>實戰基準</th></tr><tr><th>獨隻1中1</th><td>38</td><td>86.56</td><td>滾動命中指紋</td><td>近60期 0.117 / 隨機 0.128</td></tr><tr><th>2中1~2</th><td>13 21</td><td>83.85</td><td>綜合精算</td><td>近60期 0.283 / 隨機 0.243</td></tr><tr><th>3中1~3</th><td>10 13 38</td><td>77.93</td><td>原始綜合分</td><td>近60期 0.4 / 隨機 0.345</td></tr></table></section>
+<section class='band danger-zone'><h2>下期低機率暫避預測</h2><p><strong>台灣開獎時間：</strong>2026-10-16 09:50 台灣時間 / <strong>對應開獎日：</strong>2026-10-15</p><p>低機率清單已加入月度誤開守門；未通過者只列風控觀察，不得標示高信心。</p><p>回測：樣本 80 / 零誤入率 0.237</p><h3>五不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>03</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>2</th><td>06</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>3</th><td>35</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>17</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr></table><h3>十不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>03</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>2</th><td>06</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>3</th><td>35</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>17</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>6</th><td>12</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、綜合出現分偏低</td></tr><tr><th>7</th><td>18</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>8</th><td>02</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>9</th><td>19</td><td>45.0</td><td>誤開偏高降級</td><td>未達主推門檻</td></tr><tr><th>10</th><td>23</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr></table><h3>十五不中</h3><table><tr><th>#</th><th>號碼</th><th>避開信心</th><th>等級</th><th>理由</th></tr><tr><th>1</th><td>03</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>2</th><td>06</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>3</th><td>35</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>4</th><td>17</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>5</th><td>26</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>6</th><td>12</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、綜合出現分偏低</td></tr><tr><th>7</th><td>18</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>8</th><td>02</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>9</th><td>19</td><td>45.0</td><td>誤開偏高降級</td><td>未達主推門檻</td></tr><tr><th>10</th><td>23</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>11</th><td>25</td><td>45.0</td><td>誤開偏高降級</td><td>候選排序後段、高信心守門未通過</td></tr><tr><th>12</th><td>01</td><td>45.0</td><td>誤開偏高降級</td><td>未達主推門檻</td></tr><tr><th>13</th><td>05</td><td>35.0</td><td>誤開偏高降級</td><td>候選排序後段、綜合出現分偏低、近期實開或漏抓復活風險，禁止列入核心低機率</td></tr><tr><th>14</th><td>08</td><td>35.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、近期實開或漏抓復活風險，禁止列入核心低機率</td></tr><tr><th>15</th><td>09</td><td>35.0</td><td>誤開偏高降級</td><td>多數公式偏弱、候選排序後段、綜合出現分偏低、近期實開或漏抓復活風險，禁止列入核心低機率</td></tr></table></section>
+<section class="band diagnosis"><h2>全系統命中率缺口診斷</h2><p><strong>新增模型:</strong> 型態缺口橋接、相似歷史近鄰、遺漏相位回彈、前九與前十五錯位修正、有效命中前移 / <strong>狀態:</strong> 需繼續補強</p><p class="small">系統已把命中不足問題拆成可回測、可降權、可競賽的項目</p><p class="small"><strong>已啟用動作:</strong> 加權有效命中前移、啟用遺漏相位回彈補強、加權前九與前十五錯位修正、加權型態缺口橋接、啟用相似歷史近鄰補強、強制套用上期失誤回饋</p><table><tr><th>缺口</th><th>證據</th><th>已補強</th></tr><tr><th>前十名邊際不足</th><td>前十 1.317 / 隨機 1.282 / 優勢 0.035</td><td>啟用型態缺口橋接、相似歷史近鄰、遺漏相位回彈，將上期牌型與歷史同相位下期命中統計合併加權</td></tr><tr><th>強牌實戰門檻未穩</th><td>強獨: 通過優勢 -0.028 / 平均命中優勢 -0.028 / 零命中 0.9</td><td>保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選</td></tr><tr><th>強牌實戰門檻未穩</th><td>二中一: 通過優勢 0.024 / 平均命中優勢 0.011 / 零命中 0.733</td><td>保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選</td></tr><tr><th>強牌實戰門檻未穩</th><td>三中一至三: 通過優勢 0.005 / 平均命中優勢 -0.018 / 零命中 0.65</td><td>保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選</td></tr><tr><th>強牌實戰門檻未穩</th><td>五中一至五: 通過優勢 0.033 / 平均命中優勢 0.026 / 零命中 0.45</td><td>保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選</td></tr><tr><th>強牌實戰門檻未穩</th><td>九中三: 通過優勢 -0.003 / 平均命中優勢 0.013 / 零命中 0.183</td><td>保留小組競賽，對弱勢組啟用門檻降級與型態橋接候選</td></tr></table></section>
+<section class="band high-note"><h2>高機率／高信心預測加註</h2><p>機率高或信心高的號碼已限制在前九核心內顯示，第十至十五名只列備查。</p><table><tr><th>排名</th><th>號碼</th><th>高信心說明</th><th>來源理由</th></tr><tr><td>2</td><td>27</td><td><span class="confidence-mid">中高信心</span><br><span class="small">信心指數 84.3 / 模型機率 15.87% / 穩定共識 2 / 交叉驗證 10/21 通過 / 成熟度 80.8 可觀察 / 前九核心</span></td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、遺漏相位回彈、滾動命中指紋</td></tr><tr><td>3</td><td>10</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 99.0 / 模型機率 18.72% / 穩定共識 1 / 交叉驗證 14/21 通過 / 成熟度 100.0 成熟通過 / 前九核心</span></td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、滾動命中指紋、遺漏相位回彈</td></tr><tr><td>5</td><td>11</td><td><span class="confidence-high">高信心</span><br><span class="small">信心指數 93.6 / 模型機率 17.66% / 穩定共識 2 / 交叉驗證 12/21 通過 / 成熟度 100.0 成熟通過 / 前九核心</span></td><td>失準急救前九重建、多模型競賽校正、外部方法共識校正、全歷史錨點、滾動命中指紋、全歷史頻率</td></tr></table></section>
 <div class="grid">
-<section class="card"><h2>最新開獎台灣時間</h2><div class="value">台灣時間 2026-10-14 09:50</div><p class="small">開獎期別 2026-10-13</p></section>
-<section class="card"><h2>最新開獎號碼</h2><div class="value">03 04 06 11 26</div></section>
-<section class="card"><h2>下期開獎台灣時間</h2><div class="value">台灣時間 2026-10-15 09:50</div><p class="small">開獎期別 2026-10-14</p></section>
-<section class="card"><h2>全歷史筆數</h2><div class="value">11949</div></section>
-<section class="card"><h2>發布狀態</h2><div class="value">研究觀察通過</div><p class="small">非正式保證</p></section>
-<section class="card"><h2>實戰成熟度</h2><div class="value">72</div><p class="small">通過</p></section>
+<section class="card"><h2>台灣最新可確認時間</h2><div class="value">2026-10-15 09:50 台灣時間</div><p class="small">對應開獎日 2026-10-14</p></section>
+<section class="card"><h2>最新開獎號碼</h2><div class="value">24 31 34 36 37</div></section>
+<section class="card"><h2>下期預測台灣時間</h2><div class="value">2026-10-16 09:50 台灣時間</div><p class="small">對應開獎日 2026-10-15</p></section>
+<section class="card"><h2>全歷史筆數</h2><div class="value">11950</div></section>
+<section class="card"><h2>發布狀態</h2><div class="value">觀察中</div><p class="small">非正式保證</p></section>
+<section class="card"><h2>實戰成熟度</h2><div class="value">89.7</div><p class="small">通過</p></section>
 </div>
-<section class="band"><h2>本期核心預測摘要</h2><p><strong>前九核心:</strong> 02 27 33 09 05 11 10 39 19</p><table><tr><th>模型</th><th>號碼</th><th>目標</th><th>成熟度</th></tr><tr><th>超強精算獨隻1中1</th><td>02</td><td>1</td><td>二次精算 0.67135 / 十重驗證通過・定版鎖唯一輸出</td></tr><tr><th>超強精算2中1~2</th><td>02 27</td><td>1~2</td><td>二次精算 0.67135 / 同源嚴格組合</td></tr><tr><th>超強精算3中1~3</th><td>02 27 33</td><td>1~3</td><td>二次精算 0.67135 / 同源嚴格組合</td></tr><tr><th>5中1~5</th><td>02 27 33 09 05</td><td>1~5</td><td>- / -</td></tr><tr><th>9中3~5</th><td>02 27 33 09 05 11 10 39 19</td><td>2</td><td>- / -</td></tr></table></section>
+<section class="band"><h2>本期核心預測摘要</h2><p><strong>前九核心:</strong> 02 27 10 33 11 19 15 39 06</p><table><tr><th>模型</th><th>號碼</th><th>目標</th><th>成熟度</th></tr><tr><th>超強精算獨隻1中1</th><td>38</td><td>1</td><td>二次精算 86.56 / 高信心觀察</td></tr><tr><th>超強精算2中1~2</th><td>13 21</td><td>1~2</td><td>二次精算 83.85 / 高信心觀察</td></tr><tr><th>超強精算3中1~3</th><td>10 13 38</td><td>1~3</td><td>二次精算 77.93 / 高信心觀察</td></tr><tr><th>5中2~3</th><td>10 13 16 21 38</td><td>1</td><td>94.0 / 通過</td></tr><tr><th>9中3~5</th><td>10 11 13 14 16 21 30 38 39</td><td>3</td><td>91.9 / 通過</td></tr></table></section>
 </main>
 
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261014131621';
+    window.TIANTIANLE_BUILD_VERSION = '20261015132429';
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -140,7 +120,7 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v=20261014131621&force=' + Date.now());
+      location.replace('首頁.html?v=20261015132429&force=' + Date.now());
     }
     async function autoRefreshIfStale() {
       try {
@@ -155,205 +135,32 @@ table{width:100%;min-width:640px;border-collapse:collapse}th,td{border-bottom:1p
         }
       } catch (err) {}
     }
-    window.addEventListener('load', function(){
-      clearMobileCaches().finally(function(){
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js?v=20261015132429', { updateViaCache: 'none' }).then(function(reg){
+          reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }).catch(function(){});
         autoRefreshIfStale();
         setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
       });
-    });
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) autoRefreshIfStale();
-    });
-    window.addEventListener('online', autoRefreshIfStale);
-    </script>
-    
-    <script>
-    (function(){
-      if (window.TIANTIANLE_OPEN_SYNC_VERSION === '20261014131621') return;
-      window.TIANTIANLE_OPEN_SYNC_VERSION = '20261014131621';
-      var firstOpenAt = Date.now();
-      var normalCheckMs = 30000;
-      var intenseWindowMs = 180000;
-      function rootPrefix() {
-        return decodeURIComponent(location.pathname).indexOf('/reports/') >= 0 ? '../' : '';
-      }
-      function currentStamp() {
-        try {
-          var queryStamp = new URL(location.href).searchParams.get('v') || '';
-          return queryStamp || window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        } catch (err) {
-          return window.TIANTIANLE_BUILD_VERSION || window.TIANTIANLE_OPEN_SYNC_VERSION || '';
-        }
-      }
-      function stampFromPayload(data) {
-        var raw = String((data && (data.version || data.generated_at_taiwan || data.generated_at)) || '');
-        return raw.replace(/\D/g, '').slice(0, 14);
-      }
-      function setOpenSyncStatus(text) {
-        var el = document.getElementById('mobileUpdateStatus');
-        if (el) el.textContent = text;
-      }
-      async function clearAllBrowserCaches() {
-        if ('serviceWorker' in navigator) {
-          var regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(async function(reg) {
-            try {
-              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
-              await reg.update();
-            } catch (err) {}
-          }));
-        }
-        if ('caches' in window) {
-          var keys = await caches.keys();
-          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
-        }
-      }
-      async function verifyLatestAnalysis(prefix) {
-        try {
-          var res = await fetch(prefix + 'latest_analysis.json?open=' + Date.now(), { cache: 'no-store' });
-          if (!res.ok) return null;
-          return await res.json();
-        } catch (err) {
-          return null;
-        }
-      }
-      async function mobileOpenSync() {
-        var prefix = rootPrefix();
-        try {
-          var res = await fetch(prefix + 'version.json?open=' + Date.now(), {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' }
-          });
-          if (!res.ok) return;
-          var versionData = await res.json();
-          var cloudStamp = stampFromPayload(versionData);
-          var localStamp = String(currentStamp()).replace(/\D/g, '').slice(0, 14);
-          if (cloudStamp && cloudStamp !== localStamp && !sessionStorage.getItem('tiantianle_open_synced_' + cloudStamp)) {
-            sessionStorage.setItem('tiantianle_open_synced_' + cloudStamp, '1');
-            setOpenSyncStatus('偵測到新戰報，正在自動切換最新版');
-            await clearAllBrowserCaches();
-            var target = new URL(location.href);
-            target.searchParams.set('v', cloudStamp);
-            target.searchParams.set('open_sync', Date.now());
-            location.replace(target.toString());
-            return;
-          }
-          var analysis = await verifyLatestAnalysis(prefix);
-          if (analysis && analysis.generated_at_taiwan) {
-            setOpenSyncStatus('手機已同步最新戰報：' + analysis.generated_at_taiwan);
-          }
-        } catch (err) {
-          setOpenSyncStatus('手機同步檢查暫時失敗，會自動重試');
-        }
-      }
-      window.addEventListener('pageshow', mobileOpenSync);
-      window.addEventListener('online', mobileOpenSync);
       document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) mobileOpenSync();
+        if (!document.hidden) autoRefreshIfStale();
       });
-      setInterval(function() {
-        mobileOpenSync();
-      }, Date.now() - firstOpenAt < intenseWindowMs ? 10000 : normalCheckMs);
-    })();
-    </script>
-    
-    <script>
-    window.TIANTIANLE_CLOUD_ACTION_VERSION = "20261014131621";
-    window.TIANTIANLE_CLOUD_LAST_GENERATED = "2026-10-14T10:26:44+08:00";
-    window.TIANTIANLE_CLOUD_POLL_TIMER = window.TIANTIANLE_CLOUD_POLL_TIMER || null;
-    async function tiantianleClearVisibleCaches() {
-      try {
-        if ('serviceWorker' in navigator) {
-          var regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(async function(reg) {
-            try {
-              if (reg.active) reg.active.postMessage({ type: 'CLEAR_CACHE' });
-              await reg.update();
-            } catch (err) {}
-          }));
+      window.addEventListener('online', autoRefreshIfStale);
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!sessionStorage.getItem('tiantianle_controller_reloaded')) {
+          sessionStorage.setItem('tiantianle_controller_reloaded', '1');
+          location.reload();
         }
-        if ('caches' in window) {
-          var keys = await caches.keys();
-          await Promise.all(keys.map(function(key) { return caches.delete(key); }));
-        }
-      } catch (err) {}
+      });
+    } else {
+      window.addEventListener('load', autoRefreshIfStale);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) autoRefreshIfStale();
+      });
+      window.addEventListener('online', autoRefreshIfStale);
+      setInterval(autoRefreshIfStale, REFRESH_CHECK_MS);
     }
-    function tiantianleFormatCloudNumbers(numbers) {
-      if (!Array.isArray(numbers)) return '-';
-      return numbers.map(function(number) {
-        var value = parseInt(number, 10);
-        if (!Number.isFinite(value)) return '';
-        return String(value).padStart(2, '0');
-      }).filter(Boolean).join(' ') || '-';
-    }
-    function tiantianleSetLatestUpdateDisplay(data, sourceLabel) {
-      if (!data) return;
-      var latest = data.latest_draw || {};
-      var generated = data.generated_at_taiwan || data.generated_at || '-';
-      var latestDate = latest.draw_date || '-';
-      var latestNumbers = tiantianleFormatCloudNumbers(latest.numbers || latest.winning_numbers || []);
-      var targetDate = data.target_draw_date || '-';
-      var targetTime = data.prediction_draw_taiwan_time || '-';
-      var timeEl = document.getElementById('tiantianleLatestUpdateTime');
-      var drawEl = document.getElementById('tiantianleLatestDrawLine');
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (timeEl) timeEl.textContent = '目前最新更新時間：' + generated;
-      if (drawEl) drawEl.textContent = '最新開獎：' + latestDate + '　' + latestNumbers + ' / 下期：' + targetDate + '　' + targetTime;
-      if (generated && generated !== '-' && generated !== window.TIANTIANLE_CLOUD_LAST_GENERATED) {
-        window.TIANTIANLE_CLOUD_LAST_GENERATED = generated;
-        if (status) status.textContent = (sourceLabel || '雲端') + '：已讀到最新更新時間 ' + generated;
-      }
-    }
-    async function tiantianleRefreshLatestUpdateDisplay(sourceLabel) {
-      try {
-        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
-        var res = await fetch(prefix + 'latest_analysis.json?latest_time=' + Date.now(), {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        if (!res.ok) throw new Error('latest_analysis not ready');
-        var data = await res.json();
-        tiantianleSetLatestUpdateDisplay(data, sourceLabel);
-        return data;
-      } catch (err) {
-        var status = document.getElementById('tiantianleCloudActionStatus');
-        if (status) status.textContent = (sourceLabel || '雲端') + '：暫時讀不到最新時間，會繼續重試';
-        return null;
-      }
-    }
-    function tiantianleStartUpdatePolling(label) {
-      if (window.TIANTIANLE_CLOUD_POLL_TIMER) clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
-      tiantianleRefreshLatestUpdateDisplay(label);
-      window.TIANTIANLE_CLOUD_POLL_TIMER = setInterval(function() {
-        tiantianleRefreshLatestUpdateDisplay(label);
-      }, 15000);
-      setTimeout(function() {
-        if (window.TIANTIANLE_CLOUD_POLL_TIMER) {
-          clearInterval(window.TIANTIANLE_CLOUD_POLL_TIMER);
-          window.TIANTIANLE_CLOUD_POLL_TIMER = null;
-        }
-      }, 30 * 60 * 1000);
-    }
-    async function tiantianleForceReadLatestNow() {
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = '正在重讀雲端最新更新時間';
-      await tiantianleClearVisibleCaches();
-      await tiantianleRefreshLatestUpdateDisplay('重讀最新時間');
-    }
-    async function tiantianlePrepareCloudAction(label) {
-      var status = document.getElementById('tiantianleCloudActionStatus');
-      if (status) status.textContent = label + '：已清理手機快取；若 GitHub 頁面要求確認，請按 Run workflow，本頁會自動顯示更新後時間。';
-      await tiantianleClearVisibleCaches();
-      try {
-        var prefix = location.pathname.indexOf('/reports/') >= 0 ? '../' : '';
-        await fetch(prefix + 'latest_analysis.json?manual=' + Date.now(), { cache: 'no-store' });
-        await fetch(prefix + 'version.json?manual=' + Date.now(), { cache: 'no-store' });
-      } catch (err) {}
-      tiantianleStartUpdatePolling(label);
-    }
-    window.addEventListener('pageshow', function() { tiantianleRefreshLatestUpdateDisplay('頁面開啟'); });
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) tiantianleRefreshLatestUpdateDisplay('回到頁面');
-    });
     </script>
     </body></html>

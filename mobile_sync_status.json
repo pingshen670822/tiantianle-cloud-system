@@ -1,197 +1,133 @@
 {
-  "checked_at_taiwan": "2026-10-14T13:13:48+08:00",
+  "checked_at_taiwan": "2026-07-21T13:25:07+08:00",
   "status": "同步",
   "local": {
-    "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-    "draw_count": 11949,
-    "latest_draw_date": "2026-10-13",
+    "generated_at_taiwan": "2026-07-21T13:22:17+08:00",
+    "latest_draw_date": "2026-07-20",
     "latest_numbers": [
-      3,
-      4,
-      6,
-      11,
-      26
-    ],
-    "target_draw_date": "2026-10-14",
-    "target_taiwan_time": "2026-10-15 09:50",
-    "top1": [
-      2
-    ],
-    "top9": [
-      2,
+      14,
       27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
+      29,
+      31,
+      33
+    ],
+    "target_draw_date": "2026-07-21",
+    "target_taiwan_time": "2026-07-22 09:50",
+    "top9": [
+      28,
+      34,
+      21,
+      12,
+      30,
+      3,
+      13,
+      1,
+      4
     ],
     "top15": [
-      2,
-      27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
+      28,
+      34,
+      21,
+      12,
+      30,
+      3,
+      13,
+      1,
+      4,
+      17,
+      24,
+      19,
+      16,
+      8,
+      33
     ],
-    "ultimate_single": 2,
-    "ultimate_model": "貝氏馬可夫獨支",
-    "super_single_number": 2,
-    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
-    "strong_single_numbers": [
-      2
-    ],
-    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+    "engine": "industrial_v16_full_history_hard_gate_20260721"
   },
   "site": {
-    "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-    "draw_count": 11949,
-    "latest_draw_date": "2026-10-13",
+    "generated_at_taiwan": "2026-07-21T13:22:17+08:00",
+    "latest_draw_date": "2026-07-20",
     "latest_numbers": [
-      3,
-      4,
-      6,
-      11,
-      26
-    ],
-    "target_draw_date": "2026-10-14",
-    "target_taiwan_time": "2026-10-15 09:50",
-    "top1": [
-      2
-    ],
-    "top9": [
-      2,
+      14,
       27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
+      29,
+      31,
+      33
+    ],
+    "target_draw_date": "2026-07-21",
+    "target_taiwan_time": "2026-07-22 09:50",
+    "top9": [
+      28,
+      34,
+      21,
+      12,
+      30,
+      3,
+      13,
+      1,
+      4
     ],
     "top15": [
-      2,
-      27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
-    ],
-    "ultimate_single": 2,
-    "ultimate_model": "貝氏馬可夫獨支",
-    "super_single_number": 2,
-    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
-    "strong_single_numbers": [
-      2
-    ],
-    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
-  },
-  "site_data": {
-    "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-    "draw_count": 11949,
-    "latest_draw_date": "2026-10-13",
-    "latest_numbers": [
+      28,
+      34,
+      21,
+      12,
+      30,
       3,
+      13,
+      1,
       4,
-      6,
-      11,
-      26
+      17,
+      24,
+      19,
+      16,
+      8,
+      33
     ],
-    "target_draw_date": "2026-10-14",
-    "target_taiwan_time": "2026-10-15 09:50",
-    "top1": [
-      2
-    ],
-    "top9": [
-      2,
-      27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
-    ],
-    "top15": [
-      2,
-      27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
-    ],
-    "ultimate_single": 2,
-    "ultimate_model": "貝氏馬可夫獨支",
-    "super_single_number": 2,
-    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
-    "strong_single_numbers": [
-      2
-    ],
-    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+    "engine": "industrial_v16_full_history_hard_gate_20260721"
   },
   "remote": {
-    "generated_at_taiwan": "2026-10-14T10:26:44+08:00",
-    "draw_count": 11949,
-    "latest_draw_date": "2026-10-13",
+    "generated_at_taiwan": "2026-07-21T13:22:17+08:00",
+    "latest_draw_date": "2026-07-20",
     "latest_numbers": [
-      3,
-      4,
-      6,
-      11,
-      26
-    ],
-    "target_draw_date": "2026-10-14",
-    "target_taiwan_time": "2026-10-15 09:50",
-    "top1": [
-      2
-    ],
-    "top9": [
-      2,
+      14,
       27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
+      29,
+      31,
+      33
+    ],
+    "target_draw_date": "2026-07-21",
+    "target_taiwan_time": "2026-07-22 09:50",
+    "top9": [
+      28,
+      34,
+      21,
+      12,
+      30,
+      3,
+      13,
+      1,
+      4
     ],
     "top15": [
-      2,
-      27,
-      33,
-      9,
-      5,
-      11,
-      10,
-      39,
-      19
+      28,
+      34,
+      21,
+      12,
+      30,
+      3,
+      13,
+      1,
+      4,
+      17,
+      24,
+      19,
+      16,
+      8,
+      33
     ],
-    "ultimate_single": 2,
-    "ultimate_model": "貝氏馬可夫獨支",
-    "super_single_number": 2,
-    "super_single_status": "十重驗證通過・定版鎖唯一輸出",
-    "strong_single_numbers": [
-      2
-    ],
-    "engine": "industrial_fast_daily_formula_v20260929_historical_calibrated_rebuild"
+    "engine": "industrial_v16_full_history_hard_gate_20260721"
   },
   "remote_url": "https://pingshen670822.github.io/tiantianle-cloud-system/latest_analysis.json",
-  "remote_report_url": "https://pingshen670822.github.io/tiantianle-cloud-system/reports/latest_analysis.json",
-  "remote_data_url": "https://pingshen670822.github.io/tiantianle-cloud-system/data/latest_analysis.json",
   "remote_error": "",
   "mismatches": []
 }
