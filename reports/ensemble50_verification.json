@@ -1,5 +1,286 @@
 {
-  "version": "ensemble50_v2_six_number_groups",
+  "version": "ensemble50_v3_full39_six_number_groups",
+  "full39_six_combinations": {
+    "groups": [
+      {
+        "group": 1,
+        "numbers": [
+          2,
+          10,
+          11,
+          19,
+          27,
+          33
+        ],
+        "score_units": 96041,
+        "model_score": 65.6691,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 2,
+        "numbers": [
+          2,
+          10,
+          11,
+          27,
+          33,
+          39
+        ],
+        "score_units": 95590,
+        "model_score": 65.3607,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 11,
+          "3": 2,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 3,
+        "numbers": [
+          2,
+          10,
+          11,
+          15,
+          27,
+          33
+        ],
+        "score_units": 95423,
+        "model_score": 65.2465,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 4,
+        "numbers": [
+          2,
+          10,
+          11,
+          19,
+          27,
+          39
+        ],
+        "score_units": 95388,
+        "model_score": 65.2226,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 5,
+        "numbers": [
+          2,
+          10,
+          19,
+          27,
+          33,
+          39
+        ],
+        "score_units": 95217,
+        "model_score": 65.1056,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 6,
+        "numbers": [
+          2,
+          10,
+          11,
+          15,
+          19,
+          27
+        ],
+        "score_units": 94987,
+        "model_score": 64.9484,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 9,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 7,
+        "numbers": [
+          2,
+          10,
+          15,
+          19,
+          27,
+          33
+        ],
+        "score_units": 94855,
+        "model_score": 64.8581,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 11,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 8,
+        "numbers": [
+          2,
+          10,
+          11,
+          19,
+          33,
+          39
+        ],
+        "score_units": 94837,
+        "model_score": 64.8458,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 9,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 9,
+        "numbers": [
+          2,
+          10,
+          11,
+          15,
+          27,
+          39
+        ],
+        "score_units": 94731,
+        "model_score": 64.7733,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 9,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        }
+      },
+      {
+        "group": 10,
+        "numbers": [
+          2,
+          11,
+          19,
+          27,
+          33,
+          39
+        ],
+        "score_units": 94691,
+        "model_score": 64.746,
+        "confidence_label": "評分前十／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        }
+      }
+    ],
+    "group_count": 10,
+    "pool": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "expanded_five_number_tickets": 60,
+    "unique_five_number_tickets": 37,
+    "random_all5_probability_percent": 0.0064263222157959,
+    "search_space": 3262623,
+    "search_method": "精確分支定界；整數評分；保留所有可能超越第十名的分支",
+    "visited_nodes": 727,
+    "pruned_branches": 412,
+    "score_denominator": 146250,
+    "method": "平均排名分數80%＋前九共現支持20%；純取最高分，不加覆蓋或重疊限制",
+    "score_meaning": "模型評分不是中獎機率；六碼候選組內含6種五碼組合",
+    "walk_forward_samples": 60,
+    "any_group_hits_at_least": {
+      "2": 17,
+      "3": 4,
+      "4": 0,
+      "5": 0
+    },
+    "exhaustive_verification": {
+      "status": "passed",
+      "exhaustive_combinations": 3262623,
+      "all_top10_exact_match": true,
+      "synthetic_cases_passed": 6,
+      "elapsed_seconds": 4.391,
+      "basis": "2026-10-14"
+    }
+  },
   "six_number_combinations": {
     "top15_ranked": [
       2,
