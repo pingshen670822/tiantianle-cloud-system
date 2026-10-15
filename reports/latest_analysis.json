@@ -1,7 +1,243 @@
 {
   "engine_version": "天天樂最新版鐵律第4版_20260721",
   "ensemble50": {
-    "version": "ensemble50_v1",
+    "version": "ensemble50_v2_six_number_groups",
+    "six_number_combinations": {
+      "top15_ranked": [
+        2,
+        27,
+        10,
+        33,
+        11,
+        19,
+        15,
+        39,
+        6,
+        14,
+        37,
+        9,
+        36,
+        1,
+        3
+      ],
+      "groups": [
+        {
+          "group": 1,
+          "numbers": [
+            2,
+            10,
+            11,
+            19,
+            27,
+            33
+          ],
+          "model_score": 65.67,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 8,
+            "3": 1,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 2,
+          "numbers": [
+            2,
+            10,
+            14,
+            15,
+            27,
+            39
+          ],
+          "model_score": 62.19,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 9,
+            "3": 1,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 3,
+          "numbers": [
+            2,
+            6,
+            11,
+            15,
+            33,
+            39
+          ],
+          "model_score": 60.96,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 8,
+            "3": 1,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 4,
+          "numbers": [
+            2,
+            11,
+            15,
+            19,
+            27,
+            39
+          ],
+          "model_score": 64.05,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 12,
+            "3": 3,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 5,
+          "numbers": [
+            1,
+            2,
+            3,
+            9,
+            36,
+            37
+          ],
+          "model_score": 49.68,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 7,
+            "3": 1,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 6,
+          "numbers": [
+            2,
+            10,
+            15,
+            19,
+            33,
+            39
+          ],
+          "model_score": 63.9,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 8,
+            "3": 0,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 7,
+          "numbers": [
+            10,
+            11,
+            15,
+            27,
+            33,
+            39
+          ],
+          "model_score": 63.41,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 10,
+            "3": 1,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 8,
+          "numbers": [
+            2,
+            10,
+            11,
+            14,
+            33,
+            39
+          ],
+          "model_score": 62.71,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 10,
+            "3": 0,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 9,
+          "numbers": [
+            2,
+            6,
+            10,
+            11,
+            27,
+            39
+          ],
+          "model_score": 62.64,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 8,
+            "3": 0,
+            "4": 0,
+            "5": 0
+          }
+        },
+        {
+          "group": 10,
+          "numbers": [
+            2,
+            14,
+            19,
+            27,
+            33,
+            39
+          ],
+          "model_score": 62.35,
+          "confidence_label": "模型優先候選／未證實高機率",
+          "backtest_samples": 60,
+          "backtest_hits_at_least": {
+            "2": 10,
+            "3": 3,
+            "4": 0,
+            "5": 0
+          }
+        }
+      ],
+      "group_count": 10,
+      "method": "50組排名分數80%＋前九共現支持20%；另以覆蓋與重疊限制分散10組",
+      "score_meaning": "模型評分0–100，不是中獎機率；組號是固定選組順序",
+      "unique_numbers_covered": 15,
+      "walk_forward_samples": 60,
+      "any_group_hits_at_least": {
+        "2": 27,
+        "3": 8,
+        "4": 0,
+        "5": 0
+      },
+      "verification": {
+        "groups_unique": true,
+        "all_from_top15": true
+      }
+    },
     "module_count": 50,
     "modules": [
       {
@@ -4833,8 +5069,8 @@
     }
   },
   "industrial_engine_version": "industrial_v34_zero_hit_cluster_rescue_20260812",
-  "generated_at_taiwan": "2026-10-15T14:37:19+08:00",
-  "generated_at_california": "2026-10-14T23:37:19-07:00",
+  "generated_at_taiwan": "2026-10-15T14:42:30+08:00",
+  "generated_at_california": "2026-10-14T23:42:30-07:00",
   "game": "天天樂",
   "latest_draw": {
     "period": 11950,
@@ -6477,7 +6713,7 @@
   },
   "freshness": {
     "california_today": "2026-10-14",
-    "california_time": "23:37:19",
+    "california_time": "23:42:30",
     "allowed_latest_draw_date": "2026-10-14",
     "age_days": 0,
     "status": "ok",
@@ -135403,6 +135639,266 @@
           "probability": 0.000219,
           "odds_1_in": 4569.5
         }
+      },
+      "top15_six_01": {
+        "group": 1,
+        "numbers": [
+          2,
+          10,
+          11,
+          19,
+          27,
+          33
+        ],
+        "model_score": 65.67,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合1（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_02": {
+        "group": 2,
+        "numbers": [
+          2,
+          10,
+          14,
+          15,
+          27,
+          39
+        ],
+        "model_score": 62.19,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 9,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合2（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_03": {
+        "group": 3,
+        "numbers": [
+          2,
+          6,
+          11,
+          15,
+          33,
+          39
+        ],
+        "model_score": 60.96,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合3（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_04": {
+        "group": 4,
+        "numbers": [
+          2,
+          11,
+          15,
+          19,
+          27,
+          39
+        ],
+        "model_score": 64.05,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 12,
+          "3": 3,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合4（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_05": {
+        "group": 5,
+        "numbers": [
+          1,
+          2,
+          3,
+          9,
+          36,
+          37
+        ],
+        "model_score": 49.68,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 7,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合5（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_06": {
+        "group": 6,
+        "numbers": [
+          2,
+          10,
+          15,
+          19,
+          33,
+          39
+        ],
+        "model_score": 63.9,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合6（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_07": {
+        "group": 7,
+        "numbers": [
+          10,
+          11,
+          15,
+          27,
+          33,
+          39
+        ],
+        "model_score": 63.41,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 10,
+          "3": 1,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合7（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_08": {
+        "group": 8,
+        "numbers": [
+          2,
+          10,
+          11,
+          14,
+          33,
+          39
+        ],
+        "model_score": 62.71,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 10,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合8（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_09": {
+        "group": 9,
+        "numbers": [
+          2,
+          6,
+          10,
+          11,
+          27,
+          39
+        ],
+        "model_score": 62.64,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 8,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合9（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
+      },
+      "top15_six_10": {
+        "group": 10,
+        "numbers": [
+          2,
+          14,
+          19,
+          27,
+          33,
+          39
+        ],
+        "model_score": 62.35,
+        "confidence_label": "模型優先候選／未證實高機率",
+        "backtest_samples": 60,
+        "backtest_hits_at_least": {
+          "2": 10,
+          "3": 3,
+          "4": 0,
+          "5": 0
+        },
+        "name": "前15名六碼組合10（6中5）",
+        "hit_goal": 5,
+        "theoretical_probability": {
+          "probability": 1e-05,
+          "odds_1_in": 95959.5
+        }
       }
     },
     "precision_micro_models": {
@@ -171280,6 +171776,266 @@
         "probability": 0.000219,
         "odds_1_in": 4569.5
       }
+    },
+    "top15_six_01": {
+      "group": 1,
+      "numbers": [
+        2,
+        10,
+        11,
+        19,
+        27,
+        33
+      ],
+      "model_score": 65.67,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 8,
+        "3": 1,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合1（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_02": {
+      "group": 2,
+      "numbers": [
+        2,
+        10,
+        14,
+        15,
+        27,
+        39
+      ],
+      "model_score": 62.19,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 9,
+        "3": 1,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合2（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_03": {
+      "group": 3,
+      "numbers": [
+        2,
+        6,
+        11,
+        15,
+        33,
+        39
+      ],
+      "model_score": 60.96,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 8,
+        "3": 1,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合3（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_04": {
+      "group": 4,
+      "numbers": [
+        2,
+        11,
+        15,
+        19,
+        27,
+        39
+      ],
+      "model_score": 64.05,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 12,
+        "3": 3,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合4（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_05": {
+      "group": 5,
+      "numbers": [
+        1,
+        2,
+        3,
+        9,
+        36,
+        37
+      ],
+      "model_score": 49.68,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 7,
+        "3": 1,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合5（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_06": {
+      "group": 6,
+      "numbers": [
+        2,
+        10,
+        15,
+        19,
+        33,
+        39
+      ],
+      "model_score": 63.9,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 8,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合6（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_07": {
+      "group": 7,
+      "numbers": [
+        10,
+        11,
+        15,
+        27,
+        33,
+        39
+      ],
+      "model_score": 63.41,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 10,
+        "3": 1,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合7（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_08": {
+      "group": 8,
+      "numbers": [
+        2,
+        10,
+        11,
+        14,
+        33,
+        39
+      ],
+      "model_score": 62.71,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 10,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合8（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_09": {
+      "group": 9,
+      "numbers": [
+        2,
+        6,
+        10,
+        11,
+        27,
+        39
+      ],
+      "model_score": 62.64,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 8,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合9（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
+    },
+    "top15_six_10": {
+      "group": 10,
+      "numbers": [
+        2,
+        14,
+        19,
+        27,
+        33,
+        39
+      ],
+      "model_score": 62.35,
+      "confidence_label": "模型優先候選／未證實高機率",
+      "backtest_samples": 60,
+      "backtest_hits_at_least": {
+        "2": 10,
+        "3": 3,
+        "4": 0,
+        "5": 0
+      },
+      "name": "前15名六碼組合10（6中5）",
+      "hit_goal": 5,
+      "theoretical_probability": {
+        "probability": 1e-05,
+        "odds_1_in": 95959.5
+      }
     }
   },
   "precision_micro_models": {
@@ -184960,9 +185716,9 @@
       "confidence_cap": 45.0
     }
   },
-  "last_checked_at_taiwan": "2026-10-15T14:37:19+08:00",
+  "last_checked_at_taiwan": "2026-10-15T14:42:30+08:00",
   "refresh_verification": {
-    "checked_at_taiwan": "2026-10-15T14:37:19+08:00",
+    "checked_at_taiwan": "2026-10-15T14:42:30+08:00",
     "new_draw_found": false,
     "basis_unchanged": true,
     "module_count": 50,
@@ -184975,6 +185731,7 @@
       "lotteryusa",
       "lotto8",
       "lottolyzer"
-    ]
+    ],
+    "six_number_group_validation": "passed"
   }
 }
