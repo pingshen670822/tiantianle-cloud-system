@@ -1,8 +1,8 @@
 # 檔案讀取檢查
 
-- 檢查：204
+- 檢查：212
 - 異常：0
-- 備註：22
+- 備註：23
 
 ## 備註
 california_fantasy5_system.py: cjk_report_text_allowed
@@ -16,6 +16,7 @@ PUBLISH_MOBILE_SITE_ONLY.bat: cjk_report_text_allowed
 publish_mobile_site_only.py: cjk_report_text_allowed
 PUBLISH_TIANTIANLE_CLOUD_NOW.bat: cjk_report_text_allowed
 RUN_TIANTIANLE_NOW.bat: cjk_report_text_allowed
+system_update.py: cjk_report_text_allowed
 tiantianle_core.py: cjk_report_text_allowed
 tiantianle_formula_engine.py: cjk_report_text_allowed
 tiantianle_ironlaw_report.py: cjk_report_text_allowed
