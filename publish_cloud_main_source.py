@@ -1,189 +1,37 @@
-import base64
-import http.client
+"""GitHub API client; CLI only requests the verified workflow."""
 import json
-import pathlib
-import ssl
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from pathlib import Path
+BASE=Path(__file__).resolve().parent
+REPO='pingshen670822/tiantianle-cloud-system'
+TOKEN_FILE=BASE/'mobile_access_token.txt'
 
-
-BASE = pathlib.Path(__file__).resolve().parent
-REPO = "pingshen670822/tiantianle-cloud-system"
-TOKEN_FILE = BASE / "mobile_access_token.txt"
-BLOCKED_DIRS = {
-    ".git",
-    ".gh-cli",
-    "__pycache__",
-    "backups",
-    "logs",
-    "site",
-    "reports",
-    "data",
-    "history_import",
-    "validation_sources",
-}
-BLOCKED_NAMES = {".env", ".env.local", ".env.production", ".gitconfig-gh"}
-BLOCKED_PARTS = ("token", "secret", "credential", "password", "github_device_login")
-ALLOWLIST = {
-    ".github/workflows/tiantianle-cloud-auto-update.yml",
-    ".github/workflows/tiantianle-cloud-self-heal.yml",
-    "aerospace_engine.py",
-    "california_fantasy5_system.py",
-    "cloud_latest_cache_refresh.py",
-    "cloud_self_repair.py",
-    "fantasy5_full_history.csv",
-    "full_system_integrity_scan.py",
-    "full_probability_table_report.py",
-    "industrial_engine.py",
-    "offline_full_history_recalc.py",
-    "pages_build.py",
-    "prediction_final_lock.json",
-    "prediction_final_lock_guard.py",
-    "run_california_fantasy5_once.ps1",
-    "sanitize_public_outputs.py",
-    "system_gap_audit.py",
-    "天天樂開獎後自動更新.ps1",
-    "天天樂自動更新鐵律守護.ps1",
-    "install_daily_auto_update.ps1",
-    "system_stability_monitor.py",
-    "super_single_pattern_miner.py",
-    "sync_local_from_cloud.py",
-    "tiantianle_core.py",
-    "tiantianle_formula_engine.py",
-    "tiantianle_ironlaw_report.py",
-    "tenfold_validation_gate.py",
-    "top9_evaluation_report.py",
-    "ultimate_single_deep_validation.py",
-    "verify_mobile_sync.py",
-    "publish_mobile_site_only.py",
-    "publish_cloud_main_source.py",
-    "repair_no_empty_prediction.py",
-}
-
-
-def request_json(path, token, data=None, method="GET", tolerate=()):
-    body = None if data is None else json.dumps(data).encode()
-    req = urllib.request.Request(
-        "https://api.github.com/" + path.lstrip("/"),
-        data=body,
-        method=method,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": "Bearer " + token,
-            "User-Agent": "tiantianle-main-source-publisher",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    last_error = None
-    for attempt in range(1, 7):
+def request_json(path,token,data=None,method='GET',tolerate=()):
+    url='https://api.github.com/'+urllib.parse.quote(path.lstrip('/'),safe='/?=&%')
+    body=None if data is None else json.dumps(data).encode('utf-8')
+    request=urllib.request.Request(url,data=body,method=method,headers={
+        'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,
+        'User-Agent':'tiantianle-verified-updater','X-GitHub-Api-Version':'2022-11-28'})
+    attempts=3 if method=='GET' else 1
+    for attempt in range(attempts):
         try:
-            raw = urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()).read().decode()
-            return json.loads(raw or "{}") if raw else {}
+            with urllib.request.urlopen(request,timeout=30) as response:
+                raw=response.read().decode('utf-8')
+            return json.loads(raw) if raw else {}
         except urllib.error.HTTPError as exc:
-            text = exc.read().decode(errors="ignore")
-            if exc.code in tolerate:
-                return {"_status": exc.code, "body": text}
-            if exc.code not in {429, 500, 502, 503, 504} or attempt == 6:
-                raise RuntimeError(f"{method} {path} {exc.code} {text[:500]}")
-            last_error = f"{exc.code} {text[:160]}"
-        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.RemoteDisconnected) as exc:
-            last_error = str(exc)
-            if attempt == 6:
-                raise RuntimeError(f"{method} {path} failed after retries: {last_error}") from exc
-        time.sleep(min(2 ** attempt, 30))
-    raise RuntimeError(f"{method} {path} failed after retries: {last_error}")
-
-
-def allowed(path):
-    rel_parts = path.relative_to(BASE).parts
-    if any(part in BLOCKED_DIRS for part in rel_parts):
-        return False
-    if any(part.startswith("__gh_pages_publish_") for part in rel_parts):
-        return False
-    lower_name = path.name.lower()
-    if lower_name in BLOCKED_NAMES:
-        return False
-    if path.suffix.lower() == ".zip":
-        return False
-    if any(part in lower_name for part in BLOCKED_PARTS):
-        return False
-    return True
-
-
-def source_files():
-    files = []
-    seen = set()
-    for rel in sorted(ALLOWLIST):
-        path = BASE / rel
-        if not path.is_file() or not allowed(path):
-            continue
-        seen.add(rel)
-        files.append((rel, path))
-    for path in sorted(BASE.glob("*20260618*.py")):
-        rel = path.name
-        if rel in seen or not path.is_file() or not allowed(path):
-            continue
-        files.append((rel, path))
-    return sorted(files)
-
+            if exc.code in tolerate: return {'_status':exc.code}
+            if method=='GET' and exc.code>=500 and attempt+1<attempts:
+                time.sleep(0.5*(attempt+1));continue
+            raise RuntimeError(f'GitHub {method} failed: HTTP {exc.code}') from exc
+        except (urllib.error.URLError,TimeoutError):
+            if attempt+1==attempts: raise
+            time.sleep(0.5*(attempt+1))
 
 def main():
-    if not TOKEN_FILE.exists():
-        raise RuntimeError("mobile_access_token.txt is required for API publishing")
-    token = TOKEN_FILE.read_text(encoding="utf-8", errors="ignore").strip()
-    if not token:
-        raise RuntimeError("mobile_access_token.txt is empty")
+    from cloud_update_request import main as request_update
+    request_update()
 
-    request_json(f"repos/{REPO}", token)
-    ref = request_json(f"repos/{REPO}/git/ref/heads/main", token, tolerate=(404,))
-    parent = None if ref.get("_status") == 404 else ref.get("object", {}).get("sha")
-    parent_tree = None
-    if parent:
-        parent_commit = request_json(f"repos/{REPO}/git/commits/{parent}", token)
-        parent_tree = (parent_commit.get("tree") or {}).get("sha")
-    entries = []
-    for rel, path in source_files():
-        blob = request_json(
-            f"repos/{REPO}/git/blobs",
-            token,
-            method="POST",
-            data={"content": base64.b64encode(path.read_bytes()).decode(), "encoding": "base64"},
-        )
-        entries.append({"path": rel, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    tree_payload = {"tree": entries}
-    if parent_tree:
-        tree_payload["base_tree"] = parent_tree
-    tree = request_json(f"repos/{REPO}/git/trees", token, method="POST", data=tree_payload)
-    commit_data = {
-        "message": "Update Tiantianle source, precision model, and instant refresh",
-        "tree": tree["sha"],
-        "committer": {
-            "name": "tiantianle-cloud-bot",
-            "email": "tiantianle-cloud-bot@users.noreply.github.com",
-            "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        },
-    }
-    if parent:
-        commit_data["parents"] = [parent]
-    commit = request_json(f"repos/{REPO}/git/commits", token, method="POST", data=commit_data)
-    if ref.get("_status") == 404:
-        request_json(
-            f"repos/{REPO}/git/refs",
-            token,
-            method="POST",
-            data={"ref": "refs/heads/main", "sha": commit["sha"]},
-        )
-    else:
-        request_json(
-            f"repos/{REPO}/git/refs/heads/main",
-            token,
-            method="PATCH",
-            data={"sha": commit["sha"], "force": True},
-        )
-    print(f"main source published: {commit['sha']}")
-    print(f"files: {len(entries)}")
-
-
-if __name__ == "__main__":
-    main()
+if __name__=='__main__': main()

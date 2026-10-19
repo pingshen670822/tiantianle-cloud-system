@@ -2,44 +2,17 @@ name: tiantianle-cloud-auto-update
 
 on:
   workflow_dispatch:
+  workflow_call:
   repository_dispatch:
     types: [tiantianle_manual_update]
   schedule:
-    # 每 3 小時自動檢測：確認戰報是否為最新資料，並重建手機版同步檔案。
-    - cron: "0 */3 * * *"
-    # 台灣夏令開獎後嚴格更新窗：09:48-10:00，目標 10:00 前完成最新開獎與下期預測。
-    - cron: "48 1 * * *"
-    - cron: "49 1 * * *"
-    - cron: "50 1 * * *"
-    - cron: "52 1 * * *"
-    - cron: "55 1 * * *"
-    - cron: "58 1 * * *"
-    - cron: "0 2 * * *"
-    # 台灣夏令開獎後一小時保證更新窗：10:05-10:50 持續追最新資料與下期預測。
-    - cron: "5 2 * * *"
-    - cron: "10 2 * * *"
-    - cron: "20 2 * * *"
-    - cron: "30 2 * * *"
-    - cron: "40 2 * * *"
-    - cron: "50 2 * * *"
-    # 台灣冬令開獎後嚴格更新窗：10:48-11:00。
-    - cron: "48 2 * * *"
-    - cron: "49 2 * * *"
-    - cron: "55 2 * * *"
-    - cron: "0 3 * * *"
-    # 台灣冬令開獎後一小時保證更新窗：11:05-11:50 持續追最新資料與下期預測。
-    - cron: "5 3 * * *"
-    - cron: "10 3 * * *"
-    - cron: "20 3 * * *"
-    - cron: "30 3 * * *"
-    - cron: "40 3 * * *"
-    - cron: "50 3 * * *"
-    # 台灣 13:00 強制完整重新運算、回測、檢討、戰報重建。
-    - cron: "0 5 * * *"
-    # 開獎後兩小時自動修復：夏令台灣 11:50 已含於上方，冬令台灣 12:50 另行補跑。
-    - cron: "50 4 * * *"
-    # 台灣 21:45 保險檢查。
-    - cron: "45 13 * * *"
+    - cron: '0 */3 * * *'
+    - cron: '50,55 1 * * *'
+    - cron: '0 2 * * *'
+    - cron: '50,55 2 * * *'
+    - cron: '0 3 * * *'
+    - cron: '0 5 * * *'
+    - cron: '45 13 * * *'
 
 permissions:
   contents: write
@@ -52,14 +25,14 @@ concurrency:
 
 jobs:
   update:
-    
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
       PYTHONUTF8: '1'
+      TIANTIANLE_RUN_MODE: ${{ github.event.schedule == '0 5 * * *' && 'deep' || 'realtime' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,9 +40,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Update draw data and recalculate all report modules
+      - name: Fault injection and regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Calculate in isolation and promote verified output
         run: python -u system_update.py
-      - name: Validate current data, report sections and mobile synchronization
+      - name: Validate current report
         run: python system_update.py --validate-only
       - name: Commit verified generated data
         run: |

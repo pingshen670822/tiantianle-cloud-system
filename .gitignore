@@ -8,3 +8,7 @@ tiantianle_ironlaw_20260617_current/
 *.pyo
 *.tmp
 *.log
+work/
+mobile_access_token.txt
+github_device_login.json
+.gitconfig-gh

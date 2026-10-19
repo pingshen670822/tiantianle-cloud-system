@@ -3459,6 +3459,10 @@ def run(full=False):
         draws = fetch_draws(conn)
         if not draws:
             raise RuntimeError("no draw data")
+        if draws[-1]['draw_date'] != latest_allowed_draw_date():
+            raise RuntimeError('最新開獎資料尚未取得，停止重算並保留上一份有效戰報。')
+        if not source_is_confirmed(draws[-1].get('source','')):
+            raise RuntimeError('最新開獎來源尚未確認，停止重算。')
         period_audit = full_period_prediction_audit_and_backfill(conn, draws)
         analysis = analyze(draws, failure_review(conn))
         analysis["period_integrity_audit"] = period_audit
@@ -3527,7 +3531,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from system_update import main as verified_update
+    verified_update()
 
 
 

@@ -17,5 +17,5 @@ MAIN_PROGRAM = Path(__file__).resolve().with_name("美國加州天天樂_2026061
 if not MAIN_PROGRAM.exists():
     raise SystemExit(f"Main program not found: {MAIN_PROGRAM}")
 
-sys.argv[0] = str(MAIN_PROGRAM)
-runpy.run_path(str(MAIN_PROGRAM), run_name="__main__")
+from system_update import main
+main()

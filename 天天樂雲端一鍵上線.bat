@@ -1,5 +1,5 @@
 ﻿@echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-wscript.exe "%~dp0天天樂背景完整上線.vbs"
-exit /b
+call "%~dp0PUBLISH_TIANTIANLE_CLOUD_NOW.bat"
+exit /b %errorlevel%

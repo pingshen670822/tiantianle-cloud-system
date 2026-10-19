@@ -3,81 +3,15 @@ name: tiantianle-cloud-self-heal
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["tiantianle-cloud-auto-update"]
+    workflows: [tiantianle-cloud-auto-update]
     types: [completed]
-  schedule:
-    # 每小時獨立自我修復巡檢：主流程故障時仍可由本流程補跑。
-    - cron: "17 * * * *"
-    # 台灣夏令開獎後備援補跑：10:00 內啟動，10:00-10:50 一小時內密集追更新。
-    - cron: "0 2 * * *"
-    - cron: "5 2 * * *"
-    - cron: "10 2 * * *"
-    - cron: "15 2 * * *"
-    - cron: "20 2 * * *"
-    - cron: "30 2 * * *"
-    - cron: "40 2 * * *"
-    - cron: "50 2 * * *"
-    # 台灣冬令開獎後備援補跑：11:00 內啟動，11:00-11:50 一小時內密集追更新。
-    - cron: "0 3 * * *"
-    - cron: "5 3 * * *"
-    - cron: "10 3 * * *"
-    - cron: "15 3 * * *"
-    - cron: "20 3 * * *"
-    - cron: "30 3 * * *"
-    - cron: "40 3 * * *"
-    - cron: "50 3 * * *"
-    # 開獎後兩小時強制自修：夏令台灣 11:50 已含於上方，冬令台灣 12:50 另行補跑。
-    - cron: "50 4 * * *"
-    # 台灣 13:10 備援完整重算。
-    - cron: "10 5 * * *"
 
 permissions:
   contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: tiantianle-cloud-publisher
-  cancel-in-progress: false
-
 jobs:
-  update:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    env:
-      PYTHONUTF8: '1'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Update draw data and recalculate all report modules
-        run: python -u system_update.py
-      - name: Validate current data, report sections and mobile synchronization
-        run: python system_update.py --validate-only
-      - name: Commit verified generated data
-        run: |
-          git config user.name 'tiantianle automation'
-          git config user.email 'actions@users.noreply.github.com'
-          git add data reports site fantasy5_full_history.csv
-          if ! git diff --cached --quiet; then
-            git commit -m 'Update verified Tiantianle reports'
-            git push origin HEAD:main
-          fi
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - name: Deploy verified report
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: Verify deployed report
-        run: python verify_live_report.py
+  retry-failed-update:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    uses: ./.github/workflows/tiantianle-cloud-auto-update.yml
