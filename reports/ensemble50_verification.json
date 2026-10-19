@@ -1,5 +1,284 @@
 {
-  "version": "ensemble50_v3_full39_six_number_groups",
+  "version": "ensemble50_v4_number_percentages",
+  "number_percentages": {
+    "method": "50組名次積分合計 ÷ (50×39) ×100；每組第一名39分、末名1分",
+    "meaning": "融合排名分數百分比，不是開出機率，尚未校準",
+    "numbers": [
+      {
+        "number": 11,
+        "rank": 1,
+        "ranking_points": 1551,
+        "ranking_score_percent": 79.5385,
+        "top9_support_percent": 62.0
+      },
+      {
+        "number": 10,
+        "rank": 2,
+        "ranking_points": 1549,
+        "ranking_score_percent": 79.4359,
+        "top9_support_percent": 62.0
+      },
+      {
+        "number": 2,
+        "rank": 3,
+        "ranking_points": 1511,
+        "ranking_score_percent": 77.4872,
+        "top9_support_percent": 70.0
+      },
+      {
+        "number": 15,
+        "rank": 4,
+        "ranking_points": 1434,
+        "ranking_score_percent": 73.5385,
+        "top9_support_percent": 62.0
+      },
+      {
+        "number": 27,
+        "rank": 5,
+        "ranking_points": 1424,
+        "ranking_score_percent": 73.0256,
+        "top9_support_percent": 60.0
+      },
+      {
+        "number": 32,
+        "rank": 6,
+        "ranking_points": 1405,
+        "ranking_score_percent": 72.0513,
+        "top9_support_percent": 48.0
+      },
+      {
+        "number": 9,
+        "rank": 7,
+        "ranking_points": 1341,
+        "ranking_score_percent": 68.7692,
+        "top9_support_percent": 52.0
+      },
+      {
+        "number": 14,
+        "rank": 8,
+        "ranking_points": 1280,
+        "ranking_score_percent": 65.641,
+        "top9_support_percent": 36.0
+      },
+      {
+        "number": 18,
+        "rank": 9,
+        "ranking_points": 1268,
+        "ranking_score_percent": 65.0256,
+        "top9_support_percent": 46.0
+      },
+      {
+        "number": 35,
+        "rank": 10,
+        "ranking_points": 1262,
+        "ranking_score_percent": 64.7179,
+        "top9_support_percent": 26.0
+      },
+      {
+        "number": 3,
+        "rank": 11,
+        "ranking_points": 1234,
+        "ranking_score_percent": 63.2821,
+        "top9_support_percent": 32.0
+      },
+      {
+        "number": 25,
+        "rank": 12,
+        "ranking_points": 1158,
+        "ranking_score_percent": 59.3846,
+        "top9_support_percent": 12.0
+      },
+      {
+        "number": 28,
+        "rank": 13,
+        "ranking_points": 1128,
+        "ranking_score_percent": 57.8462,
+        "top9_support_percent": 24.0
+      },
+      {
+        "number": 19,
+        "rank": 14,
+        "ranking_points": 1120,
+        "ranking_score_percent": 57.4359,
+        "top9_support_percent": 30.0
+      },
+      {
+        "number": 33,
+        "rank": 15,
+        "ranking_points": 1093,
+        "ranking_score_percent": 56.0513,
+        "top9_support_percent": 24.0
+      },
+      {
+        "number": 6,
+        "rank": 16,
+        "ranking_points": 1084,
+        "ranking_score_percent": 55.5897,
+        "top9_support_percent": 16.0
+      },
+      {
+        "number": 26,
+        "rank": 17,
+        "ranking_points": 1063,
+        "ranking_score_percent": 54.5128,
+        "top9_support_percent": 32.0
+      },
+      {
+        "number": 22,
+        "rank": 18,
+        "ranking_points": 1054,
+        "ranking_score_percent": 54.0513,
+        "top9_support_percent": 34.0
+      },
+      {
+        "number": 8,
+        "rank": 19,
+        "ranking_points": 1002,
+        "ranking_score_percent": 51.3846,
+        "top9_support_percent": 16.0
+      },
+      {
+        "number": 17,
+        "rank": 20,
+        "ranking_points": 912,
+        "ranking_score_percent": 46.7692,
+        "top9_support_percent": 18.0
+      },
+      {
+        "number": 36,
+        "rank": 21,
+        "ranking_points": 912,
+        "ranking_score_percent": 46.7692,
+        "top9_support_percent": 14.0
+      },
+      {
+        "number": 39,
+        "rank": 22,
+        "ranking_points": 912,
+        "ranking_score_percent": 46.7692,
+        "top9_support_percent": 18.0
+      },
+      {
+        "number": 1,
+        "rank": 23,
+        "ranking_points": 909,
+        "ranking_score_percent": 46.6154,
+        "top9_support_percent": 16.0
+      },
+      {
+        "number": 24,
+        "rank": 24,
+        "ranking_points": 907,
+        "ranking_score_percent": 46.5128,
+        "top9_support_percent": 18.0
+      },
+      {
+        "number": 12,
+        "rank": 25,
+        "ranking_points": 862,
+        "ranking_score_percent": 44.2051,
+        "top9_support_percent": 16.0
+      },
+      {
+        "number": 13,
+        "rank": 26,
+        "ranking_points": 856,
+        "ranking_score_percent": 43.8974,
+        "top9_support_percent": 12.0
+      },
+      {
+        "number": 4,
+        "rank": 27,
+        "ranking_points": 827,
+        "ranking_score_percent": 42.4103,
+        "top9_support_percent": 8.0
+      },
+      {
+        "number": 29,
+        "rank": 28,
+        "ranking_points": 786,
+        "ranking_score_percent": 40.3077,
+        "top9_support_percent": 8.0
+      },
+      {
+        "number": 30,
+        "rank": 29,
+        "ranking_points": 777,
+        "ranking_score_percent": 39.8462,
+        "top9_support_percent": 2.0
+      },
+      {
+        "number": 23,
+        "rank": 30,
+        "ranking_points": 772,
+        "ranking_score_percent": 39.5897,
+        "top9_support_percent": 6.0
+      },
+      {
+        "number": 5,
+        "rank": 31,
+        "ranking_points": 766,
+        "ranking_score_percent": 39.2821,
+        "top9_support_percent": 4.0
+      },
+      {
+        "number": 16,
+        "rank": 32,
+        "ranking_points": 763,
+        "ranking_score_percent": 39.1282,
+        "top9_support_percent": 4.0
+      },
+      {
+        "number": 37,
+        "rank": 33,
+        "ranking_points": 702,
+        "ranking_score_percent": 36.0,
+        "top9_support_percent": 0.0
+      },
+      {
+        "number": 20,
+        "rank": 34,
+        "ranking_points": 689,
+        "ranking_score_percent": 35.3333,
+        "top9_support_percent": 8.0
+      },
+      {
+        "number": 31,
+        "rank": 35,
+        "ranking_points": 681,
+        "ranking_score_percent": 34.9231,
+        "top9_support_percent": 0.0
+      },
+      {
+        "number": 38,
+        "rank": 36,
+        "ranking_points": 601,
+        "ranking_score_percent": 30.8205,
+        "top9_support_percent": 2.0
+      },
+      {
+        "number": 7,
+        "rank": 37,
+        "ranking_points": 544,
+        "ranking_score_percent": 27.8974,
+        "top9_support_percent": 0.0
+      },
+      {
+        "number": 21,
+        "rank": 38,
+        "ranking_points": 434,
+        "ranking_score_percent": 22.2564,
+        "top9_support_percent": 2.0
+      },
+      {
+        "number": 34,
+        "rank": 39,
+        "ranking_points": 427,
+        "ranking_score_percent": 21.8974,
+        "top9_support_percent": 0.0
+      }
+    ]
+  },
   "full39_six_combinations": {
     "groups": [
       {
