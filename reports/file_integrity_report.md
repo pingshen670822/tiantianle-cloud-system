@@ -1,8 +1,8 @@
 # 檔案讀取檢查
 
-- 檢查：80
+- 檢查：81
 - 異常：0
-- 備註：27
+- 備註：28
 
 ## 備註
 california_fantasy5_system.py: cjk_report_text_allowed
@@ -10,6 +10,7 @@ mobile_server.py: cjk_report_text_allowed
 system_stability_monitor.py: cjk_report_text_allowed
 ensemble50.py: cjk_report_text_allowed
 tiantianle_core.py: cjk_report_text_allowed
+report_sections.py: cjk_report_text_allowed
 full_probability_table_report.py: cjk_report_text_allowed
 sanitize_public_outputs.py: cjk_report_text_allowed
 sync_local_from_cloud.py: cjk_report_text_allowed
