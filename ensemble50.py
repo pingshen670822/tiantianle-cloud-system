@@ -70,6 +70,25 @@ def consensus(modules):
             scores[n] += 39-i
     return sorted(scores, key=lambda n:(-scores[n],n))
 
+
+def number_percentages(modules):
+    """Normalize the existing equal-weight ranking points; not win probabilities."""
+    if len(modules)!=50 or len({m['id'] for m in modules})!=50:
+        raise ValueError('Single-number percentages require 50 unique modules')
+    points=Counter(); support=Counter()
+    for m in modules:
+        ranked=m['ranking']
+        if any(type(n) is not int for n in ranked) or sorted(ranked)!=list(range(1,40)):
+            raise ValueError('Invalid ranking for single-number percentage')
+        points.update({n:39-i for i,n in enumerate(ranked)})
+        support.update(ranked[:9])
+    ranking=sorted(points,key=lambda n:(-points[n],n))
+    return {'method':'50組名次積分合計 ÷ (50×39) ×100；每組第一名39分、末名1分',
+            'meaning':'融合排名分數百分比，不是開出機率，尚未校準',
+            'numbers':[{'number':n,'rank':i+1,'ranking_points':points[n],
+                        'ranking_score_percent':round(points[n]/(50*39)*100,4),
+                        'top9_support_percent':round(support[n]/50*100,4)} for i,n in enumerate(ranking)]}
+
 def six_number_groups(modules, ranked, count=10):
     """Fixed ranking/co-occurrence score with diversified groups, no outcome input."""
     pool=ranked[:15]
@@ -232,7 +251,7 @@ def compute(draws, samples=60):
                       'backtest_samples':samples,'backtest_successes':wins,'backtest_rate_percent':round(rate*100,2),
                       'wilson_95_percent':[round(max(0,centre-margin)*100,2),round(min(1,centre+margin)*100,2)],
                       'random_baseline_percent':round(baseline*100,6)})
-    return {'version':'ensemble50_v3_full39_six_number_groups','full39_six_combinations':full,'six_number_combinations':six,'module_count':len(modules),'modules':modules,'ranking':ranked,'packs':packs,
+    return {'version':'ensemble50_v4_number_percentages','number_percentages':number_percentages(modules),'full39_six_combinations':full,'six_number_combinations':six,'module_count':len(modules),'modules':modules,'ranking':ranked,'packs':packs,
             'based_on_date':dates[-1],'target_draw_date':(date.fromisoformat(dates[-1])+timedelta(days=1)).isoformat(),
             'verification':{'status':'passed','modules_verified':sum(m['validation']['structural_pass'] for m in modules),
                             'walk_forward_samples':samples,'future_data_used':False,'weighting':'預先固定等權排名平均',

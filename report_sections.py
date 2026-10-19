@@ -2,7 +2,7 @@
 import csv
 import json
 from pathlib import Path
-from report539_style import esc, balls, table, navigation, STYLE_FROM_539, EXTRA_STYLE
+from report539_style import esc, balls, table, navigation, STYLE_FROM_539, EXTRA_STYLE, percentage_map, number_labels
 
 
 def history_rows(path, analysis):
@@ -65,8 +65,9 @@ def history_content(rows):
 
 def models_content(a):
     e=a['ensemble50']
-    rows=[[i+1,m['id'],m['family'],m['window'],f"{m['ranking'][0]:02d}",' '.join(f'{n:02d}' for n in m['ranking'][:5]),m['validation']['top5_avg_hits'],m['validation']['samples']] for i,m in enumerate(e['modules'])]
-    return f'''<section class="panel"><h2>50組候選模組</h2><p class="muted">5個算法家族，各10種歷史視窗。下表顯示每組實際首選、前五名單與60期逐期回測；固定等權融合，不以事後最高成績取代融合結果。</p>{table(['序','模組','算法家族','歷史窗口','本期首選','本期前五','前五平均命中','回測期數'],rows)}<p class="research-label">信心等級：研究參考。這些模組共用資料，不能視為50份獨立證據。</p></section>'''
+    percentages=percentage_map(e)
+    rows=[[i+1,m['id'],m['family'],m['window'],number_labels(m['ranking'][:1],percentages),number_labels(m['ranking'][:5],percentages),m['validation']['top5_avg_hits'],m['validation']['samples']] for i,m in enumerate(e['modules'])]
+    return f'''<section class="panel"><h2>50組候選模組</h2><p class="muted">5個算法家族，各10種歷史視窗。下表顯示每組實際首選、前五名單與60期逐期回測；固定等權融合，不以事後最高成績取代融合結果。號碼旁百分比統一使用本期50組融合排名分數，個別模組的選號順序仍依其自身排名。</p>{table(['序','模組','算法家族','歷史窗口','本期首選（融合分數％）','本期前五（融合分數％）','前五平均命中','回測期數'],rows)}<p class="research-label">信心等級：研究參考。這些模組共用資料，不能視為50份獨立證據。</p></section>'''
 
 
 def system_content(a,workflow_url):

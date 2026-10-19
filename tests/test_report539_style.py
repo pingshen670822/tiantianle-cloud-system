@@ -36,7 +36,7 @@ class StyledReportTests(unittest.TestCase):
             self.assertEqual(parser.ids.count(marker),1)
         for block in ('six_number_combinations','full39_six_combinations'):
             for group in e[block]['groups']:
-                self.assertIn(' '.join(f'{n:02d}' for n in group['numbers']),page)
+                self.assertIn(layout.number_labels(group['numbers'],layout.percentage_map(e)),page)
     def test_invalid_dates_or_missing_verification_do_not_get_report(self):
         a=copy.deepcopy(self.analysis);a['target_draw_date']='1900-01-01'
         with self.assertRaises(ValueError):self.render(a)

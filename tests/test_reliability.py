@@ -108,6 +108,8 @@ class ReliabilityTests(unittest.TestCase):
         self.assertIn(b'isolated update workspace',child.stderr)
     def audit_fixture(self):
         a=json.loads((ROOT/'reports/latest_analysis.json').read_text(encoding='utf-8-sig'))
+        from ensemble50 import number_percentages
+        a['ensemble50']['number_percentages']=number_percentages(a['ensemble50']['modules'])
         for name in ('reports','site'):(self.root/name).mkdir(exist_ok=True)
         for name in ('reports/latest_analysis.json','site/latest_analysis.json'):
             (self.root/name).write_text(json.dumps(a),encoding='utf-8')
@@ -119,6 +121,10 @@ class ReliabilityTests(unittest.TestCase):
         with patch.object(runner,'ROOT',self.root),contextlib.redirect_stdout(io.StringIO()):return runner.audit(game)
     def test_valid_outputs_pass(self):
         a,game=self.audit_fixture();self.assertEqual(self.run_audit(game)['status'],'passed')
+    def test_tampered_single_number_percentage_blocks_publication(self):
+        a,game=self.audit_fixture();a['ensemble50']['number_percentages']['numbers'][0]['ranking_score_percent']+=1
+        for name in ('reports/latest_analysis.json','site/latest_analysis.json'):(self.root/name).write_text(json.dumps(a),encoding='utf-8')
+        with self.assertRaisesRegex(RuntimeError,'單號百分比'):self.run_audit(game)
     def test_stale_data_is_rejected(self):
         a,game=self.audit_fixture();game.latest_allowed_draw_date.return_value='2099-01-01'
         with self.assertRaisesRegex(RuntimeError,'開獎資料落後'):self.run_audit(game)

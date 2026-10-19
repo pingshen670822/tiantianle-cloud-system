@@ -45,6 +45,13 @@ def audit(game):
     if len(modules)!=50 or len({m.get('id') for m in modules})!=50:problems.append('50組模組內容缺漏或重複')
     if any(sorted(m.get('ranking',[]))!=list(range(1,40)) or any(type(n) is not int for n in m.get('ranking',[])) for m in modules):problems.append('模組排名缺碼或重複')
     if sorted(e.get('ranking',[]))!=list(range(1,40)):problems.append('總排名格式錯誤')
+    from ensemble50 import number_percentages
+    try:
+        calculated_percentages=number_percentages(modules)
+        if e.get('number_percentages')!=calculated_percentages:problems.append('單號百分比與50組排名不一致或缺漏')
+        if [r['number'] for r in calculated_percentages['numbers']]!=e.get('ranking'):problems.append('單號百分比排序與融合排名不一致')
+    except (ValueError,KeyError,TypeError):
+        problems.append('單號百分比來源排名無效')
     sizes={'終極獨隻':1,'2中2':2,'3中3':3,'5中5':5,'7中5':7,'9中5':9}
     required={p.get('name'):p for p in e.get('packs',[])}
     for label,size in sizes.items():
