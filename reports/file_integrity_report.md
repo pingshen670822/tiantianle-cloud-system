@@ -1,8 +1,8 @@
 # 檔案讀取檢查
 
-- 檢查：79
+- 檢查：80
 - 異常：0
-- 備註：26
+- 備註：27
 
 ## 備註
 california_fantasy5_system.py: cjk_report_text_allowed
@@ -22,6 +22,7 @@ repair_no_empty_prediction.py: cjk_report_text_allowed
 tenfold_validation_gate.py: cjk_report_text_allowed
 update_transaction.py: cjk_report_text_allowed
 top9_evaluation_report.py: cjk_report_text_allowed
+report539_style.py: cjk_report_text_allowed
 system_gap_audit.py: cjk_report_text_allowed
 tiantianle_formula_engine.py: cjk_report_text_allowed
 pages_build.py: cjk_report_text_allowed
