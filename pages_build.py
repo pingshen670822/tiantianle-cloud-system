@@ -83,7 +83,7 @@ def build_version():
     return datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def inject_mobile_panel(html, report_layout=False):
+def inject_mobile_panel(html, report_layout=False, report_path=''):
     repo, workflow_url, page_url = cloud_links()
     version = build_version()
     local_note = ""
@@ -211,7 +211,7 @@ def inject_mobile_panel(html, report_layout=False):
     if report_layout:
         style = '<meta name="theme-color" content="#12273b">'
     script = script.replace("{version}", version)
-    script = script.replace("{cloud_url}", json.dumps(page_url))
+    script = script.replace("{cloud_url}", json.dumps(page_url + report_path))
     html = html.replace("tiantianle_prediction_history.html", "prediction-history.html")
     html = html.replace("</head>", style + "</head>")
     html = html.replace("</body>", script + "</body>")
@@ -1199,6 +1199,16 @@ def main():
                      '天天樂完整戰報.html','天天樂最新戰報.html','最新完整戰報.html','完整戰報.html','完整_report.html',
                      'prediction.html','下期預測.html','天天樂下期預測.html'):
             (SITE_DIR / 'reports' / name).write_text(styled_report, encoding='utf-8')
+        from report_sections import history_rows, render_sections
+        records = history_rows(ROOT / 'fantasy5_full_history.csv', current_analysis)
+        sections = render_sections(current_analysis, records, cloud_url, workflow_url)
+        shutil.copy2(ROOT / 'fantasy5_full_history.csv', SITE_DIR / 'history.csv')
+        for key, content in sections.items():
+            content = inject_mobile_panel(content, report_layout=True, report_path=key+'/')
+            (SITE_DIR / key).mkdir(exist_ok=True)
+            (SITE_DIR / key / 'index.html').write_text(content, encoding='utf-8')
+            (SITE_DIR / (key+'.html')).write_text(content, encoding='utf-8')
+        (SITE_DIR / '上期未命中檢討.html').write_text((SITE_DIR/'review.html').read_text(encoding='utf-8'),encoding='utf-8')
     print(SITE_DIR / "index.html")
 
 

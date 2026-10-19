@@ -32,6 +32,17 @@ def balls(numbers, small=True):
         f'<span>{n:02d}</span>' for n in numbers) + '</div>'
 
 
+NAVIGATION = (('forecast','./','預測戰報'),('review','review/','開獎檢討'),
+              ('history','history/','歷史資料'),('models','models/','候選模型'),('system','system/','更新與檢修'))
+
+
+def navigation(active='forecast'):
+    return '<nav aria-label="主導覽">' + ''.join(
+        f'<a class="{"active" if key == active else ""}" href="{href}"'
+        + (' aria-current="page"' if key == active else '') + f'>{name}</a>'
+        for key,href,name in NAVIGATION) + '</nav>'
+
+
 def table(headers, rows):
     return '<div class="table-wrap"><table><thead><tr>' + ''.join(f'<th>{esc(v)}</th>' for v in headers) + '</tr></thead><tbody>' + ''.join(
         '<tr>' + ''.join(f'<td>{esc(v)}</td>' for v in row) + '</tr>' for row in rows) + '</tbody></table></div>'
@@ -80,7 +91,7 @@ def render_report(analysis, cloud_url, workflow_url):
     return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <base href="{esc(cloud_url)}"><title>天天樂｜539同規格戰報 · {esc(target)}</title><style>{STYLE_FROM_539}{EXTRA_STYLE}</style></head>
     <body data-report-layout="539-v23-compatible"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 539同規格版面</span></div></div><span class="status"><i></i>50組模組已驗證</span></header>
-    <nav><a class="active" href="#ensemble50-required">預測戰報</a><a href="#target-groups">五組目標</a><a href="#top15-six-groups">六碼組合</a><a href="#verification">運算驗證</a><a href="{esc(workflow_url)}">更新與檢修</a></nav>
+    {navigation()}
     <main><div class="toolbar"><p>最新運算（台灣）：{esc(generated)}<br>資料截至加州 {esc(e['based_on_date'])} · 每日開獎，適用日期依加州日曆</p>
     <div><button type="button" onclick="forceRefresh()">同步最新戰報</button><a class="action-link" href="{esc(workflow_url)}">雲端更新與檢修</a></div></div>
     <p class="alert local-note" id="localSnapshotNote" hidden>本機離線快照，尚未同步。<a href="{esc(cloud_url)}">開啟線上戰報</a></p>
