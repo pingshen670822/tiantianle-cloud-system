@@ -83,7 +83,7 @@ def build_version():
     return datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def inject_mobile_panel(html):
+def inject_mobile_panel(html, report_layout=False):
     repo, workflow_url, page_url = cloud_links()
     version = build_version()
     local_note = ""
@@ -208,12 +208,14 @@ def inject_mobile_panel(html):
     </script>
     """
     style = style.replace("{version}", version)
+    if report_layout:
+        style = '<meta name="theme-color" content="#12273b">'
     script = script.replace("{version}", version)
     script = script.replace("{cloud_url}", json.dumps(page_url))
     html = html.replace("tiantianle_prediction_history.html", "prediction-history.html")
     html = html.replace("</head>", style + "</head>")
     html = html.replace("</body>", script + "</body>")
-    return html.replace("<main>", "<main>" + panel, 1)
+    return html if report_layout else html.replace("<main>", "<main>" + panel, 1)
 
 
 def copy_text(src, dst):
@@ -1092,13 +1094,15 @@ def main():
     prediction = REPORT_DIR / "prediction.html"
     review = REPORT_DIR / "review.html"
     index_html = finalize_user_html(inject_mobile_panel(build_home_page()))
+    styled_report = None
     analysis_path = REPORT_DIR / 'latest_analysis.json'
     if analysis_path.exists():
         current_analysis = json.loads(analysis_path.read_text(encoding='utf-8'))
         if current_analysis.get('ensemble50'):
-            from ensemble50 import html_section
-            marker = '<main>' if '<main>' in index_html else '<body>'
-            index_html = index_html.replace(marker, marker + html_section(current_analysis), 1)
+            from report539_style import render_report
+            _, workflow_url, cloud_url = cloud_links()
+            styled_report = inject_mobile_panel(render_report(current_analysis, cloud_url, workflow_url), report_layout=True)
+            index_html = styled_report
     (SITE_DIR / "index.html").write_text(index_html, encoding="utf-8")
     (SITE_DIR / "首頁.html").write_text(index_html, encoding="utf-8")
     if prediction.exists():
@@ -1139,6 +1143,7 @@ def main():
         for alias in aliases:
             write_alias(source, alias)
     root_report_source = SITE_DIR / "reports" / "latest_battle_report.html"
+    copy_text(root_report_source, SITE_DIR / "legacy_model_report.html")
     for alias in [
         "complete_report.html",
         "tiantianle_complete_report.html",
@@ -1184,6 +1189,16 @@ def main():
     write_pwa_files()
     write_install_page()
     write_alias(SITE_DIR / "install.html", "安裝手機版.html")
+    if styled_report is not None:
+        # All current-report entry points must show the same dated snapshot.
+        for name in ('index.html','首頁.html','prediction.html','下期預測.html',
+                     'latest_battle_report.html','complete_report.html','tiantianle_complete_report.html',
+                     '完整_report.html','完整戰報.html','天天樂完整戰報.html','最新完整戰報.html'):
+            (SITE_DIR / name).write_text(styled_report, encoding='utf-8')
+        for name in ('latest_battle_report.html','complete_report.html','tiantianle_complete_report.html',
+                     '天天樂完整戰報.html','天天樂最新戰報.html','最新完整戰報.html','完整戰報.html','完整_report.html',
+                     'prediction.html','下期預測.html','天天樂下期預測.html'):
+            (SITE_DIR / 'reports' / name).write_text(styled_report, encoding='utf-8')
     print(SITE_DIR / "index.html")
 
 
