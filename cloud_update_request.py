@@ -4,7 +4,7 @@ from publish_cloud_main_source import REPO,TOKEN_FILE,request_json
 def request_update(token=None):
     if token is None:
         if not TOKEN_FILE.exists(): raise RuntimeError('找不到既有雲端登入憑證，未變更雲端或本機資料。')
-        token=TOKEN_FILE.read_text(encoding='utf-8').strip()
+        token=TOKEN_FILE.read_text(encoding='utf-8-sig').strip()
     if not token: raise RuntimeError('雲端登入憑證為空，未執行發布。')
     request_json(f'repos/{REPO}/actions/workflows/tiantianle-cloud-auto-update.yml/dispatches',
                  token,data={'ref':'main'},method='POST')

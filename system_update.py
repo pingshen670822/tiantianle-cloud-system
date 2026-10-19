@@ -91,7 +91,10 @@ def main():
     mode='deep' if args.all else (args.mode or os.environ.get('TIANTIANLE_RUN_MODE','realtime'))
     runtime_defaults(mode)
     if args.validate_only:
-        audit(load_game())
+        from update_transaction import UpdateLock,recover
+        with UpdateLock(ROOT/'work/update.lock'):
+            recover(ROOT)
+            audit(load_game())
     elif args.worker:
         if os.environ.get('TIANTIANLE_STAGE_ROOT')!=str(ROOT.resolve()) or ROOT.parent.name!='work' or not ROOT.name.startswith('stage-'):
             raise RuntimeError('Worker may run only inside an isolated update workspace')

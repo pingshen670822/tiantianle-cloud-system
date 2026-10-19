@@ -13,5 +13,5 @@ permissions:
 
 jobs:
   retry-failed-update:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'timed_out'
     uses: ./.github/workflows/tiantianle-cloud-auto-update.yml

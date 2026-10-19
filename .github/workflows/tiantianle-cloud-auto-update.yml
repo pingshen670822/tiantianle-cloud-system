@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -66,3 +66,13 @@ jobs:
         uses: actions/deploy-pages@v4
       - name: Verify deployed report
         run: python verify_live_report.py
+      - name: Preserve failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiantianle-update-diagnostics
+          path: |
+            logs/last_update.log
+            work/update_status.json
+            reports/repair_validation.json
+          if-no-files-found: ignore
