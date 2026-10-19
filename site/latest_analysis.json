@@ -5342,8 +5342,8 @@
     }
   },
   "industrial_engine_version": "industrial_v34_zero_hit_cluster_rescue_20260812",
-  "generated_at_taiwan": "2026-10-19T10:57:58+08:00",
-  "generated_at_california": "2026-10-18T19:57:58-07:00",
+  "generated_at_taiwan": "2026-10-19T11:19:43+08:00",
+  "generated_at_california": "2026-10-18T20:19:43-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11954,
@@ -7040,7 +7040,7 @@
   },
   "freshness": {
     "california_today": "2026-10-18",
-    "california_time": "19:57:58",
+    "california_time": "20:19:43",
     "allowed_latest_draw_date": "2026-10-18",
     "age_days": 0,
     "status": "ok",
@@ -180020,47 +180020,15 @@
     "status": "ok",
     "active_start": "2026-09-20",
     "checked": 28,
-    "missing_before": [
-      "2026-10-14",
-      "2026-10-15",
-      "2026-10-16",
-      "2026-10-17",
-      "2026-10-18"
-    ],
-    "repaired": [
-      {
-        "target_date": "2026-10-14",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-10-13"
-      },
-      {
-        "target_date": "2026-10-15",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-10-14"
-      },
-      {
-        "target_date": "2026-10-16",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-10-15"
-      },
-      {
-        "target_date": "2026-10-17",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-10-16"
-      },
-      {
-        "target_date": "2026-10-18",
-        "method": "rebuilt_from_history",
-        "based_on_date": "2026-10-17"
-      }
-    ],
+    "missing_before": [],
+    "repaired": [],
     "missing_after": []
   },
   "low_probability_daily_records": [
     {
       "based_on_date": "2026-10-18",
       "target_date": "2026-10-19",
-      "created_at": "2026-10-19T10:57:58+08:00",
+      "created_at": "2026-10-19T11:19:43+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
