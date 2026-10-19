@@ -36,6 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Queued events retain an old SHA even after the preceding run commits.
+          # Resolve main when this serialized job actually starts.
+          ref: main
           fetch-depth: 1
       - uses: actions/setup-python@v5
         with:
@@ -48,6 +51,11 @@ jobs:
         run: python system_update.py --validate-only
       - name: Commit verified generated data
         run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo '::error::main changed during calculation; refusing stale output. Recovery will recalculate the latest main.'
+            exit 1
+          fi
           git config user.name 'tiantianle automation'
           git config user.email 'actions@users.noreply.github.com'
           git add data reports site fantasy5_full_history.csv
