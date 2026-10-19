@@ -38,286 +38,46 @@ permissions:
 
 concurrency:
   group: tiantianle-cloud-publisher
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  self-heal:
+  update:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Set self-heal runtime
-        shell: bash
+          python-version: '3.12'
+      - name: Update draw data and recalculate all report modules
+        run: python -u system_update.py
+      - name: Validate current data, report sections and mobile synchronization
+        run: python system_update.py --validate-only
+      - name: Commit verified generated data
         run: |
-          echo "TIANTIANLE_RUN_MODE=self_heal" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_CORE_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_PACK_GOVERNANCE_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_PRECISION_TOURNAMENT_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_INDUSTRIAL_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_ADVANCED_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_UNLIKELY_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_FORMULA_BACKTEST_ROUNDS=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_GROUP_BACKTEST_SHORT=30" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_GROUP_BACKTEST_MID=60" >> "$GITHUB_ENV"
-          echo "TIANTIANLE_GROUP_BACKTEST_LONG=120" >> "$GITHUB_ENV"
-      - name: Compile cloud repair programs
-        shell: bash
-        run: |
-          python -m py_compile \
-            cloud_latest_cache_refresh.py \
-            cloud_self_repair.py \
-            offline_full_history_recalc.py \
-            pages_build.py \
-            sanitize_public_outputs.py \
-            system_gap_audit.py \
-            system_stability_monitor.py \
-            verify_mobile_sync.py \
-            tiantianle_ironlaw_report.py \
-            prediction_final_lock_guard.py \
-            tenfold_validation_gate.py \
-            top9_evaluation_report.py \
-            full_probability_table_report.py \
-            full_system_integrity_scan.py \
-            "美國加州天天樂_20260618_第1版.py"
-      - name: Run independent cloud self-repair
-        shell: bash
-        run: |
-          set +e
-          timeout 900 python cloud_self_repair.py --retries 6
-          repair_exit=$?
-          python prediction_final_lock_guard.py
-          python pages_build.py
-          python full_system_integrity_scan.py --local-only || true
-          if [ "$repair_exit" -ne 0 ]; then
-            echo "first self-heal pass failed; running emergency fallback"
-            timeout 300 python "美國加州天天樂_20260618_第1版.py" || true
-            timeout 600 python cloud_self_repair.py --retries 3
-            repair_exit=$?
-            python prediction_final_lock_guard.py
-            python pages_build.py
-            python full_system_integrity_scan.py --local-only || true
+          git config user.name 'tiantianle automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add data reports site fantasy5_full_history.csv
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update verified Tiantianle reports'
+            git push origin HEAD:main
           fi
-          exit "$repair_exit"
-      - name: Verify local repair result
-        shell: bash
-        run: |
-          python system_gap_audit.py --fail-on-publish-blocking --local-only
-          python verify_mobile_sync.py --local-only
-          python system_stability_monitor.py
-          python full_system_integrity_scan.py --local-only
-          python - <<'PY'
-          import pathlib
-
-          root = pathlib.Path(".")
-          problems = []
-          for file_name in [
-              "reports/latest_battle_report.html",
-              "site/reports/latest_battle_report.html",
-              "site/reports/complete_report.html",
-          ]:
-              path = root / file_name
-              if not path.exists():
-                  problems.append(f"缺少必要檔案：{file_name}")
-                  continue
-              text = path.read_text(encoding="utf-8", errors="ignore")
-              if 'data-ironlaw-interface' in text or 'data-report-style' in text:
-                  problems.append(f"完整戰報不得殘留自訂介面屬性：{file_name}")
-              if "tiantianleCloudControls" in text or "手動更新最新" in text:
-                  problems.append(f"完整戰報不得混入雲端操作按鈕：{file_name}")
-              if text.count("data-tab=") != 6 or text.count('class="panel') != 6:
-                  problems.append(f"完整戰報未保持539六分頁規格：{file_name}")
-          index_path = root / "site/index.html"
-          if not index_path.exists():
-              problems.append("缺少手機雲端首頁：site/index.html")
-          else:
-              index_text = index_path.read_text(encoding="utf-8", errors="ignore")
-              for marker, message in [
-                  ("tiantianleCloudControls", "手機雲端操作按鈕缺失"),
-                  ("手動更新最新", "手動更新按鈕缺失"),
-                  ("目前最新更新時間", "手機雲端最新更新時間顯示缺失"),
-              ]:
-                  if marker not in index_text:
-                      problems.append(f"{message}：site/index.html")
-          if problems:
-              raise SystemExit("\n".join(problems))
-          print("self-heal 539 report interface and homepage cloud controls verified")
-          PY
-      - name: Refuse stale overwrite
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import pathlib
-          import ssl
-          import sys
-          import time
-          import urllib.request
-
-          def load(path):
-              return json.loads(pathlib.Path(path).read_text(encoding="utf-8-sig"))
-
-          def core(data):
-              latest = data.get("latest_draw") or {}
-              freshness = data.get("freshness") or {}
-              prediction = data.get("prediction") or {}
-              ultimate = data.get("ultimate_super_single_engine") or {}
-              return {
-                  "generated": data.get("generated_at_taiwan") or "",
-                  "latest": latest.get("draw_date") or freshness.get("latest_draw_date") or "",
-                  "target": data.get("target_draw_date") or freshness.get("target_draw_date") or "",
-                  "top1": prediction.get("top1") or [],
-                  "top9": prediction.get("top9") or [],
-                  "ultimate": ultimate.get("selected_number") or 0,
-              }
-
-          def skip_publish(message):
-              print(message)
-              env_file = os.environ.get("GITHUB_ENV")
-              if env_file:
-                  with open(env_file, "a", encoding="utf-8") as handle:
-                      handle.write("TIANTIANLE_SKIP_PUBLISH=true\n")
-                      handle.write("TIANTIANLE_SKIP_REASON=" + message.replace("\n", " ") + "\n")
-              sys.exit(0)
-
-          local = core(load("reports/latest_analysis.json"))
-          remote = {}
-          try:
-              url = "https://raw.githubusercontent.com/pingshen670822/tiantianle-cloud-system/gh-pages/latest_analysis.json?cb=" + str(int(time.time()))
-              remote = core(json.loads(urllib.request.urlopen(url, timeout=60, context=ssl._create_unverified_context()).read().decode("utf-8-sig")))
-          except Exception as exc:
-              print(f"remote comparison warning: {exc}")
-          if remote.get("latest") and local.get("latest") and local["latest"] < remote["latest"]:
-              skip_publish(f"stale self-heal publish skipped: local latest {local['latest']} < cloud latest {remote['latest']}")
-          if remote.get("target") and local.get("target") and local["latest"] == remote.get("latest") and local["target"] < remote["target"]:
-              skip_publish(f"target regression skipped: local target {local['target']} < cloud target {remote['target']}")
-          if (
-              remote.get("generated")
-              and local.get("generated")
-              and local.get("latest") == remote.get("latest")
-              and local.get("target") == remote.get("target")
-              and local["generated"] < remote["generated"]
-          ):
-              skip_publish(f"generated regression skipped: local generated {local['generated']} < cloud generated {remote['generated']}")
-          print(f"self-heal publish guard passed: local={local}, remote={remote}")
-          PY
-      - name: Commit repaired generated data to main
-        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
-        shell: bash
-        run: |
-          git config user.name "tiantianle self-heal"
-          git config user.email "actions@users.noreply.github.com"
-          git add data reports site
-          if git diff --cached --quiet; then
-            echo "No repaired generated data changes to commit"
-            exit 0
-          fi
-          git commit -m "Self-heal Tiantianle generated data" || true
-          git push origin HEAD:main || echo "main push skipped because remote changed; gh-pages publish continues"
-      - name: Build public mobile package
-        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
-        shell: bash
-        run: |
-          set -e
-          rm -rf public_site
-          mkdir -p public_site/data public_site/reports
-          cp -a site/. public_site/
-          cp -a data/. public_site/data/
-          while IFS= read -r -d '' src; do
-            rel="${src#reports/}"
-            dest="public_site/reports/${rel}"
-            if [ -e "$dest" ]; then
-              continue
-            fi
-            mkdir -p "$(dirname "$dest")"
-            cp "$src" "$dest"
-          done < <(find reports -type f -print0)
-          cp reports/latest_analysis.json public_site/latest_analysis.json
-          cp reports/latest_battle_report.html public_site/latest_battle_report.html
-          cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
-          cp reports/complete_report.html public_site/complete_report.html
-          cp reports/complete_report.html public_site/reports/complete_report.html
-          test -s public_site/index.html
-          test -s public_site/latest_analysis.json
-          test -s public_site/reports/latest_battle_report.html
-          touch public_site/.nojekyll
-      - name: Publish repaired mobile site
-        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          publish_dir="$(mktemp -d)"
-          cp -a public_site/. "$publish_dir/"
-          cd "$publish_dir"
-          git init
-          git checkout -B gh-pages
-          git config user.name "tiantianle self-heal"
-          git config user.email "actions@users.noreply.github.com"
-          git add .
-          git commit -m "Self-heal Tiantianle mobile site"
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push --force origin gh-pages
-          curl -sS -X PUT \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" \
-            -d '{"source":{"branch":"gh-pages","path":"/"}}' || true
-      - name: Verify deployed mobile site and emergency retry
-        if: env.TIANTIANLE_SKIP_PUBLISH != 'true'
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set +e
-          python verify_mobile_sync.py --remote --retries 18 --sleep 10
-          verify_exit=$?
-          if [ "$verify_exit" -eq 0 ]; then
-            exit 0
-          fi
-          echo "remote mobile sync failed after publish; emergency self-heal republish"
-          timeout 420 python cloud_self_repair.py --retries 1
-          python prediction_final_lock_guard.py
-          python pages_build.py
-          python full_system_integrity_scan.py --local-only || true
-          python verify_mobile_sync.py --local-only
-          rm -rf public_site
-          mkdir -p public_site/data public_site/reports
-          cp -a site/. public_site/
-          cp -a data/. public_site/data/
-          while IFS= read -r -d '' src; do
-            rel="${src#reports/}"
-            dest="public_site/reports/${rel}"
-            if [ -e "$dest" ]; then
-              continue
-            fi
-            mkdir -p "$(dirname "$dest")"
-            cp "$src" "$dest"
-          done < <(find reports -type f -print0)
-          cp reports/latest_analysis.json public_site/latest_analysis.json
-          cp reports/latest_battle_report.html public_site/latest_battle_report.html
-          cp reports/latest_battle_report.html public_site/reports/latest_battle_report.html
-          cp reports/complete_report.html public_site/complete_report.html
-          cp reports/complete_report.html public_site/reports/complete_report.html
-          touch public_site/.nojekyll
-          publish_dir="$(mktemp -d)"
-          cp -a public_site/. "$publish_dir/"
-          cd "$publish_dir"
-          git init
-          git checkout -B gh-pages
-          git config user.name "tiantianle self-heal"
-          git config user.email "actions@users.noreply.github.com"
-          git add .
-          git commit -m "Emergency republish Tiantianle mobile site"
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push --force origin gh-pages
-          python "$GITHUB_WORKSPACE/verify_mobile_sync.py" --remote --retries 24 --sleep 10
-      - name: Confirm publish skipped because cloud is newer
-        if: env.TIANTIANLE_SKIP_PUBLISH == 'true'
-        shell: bash
-        run: |
-          echo "Self-heal publish skipped safely: ${TIANTIANLE_SKIP_REASON}"
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy verified report
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify deployed report
+        run: python verify_live_report.py
