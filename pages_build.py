@@ -56,7 +56,7 @@ def cloud_links():
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip() or DEFAULT_CLOUD_REPO or repo_from_git_remote()
     if "/" not in repo:
         repo = DEFAULT_CLOUD_REPO
-    workflow_url = f"https://github.com/{repo}/actions/workflows/daily-update.yml"
+    workflow_url = f"https://github.com/{repo}/actions/workflows/tiantianle-cloud-auto-update.yml"
     owner, name = repo.split("/", 1)
     page_url = f"https://{owner}.github.io/{name}/"
     saved_url_path = ROOT / "tiantianle-mobile-cloud-url.txt"
@@ -97,6 +97,7 @@ def inject_mobile_panel(html):
       <a class="cloud-update-link" href="reset.html?v={version}">{u('\\u624b\\u6a5f\\u6c92\\u66f4\\u65b0\\u9ede\\u9019\\u88e1\\u6e05\\u9664\\u820a\\u5feb\\u53d6')}</a>
       <p class="cloud-note">{u('\\u96f2\\u7aef\\u7db2\\u5740')}：<span>{u('\\u5df2\\u8a2d\\u5b9a\\uff0c\\u624b\\u6a5f\\u53ef\\u76f4\\u63a5\\u6536\\u85cf\\u672c\\u9801')}</span></p>
       <p class="cloud-note" id="mobileUpdateStatus">{u('\\u7248\\u672c')} {version}</p>
+      <p class="cloud-note" id="localSnapshotNote" hidden>本機檔案是離線快照，不會隨雲端自動改寫。<a href="{page_url}">開啟同步的線上戰報</a></p>
       {local_note}
     </section>
     <a class="mobile-action sticky-launch" href="{workflow_url}">{u('\\u4e00\\u9375\\u96f2\\u7aef\\u66f4\\u65b0')}</a>
@@ -121,6 +122,15 @@ def inject_mobile_panel(html):
     script = """
     <script>
     window.TIANTIANLE_BUILD_VERSION = '{version}';
+    const CLOUD_REPORT_URL = {cloud_url};
+    function openCloudReport() {
+      location.replace(CLOUD_REPORT_URL + '?refresh=' + Date.now());
+    }
+    if (location.protocol === 'file:') {
+      const note = document.getElementById('localSnapshotNote');
+      if (note) note.hidden = false;
+      if (navigator.onLine !== false) openCloudReport();
+    }
     function setMobileStatus(text) {
       var el = document.getElementById('mobileUpdateStatus');
       if (el) el.textContent = text;
@@ -143,14 +153,19 @@ def inject_mobile_panel(html):
     }
     const REFRESH_CHECK_MS = 30000;
     async function forceRefresh() {
+      if (location.protocol === 'file:') { openCloudReport(); return; }
       setMobileStatus('更新中 ' + new Date().toLocaleTimeString());
       await clearMobileCaches();
       try {
         await fetch('latest_analysis.json?force=' + Date.now(), { cache: 'no-store' });
       } catch (err) {}
-      location.replace('首頁.html?v={version}&force=' + Date.now());
+      openCloudReport();
     }
     async function autoRefreshIfStale() {
+      if (location.protocol === 'file:') {
+        if (navigator.onLine !== false) openCloudReport();
+        return;
+      }
       try {
         const res = await fetch('version.json?check=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) return;
@@ -159,7 +174,7 @@ def inject_mobile_panel(html):
         if (stamp && stamp !== window.TIANTIANLE_BUILD_VERSION && !sessionStorage.getItem('tiantianle_refreshed_' + stamp)) {
           sessionStorage.setItem('tiantianle_refreshed_' + stamp, '1');
           await clearMobileCaches();
-          location.replace('首頁.html?v=' + stamp + '&auto=' + Date.now());
+          location.replace(CLOUD_REPORT_URL + '?v=' + stamp + '&auto=' + Date.now());
         }
       } catch (err) {}
     }
@@ -194,6 +209,7 @@ def inject_mobile_panel(html):
     """
     style = style.replace("{version}", version)
     script = script.replace("{version}", version)
+    script = script.replace("{cloud_url}", json.dumps(page_url))
     html = html.replace("tiantianle_prediction_history.html", "prediction-history.html")
     html = html.replace("</head>", style + "</head>")
     html = html.replace("</body>", script + "</body>")
