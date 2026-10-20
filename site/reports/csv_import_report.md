@@ -1,7 +1,7 @@
 # 歷史 CSV 備援匯入報告
 
-- 產生時間：2026-10-20T16:12:10+08:00
-- 掃描資料夾：/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/work/stage-7a42dcd128d349eb848f9814615016ef/history_import
+- 產生時間：2026-10-20T16:15:58+08:00
+- 掃描資料夾：/home/runner/work/tiantianle-cloud-system/tiantianle-cloud-system/work/stage-ec7e723cbc884ff283eb46507d44e7e2/history_import
 - 檔案數：0
 
 | 檔案 | 狀態 | 新增 | 跳過 | 錯誤 |
