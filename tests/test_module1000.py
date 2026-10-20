@@ -59,7 +59,7 @@ class ThousandModuleTests(unittest.TestCase):
             observed.append(len(prefix));return original(prefix)
         with patch.object(engine,'rank_modules',side_effect=spy),patch.object(engine,'verify_exact_six',return_value={}):
             result=engine.compute(self.draws,samples=3)
-        self.assertEqual(observed,[160,157,158,159,157,158,159,160])
+        self.assertEqual(observed,[160,157,158,159,157,158,159,160,157])
         self.assertEqual(result['verification']['module_forecasts'],3000)
         self.assertEqual(result['verification']['replay_rounds'],2)
         expected_single=expected_five=0
@@ -70,6 +70,18 @@ class ThousandModuleTests(unittest.TestCase):
         self.assertEqual(validation['single_hits'],expected_single)
         self.assertEqual(validation['top5_avg_hits'],round(expected_five/3,4))
         self.assertTrue(all(r['training_last_date']<r['target_date'] for r in result['backtest_manifest']))
+
+    def test_frozen_holdout_uses_only_preblock_training(self):
+        from test_data import current_analysis
+        a=current_analysis();report=a['ensemble50']['algorithm_report']
+        protocol=report['alternative_validation']
+        self.assertEqual(protocol['permutation_rounds'],199)
+        for block in protocol['frozen_holdout_blocks']:
+            self.assertLess(block['training_last_date'],block['test_start'])
+        self.assertEqual(sum(b['samples'] for b in protocol['frozen_holdout_blocks']),60)
+        for row in protocol['results']:
+            self.assertGreaterEqual(row['permutation_p_holm'],row['permutation_p_exploratory'])
+            self.assertEqual(len(row['frozen_blocks']),3)
 
     def test_changed_replay_cannot_claim_success(self):
         original=registry.rank_modules;calls=0

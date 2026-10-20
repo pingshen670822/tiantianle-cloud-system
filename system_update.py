@@ -57,6 +57,9 @@ def audit(game):
         report=e.get('algorithm_report',{})
         if report.get('method_count')!=19 or report.get('random_control_count')!=1 or report.get('fusion_configuration_count')!=950:
             problems.append('算法與參數實驗計數不一致')
+        alternative=report.get('alternative_validation',{})
+        if alternative.get('permutation_rounds')!=199 or len(alternative.get('results',[]))!=20 or len(alternative.get('frozen_holdout_blocks',[]))!=3:problems.append('不同回測方式未完成')
+        if any(b['training_last_date']>=b['test_start'] for b in alternative.get('frozen_holdout_blocks',[])):problems.append('保留測試誤用未來資料')
         representatives=report.get('representatives',[])
         if len(representatives)!=20 or len(report.get('pairwise_diversity',[]))!=190:problems.append('算法差異證據缺漏')
         registered={m['id']:m for m in modules}

@@ -134,6 +134,49 @@ def full39_top_six(modules, count=10, pool=None):
             'method':'平均排名分數80%＋前九共現支持20%；純取最高分，不加覆蓋或重疊限制',
             'score_meaning':'模型評分不是中獎機率；六碼候選組內含6種五碼組合'}
 
+def alternative_validation(draws,representatives,samples):
+    """Three disjoint frozen-model holdouts, plus an exploratory alignment null.
+    The first protocol never trains on its evaluation block. Permutation scores
+    are diagnostic, not independent proof or a calibrated probability of winning.
+    """
+    import random
+    start=len(draws)-samples
+    frozen={m['id']:[] for m in representatives}
+    block_records=[]
+    for offset in range(0,samples,20):
+        cutoff=start+offset;end=min(cutoff+20,len(draws))
+        models={m['id']:m for m in rank_modules(draws[:cutoff])}
+        block_records.append({'training_last_date':draws[cutoff-1]['draw_date'],'test_start':draws[cutoff]['draw_date'],'test_end':draws[end-1]['draw_date'],'samples':end-cutoff})
+        for representative in representatives:
+            m=models[representative['id']];ranked=m['ranking']
+            actual=[set(d['numbers']) for d in draws[cutoff:end]]
+            frozen[m['id']].append({'training_last_date':draws[cutoff-1]['draw_date'],'test_start':draws[cutoff]['draw_date'],'test_end':draws[end-1]['draw_date'],'samples':len(actual),'frozen_top1':ranked[0],'frozen_top5':ranked[:5],'single_hits':sum(ranked[0] in r for r in actual),'top5_total_hits':sum(len(set(ranked[:5])&r) for r in actual)})
+    actual=[set(d['numbers']) for d in draws[-samples:]]
+    permutations=[];rng=random.Random(10002026)
+    for _ in range(199):
+        order=list(range(samples));rng.shuffle(order);permutations.append(order)
+    results=[]
+    for m in representatives:
+        v=m['validation'];blocks=frozen[m['id']]
+        predictions=[set(t['top5']) for t in m['trace']]
+        observed=sum(len(p&a) for p,a in zip(predictions,actual))
+        null=[sum(len(p&actual[index]) for p,index in zip(predictions,order)) for order in permutations]
+        results.append({'id':m['id'],'family':m['family'],'frozen_blocks':blocks,
+            'frozen_single_hits':sum(b['single_hits'] for b in blocks),
+            'frozen_top5_mean_hits':round(sum(b['top5_total_hits'] for b in blocks)/samples,4),
+            'permutation_top5_observed_total':observed,'permutation_null_mean_total':round(sum(null)/len(null),4),
+            'permutation_p_exploratory':(1+sum(score>=observed for score in null))/200})
+    # Holm adjustment over all twenty inspected representatives, including control.
+    previous=0
+    for position,row in enumerate(sorted(results,key=lambda r:r['permutation_p_exploratory'])):
+        previous=max(previous,min(1,(len(results)-position)*row['permutation_p_exploratory']))
+        row['permutation_p_holm']=round(previous,4)
+    return {'walk_forward_samples':samples,'frozen_holdout_blocks':block_records,'permutation_rounds':199,
+        'protocols':['每日重訓的逐期回測','20期不重訓的分段保留測試','199次目標日期打亂對照（探索用途）'],
+        'permutation_limit':'只打亂評分配對，不重訓模型；屬探索性對照，不能當獨立樣本或證明中獎機率。Holm調整涵蓋20個固定代表，未涵蓋曾試過的全部配置。',
+        'results':results}
+
+
 def compute(draws, samples=60):
     if len(draws)<120:
         raise ValueError('1000組驗證至少需要120期資料')
@@ -226,6 +269,7 @@ def compute(draws, samples=60):
         'representatives':[{'id':m['id'],'family':m['family'],'logic':m['logic'],'parameters':m['parameters'],'window':m['window'],'ranking':m['ranking'],'scores':m['scores'],'validation':m['validation'],'trace':traces[m['id']]} for m in representatives],
         'pairwise_diversity':diversity,'baseline':{'single_rate':5/39,'top5_mean_hits':25/39,'top9_mean_hits':45/39},
         'limits':'19種預測方法不等於1000種算法；分數未校準。60期不足以證實優勢，查看多模型最佳成績有事後挑選偏差。'}
+    algorithm_report['alternative_validation']=alternative_validation(draws,algorithm_report['representatives'],samples)
     ranked = consensus(modules)
     six=six_number_groups(modules,ranked)
     full=full39_top_six(modules)

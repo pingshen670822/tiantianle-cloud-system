@@ -72,10 +72,14 @@ def algorithm_evidence(e):
         rows.append([m['family'],m['id'],raw,number_labels(m['ranking'][:5],percentages),f"{v['single_hits']}/{v['samples']}",v['top5_avg_hits'],v['top5_excess_over_random'],blocks])
         trace=[[r['target_date'],r['top1'],' '.join(f'{n:02d}' for n in r['top5']),' '.join(f'{n:02d}' for n in r['actual']),r['top5_hits']] for r in m['trace']]
         cards.append(f"<details class='panel' data-algorithm='{esc(m['family'])}'><summary>{esc(m['family'])} · 公式、原始分數及逐期回測</summary><p>{esc(m['logic'])}</p><p>固定代表：90期視窗，設定2。原始分數尺度因算法而異，不跨算法比較，也不是開出機率。</p>{table(['目標日期','預測獨隻','預測前五','實際五碼','前五命中'],trace)}</details>")
+    alternative=report['alternative_validation']
+    alternatives={r['id']:r for r in alternative['results']}
+    comparison=[[m['family'],f"{m['validation']['single_hits']}/60",m['validation']['top5_avg_hits'],f"{alternatives[m['id']]['frozen_single_hits']}/60",alternatives[m['id']]['frozen_top5_mean_hits'],alternatives[m['id']]['permutation_p_exploratory'],alternatives[m['id']]['permutation_p_holm']] for m in report['representatives']]
+    alternative_html=f"<section class='panel' id='alternative-validation'><h2>不同回測方式分開比較</h2><p>逐期回測：每期重新訓練。保留測試：每20期開始前訓練一次，整段沿用該次固定選號。兩者使用相同60個目標日，各自計分。</p>{table(['方法','逐期獨隻','逐期前五均中','固定20期獨隻','固定20期前五均中','打亂對照p（探索）','Holm調整p'],comparison)}<p>{esc(alternative['permutation_limit'])}。p值不是號碼開出百分比。</p></section>"
     pairs=report['pairwise_diversity']
     same=sum(p['top5_overlap']==5 for p in pairs)
     pairrows=[[p['a'],p['b'],p['spearman'],p['top5_overlap']] for p in pairs]
-    return f"""<section class='panel' id='algorithm-evidence'><h2>19種預測算法＋1種隨機對照</h2><p>1000是參數實驗數，不是1000種算法。已移除共同長期頻率混合；每種方法直接使用自己的原始評分公式。950組預測配置參與融合，50組隨機對照只做比較。</p><p>{esc(report['representative_rule'])}。{esc(report['evaluation_rule'])}</p><p>公平隨機基準：獨隻5/39＝12.82%；前五平均25/39＝0.6410顆。號碼旁百分比仍為全系統融合排名分數；各算法原始分數另欄列示。下表超額為前五平均減0.6410；正數也不代表已證實優勢。三段依日期順序各20期，顯示獨隻命中／樣本、前五平均。</p>{table(['方法','固定代表','本期前五：各自原始分數','前五：全系統融合分數％','獨隻命中','前五平均','較隨機超額','三段回測：獨隻；前五'],rows)}<p>{esc(report['limits'])}</p><p>20個代表兩兩比較共{len(pairs)}對；本期前五完全相同{same}對。排名相關與選號重疊可在下方逐對核對。</p><details><summary>展開190對算法差異：Spearman相關與前五交集</summary>{table(['方法A','方法B','排名相關−1至1','前五交集0至5'],pairrows)}</details></section>{''.join(cards)}"""
+    return f"""<section class='panel' id='algorithm-evidence'><h2>19種預測算法＋1種隨機對照</h2><p>1000是參數實驗數，不是1000種算法。已移除共同長期頻率混合；每種方法直接使用自己的原始評分公式。950組預測配置參與融合，50組隨機對照只做比較。</p><p>{esc(report['representative_rule'])}。{esc(report['evaluation_rule'])}</p><p>公平隨機基準：獨隻5/39＝12.82%；前五平均25/39＝0.6410顆。號碼旁百分比仍為全系統融合排名分數；各算法原始分數另欄列示。下表超額為前五平均減0.6410；正數也不代表已證實優勢。三段依日期順序各20期，顯示獨隻命中／樣本、前五平均。</p>{table(['方法','固定代表','本期前五：各自原始分數','前五：全系統融合分數％','獨隻命中','前五平均','較隨機超額','三段回測：獨隻；前五'],rows)}<p>{esc(report['limits'])}</p><p>20個代表兩兩比較共{len(pairs)}對；本期前五完全相同{same}對。排名相關與選號重疊可在下方逐對核對。</p><details><summary>展開190對算法差異：Spearman相關與前五交集</summary>{table(['方法A','方法B','排名相關−1至1','前五交集0至5'],pairrows)}</details></section>{alternative_html}{''.join(cards)}"""
 
 
 def models_content(a):
