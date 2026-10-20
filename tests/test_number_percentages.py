@@ -1,9 +1,11 @@
+from test_data import current_analysis
 import copy
 import json
 import unittest
 from pathlib import Path
 from html.parser import HTMLParser
 from ensemble50 import number_percentages
+from module1000 import MODULE_COUNT
 import report539_style as layout
 import report_sections
 
@@ -26,7 +28,7 @@ class ScoredNumbers(HTMLParser):
 
 class NumberPercentageTests(unittest.TestCase):
     def setUp(self):
-        self.a=json.loads((ROOT/'reports/latest_analysis.json').read_text(encoding='utf-8'))
+        self.a=current_analysis()
         self.e=self.a['ensemble50']
     def test_percentages_match_independent_rank_arithmetic_and_fusion_order(self):
         values=number_percentages(self.e['modules'])['numbers']
@@ -35,12 +37,12 @@ class NumberPercentageTests(unittest.TestCase):
         for row in values:
             points=sum(40-(m['ranking'].index(row['number'])+1) for m in self.e['modules'])
             self.assertEqual(row['ranking_points'],points)
-            self.assertAlmostEqual(row['ranking_score_percent'],round(100*points/1950,4))
+            self.assertAlmostEqual(row['ranking_score_percent'],round(100*points/(39*MODULE_COUNT),4))
     def test_known_opposite_rankings_have_same_score_and_deterministic_ties(self):
-        modules=[{'id':str(i),'ranking':list(range(1,40)) if i%2==0 else list(range(39,0,-1))} for i in range(50)]
+        modules=[{'id':str(i),'ranking':list(range(1,40)) if i%2==0 else list(range(39,0,-1))} for i in range(MODULE_COUNT)]
         rows=number_percentages(modules)['numbers']
         self.assertEqual([r['number'] for r in rows],list(range(1,40)))
-        self.assertEqual({r['ranking_points'] for r in rows},{1000})
+        self.assertEqual({r['ranking_points'] for r in rows},{20*MODULE_COUNT})
         self.assertEqual({r['ranking_score_percent'] for r in rows},{round(100*20/39,4)})
     def test_all_prediction_chips_and_six_groups_keep_exact_same_percent(self):
         page=layout.render_report(self.a,'https://example.invalid/','https://example.invalid/update')
@@ -65,7 +67,7 @@ class NumberPercentageTests(unittest.TestCase):
         page=report_sections.models_content(self.a)
         for module in self.e['modules']:
             for n in module['ranking'][:5]:
-                expected=round(sum(39-m['ranking'].index(n) for m in self.e['modules'])/1950*100,2)
+                expected=round(sum(39-m['ranking'].index(n) for m in self.e['modules'])/(39*MODULE_COUNT)*100,2)
                 self.assertIn(f'{n:02d}（{expected:.2f}％）',page)
 
 

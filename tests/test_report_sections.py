@@ -1,3 +1,4 @@
+from test_data import current_analysis
 import copy
 import json
 import re
@@ -26,7 +27,7 @@ class NavReader(HTMLParser):
 class SectionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.a=json.loads((ROOT/'reports/latest_analysis.json').read_text(encoding='utf-8'))
+        cls.a=current_analysis()
         cls.records=sections.history_rows(ROOT/'fantasy5_full_history.csv',cls.a)
         cls.pages=sections.render_sections(cls.a,cls.records,'https://example.invalid/','https://example.invalid/tiantianle-cloud-auto-update.yml')
     def test_all_five_destinations_share_navigation_and_current_tab(self):

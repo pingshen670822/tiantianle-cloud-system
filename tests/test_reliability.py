@@ -1,3 +1,4 @@
+from test_data import current_analysis
 import json
 import os
 import shutil
@@ -107,7 +108,7 @@ class ReliabilityTests(unittest.TestCase):
         self.assertNotEqual(child.returncode,0)
         self.assertIn(b'isolated update workspace',child.stderr)
     def audit_fixture(self):
-        a=json.loads((ROOT/'reports/latest_analysis.json').read_text(encoding='utf-8-sig'))
+        a=current_analysis()
         from ensemble50 import number_percentages
         a['ensemble50']['number_percentages']=number_percentages(a['ensemble50']['modules'])
         for name in ('reports','site'):(self.root/name).mkdir(exist_ok=True)
@@ -121,6 +122,10 @@ class ReliabilityTests(unittest.TestCase):
         with patch.object(runner,'ROOT',self.root),contextlib.redirect_stdout(io.StringIO()):return runner.audit(game)
     def test_valid_outputs_pass(self):
         a,game=self.audit_fixture();self.assertEqual(self.run_audit(game)['status'],'passed')
+    def test_parameter_relabel_cannot_pass_1000_configuration_audit(self):
+        a,game=self.audit_fixture();a['ensemble50']['modules'][0]['parameters']['long_frequency_rank_blend']=.99
+        for name in ('reports/latest_analysis.json','site/latest_analysis.json'):(self.root/name).write_text(json.dumps(a),encoding='utf-8')
+        with self.assertRaisesRegex(RuntimeError,'配置與登錄'):self.run_audit(game)
     def test_tampered_single_number_percentage_blocks_publication(self):
         a,game=self.audit_fixture();a['ensemble50']['number_percentages']['numbers'][0]['ranking_score_percent']+=1
         for name in ('reports/latest_analysis.json','site/latest_analysis.json'):(self.root/name).write_text(json.dumps(a),encoding='utf-8')

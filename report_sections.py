@@ -43,7 +43,7 @@ def review_content(a):
     for r in review.get('recent_settled',[]):
         if isinstance(r,dict):recent.append([r.get('target_date',r.get('actual_date','未提供')),r.get('top5_hits','未提供'),r.get('top10_hits','未提供'),r.get('top15_hits','未提供')])
     return f'''<section class="panel"><div class="section-title"><h2>最新一期已結算檢討</h2><small>開獎日 {esc(settled['actual_date'])}</small></div>
-    {balls(settled['actual_numbers'],False)}<p class="muted">這是開獎前保存的原模型預測紀錄，與目前50組融合主選分開核對。未保存的融合預測不事後補算為實戰。</p>
+    {balls(settled['actual_numbers'],False)}<p class="muted">這是開獎前保存的原模型預測紀錄，與目前1000組融合主選分開核對。未保存的融合預測不事後補算為實戰。</p>
     {table(['封存模型','原預測號碼','實際命中','命中目標','結果'],rows)}</section>
     <section class="panel"><h2>近期已結算結果</h2>{table(['目標開獎日','前五命中','前十命中','前十五命中'],recent) if recent else '<p class="muted">尚無其他近期結算。</p>'}</section>
     <section class="panel"><h2>失準檢討紀錄</h2><ul class="review-list">{''.join('<li>'+esc(x)+'</li>' for x in review.get('actions',[]))}</ul><details><summary>展開上期候選號碼逐號核對</summary>{table(['原排名','號碼','核對結果'],candidates)}</details></section>'''
@@ -66,8 +66,8 @@ def history_content(rows):
 def models_content(a):
     e=a['ensemble50']
     percentages=percentage_map(e)
-    rows=[[i+1,m['id'],m['family'],m['window'],number_labels(m['ranking'][:1],percentages),number_labels(m['ranking'][:5],percentages),m['validation']['top5_avg_hits'],m['validation']['samples']] for i,m in enumerate(e['modules'])]
-    return f'''<section class="panel"><h2>50組候選模組</h2><p class="muted">5個算法家族，各10種歷史視窗。下表顯示每組實際首選、前五名單與60期逐期回測；固定等權融合，不以事後最高成績取代融合結果。號碼旁百分比統一使用本期50組融合排名分數，個別模組的選號順序仍依其自身排名。</p>{table(['序','模組','算法家族','歷史窗口','本期首選（融合分數％）','本期前五（融合分數％）','前五平均命中','回測期數'],rows)}<p class="research-label">信心等級：研究參考。這些模組共用資料，不能視為50份獨立證據。</p></section>'''
+    rows=[[i+1,m['id'],m['family'],m['window'],m['parameters']['long_frequency_rank_blend'],number_labels(m['ranking'][:1],percentages),number_labels(m['ranking'][:5],percentages),m['validation']['single_hits'],m['validation']['top5_avg_hits'],m['validation']['samples']] for i,m in enumerate(e['modules'])]
+    return f'''<section class="panel"><h2>1000組候選模組</h2><p class="muted">20個算法家族、10種視窗、5種長期頻率排名混合。下表顯示每組配置、實際首選、前五名單與60期逐期回測；固定等權融合，不以事後最高成績取代融合結果。號碼旁百分比統一使用本期1000組融合排名分數，個別模組的選號順序仍依其自身排名。</p><p class="muted">本期實際不同排名 {e['verification']['unique_current_rankings']} 種；雙輪重算 {e['verification']['replay_rounds']} 輪，每輪回測 {e['verification']['module_forecasts']:,} 次模組預測。</p>{table(['序','模組','算法家族','歷史窗口','長期混合比','本期首選（融合分數％）','本期前五（融合分數％）','獨支命中／60','前五平均命中','回測期數'],rows)}<p class="research-label">信心等級：研究參考。這些模組共用資料，不能視為1000份獨立證據。</p></section>'''
 
 
 def system_content(a,workflow_url):
@@ -75,7 +75,7 @@ def system_content(a,workflow_url):
     rescue=workflow_url.replace('tiantianle-cloud-auto-update.yml','tiantianle-cloud-self-heal.yml')
     return f'''<section class="panel"><h2>更新與故障檢修</h2><p>雲端負責抓取資料、運算、驗證及發布。開啟以下更新頁面，登入你的GitHub帳號後按「Run workflow」執行。</p>
     <div class="history-controls"><a class="action-link" href="{esc(workflow_url)}" target="_blank" rel="noopener">手動更新最新 · 開啟雲端更新</a><a class="action-link" href="{esc(rescue)}" target="_blank" rel="noopener">故障檢修 · 開啟救援流程</a><button class="secondary" onclick="forceRefresh()">重新同步戰報</button></div>
-    <div class="stats-grid"><div class="stat"><span>最新開獎日期（加州）</span><strong>{esc(a['latest_draw']['draw_date'])}</strong></div><div class="stat"><span>本期適用日期（加州）</span><strong>{esc(a['target_draw_date'])}</strong></div><div class="stat"><span>模組結構驗證</span><strong>{e['verification']['modules_verified']}／50</strong></div><div class="stat"><span>逐期回測</span><strong>{e['verification']['walk_forward_samples']} 期</strong></div></div>
+    <div class="stats-grid"><div class="stat"><span>最新開獎日期（加州）</span><strong>{esc(a['latest_draw']['draw_date'])}</strong></div><div class="stat"><span>本期適用日期（加州）</span><strong>{esc(a['target_draw_date'])}</strong></div><div class="stat"><span>模組結構驗證</span><strong>{e['verification']['modules_verified']}／1000</strong></div><div class="stat"><span>逐期回測</span><strong>{e['verification']['walk_forward_samples']} 期</strong></div></div>
     <p class="muted">以上是目前發布報告的資訊；雲端任務的即時執行結果請查看更新頁面。</p>
     <a class="action-link" href="repair_validation.json" target="_blank" rel="noopener">查看本次戰報驗證結果</a><a class="action-link" href="reset.html">清除舊快取並重讀</a></section>'''
 

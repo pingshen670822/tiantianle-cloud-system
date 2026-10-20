@@ -40,15 +40,32 @@ def audit(game):
     actual=a['latest_draw'].get('numbers',[])
     if len(actual)!=5 or len(set(actual))!=5 or any(type(n) is not int or not 1<=n<=39 for n in actual):problems.append('實際開獎號碼無效')
     e=a.get('ensemble50',{})
-    if e.get('module_count')!=50 or e.get('verification',{}).get('modules_verified')!=50: problems.append('50組驗證未完成')
+    if e.get('module_count')!=1000 or e.get('verification',{}).get('modules_verified')!=1000: problems.append('1000組驗證未完成')
     modules=e.get('modules',[])
-    if len(modules)!=50 or len({m.get('id') for m in modules})!=50:problems.append('50組模組內容缺漏或重複')
+    if len(modules)!=1000 or len({m.get('id') for m in modules})!=1000:problems.append('1000組模組內容缺漏或重複')
+    from module1000 import configurations,configuration_signature,SCHEMA_VERSION,FAMILIES
+    try:
+        if e.get('version')!=SCHEMA_VERSION or e.get('family_count')!=len(FAMILIES):problems.append('1000組算法版本或家族數錯誤')
+        if [configuration_signature(m) for m in modules]!=[configuration_signature(m) for m in configurations()]:problems.append('1000組配置與登錄定義不一致')
+        if [m['id'] for m in modules]!=[m['id'] for m in configurations()]:problems.append('1000組登錄識別碼不一致')
+        for m in modules:
+            validation=m.get('validation',{});scores={int(k):v for k,v in m.get('scores',{}).items()}
+            if sorted(scores)!=list(range(1,40)) or any(not math.isfinite(v) for v in scores.values()) or sorted(scores,key=lambda n:(-scores[n],n))!=m['ranking']:
+                problems.append('模組數值或排名不一致');break
+            if validation.get('samples')!=60 or type(validation.get('single_hits')) is not int or not 0<=validation['single_hits']<=60 or not 0<=validation.get('top5_avg_hits',-1)<=validation.get('top9_avg_hits',-1)<=5 or len(validation.get('replay_sha256',''))!=64:
+                problems.append('模組回測明細缺漏或無效');break
+        proof=e.get('verification',{});manifest=e.get('backtest_manifest',[])
+        if proof.get('replay_rounds')!=2 or proof.get('replay_periods_verified')!=60 or proof.get('module_forecasts')!=60000 or proof.get('unique_configurations')!=1000:problems.append('1000組雙輪回測驗證未完成')
+        if proof.get('unique_current_rankings')!=len({tuple(m['ranking']) for m in modules}):problems.append('不同排名實際數量不一致')
+        if len(manifest)!=60 or manifest[-1]['target_date']!=latest or any(r['module_count']!=1000 or r['training_last_date']>=r['target_date'] or len(r['forecast_sha256'])!=64 or len(r['input_sha256'])!=64 for r in manifest):problems.append('逐期回測日期或排名指紋缺漏')
+    except (KeyError,TypeError,ValueError,IndexError):
+        problems.append('1000組配置或回測結構無效')
     if any(sorted(m.get('ranking',[]))!=list(range(1,40)) or any(type(n) is not int for n in m.get('ranking',[])) for m in modules):problems.append('模組排名缺碼或重複')
     if sorted(e.get('ranking',[]))!=list(range(1,40)):problems.append('總排名格式錯誤')
     from ensemble50 import number_percentages
     try:
         calculated_percentages=number_percentages(modules)
-        if e.get('number_percentages')!=calculated_percentages:problems.append('單號百分比與50組排名不一致或缺漏')
+        if e.get('number_percentages')!=calculated_percentages:problems.append('單號百分比與1000組排名不一致或缺漏')
         if [r['number'] for r in calculated_percentages['numbers']]!=e.get('ranking'):problems.append('單號百分比排序與融合排名不一致')
     except (ValueError,KeyError,TypeError):
         problems.append('單號百分比來源排名無效')
@@ -73,6 +90,7 @@ def audit(game):
             if any(type(v) is not int for v in values) or not 0<=values[0]<=values[1]<=values[2]<=values[3]<=60:problems.append(key+': 回測命中統計無效')
         if key=='six_number_combinations' and any(not set(g['numbers'])<=set(e['ranking'][:15]) for g in groups): problems.append('前15名組合超出候選池')
         if key=='full39_six_combinations' and [g['score_units'] for g in groups]!=sorted((g['score_units'] for g in groups),reverse=True): problems.append('全39碼前十名排序錯誤')
+        if key=='full39_six_combinations' and (block.get('exhaustive_verification',{}).get('all_top10_exact_match') is not True or block.get('exhaustive_verification',{}).get('combinations_scored')!=3262623):problems.append('全39碼獨立完整枚舉驗證未完成')
     for rel in ('site/index.html','site/prediction.html','site/latest_battle_report.html'):
         text=(ROOT/rel).read_text(encoding='utf-8')
         for marker in ('ensemble50-required','top15-six-groups','full39-six-groups','終極獨隻','2中2','3中3','5中5','7中5','9中5','適用日期'):

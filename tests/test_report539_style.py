@@ -1,3 +1,4 @@
+from test_data import current_analysis
 import copy
 import sys
 import unittest
@@ -23,7 +24,7 @@ class StyledReportTests(unittest.TestCase):
     def setUp(self):
         # Existing fixture covers the data audit; use the actual field schema for rendering.
         import json
-        self.analysis=json.loads((Path(__file__).resolve().parents[1]/'reports/latest_analysis.json').read_text(encoding='utf-8'))
+        self.analysis=current_analysis()
     def render(self,a=None):
         return layout.render_report(a or self.analysis,'https://example.invalid/','https://example.invalid/update')
     def test_same_fusion_drives_single_five_targets_and_twenty_six_groups(self):
