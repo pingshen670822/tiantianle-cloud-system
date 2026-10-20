@@ -16,7 +16,7 @@ class ThousandModuleTests(unittest.TestCase):
         cls.draws=[{'draw_date':(date(2025,1,1)+timedelta(days=i)).isoformat(),
                     'numbers':sorted(rng.sample(range(1,40),5))} for i in range(160)]
 
-    def test_registry_is_exactly_20_families_times_10_windows_times_5_blends(self):
+    def test_registry_is_exactly_20_families_times_10_windows_times_5_algorithm_settings(self):
         configs=registry.configurations()
         self.assertEqual(len(configs),1000)
         self.assertEqual(len({registry.configuration_signature(c) for c in configs}),1000)
@@ -27,9 +27,31 @@ class ThousandModuleTests(unittest.TestCase):
     def test_frequency_module_matches_direct_counting_with_no_outcomes_supplied(self):
         modules=registry.rank_modules(self.draws[:150])
         counts=Counter(n for d in self.draws[140:150] for n in d['numbers'])
-        expected=sorted(range(1,40),key=lambda n:(-counts[n],n))
+        older=Counter(n for d in self.draws[:140] for n in d['numbers'])
+        values={n:(counts[n]+(older[n]+5/39)/141)/11 for n in range(1,40)}
+        expected=sorted(range(1,40),key=lambda n:(-values[n],n))
         self.assertEqual(modules[0]['ranking'],expected)
         self.assertTrue(all(len(m['ranking'])==39 and set(m['ranking'])==set(range(1,40)) for m in modules))
+
+    def test_algorithms_have_own_formulas_and_control_cannot_vote(self):
+        modules=registry.rank_modules(self.draws)
+        self.assertEqual(len(engine.voting_modules(modules)),950)
+        # Direct independent AR(1) solution, not a frequency/rank blend.
+        scores=registry.features(self.draws,30,2)['自迴歸最小平方法']
+        for n in range(1,40):
+            y=[int(n in d['numbers']) for d in self.draws[-30:]]
+            mx=sum(y[:-1])/29;my=sum(y[1:])/29
+            slope=sum((a-mx)*(b-my) for a,b in zip(y[:-1],y[1:]))/(sum((a-mx)**2 for a in y[:-1])+3)
+            self.assertAlmostEqual(scores[n],my+slope*(y[-1]-mx))
+        random_a=registry.features(self.draws,30,2)['可重現隨機對照']
+        changed=copy.deepcopy(self.draws)
+        for d in changed:d['numbers']=[1,2,3,4,5]
+        self.assertEqual(random_a,registry.features(changed,30,2)['可重現隨機對照'])
+        # Graph stationary mass is a probability distribution; regression scores are not forced into ranks.
+        graph=registry.features(self.draws,30,2)['共現圖隨機漫步']
+        self.assertAlmostEqual(sum(graph.values()),1)
+        representatives=[m for m in modules if m['window']==90 and m['parameters']['algorithm_setting']==2]
+        self.assertGreaterEqual(len({tuple(m['ranking']) for m in representatives}),15)
 
     def test_causal_prefixes_and_per_module_hit_counts_are_replayed(self):
         original=registry.rank_modules;observed=[]
@@ -62,6 +84,7 @@ class ThousandModuleTests(unittest.TestCase):
     def test_exact_six_search_agrees_with_independent_small_pool_enumeration(self):
         modules=registry.rank_modules(self.draws);pool=list(range(1,11))
         actual=engine.full39_top_six(modules,count=10,pool=pool)['groups']
+        modules=engine.voting_modules(modules)
         ranks={n:sum(39-m['ranking'].index(n) for m in modules) for n in pool}
         pairs={p:sum(set(p)<=set(m['ranking'][:9]) for m in modules) for p in combinations(pool,2)}
         expected=[]

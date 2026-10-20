@@ -1,5 +1,6 @@
 """Compatibility entry point for 1000 configured modules and causal validation."""
 import math
+import os
 import json
 import html
 import heapq
@@ -13,7 +14,11 @@ from module1000 import MODULE_COUNT, FAMILIES, WINDOWS, BLENDS, SCHEMA_VERSION, 
 GOALS = ((1, 1, '終極獨隻'), (2, 2, '2中2'), (3, 3, '3中3'),
          (5, 5, '5中5'), (7, 5, '7中5'), (9, 5, '9中5'))
 
+def voting_modules(modules):
+    return [m for m in modules if m.get("family") != FAMILIES[-1]]
+
 def consensus(modules):
+    modules=voting_modules(modules)
     scores = dict.fromkeys(range(1,40), 0)
     for module in modules:
         for i,n in enumerate(module['ranking']):
@@ -25,6 +30,8 @@ def number_percentages(modules):
     """Normalize the existing equal-weight ranking points; not win probabilities."""
     if len(modules)!=MODULE_COUNT or len({m['id'] for m in modules})!=MODULE_COUNT:
         raise ValueError('Single-number percentages require 1000 unique modules')
+    modules=voting_modules(modules)
+    total=len(modules)
     points=Counter(); support=Counter()
     for m in modules:
         ranked=m['ranking']
@@ -33,14 +40,15 @@ def number_percentages(modules):
         points.update({n:39-i for i,n in enumerate(ranked)})
         support.update(ranked[:9])
     ranking=sorted(points,key=lambda n:(-points[n],n))
-    return {'method':'1000組名次積分合計 ÷ (1000×39) ×100；每組第一名39分、末名1分',
+    return {'method':f'{total}組預測配置名次積分 ÷ ({total}×39) ×100；隨機對照不參與融合',
             'meaning':'融合排名分數百分比，不是開出機率，尚未校準',
             'numbers':[{'number':n,'rank':i+1,'ranking_points':points[n],
-                        'ranking_score_percent':round(points[n]/(MODULE_COUNT*39)*100,4),
-                        'top9_support_percent':round(support[n]/MODULE_COUNT*100,4)} for i,n in enumerate(ranking)]}
+                        'ranking_score_percent':round(points[n]/(total*39)*100,4),
+                        'top9_support_percent':round(support[n]/total*100,4)} for i,n in enumerate(ranking)]}
 
 def six_number_groups(modules, ranked, count=10):
     """Fixed ranking/co-occurrence score with diversified groups, no outcome input."""
+    modules=voting_modules(modules)
     pool=ranked[:15]
     quality=dict.fromkeys(pool,0.0)
     pairs=Counter()
@@ -70,12 +78,13 @@ def six_number_groups(modules, ranked, count=10):
         usage.update(combo)
         remaining=[r for r in remaining if r[0]!=combo]
     return {'top15_ranked':pool,'groups':selected,'group_count':count,
-            'method':'1000組排名分數80%＋前九共現支持20%；另以覆蓋與重疊限制分散10組',
+            'method':'950組預測配置排名分數80%＋前九共現支持20%；另以覆蓋與重疊限制分散10組',
             'score_meaning':'模型評分0–100，不是中獎機率；組號是固定選組順序',
             'unique_numbers_covered':len(usage)}
 
 def full39_top_six(modules, count=10, pool=None):
     """Exact top-K using integer scores and an admissible branch upper bound."""
+    modules=voting_modules(modules)
     ranks=Counter()
     pair_counts=Counter()
     for m in modules:
@@ -143,6 +152,9 @@ def compute(draws, samples=60):
     top9_hits={m['id']:0 for m in modules}
     replay_digests={m['id']:hashlib.sha256() for m in modules}
     manifest=[]
+    representative_ids={f"M{i*50+28:04d}" for i in range(20)}
+    traces={mid:[] for mid in representative_ids}
+    single_sequences={m["id"]:[] for m in modules}
     prefix_hashes=[];prefix_digest=hashlib.sha256()
     for row in draws:
         prefix_digest.update(row['draw_date'].encode());prefix_digest.update(bytes(sorted(row['numbers'])))
@@ -153,6 +165,7 @@ def compute(draws, samples=60):
     full_stats=[Counter() for _ in range(10)]
     full_any=Counter()
     for end in range(len(draws)-samples,len(draws)):
+        if os.environ.get('TIANTIANLE_STAGE_ROOT') and (end-len(draws)+samples)%20==0:print(f'算法回測進度：{end-len(draws)+samples}/{samples}期',flush=True)
         prior = rank_modules(draws[:end])
         actual = set(draws[end]['numbers'])
         manifest.append({'training_count':end,'training_last_date':draws[end-1]['draw_date'],
@@ -160,6 +173,9 @@ def compute(draws, samples=60):
                          'module_count':len(prior),'forecast_sha256':forecast_hash(prior),
                          'actual_numbers':sorted(actual)})
         for m in prior:
+            single_sequences[m['id']].append(int(m['ranking'][0] in actual))
+            if m['id'] in traces:
+                traces[m['id']].append({'target_date':draws[end]['draw_date'],'top1':m['ranking'][0],'top5':m['ranking'][:5],'top9':m['ranking'][:9],'actual':sorted(actual),'top5_hits':len(actual & set(m['ranking'][:5]))})
             hits[m['id']].append(len(actual & set(m['ranking'][:5])))
             single_hits[m['id']]+=m['ranking'][0] in actual
             top9_hits[m['id']]+=len(actual & set(m['ranking'][:9]))
@@ -187,14 +203,29 @@ def compute(draws, samples=60):
                            'single_hits':single_hits[m['id']],'single_rate_percent':round(single_hits[m['id']]/samples*100,4),
                            'top9_avg_hits':round(top9_hits[m['id']]/samples,4),
                            'replay_sha256':replay_digests[m['id']].hexdigest(),
-                           'random_top5_expected_hits':25/39, 'structural_pass': sorted(m['ranking'])==list(range(1,40))}
+                           'random_top5_expected_hits':25/39,
+                           'top5_excess_over_random':round(sum(values)/samples-25/39,4),
+                           'blocks':[{'start':manifest[start]['target_date'],'end':manifest[min(start+20,samples)-1]['target_date'],'samples':len(values[start:start+20]),'single_hits':sum(single_sequences[m['id']][start:start+20]),'top5_avg_hits':round(sum(values[start:start+20])/len(values[start:start+20]),4)} for start in range(0,samples,20)], 'structural_pass': sorted(m['ranking'])==list(range(1,40))}
     # Rebuild each historical prefix in a separate pass. Never select weights by this outcome.
     for record,end in zip(manifest,range(len(draws)-samples,len(draws))):
+        if os.environ.get('TIANTIANLE_STAGE_ROOT') and (end-len(draws)+samples)%20==0:print(f'獨立重算進度：{end-len(draws)+samples}/{samples}期',flush=True)
         replay=rank_modules(draws[:end])
         if forecast_hash(replay)!=record['forecast_sha256'] or record['training_last_date']>=record['target_date']:
             raise RuntimeError('Historical prefix replay mismatch')
     if forecast_hash(rank_modules(draws))!=forecast_hash(modules):
         raise RuntimeError('Current 1000-module replay mismatch')
+    representatives=[m for m in modules if m['id'] in representative_ids]
+    diversity=[]
+    for i,a in enumerate(representatives):
+        for b in representatives[i+1:]:
+            ra={n:j for j,n in enumerate(a['ranking'])};rb={n:j for j,n in enumerate(b['ranking'])}
+            diversity.append({'a':a['family'],'b':b['family'],'spearman':round(1-6*sum((ra[n]-rb[n])**2 for n in ra)/(39*(39**2-1)),4),'top5_overlap':len(set(a['ranking'][:5])&set(b['ranking'][:5]))})
+    algorithm_report={'method_count':19,'random_control_count':1,'configuration_count':1000,'fusion_configuration_count':950,
+        'representative_rule':'預先固定90期視窗、設定2；不依60期成績選最佳參數',
+        'evaluation_rule':'相同60個目標日期以利公平比較；各算法各自重訓、各自預測及計分，另列每20期區段。雙輪重算僅驗證一致性，不算第二份統計證據。',
+        'representatives':[{'id':m['id'],'family':m['family'],'logic':m['logic'],'parameters':m['parameters'],'window':m['window'],'ranking':m['ranking'],'scores':m['scores'],'validation':m['validation'],'trace':traces[m['id']]} for m in representatives],
+        'pairwise_diversity':diversity,'baseline':{'single_rate':5/39,'top5_mean_hits':25/39,'top9_mean_hits':45/39},
+        'limits':'19種預測方法不等於1000種算法；分數未校準。60期不足以證實優勢，查看多模型最佳成績有事後挑選偏差。'}
     ranked = consensus(modules)
     six=six_number_groups(modules,ranked)
     full=full39_top_six(modules)
@@ -219,7 +250,7 @@ def compute(draws, samples=60):
         z=1.96
         centre=(rate+z*z/(2*samples))/(1+z*z/samples)
         margin=z*math.sqrt(rate*(1-rate)/samples+z*z/(4*samples*samples))/(1+z*z/samples)
-        agreement = sum(sum(n in m['ranking'][:size] for n in numbers) for m in modules)/(MODULE_COUNT*size)*100
+        agreement = sum(sum(n in m['ranking'][:size] for n in numbers) for m in voting_modules(modules))/(len(voting_modules(modules))*size)*100
         baseline = sum(math.comb(size,k)*math.comb(39-size,5-k)/math.comb(39,5)
                        for k in range(goal,min(size,5)+1))
         packs.append({'name':label,'numbers':numbers,'hit_goal':goal,
@@ -227,18 +258,18 @@ def compute(draws, samples=60):
                       'backtest_samples':samples,'backtest_successes':wins,'backtest_rate_percent':round(rate*100,2),
                       'wilson_95_percent':[round(max(0,centre-margin)*100,2),round(min(1,centre+margin)*100,2)],
                       'random_baseline_percent':round(baseline*100,6)})
-    return {'version':SCHEMA_VERSION,'family_count':len(FAMILIES),'configuration_count':MODULE_COUNT,
-            'configuration_definition':{'families':list(FAMILIES),'windows':list(WINDOWS),'blends':list(BLENDS)},
+    return {'algorithm_report':algorithm_report,'version':SCHEMA_VERSION,'family_count':len(FAMILIES),'configuration_count':MODULE_COUNT,
+            'configuration_definition':{'families':list(FAMILIES),'windows':list(WINDOWS),'algorithm_settings':list(BLENDS)},
             'backtest_manifest':manifest,
             'number_percentages':number_percentages(modules),'full39_six_combinations':full,'six_number_combinations':six,'module_count':len(modules),'modules':modules,'ranking':ranked,'packs':packs,
             'based_on_date':dates[-1],'target_draw_date':(date.fromisoformat(dates[-1])+timedelta(days=1)).isoformat(),
             'verification':{'status':'passed','modules_verified':sum(m['validation']['structural_pass'] for m in modules),
-                            'walk_forward_samples':samples,'future_data_used':False,'weighting':'預先固定等權排名平均',
+                            'walk_forward_samples':samples,'future_data_used':False,'weighting':'19種預測算法共950配置固定等權；50組隨機對照不參與融合',
                             'replay_rounds':2,'replay_periods_verified':len(manifest),'module_forecasts':samples*MODULE_COUNT,
                             'numeric_values_checked':(samples+1)*MODULE_COUNT*39*2,
                             'unique_configurations':len({configuration_signature(m) for m in modules}),
                             'unique_current_rankings':len({tuple(m['ranking']) for m in modules}),
-                            'note':'20個算法家族、10種視窗、5種長期頻率排名混合，共1000種配置；參數變體互有相關，不是1000份獨立證據。排名相同的配置照實列出。回測不保證下期。'}}
+                            'note':'19種預測算法＋1種隨機對照；10種視窗、5種算法專用設定，共1000種配置；參數變體互有相關，不是1000份獨立證據。排名相同的配置照實列出。回測不保證下期。'}}
 
 def report_section(analysis):
     e=analysis['ensemble50']
@@ -249,7 +280,7 @@ def report_section(analysis):
            f"- 對應台灣開獎時間：{fresh.get('target_taiwan_safe_update_time','待確認')}",
            f"- 資料截至：{e['based_on_date']}；資料狀態：{fresh.get('status','待確認')}",
            f"- 模組：1000／1000完成；驗證：{e['verification']['modules_verified']}／1000；逐期回測：{e['verification']['walk_forward_samples']}期",
-           '- 信心分數為1000組模組的選號共識比例，不是中獎機率。高機率狀態依驗證註明。',
+           '- 信心分數為950組預測配置的選號共識比例，不是中獎機率。高機率狀態依驗證註明。',
            '| 組別 | 號碼 | 模組共識信心 | 高機率狀態 | 回測命中 | 隨機基準 | 95%信賴區間 |',
            '| --- | --- | --- | --- | --- | --- | --- |']
     for p in e['packs']:
@@ -329,7 +360,7 @@ def html_section(analysis):
     return f'''<section id="ensemble50-required"><h2>適用日期：{e['target_draw_date']}（加州開獎日）</h2>
 <p>最新核對時間（台灣）：{html.escape(str(analysis.get('last_checked_at_taiwan', analysis.get('generated_at_taiwan', '待確認'))))}</p>
 <p>台灣開獎時間：{html.escape(str(analysis.get('freshness',{}).get('target_taiwan_safe_update_time','待確認')))}；資料截至：{e['based_on_date']}；資料狀態：{html.escape(str(analysis.get('freshness',{}).get('status','待確認')))}</p>
-<h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝1000組選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
+<h3>終極獨隻與必備組合 · 高機率信心標示</h3><p>模組共識信心＝950組預測配置選號共識比例；不是中獎機率。所有組合目前標示未證實高機率／觀察。</p>
 <div style="overflow:auto"><table><thead><tr><th>組別</th><th>號碼</th><th>模組共識信心</th><th>高機率狀態</th><th>逐期回測命中</th><th>隨機基準</th><th>95%信賴區間</th></tr></thead><tbody>{rows}</tbody></table></div>
 <p>1000／1000運算完成，{e['verification']['modules_verified']}／1000結構驗證通過；最近{e['verification']['walk_forward_samples']}期逐期回測，每期只使用開獎前資料。</p>
 <details><summary>1000組模組驗證明細</summary><table><tr><th>模組</th><th>方法</th><th>視窗期數</th><th>Top5平均命中（隨機基準0.6410）</th><th>結構驗證</th></tr>{details}</table></details></section>''' + six_html(e) + full39_html(e)

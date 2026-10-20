@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 from html.parser import HTMLParser
-from ensemble50 import number_percentages
+from ensemble50 import number_percentages, voting_modules
 from module1000 import MODULE_COUNT
 import report539_style as layout
 import report_sections
@@ -35,9 +35,9 @@ class NumberPercentageTests(unittest.TestCase):
         self.assertEqual([r['number'] for r in values],self.e['ranking'])
         self.assertEqual({r['number'] for r in values},set(range(1,40)))
         for row in values:
-            points=sum(40-(m['ranking'].index(row['number'])+1) for m in self.e['modules'])
+            points=sum(40-(m['ranking'].index(row['number'])+1) for m in voting_modules(self.e['modules']))
             self.assertEqual(row['ranking_points'],points)
-            self.assertAlmostEqual(row['ranking_score_percent'],round(100*points/(39*MODULE_COUNT),4))
+            self.assertAlmostEqual(row['ranking_score_percent'],round(100*points/(39*len(voting_modules(self.e['modules']))),4))
     def test_known_opposite_rankings_have_same_score_and_deterministic_ties(self):
         modules=[{'id':str(i),'ranking':list(range(1,40)) if i%2==0 else list(range(39,0,-1))} for i in range(MODULE_COUNT)]
         rows=number_percentages(modules)['numbers']
@@ -67,7 +67,7 @@ class NumberPercentageTests(unittest.TestCase):
         page=report_sections.models_content(self.a)
         for module in self.e['modules']:
             for n in module['ranking'][:5]:
-                expected=round(sum(39-m['ranking'].index(n) for m in self.e['modules'])/(39*MODULE_COUNT)*100,2)
+                expected=round(sum(39-m['ranking'].index(n) for m in voting_modules(self.e['modules']))/(39*len(voting_modules(self.e['modules'])))*100,2)
                 self.assertIn(f'{n:02d}（{expected:.2f}％）',page)
 
 

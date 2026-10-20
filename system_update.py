@@ -54,6 +54,19 @@ def audit(game):
                 problems.append('模組數值或排名不一致');break
             if validation.get('samples')!=60 or type(validation.get('single_hits')) is not int or not 0<=validation['single_hits']<=60 or not 0<=validation.get('top5_avg_hits',-1)<=validation.get('top9_avg_hits',-1)<=5 or len(validation.get('replay_sha256',''))!=64:
                 problems.append('模組回測明細缺漏或無效');break
+        report=e.get('algorithm_report',{})
+        if report.get('method_count')!=19 or report.get('random_control_count')!=1 or report.get('fusion_configuration_count')!=950:
+            problems.append('算法與參數實驗計數不一致')
+        representatives=report.get('representatives',[])
+        if len(representatives)!=20 or len(report.get('pairwise_diversity',[]))!=190:problems.append('算法差異證據缺漏')
+        registered={m['id']:m for m in modules}
+        for representative in representatives:
+            original=registered.get(representative.get('id'))
+            if original is None or any(representative.get(key)!=original.get(key) for key in ('family','window','parameters','ranking','scores','validation')):problems.append('算法代表與實算模組不一致');break
+            trace=representative.get('trace',[])
+            if len(trace)!=60 or len(representative['validation'].get('blocks',[]))!=3:problems.append('算法逐期及分段回測缺漏');break
+            if any(t['target_date']!=record['target_date'] or t['actual']!=record['actual_numbers'] or t['top5_hits']!=len(set(t['top5'])&set(t['actual'])) for t,record in zip(trace,e.get('backtest_manifest',[]))):problems.append('算法逐期回測記錄不一致');break
+            if sum(t['top1'] in t['actual'] for t in trace)!=representative['validation']['single_hits']:problems.append('算法獨隻回測記錄不一致');break
         proof=e.get('verification',{});manifest=e.get('backtest_manifest',[])
         if proof.get('replay_rounds')!=2 or proof.get('replay_periods_verified')!=60 or proof.get('module_forecasts')!=60000 or proof.get('unique_configurations')!=1000:problems.append('1000組雙輪回測驗證未完成')
         if proof.get('unique_current_rankings')!=len({tuple(m['ranking']) for m in modules}):problems.append('不同排名實際數量不一致')

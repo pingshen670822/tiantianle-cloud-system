@@ -112,12 +112,14 @@ def render_report(analysis, cloud_url, workflow_url):
     group_cards = ''.join(f'''<article class="research-group-card" data-target-group="{esc(name)}"><h3>{esc(name)}</h3>{balls(packs[name]['numbers'],percentages=percentages)}
     <small>適用 {esc(target)} · 目標命中 {packs[name]['hit_goal']} 顆</small></article>''' for name in ('2中2','3中3','5中5','7中5','9中5'))
     pack_rows = [[p['name'], f"{p['backtest_successes']}／{p['backtest_samples']}", f"{p['backtest_rate_percent']}％", f"{p['random_baseline_percent']}％", f"{p['wilson_95_percent'][0]}～{p['wilson_95_percent'][1]}％",f"{p['model_agreement_percent']}％"] for p in e['packs']]
-    module_rows = [[i+1,m['id'],m['family'],m['window'],m['parameters']['long_frequency_rank_blend'],number_labels(m['ranking'][:1],percentages),m['validation']['single_hits'],m['validation']['top5_avg_hits'],m['validation']['samples'],'通過' if m['validation']['structural_pass'] else '未通過'] for i,m in enumerate(e['modules'])]
+    module_rows = [[i+1,m['id'],m['family'],m['window'],m['parameters']['algorithm_setting'],number_labels(m['ranking'][:1],percentages),m['validation']['single_hits'],m['validation']['top5_avg_hits'],m['validation']['samples'],'通過' if m['validation']['structural_pass'] else '未通過'] for i,m in enumerate(e['modules'])]
     number_rows=[[r['rank'],f"{r['number']:02d}",f"{r['ranking_score_percent']:.2f}％",f"{r['top9_support_percent']:.2f}％",r['ranking_points']] for r in number_data['numbers']]
-    metrics = f'<span>模組實算 <b>1000／1000組</b></span><span>模組結構驗證 <b>{e["verification"]["modules_verified"]}／1000組</b></span><span>逐期回測 <b>{e["verification"]["walk_forward_samples"]}期</b></span>'
+    metrics = f'<span>參數實驗 <b>1000／1000組</b></span><span>模組結構驗證 <b>{e["verification"]["modules_verified"]}／1000組</b></span><span>逐期回測 <b>{e["verification"]["walk_forward_samples"]}期</b></span>'
+    from report_sections import algorithm_evidence
+    evidence=algorithm_evidence(e)
     return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <base href="{esc(cloud_url)}"><title>天天樂｜539同規格戰報 · {esc(target)}</title><style>{STYLE_FROM_539}{EXTRA_STYLE}</style></head>
-    <body data-report-layout="539-v23-compatible"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 539同規格版面</span></div></div><span class="status"><i></i>1000組模組已驗證</span></header>
+    <body data-report-layout="539-v23-compatible"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 539同規格版面</span></div></div><span class="status"><i></i>1000組參數實驗已驗證</span></header>
     {navigation()}
     <main><div class="toolbar"><p>最新運算（台灣）：{esc(generated)}<br>資料截至加州 {esc(e['based_on_date'])} · 每日開獎，適用日期依加州日曆</p>
     <div><button type="button" onclick="forceRefresh()">同步最新戰報</button><a class="action-link" href="{esc(workflow_url)}">雲端更新與檢修</a></div></div>
@@ -125,17 +127,18 @@ def render_report(analysis, cloud_url, workflow_url):
     <section class="hero forecast-hero" id="ensemble50-required"><div class="hero-top"><span>本期融合研究結果</span><small>適用日期 · 加州開獎日</small></div>
     <div class="hero-body"><div><h1>{esc(target)}<small>目標開獎日期 · America/Los_Angeles</small></h1><p>輸入截止 {esc(e['based_on_date'])}<br>完整歷史 {analysis['draw_count']:,} 期<br>對應台灣時間：{esc(analysis.get('freshness',{}).get('target_taiwan_safe_update_time','待確認'))}</p><div class="hero-metrics">{metrics}</div></div>
     <div class="single"><small>終極獨隻（研究）</small><b data-ultimate-single="{single['numbers'][0]}">{single['numbers'][0]:02d}</b><span class="single-percent" data-scored-number="{single['numbers'][0]}" data-ranking-percent="{percentages[single['numbers'][0]]:.4f}">融合排名分數 {percentages[single['numbers'][0]]:.2f}％</span><span class="single-date">適用 {esc(target)}</span><span class="research-qualification">信心等級：研究參考<br>高信心命中資格尚未通過</span></div></div>
-    <div class="confidence-evidence"><strong>高機率／信心標註</strong><p>1000組固定配置、20個算法家族、10種視窗、5種長期頻率排名混合，固定等權融合。獨隻模組共識 {single['model_agreement_percent']}％；60期逐期回測命中 {single['backtest_successes']}／{single['backtest_samples']}。共識比例不是開出機率；運算通過不代表高信心命中資格。</p></div>
+    <div class="confidence-evidence"><strong>高機率／信心標註</strong><p>19種預測算法各有50組參數實驗，共950組固定等權融合；另50組隨機對照不投票。1000組實驗不等於1000種算法。獨隻模組共識 {single['model_agreement_percent']}％；60期逐期回測命中 {single['backtest_successes']}／{single['backtest_samples']}。共識比例不是開出機率；運算通過不代表高信心命中資格。</p></div>
     <div class="hero-foot"><span>最新一期實際開獎：{esc(e['based_on_date'])} · {' '.join(f'{n:02d}' for n in analysis['latest_draw']['numbers'])}</span><span>天天樂資料與玩法 · 539版面規格</span></div></section>
-    <section class="panel" id="target-groups"><div class="section-title"><h2>本期五組命中目標</h2><small>適用 {esc(target)}</small></div><p class="muted">全部取自同一份1000組融合排序，與終極獨隻同源。各組彼此包含，目標不是必中保證。</p>
+    <section class="panel" id="target-groups"><div class="section-title"><h2>本期五組命中目標</h2><small>適用 {esc(target)}</small></div><p class="muted">全部取自同一份950組預測配置融合排序，與終極獨隻同源。各組彼此包含，目標不是必中保證。</p>
     <p class="research-label">每個預測號碼下方為融合排名分數百分比，不是開出機率；同一號碼在所有組合使用相同本期分數。</p><div class="research-group-grid">{group_cards}</div><details><summary>展開五組與獨隻回測、理論對照及信心依據</summary>{table(['目標','回測達標','回測比率','公平理論對照','95％區間','模組共識'],pack_rows)}<p class="muted">公平理論值及歷史比率均不是本模型下期成功率；共用資料與參數變體不代表1000份獨立證據。</p></details></section>
-    <section class="panel" id="number-percentages"><h2>1–39全號碼運算百分比</h2><p class="muted">{esc(number_data['method'])}。{esc(number_data['meaning'])}。此分數與主選使用同一個1000組排名，未改動選號排序。</p>{table(['融合排名','號碼','融合排名分數％','進入模組前九比例％','名次積分'],number_rows)}</section>
+    <section class="panel" id="number-percentages"><h2>1–39全號碼運算百分比</h2><p class="muted">{esc(number_data['method'])}。{esc(number_data['meaning'])}。此分數與主選使用同一個950組預測配置融合排名，未改動選號排序。</p>{table(['融合排名','號碼','融合排名分數％','進入模組前九比例％','名次積分'],number_rows)}</section>
     {six_section(e,'six_number_combinations','top15-six-groups','前15名六碼組合 · 10組')}
     {six_section(e,'full39_six_combinations','full39-six-groups','1–39全號碼六碼包牌 · 評分最高10組')}
+    {evidence}
     <section class="panel" id="verification"><div class="section-title"><h2>本期出報告驗證</h2><strong class="hit">1000／1000 模組結構通過</strong></div><p>全部模組排名包含39個不同號碼；使用60期先預測再評分的逐期回測。完成雙輪重算並核對每期排名指紋；這是60期逐期回測，不是全歷史逐期回測。</p>
-    <div class="stats-grid"><div class="stat"><span>完整資料筆數</span><strong>{analysis['draw_count']:,}</strong></div><div class="stat"><span>算法家族</span><strong>20 家族</strong></div><div class="stat"><span>逐期回測</span><strong>60 期</strong></div><div class="stat"><span>六碼組合</span><strong>10＋10 組</strong></div></div>
-    <p class="muted">1000種唯一配置 · 本期實際不同排名 {e['verification']['unique_current_rankings']} 種 · 雙輪重算 {e['verification']['replay_rounds']} 輪 · 每輪歷史預測 {e['verification']['module_forecasts']:,} 次。相同排名不是另外的獨立證據。</p>
-    <details><summary>展開1000組算法、信心依據與完整驗證</summary>{table(['序','模組','家族','歷史窗口','長期混合比','當期第一名','獨支命中／60','回測前五平均中','回測期數','結構驗證'],module_rows)}<p class="muted">{esc(e['verification']['note'])}</p></details>
+    <div class="stats-grid"><div class="stat"><span>完整資料筆數</span><strong>{analysis['draw_count']:,}</strong></div><div class="stat"><span>算法家族</span><strong>19方法＋對照</strong></div><div class="stat"><span>逐期回測</span><strong>60 期</strong></div><div class="stat"><span>六碼組合</span><strong>10＋10 組</strong></div></div>
+    <p class="muted">1000組參數配置 · 本期實際不同排名 {e['verification']['unique_current_rankings']} 種 · 雙輪重算 {e['verification']['replay_rounds']} 輪 · 每輪歷史預測 {e['verification']['module_forecasts']:,} 次。相同排名不是另外的獨立證據。</p>
+    <details><summary>展開1000組參數實驗、信心依據與完整驗證</summary>{table(['序','模組','家族','歷史窗口','算法設定','當期第一名','獨支命中／60','回測前五平均中','回測期數','結構驗證'],module_rows)}<p class="muted">{esc(e['verification']['note'])}</p></details>
     <details><summary>展開資料與戰報同步識別</summary><dl class="evidence-meta"><div><dt>最新運算時間（台灣）</dt><dd>{esc(generated)}</dd></div><div><dt>適用日期（加州）</dt><dd>{esc(target)}</dd></div><div><dt>資料來源</dt><dd>{esc(analysis['latest_draw']['source'])}</dd></div><div><dt>報告資料識別</dt><dd class="hash">{digest}</dd></div></dl><p class="muted">同一份報告的號碼、回測及識別碼同源呈現。本機離線副本會保留當時資料；連線後開啟同一個雲端入口。</p></details></section>
     <details class="panel"><summary>舊模型原始報告</summary><p class="muted">原模型為不同算法結果，已移出主推薦版面。<a href="legacy_model_report.html">展開舊模型原始報告</a></p></details>
     </main><footer>天天樂 · California Fantasy 5<br>模型評分與歷史回測不保證下期；本頁使用539版面，全部號碼仍由天天樂模型運算。</footer></body></html>'''

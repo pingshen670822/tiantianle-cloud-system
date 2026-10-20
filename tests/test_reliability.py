@@ -122,8 +122,13 @@ class ReliabilityTests(unittest.TestCase):
         with patch.object(runner,'ROOT',self.root),contextlib.redirect_stdout(io.StringIO()):return runner.audit(game)
     def test_valid_outputs_pass(self):
         a,game=self.audit_fixture();self.assertEqual(self.run_audit(game)['status'],'passed')
+    def test_fabricated_algorithm_trace_cannot_pass_audit(self):
+        a,game=self.audit_fixture()
+        a['ensemble50']['algorithm_report']['representatives'][0]['trace'][0]['top5_hits']=6
+        for name in ('reports/latest_analysis.json','site/latest_analysis.json'):(self.root/name).write_text(json.dumps(a),encoding='utf-8')
+        with self.assertRaisesRegex(RuntimeError,'逐期回測記錄'):self.run_audit(game)
     def test_parameter_relabel_cannot_pass_1000_configuration_audit(self):
-        a,game=self.audit_fixture();a['ensemble50']['modules'][0]['parameters']['long_frequency_rank_blend']=.99
+        a,game=self.audit_fixture();a['ensemble50']['modules'][0]['parameters']['algorithm_setting']=99
         for name in ('reports/latest_analysis.json','site/latest_analysis.json'):(self.root/name).write_text(json.dumps(a),encoding='utf-8')
         with self.assertRaisesRegex(RuntimeError,'配置與登錄'):self.run_audit(game)
     def test_tampered_single_number_percentage_blocks_publication(self):
