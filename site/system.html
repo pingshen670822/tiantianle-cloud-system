@@ -21,7 +21,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
 
     .history-controls{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.history-controls input{min-width:150px}.history-controls button{font-size:13px}.review-list{padding-left:20px;font-size:13px;line-height:2}</style><meta name="theme-color" content="#12273b"></head>
     <body data-report-section="system"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 手機與電腦同步</span></div></div><span class="status"><i></i>同一份報告資料</span></header><nav aria-label="主導覽"><a class="" href="./">預測戰報</a><a class="" href="review/">開獎檢討</a><a class="" href="history/">歷史資料</a><a class="" href="models/">候選模型</a><a class="active" href="system/" aria-current="page">更新與檢修</a></nav>
-    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-22T15:16:03+08:00<br>資料截至加州 2026-10-21 · 本期適用 2026-10-22</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
+    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-22T16:05:01+08:00<br>資料截至加州 2026-10-21 · 本期適用 2026-10-22</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
     <p class="alert" id="localSnapshotNote" hidden>本機離線快照，尚未同步。<a href="https://pingshen670822.github.io/tiantianle-cloud-system/system/">開啟線上頁面</a></p>
     <div class="page-title"><small>天天樂 · California Fantasy 5</small><h1>更新與檢修</h1></div><section class="panel"><h2>更新與故障檢修</h2><p>雲端負責抓取資料、運算、驗證及發布。開啟以下更新頁面，登入你的GitHub帳號後按「Run workflow」執行。</p>
     <div class="history-controls"><a class="action-link" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-auto-update.yml" target="_blank" rel="noopener">手動更新最新 · 開啟雲端更新</a><a class="action-link" href="https://github.com/pingshen670822/tiantianle-cloud-system/actions/workflows/tiantianle-cloud-self-heal.yml" target="_blank" rel="noopener">故障檢修 · 開啟救援流程</a><button class="secondary" onclick="forceRefresh()">重新同步戰報</button></div>
@@ -29,7 +29,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     <p class="muted">以上是目前發布報告的資訊；雲端任務的即時執行結果請查看更新頁面。</p>
     <a class="action-link" href="repair_validation.json" target="_blank" rel="noopener">查看本次戰報驗證結果</a><a class="action-link" href="reset.html">清除舊快取並重讀</a></section></main><footer>天天樂 · California Fantasy 5<br>模型評分與歷史回測不保證下期。</footer>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261022071604';
+    window.TIANTIANLE_BUILD_VERSION = '20261022080502';
     const CLOUD_REPORT_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/system/";
     function openCloudReport() {
       location.replace(CLOUD_REPORT_URL + '?refresh=' + Date.now());
@@ -88,7 +88,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261022071604', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261022080502', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
