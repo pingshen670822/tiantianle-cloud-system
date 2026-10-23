@@ -167859,8 +167859,8 @@
     }
   },
   "industrial_engine_version": "industrial_v34_zero_hit_cluster_rescue_20260812",
-  "generated_at_taiwan": "2026-10-23T11:33:24+08:00",
-  "generated_at_california": "2026-10-22T20:33:24-07:00",
+  "generated_at_taiwan": "2026-10-23T14:42:54+08:00",
+  "generated_at_california": "2026-10-22T23:42:54-07:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11958,
@@ -169581,7 +169581,7 @@
   },
   "freshness": {
     "california_today": "2026-10-22",
-    "california_time": "20:33:24",
+    "california_time": "23:42:54",
     "allowed_latest_draw_date": "2026-10-22",
     "age_days": 0,
     "status": "ok",
@@ -346595,7 +346595,7 @@
     {
       "based_on_date": "2026-10-22",
       "target_date": "2026-10-23",
-      "created_at": "2026-10-23T11:33:24+08:00",
+      "created_at": "2026-10-23T14:42:54+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
