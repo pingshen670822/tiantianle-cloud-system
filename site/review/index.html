@@ -21,7 +21,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
 
     .history-controls{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.history-controls input{min-width:150px}.history-controls button{font-size:13px}.review-list{padding-left:20px;font-size:13px;line-height:2}</style><meta name="theme-color" content="#12273b"></head>
     <body data-report-section="review"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 手機與電腦同步</span></div></div><span class="status"><i></i>同一份報告資料</span></header><nav aria-label="主導覽"><a class="" href="./">預測戰報</a><a class="active" href="review/" aria-current="page">開獎檢討</a><a class="" href="history/">歷史資料</a><a class="" href="models/">候選模型</a><a class="" href="system/">更新與檢修</a></nav>
-    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-23T17:50:48+08:00<br>資料截至加州 2026-10-22 · 本期適用 2026-10-23</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
+    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-23T19:10:07+08:00<br>資料截至加州 2026-10-22 · 本期適用 2026-10-23</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
     <p class="alert" id="localSnapshotNote" hidden>本機離線快照，尚未同步。<a href="https://pingshen670822.github.io/tiantianle-cloud-system/review/">開啟線上頁面</a></p>
     <div class="page-title"><small>天天樂 · California Fantasy 5</small><h1>開獎檢討</h1></div><section class="panel"><div class="section-title"><h2>最新一期已結算檢討</h2><small>開獎日 2026-10-22</small></div>
     <div class="balls"><span>13</span><span>15</span><span>18</span><span>28</span><span>36</span></div><p class="muted">這是開獎前保存的原模型預測紀錄，與目前1000組融合主選分開核對。未保存的融合預測不事後補算為實戰。</p>
@@ -29,7 +29,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     <section class="panel"><h2>近期已結算結果</h2><div class="table-wrap"><table><thead><tr><th>目標開獎日</th><th>前五命中</th><th>前十命中</th><th>前十五命中</th></tr></thead><tbody><tr><td>2026-10-22</td><td>2</td><td>2</td><td>3</td></tr><tr><td>2026-10-21</td><td>1</td><td>1</td><td>1</td></tr><tr><td>2026-10-20</td><td>0</td><td>1</td><td>2</td></tr><tr><td>2026-10-19</td><td>0</td><td>2</td><td>4</td></tr><tr><td>2026-10-18</td><td>0</td><td>1</td><td>2</td></tr></tbody></table></div></section>
     <section class="panel"><h2>失準檢討紀錄</h2><ul class="review-list"><li>最近5期已納入滾動檢討，Top10平均命中為 1.4</li><li>重複預測但未命中號碼已自動降權：11 02 10 39 32 35 19 03</li><li>本月總檢討已納入：Top10平均 1.318，強獨與5中2未過實戰門檻，改以觀察池與月度降權運行</li><li>失準強牌組合已降低權重：strong_single:5, five_hit_two:5, two_hit_one:4, three_hit_two:4</li><li>未命中來源已分流修正：失準後多模型競賽重排 / 近期失準硬守門未通過，禁止進入九碼核心 / 昨日預測號軟降權重新驗證 / 全系統備查通過不列主推</li><li>模型已降低短期熱號與連莊權重，改提高遺漏、共現、中期穩定權重</li></ul><details><summary>展開上期候選號碼逐號核對</summary><div class="table-wrap"><table><thead><tr><th>原排名</th><th>號碼</th><th>核對結果</th></tr></thead><tbody><tr><td>1</td><td>09</td><td>未中</td></tr><tr><td>2</td><td>27</td><td>未中</td></tr><tr><td>3</td><td>18</td><td>命中</td></tr><tr><td>4</td><td>02</td><td>未中</td></tr><tr><td>5</td><td>28</td><td>命中</td></tr><tr><td>6</td><td>39</td><td>未中</td></tr><tr><td>7</td><td>14</td><td>未中</td></tr><tr><td>8</td><td>25</td><td>未中</td></tr><tr><td>9</td><td>35</td><td>未中</td></tr><tr><td>10</td><td>22</td><td>未中</td></tr><tr><td>11</td><td>11</td><td>未中</td></tr><tr><td>12</td><td>24</td><td>未中</td></tr><tr><td>13</td><td>06</td><td>未中</td></tr><tr><td>14</td><td>10</td><td>未中</td></tr><tr><td>15</td><td>15</td><td>命中</td></tr></tbody></table></div></details></section></main><footer>天天樂 · California Fantasy 5<br>模型評分與歷史回測不保證下期。</footer>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261023095049';
+    window.TIANTIANLE_BUILD_VERSION = '20261023111008';
     const CLOUD_REPORT_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/review/";
     function openCloudReport() {
       location.replace(CLOUD_REPORT_URL + '?refresh=' + Date.now());
@@ -88,7 +88,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261023095049', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261023111008', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
