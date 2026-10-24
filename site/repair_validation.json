@@ -1,11 +1,11 @@
 {
   "status": "passed",
-  "checked_at_taiwan": "2026-10-25T04:22:20+08:00",
+  "checked_at_taiwan": "2026-10-25T07:00:47+08:00",
   "latest_draw_date": "2026-10-23",
   "expected_latest_date": "2026-10-23",
   "target_draw_date": "2026-10-24",
   "module_count": 1000,
   "walk_forward_samples": 60,
   "problems": [],
-  "analysis_sha256": "04f5c2fab6d33712646ef7655bb18d6f738decc749d5ff978d9fd5b8f2dbcc8e"
+  "analysis_sha256": "878c43f182d84bfed42c1fd5995335c99ae768e1e4363abb8ceb95efac857293"
 }
