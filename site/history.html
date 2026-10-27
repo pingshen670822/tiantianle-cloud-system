@@ -21,7 +21,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
 
     .history-controls{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.history-controls input{min-width:150px}.history-controls button{font-size:13px}.review-list{padding-left:20px;font-size:13px;line-height:2}</style><meta name="theme-color" content="#12273b"></head>
     <body data-report-section="history"><header><div class="brand"><div class="logo">天天樂</div><div>加州 Fantasy 5<span>雲端戰報 · 手機與電腦同步</span></div></div><span class="status"><i></i>同一份報告資料</span></header><nav aria-label="主導覽"><a class="" href="./">預測戰報</a><a class="" href="review/">開獎檢討</a><a class="active" href="history/" aria-current="page">歷史資料</a><a class="" href="models/">候選模型</a><a class="" href="system/">更新與檢修</a></nav>
-    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-27T16:51:14+08:00<br>資料截至加州 2026-10-26 · 本期適用 2026-10-27</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
+    <main><div class="toolbar"><p>最新運算（台灣）：2026-10-27T18:17:40+08:00<br>資料截至加州 2026-10-26 · 本期適用 2026-10-27</p><button type="button" onclick="forceRefresh()">同步最新戰報</button></div>
     <p class="alert" id="localSnapshotNote" hidden>本機離線快照，尚未同步。<a href="https://pingshen670822.github.io/tiantianle-cloud-system/history/">開啟線上頁面</a></p>
     <div class="page-title"><small>天天樂 · California Fantasy 5</small><h1>歷史資料</h1></div><section class="panel"><div class="section-title"><h2>完整開獎歷史</h2><small>11,962 期 · 1992-02-04 至 2026-10-26</small></div>
     <p class="muted">資料序號是系統歷史索引。每頁50期；可依開獎日期篩選。</p><div class="history-controls"><input id="historyDate" type="date" aria-label="篩選開獎日期"><button id="historySearch">查詢日期</button><button class="secondary" id="historyAll">全部歷史</button><a class="action-link" href="history.csv" download>下載完整CSV</a></div>
@@ -34,7 +34,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     document.getElementById('historyAll').onclick=()=>{document.getElementById('historyDate').value='';current=all;page=0;render();};
     document.getElementById('historyPrevious').onclick=()=>{if(page>0)page--;render();};document.getElementById('historyNext').onclick=()=>{if((page+1)*size<current.length)page++;render();};render();})();</script></main><footer>天天樂 · California Fantasy 5<br>模型評分與歷史回測不保證下期。</footer>
     <script>
-    window.TIANTIANLE_BUILD_VERSION = '20261027085115';
+    window.TIANTIANLE_BUILD_VERSION = '20261027101741';
     const CLOUD_REPORT_URL = "https://pingshen670822.github.io/tiantianle-cloud-system/history/";
     function openCloudReport() {
       location.replace(CLOUD_REPORT_URL + '?refresh=' + Date.now());
@@ -93,7 +93,7 @@ nav{overflow:auto;white-space:nowrap}.hero-metrics{flex-wrap:wrap}.local-note{ma
     }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){
-        navigator.serviceWorker.register('service-worker.js?v=20261027085115', { updateViaCache: 'none' }).then(function(reg){
+        navigator.serviceWorker.register('service-worker.js?v=20261027101741', { updateViaCache: 'none' }).then(function(reg){
           reg.update();
           if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }).catch(function(){});
