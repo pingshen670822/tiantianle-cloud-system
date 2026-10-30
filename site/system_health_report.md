@@ -1,7 +1,7 @@
 # 系統健康檢查
 
 - 引擎版本：天天樂最新版鐵律第4版_20260721
-- 產生時間：2026-10-30T19:11:27+08:00
+- 產生時間：2026-10-31T02:02:49+08:00
 - 狀態：ok
 - 最新開獎日：2026-10-29
 - 預測目標日：2026-10-30
@@ -21,13 +21,13 @@
 - 單一來源隔離：487
 - 未來日期隔離：0
 - 衝突資料隔離：0
-- 發布關卡：verified_research_complete
+- 發布關卡：watch_only
 - 主系統完整度：86%
 - 本次線上新增：0
 - 本次快取新增：0
 
 ## 警告
-- official_release_gate_not_promoted_but_research_complete
+- official_release_gate_watch_only
 
 ## 主系統完整度項目
 - full_history_database：通過 / 18
