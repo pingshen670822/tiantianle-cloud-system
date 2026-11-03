@@ -167859,8 +167859,8 @@
     }
   },
   "industrial_engine_version": "industrial_v34_zero_hit_cluster_rescue_20260812",
-  "generated_at_taiwan": "2026-11-03T13:31:50+08:00",
-  "generated_at_california": "2026-11-02T21:31:50-08:00",
+  "generated_at_taiwan": "2026-11-03T16:45:18+08:00",
+  "generated_at_california": "2026-11-03T00:45:18-08:00",
   "game": "\u5929\u5929\u6a02",
   "latest_draw": {
     "period": 11969,
@@ -169475,8 +169475,8 @@
     "recommendation_message": "\u672c\u671f\u6709\u9ad8\u4fe1\u5fc3\u5019\u9078\uff0c\u4f46\u6b63\u5f0f\u767c\u5e03\u9580\u6abb\u5c1a\u672a\u5168\u904e\uff1b\u6230\u5831\u53ea\u6a19\u793a\u9ad8\u4fe1\u5fc3\u89c0\u5bdf\uff0c\u4e0d\u5305\u88dd\u6210\u4fdd\u8b49\u3002"
   },
   "freshness": {
-    "california_today": "2026-11-02",
-    "california_time": "21:31:50",
+    "california_today": "2026-11-03",
+    "california_time": "00:45:18",
     "allowed_latest_draw_date": "2026-11-02",
     "age_days": 0,
     "status": "ok",
@@ -346476,7 +346476,7 @@
     {
       "based_on_date": "2026-11-02",
       "target_date": "2026-11-03",
-      "created_at": "2026-11-03T13:31:50+08:00",
+      "created_at": "2026-11-03T16:45:18+08:00",
       "status": "pending",
       "actual_date": null,
       "actual_numbers": [],
